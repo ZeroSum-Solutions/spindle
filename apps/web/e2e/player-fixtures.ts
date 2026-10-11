@@ -374,6 +374,28 @@ export class PlayerWorld {
       .at(-1)!;
   }
 
+  /**
+   * T17: the claim's approval runs out. Approvals cannot be backdated through the RPC, so an
+   * approval that expired yesterday is written directly, the way pgTAP does; it is cleaned up
+   * with the publisher's other reviews.
+   */
+  expire(claimId: string): void {
+    sql(`insert into public.claim_reviews (claim_id, decision, expires_at, receipt, reviewer, run_id, claim_hash)
+      select ${lit(claimId)}, 'approved', now() - interval '1 day',
+        '{"existenceCheckedAt": "2026-10-01T00:00:00Z", "faithfulness": "faithful", "retractionCheckedAt": "2026-10-01T00:00:00Z"}'::jsonb,
+        ${lit(this.publisherId)}, (select id from public.review_runs where recorded_by = ${lit(this.publisherId)} limit 1),
+        private.claim_hash(${lit(claimId)})`);
+  }
+
+  /** T17: a reviewer rejects a published claim through the RPC (history is kept). */
+  withdraw(claimId: string): void {
+    sql(`begin; ${asService}
+      select public.publisher_review_claim(${lit(this.publisherId)}, ${lit(claimId)}, jsonb_build_object('decision', 'rejected',
+        'expectedHash', public.publisher_claim_target(${lit(this.publisherId)}, ${lit(claimId)}) ->> 'hash', 'run', ${runReceipt(`${this.run}-withdraw`)},
+        'receipt', '{"existenceCheckedAt": "2026-10-01T00:00:00Z", "faithfulness": "unfaithful", "retractionCheckedAt": "2026-10-01T00:00:00Z", "notes": "synthetic withdrawal"}'::jsonb));
+      commit;`);
+  }
+
   retract(sourceId: string): void {
     sql(`begin; ${asService}
       select public.publisher_record_retraction(${lit(this.publisherId)}, ${lit(sourceId)},
