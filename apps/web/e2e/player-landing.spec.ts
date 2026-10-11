@@ -43,4 +43,16 @@ test.describe("signed-out landing", () => {
     await expect(page).toHaveURL(/\/sign-in\?next=%2Fgyms$/);
     await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
   });
+
+  test("the footer reaches Spindle's privacy and terms pages, which describe the YouTube embed", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("contentinfo").getByRole("link", { name: "Privacy" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Privacy" })).toBeVisible();
+    await expect(page.getByRole("main")).toContainText("Until you press Play, nothing is loaded from YouTube or Google");
+    await expect(page.getByRole("link", { name: "Google's privacy policy" })).toHaveAttribute("href", "https://policies.google.com/privacy");
+    await page.goto("/");
+    await page.getByRole("contentinfo").getByRole("link", { name: "Terms" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Terms" })).toBeVisible();
+    await expect(page.getByRole("main")).toContainText("only after you press Play");
+  });
 });

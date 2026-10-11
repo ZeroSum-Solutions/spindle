@@ -122,6 +122,12 @@ describe("registry videos in a catalog", () => {
     expect(() => validateCatalog({ version: "t", courses: [lessonMedia] }, ...lookups)).toThrow(/video host/);
   });
 
+  it("refuse the reserved lesson slug quiz in new content", () => {
+    const c = course();
+    const named: Course = { ...c, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, slug: "quiz" }] }] };
+    expect(() => validateCatalog({ version: "t", courses: [named] }, ...lookups)).toThrow(/reserved/);
+  });
+
   it("are allowed in global content and refused in gym method content", () => {
     expect(() => validateCatalog({ version: "t", courses: [withVideo("base")] }, ...lookups)).not.toThrow();
     expect(() => validateCatalog({ version: "t", courses: [withVideo("method")] }, ...lookups)).toThrow(/cannot embed registry videos/);

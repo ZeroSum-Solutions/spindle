@@ -49,7 +49,9 @@ jobs:
             --override-name auth.publishable_key=NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
             | grep '^NEXT_PUBLIC_' | sed 's/"//g' >> "$GITHUB_ENV"
       - name: Owner race test
-        run: supabase/tests/race/owner-race.sh
+        run: |
+          supabase/tests/race/owner-race-guard.test.sh
+          supabase/tests/race/owner-race.sh
       - name: Content publishing race test
         run: |
           supabase/tests/race/content-publishing-race-proc.test.sh

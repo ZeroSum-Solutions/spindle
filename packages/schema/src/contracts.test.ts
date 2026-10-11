@@ -9,6 +9,8 @@ import {
   isVideoHostUrl,
   lessonBlockSchema,
   lessonReviewInputSchema,
+  lessonSchema,
+  RESERVED_LESSON_SLUGS,
   mediaAssetSchema,
   parseModuleStatus,
   parseQuizAttemptResult,
@@ -39,6 +41,14 @@ describe("video blocks", () => {
       expect(mediaAssetSchema.safeParse({ kind: "video", src: url, alt: "x", caption: "", provenanceId: "p1" }).success, url).toBe(true);
     }
     for (const url of ["https://notyoutube.com/x", "https://example.org/youtube.com", "/media/youtube.png"]) expect(isVideoHostUrl(url), url).toBe(false);
+  });
+});
+
+describe("reserved lesson slugs", () => {
+  it("keeps snapshot parsing lenient (a historical lesson named quiz stays readable); authoring refuses it", () => {
+    const lesson = { id: "l1", slug: "quiz", title: "x", summary: "", durationMinutes: 5, format: "article", objectives: [], anatomyIds: [], blocks: [], media: [], resources: [] };
+    expect(lessonSchema.safeParse(lesson).success).toBe(true);
+    expect(RESERVED_LESSON_SLUGS).toContain("quiz");
   });
 });
 

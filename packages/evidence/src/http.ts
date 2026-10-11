@@ -41,6 +41,8 @@ export const DEFAULT_INTERVALS_MS: Readonly<Record<string, number>> = {
   "www.ebi.ac.uk": 100,
   "query.wikidata.org": 250,
   "wger.de": 200,
+  "www.youtube.com": 500, // oEmbed: conservative; no published limit
+  "generativelanguage.googleapis.com": 1000,
 };
 
 /** Requests per UTC day, per host, counted in-process (retries included). Unpaywall allows 100,000. */
@@ -67,6 +69,8 @@ export interface RequestOptions {
   minIntervalMs?: number;
   /** Statuses returned as `null` instead of thrown (for example 404). */
   nullStatuses?: readonly number[];
+  /** Only this success status counts; any other 2xx is a validation error (for example oEmbed's 200-only rule). */
+  requireStatus?: number;
 }
 
 export interface Http {
@@ -218,6 +222,10 @@ export function createHttp(options: HttpOptions = {}): Http {
         const delayMs = hinted ?? backoff;
         pauseHost(host, delayMs); // the next send on this host waits for it
         return { done: false, error };
+      }
+      if (opts.requireStatus !== undefined && res.status !== opts.requireStatus) {
+        await res.body?.cancel().catch(() => undefined);
+        throw new EvidenceValidationError(`HTTP ${res.status} from ${safeUrl}; only ${opts.requireStatus} is accepted`, safeUrl);
       }
       const text = await res.text(); // body timeouts land in the catch below and are retried
       try {

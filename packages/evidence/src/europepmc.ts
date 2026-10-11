@@ -26,6 +26,9 @@ const responseSchema = z.object({
 
 export interface EuropePmcWork extends WorkSummary {
   abstract?: string;
+  /** True when `abstract` was cut to maxAbstractChars. A review packet needs the full text. */
+  abstractTruncated?: boolean;
+  pubTypes?: string[];
 }
 
 export async function searchEuropePmc(
@@ -59,15 +62,34 @@ export async function searchEuropePmc(
       ...retractionFromPubTypes(types),
       citedByCount: r.citedByCount,
       oa: { isOa: r.isOpenAccess === "Y", license: r.license },
-      abstract: r.abstractText ? truncate(stripTags(r.abstractText), maxChars) : undefined,
+      ...abstractOf(r.abstractText, maxChars),
+      pubTypes: types,
     };
   });
   return { total: data.hitCount, works };
 }
 
-export async function getEuropePmcByDoi(ctx: EvidenceContext, doi: string): Promise<EuropePmcWork | null> {
+function abstractOf(raw: string | undefined, maxChars: number): Pick<EuropePmcWork, "abstract" | "abstractTruncated"> {
+  if (!raw) return {};
+  const text = stripTags(raw);
+  return { abstract: truncate(text, maxChars), abstractTruncated: text.length > maxChars };
+}
+
+/** The PubMed (MED) record for a PMID, with its full abstract. Null unless the PMID matches exactly. */
+export async function getEuropePmcByPmid(ctx: EvidenceContext, pmid: string): Promise<EuropePmcWork | null> {
+  if (!/^\d{1,9}$/.test(pmid)) throw new Error("PMIDs must be numeric strings");
+  const { works } = await searchEuropePmc(ctx, `EXT_ID:${pmid} AND SRC:MED`, { max: 1, maxAbstractChars: Number.POSITIVE_INFINITY });
+  const hit = works[0];
+  return hit && hit.pmid === pmid ? hit : null;
+}
+
+export async function getEuropePmcByDoi(
+  ctx: EvidenceContext,
+  doi: string,
+  opts: { maxAbstractChars?: number } = {},
+): Promise<EuropePmcWork | null> {
   const clean = requireDoi(doi);
-  const { works } = await searchEuropePmc(ctx, `DOI:"${clean.replace(/["\\]/g, "")}"`, { max: 1 });
+  const { works } = await searchEuropePmc(ctx, `DOI:"${clean.replace(/["\\]/g, "")}"`, { max: 1, ...opts });
   const hit = works[0];
   return hit && hit.doi === clean ? hit : null;
 }

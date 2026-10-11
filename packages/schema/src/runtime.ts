@@ -128,6 +128,12 @@ export const lessonBlockSchema = blockVariants.superRefine((block, ctx) => {
   }
 }) satisfies z.ZodType<LessonBlock>;
 
+/**
+ * Lesson slugs that collide with player routes (the module quiz page). New authoring refuses them
+ * (validateCatalog and the database); snapshot parsing stays lenient so historical versions stay readable.
+ */
+export const RESERVED_LESSON_SLUGS: readonly string[] = ["quiz"];
+
 export const lessonSchema = z.strictObject({
   id: idSchema,
   slug: slugSchema,
