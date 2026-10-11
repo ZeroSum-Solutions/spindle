@@ -13,6 +13,8 @@
     {
       "slot": "claim-slot:l1-bones-joints",
       "statement": "The shoulder comprises the humerus, scapula and clavicle, articulating at the glenohumeral, acromioclavicular and sternoclavicular joints; there is no osseous or ligamentous joint between the scapula and the thorax, which are connected by muscles.",
+      "evidenceLevel": "Narrative review (anatomy)",
+      "population": "Human shoulder anatomy; not a sampled study population (Frank 2013).",
       "candidateSources": [
         {
           "kind": "review",
@@ -27,6 +29,8 @@
     {
       "slot": "claim-slot:l1-scapulothoracic",
       "statement": "The scapulothoracic articulation has no articular cartilage, synovium or capsule; the scapula slides on bursal and muscular planes and is held in place by its muscular attachments.",
+      "evidenceLevel": "Narrative review (anatomy)",
+      "population": "Human shoulder anatomy; not a sampled study population: \"the scapulothoracic articulation\" (Frank 2013).",
       "candidateSources": [
         {
           "kind": "review",
@@ -41,6 +45,8 @@
     {
       "slot": "claim-slot:l1-shallow-socket",
       "statement": "The glenohumeral joint is the most mobile joint in the body, owing partly to its lack of osseous constraint; the glenoid articular surface is one third to one quarter the size of the humeral head, and the fibrocartilaginous labrum increases its depth and surface area.",
+      "evidenceLevel": "Narrative review (anatomy); anatomic specimen study",
+      "population": "Human shoulder anatomy; not a sampled study population; \"25 anatomic specimen shoulders\" (Howell 1989).",
       "candidateSources": [
         {
           "kind": "review",
@@ -61,6 +67,8 @@
     {
       "slot": "claim-slot:l1-cuff",
       "statement": "The rotator cuff comprises supraspinatus, infraspinatus, teres minor and subscapularis, which originate on the scapula and attach to the humerus, forming a cuff around the glenohumeral joint that is crucial for shoulder stability.",
+      "evidenceLevel": "Narrative reviews (anatomy)",
+      "population": "Human shoulder anatomy; not a sampled study population (Cavanaugh 2024; Frank 2013).",
       "candidateSources": [
         {
           "kind": "review",
@@ -83,6 +91,8 @@
     {
       "slot": "claim-slot:l1-concavity",
       "statement": "Compressing the humeral head into the glenoid concavity stabilises the glenohumeral joint (concavity compression), and dynamic muscle contraction can provide the compressive load.",
+      "evidenceLevel": "Narrative review of in vitro biomechanical studies",
+      "population": "The glenohumeral joint in \"in vitro studies\" (Lippitt 1993); not a patient population.",
       "candidateSources": [
         {
           "kind": "paper",
@@ -95,6 +105,8 @@
     {
       "slot": "claim-slot:l1-movers",
       "statement": "Middle deltoid and supraspinatus abduct the arm; latissimus dorsi, posterior deltoid and teres major extend it; pectoralis major is the major ventral shoulder adductor; serratus anterior protracts and upwardly rotates the scapula; trapezius elevates, retracts and upwardly rotates it.",
+      "evidenceLevel": "Clinical examination guide; expert consensus guide; narrative review (anatomy)",
+      "population": "Human shoulder anatomy; not a sampled study population: muscle actions described for bedside manual muscle testing (Vijian 2023) and in an expert guide to shoulder anatomy (Jacinto 2022).",
       "candidateSources": [
         {
           "kind": "paper",

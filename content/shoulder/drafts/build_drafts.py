@@ -80,7 +80,7 @@ HEGEDUS = src("meta_analysis", "Hegedus EJ, Goode AP, Cook CE, et al. Which phys
               RESERVED + " Historical context only.", doi="10.1136/bjsports-2012-091066", pmid="22773322")
 BESS25 = src("consensus", "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724.",
              "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. " + OPEN_ACCESS_NOTE,
-             doi="10.1177/17585732251374282", url="https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf")
+             doi="10.1177/17585732251374282", pmid="41245988", pmcid="PMC12611748", url="https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf")
 CSAW = src("paper", "Beard DJ, Rees JL, Cook JA, et al. Arthroscopic subacromial decompression for subacromial shoulder pain (CSAW): a multicentre, pragmatic, parallel group, placebo-controlled, three-group, randomised surgical trial. Lancet. 2018;391(10118):329-338.",
            "CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/), PMC5803129. " + OPEN_ACCESS_NOTE, doi="10.1016/S0140-6736(17)32457-1", pmid="29169668", pmcid="PMC5803129")
 NAUNTON = src("meta_analysis", "Naunton J, Street G, Littlewood C, Haines T, Malliaras P. Effectiveness of progressive and resisted and non-progressive or non-resisted exercise in rotator cuff related shoulder pain: a systematic review and meta-analysis of randomized controlled trials. Clin Rehabil. 2020;34(9):1198-1216.", RESERVED, doi="10.1177/0269215520934147", pmid="32571081")
@@ -98,7 +98,7 @@ POZZI = src("meta_analysis", "Pozzi F, Plummer HA, Shanley E, et al. Preseason s
             "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), PMC7456673. " + OPEN_ACCESS_NOTE, doi="10.1136/bjsports-2019-100698", pmid="31937577", pmcid="PMC7456673")
 SALAMH = src("systematic_review", "Salamh P, Bullock G, Chester R, Daniell H, et al. Risk factors associated with new onset of shoulder pain and injury among the athletic population: a systematic review of the literature. Int J Sports Phys Ther. 2025;20(3).",
              "CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/) per the article page's licence metadata; not confirmed in the article text: treat as unresolved for reuse. Publisher text read. " + OPEN_ACCESS_NOTE,
-             doi="10.26603/001c.129462", url="https://ijspt.scholasticahq.com/article/129462")
+             doi="10.26603/001c.129462", pmid="40041538", pmcid="PMC11872537", url="https://ijspt.scholasticahq.com/article/129462")
 KELLER = src("meta_analysis", "Keller RA, De Giacomo AF, Neumann JA, et al. Glenohumeral internal rotation deficit and risk of upper extremity injury in overhead athletes: a meta-analysis and systematic review. Sports Health. 2018;10(2):125-132.",
              "Free to read in PMC (PMC5857737); no open licence stated; treat as all rights reserved. " + OPEN_ACCESS_NOTE, doi="10.1177/1941738118756577", pmid="29381423", pmcid="PMC5857737")
 
@@ -696,6 +696,49 @@ LESSONS = [
     (8, "08-when-to-refer-out.json", l8, l8_slots, l8_scen, notes8),
 ]
 
+# ---------------------------------------------------------------- claim metadata
+# evidenceLevel and population for every claim slot, as the claim RPC requires (claim.evidenceLevel,
+# 1-100 characters; claim.population, 1-500). The level names the study designs behind the claim;
+# the population quotes each source's own wording (abstract or full text), never an inference.
+# Anatomy and biomechanics claims describe the human shoulder, not a sampled population, and say so.
+
+ANATOMY = "Human shoulder anatomy; not a sampled study population"
+MCCLURE_POP = '"8 healthy volunteers (5 men, 3 women)" (McClure 2001); normal scapular kinematics during arm elevation, reviewed by Ludewig 2009'
+ACSM_POP = '"healthy adults (≥18 yr)" (ACSM 2026)'
+BESS_POP = '"Subacromial Shoulder Pain" (BESS 2025 patient care pathway)'
+CLAIM_META = {
+    "claim-slot:l1-bones-joints": ("Narrative review (anatomy)", ANATOMY + " (Frank 2013)."),
+    "claim-slot:l1-scapulothoracic": ("Narrative review (anatomy)", ANATOMY + ": \"the scapulothoracic articulation\" (Frank 2013)."),
+    "claim-slot:l1-shallow-socket": ("Narrative review (anatomy); anatomic specimen study", ANATOMY + "; \"25 anatomic specimen shoulders\" (Howell 1989)."),
+    "claim-slot:l1-cuff": ("Narrative reviews (anatomy)", ANATOMY + " (Cavanaugh 2024; Frank 2013)."),
+    "claim-slot:l1-concavity": ("Narrative review of in vitro biomechanical studies", "The glenohumeral joint in \"in vitro studies\" (Lippitt 1993); not a patient population."),
+    "claim-slot:l1-movers": ("Clinical examination guide; expert consensus guide; narrative review (anatomy)", ANATOMY + ": muscle actions described for bedside manual muscle testing (Vijian 2023) and in an expert guide to shoulder anatomy (Jacinto 2022)."),
+    "claim-slot:l2-scapular-motions": ("Narrative review; in vivo kinematic study (bone pins)", MCCLURE_POP + "."),
+    "claim-slot:l2-shared-ratio": ("Laboratory kinematic studies", '"25 normal subjects" (McQuade 1998); the Inman 1944 record has no abstract, so its population is not quoted.'),
+    "claim-slot:l2-dyskinesis": ("Consensus statement; cross-sectional study", '"67 with shoulder pain and 68 healthy controls" (Plummer 2017); shoulder injuries in general (Kibler 2013 Scapular Summit consensus).'),
+    "claim-slot:l3-kyphosis-pain": ("Systematic review; systematic review with meta-analysis of cross-sectional studies", '"groups with and without shoulder pain" (Barrett 2016); "non-athletes with shoulder pain compared to asymptomatic individuals" (Fialho 2024).'),
+    "claim-slot:l3-upright-range": ("Systematic review", '"people with and without shoulder pain" (Barrett 2016).'),
+    "claim-slot:l4-exam-tests": ("Systematic reviews with meta-analysis (diagnostic accuracy)", '"3,438 patients" examined for "rotator cuff tears (RCTs) and subacromial impingement syndrome (SIS)" (Zhao 2024); shoulder physical examination studies (Hegedus 2012).'),
+    "claim-slot:l5-subacromial-exercise": ("Clinical guideline (GRADE), British Elbow & Shoulder Society", BESS_POP + "."),
+    "claim-slot:l5-csaw": ("Randomised placebo-controlled surgical trial", 'Patients "who had subacromial pain for at least 3 months with intact rotator cuff tendons, were eligible for arthroscopic surgery, and had previously completed a non-operative management programme that included exercise therapy and at least one steroid injection" (CSAW, Beard 2018).'),
+    "claim-slot:l5-progressive-comparisons": ("Systematic review with meta-analysis of randomised controlled trials", '"people with rotator cuff related pain" (Naunton 2020).'),
+    "claim-slot:l6-progression": ("Position stand (overview of systematic reviews)", ACSM_POP + "."),
+    "claim-slot:l6-overhead-upward": ("Narrative review; in vivo kinematic study (bone pins)", MCCLURE_POP + "."),
+    "claim-slot:l6-volume": ("Meta-regression; position stand (overview of systematic reviews)", '"67 total studies of 2058 participants (79.1% male, 20.9% female; average age 25.16 ± 5.22 years)" (Pelland 2026); ' + ACSM_POP + "."),
+    "claim-slot:l6-failure": ("Systematic review with meta-analysis; exploratory meta-regression", '"healthy adults of any age and resistance training experience" (Refalo 2023); the Robinson 2024 abstract does not state a population.'),
+    "claim-slot:l7-load-moments": ("Laboratory biomechanical study (high-speed motion analysis)", '"26 highly skilled, healthy adult pitchers" (Fleisig 1995).'),
+    "claim-slot:l7-adaptation": ("Systematic review (level of evidence 4)", '"nonrecreational baseball pitchers" (Paul 2025).'),
+    "claim-slot:l7-injury-risk": ("Systematic reviews with meta-analysis; systematic review of prospective studies", '"overhead athletes" (Keller 2018); "overhead athletes from Olympic or college sports", with pooled data from "professional baseball pitchers" (Pozzi 2020); "the athletic population" (Salamh 2025).'),
+    "claim-slot:l8-subacromial-course": ("Clinical guideline (GRADE), British Elbow & Shoulder Society", BESS_POP + "."),
+}
+
+def with_meta(slot):
+    """The slot with its claim metadata, in a stable key order."""
+    level, population = CLAIM_META[slot["slot"]]
+    out = {"slot": slot["slot"], "statement": slot["statement"], "evidenceLevel": level, "population": population}
+    out.update({k: v for k, v in slot.items() if k not in out})
+    return out
+
 def check(number, lesson, slots, scenarios):
     """Structural rules the drafts must meet before anything is written."""
     errors = []
@@ -720,6 +763,10 @@ def check(number, lesson, slots, scenarios):
     if used != set(defined):
         errors.append(f"slots used {sorted(used)} differ from slots defined {sorted(defined)}")
     for s in slots:
+        if not 1 <= len(s.get("evidenceLevel", "")) <= 100:
+            errors.append(f"{s['slot']}: evidenceLevel must be 1-100 characters")
+        if not 1 <= len(s.get("population", "")) <= 500:
+            errors.append(f"{s['slot']}: population must be 1-500 characters")
         if not s["candidateSources"]:
             errors.append(f"{s['slot']}: no candidate source")
         for c in s["candidateSources"]:
@@ -735,7 +782,11 @@ def check(number, lesson, slots, scenarios):
 
 def render():
     files = {}
+    unknown = set(CLAIM_META) - {s["slot"] for *_, slots, _, _ in LESSONS for s in slots}
+    if unknown:
+        raise SystemExit(f"claim metadata for unknown slots: {sorted(unknown)}")
     for number, name, lesson, slots, scenarios, notes in LESSONS:
+        slots = [with_meta(s) for s in slots]
         check(number, lesson, slots, scenarios)
         draft = {"draft": True, "status": "provisional: written before the outline review; not publishable (claim slots are not approved claims)",
                  "module": "shoulder", "lessonNumber": number, "originality": ORIGINALITY, "reviewNotes": notes,
