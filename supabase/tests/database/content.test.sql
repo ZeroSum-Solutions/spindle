@@ -2,7 +2,7 @@
 -- progress, D-07 global-row and storage checks. All content is synthetic.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(147);
+select plan(150);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Lee lead, Tess and Tom trainers. Gym B: Bob owner.
@@ -300,6 +300,13 @@ select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('/media
   '22023', pg_temp.bad_src(''), 'a percent-escaped dot segment is refused');
 select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('/media/cuff.png#top', 'p1')))$$,
   '22023', pg_temp.bad_src(''), 'a site path with a fragment is refused');
+-- ECMAScript whitespace PostgreSQL's \s may not cover (U+FEFF, U+2028, U+3000) is refused inside URLs.
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https://example.org/a' || U&'\FEFF' || 'b.png', 'p1')))$$,
+  '22023', pg_temp.bad_src(''), 'a byte-order mark inside an https URL is refused');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https://example.org/a' || U&'\2028' || 'b.png', 'p1')))$$,
+  '22023', pg_temp.bad_src(''), 'a line separator inside an https URL is refused');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https://example.org/a' || U&'\3000' || 'b.png', 'p1')))$$,
+  '22023', pg_temp.bad_src(''), 'an ideographic space inside an https URL is refused');
 select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('/media/cuff.png', 'original illustration')))$$,
   '22023', 'invalid course.parts[0].lessons[0].blocks[0].content.provenanceId: must be a plain identifier',
   'a provenance id must be a plain identifier');

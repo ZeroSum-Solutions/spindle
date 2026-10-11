@@ -541,7 +541,9 @@ declare
   m text[];
   ok boolean;
 begin
-  if s ~ '[\s\\\u0001-\u001f\u007f]' then
+  -- ECMAScript whitespace and line terminators listed explicitly (PostgreSQL's \s
+  -- depends on the locale and misses U+FEFF), plus backslash and control characters.
+  if s ~ '[\s\\\u0001-\u001f\u007f\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]' then
     ok := false;
   elsif left(s, 1) = '/' then
     ok := s ~ '^(/[A-Za-z0-9._~-]+)+$' and s !~ '/\.\.?(/|$)';
