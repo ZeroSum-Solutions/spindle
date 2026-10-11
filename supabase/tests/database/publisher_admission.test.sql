@@ -4,7 +4,7 @@
 -- Synthetic gyms and users only.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(23);
+select plan(31);
 
 insert into auth.users (id, email, email_confirmed_at) values
   ('00000000-0000-0000-0000-0000000000a1', 'alice@a.test', now()),
@@ -52,13 +52,13 @@ select throws_ok($$ select * from public.admission_tenant_texts() $$, '42501', '
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
 select throws_ok($$ select * from public.admission_tenant_texts() $$, '42501', 'not a content publisher', 'a trainer cannot list held texts');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000c1');
-select is((select count(*)::int from public.admission_tenant_texts() where status = 'pending' and org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 2,
+select is((select count(*)::int from public.admission_pending_tenant_texts(0, 500) where status = 'pending' and org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 2,
   'the publisher sees both pending texts');
-select is((select text from public.admission_tenant_texts() where text_id = current_setting('test.t1')::uuid), 'Lift well. Coach better.',
+select is((select text from public.admission_pending_tenant_texts(0, 500) where text_id = current_setting('test.t1')::uuid), 'Lift well. Coach better.',
   'the full text is listed');
-select is((select text_hash from public.admission_tenant_texts() where text_id = current_setting('test.t1')::uuid), current_setting('test.h1'),
+select is((select text_hash from public.admission_pending_tenant_texts(0, 500) where text_id = current_setting('test.t1')::uuid), current_setting('test.h1'),
   'the hash is listed with the text');
-select is((select org_name from public.admission_tenant_texts() where text_id = current_setting('test.t1')::uuid), 'Gym A', 'the gym is named');
+select is((select org_name from public.admission_pending_tenant_texts(0, 500) where text_id = current_setting('test.t1')::uuid), 'Gym A', 'the gym is named');
 
 -- Deciding: publishers only, with the reviewed hash, as themselves.
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
@@ -91,9 +91,9 @@ select pg_temp.reset_role();
 select set_config('test.oldest_b', (select id::text from private.tenant_texts where org_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' order by seq limit 1), true);
 select set_config('test.oldest_b_hash', (select text_hash from private.tenant_texts where id = current_setting('test.oldest_b')::uuid), true);
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000c1');
-select ok(exists (select 1 from public.admission_tenant_texts() where text_id = current_setting('test.t3')::uuid and status = 'pending' and not superseded),
+select ok(exists (select 1 from public.admission_pending_tenant_texts(0, 500) where text_id = current_setting('test.t3')::uuid and status = 'pending' and not superseded),
   'an older pending text stays in the queue behind more than 500 newer history rows');
-select ok((select count(*) from public.admission_tenant_texts() where not (status = 'pending' and not superseded)) <= 500,
+select ok((select count(*) from public.admission_tenant_texts()) <= 500,
   'only the history is capped, at 500 rows');
 
 -- Adversarial wrapper calls: replay, a superseded value, unknown ids; none leaves a receipt.
@@ -112,6 +112,28 @@ select throws_ok(format($$ select public.admission_decide_tenant_text(%L, jsonb_
   'a non-publisher gets the same refusal for an unknown id as for a real one (no existence hint)');
 select pg_temp.reset_role();
 select is((select count(*)::text from private.tenant_text_admissions), current_setting('test.receipts'), 'no refused call left a receipt');
+
+
+-- Pagination: pages follow the seq cursor and together hold the whole queue (Sol R2 on #46).
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000c1');
+select is((select count(*)::int from public.admission_pending_tenant_texts(0, 1)), 1, 'a page holds at most its limit');
+select is((select count(*)::int from public.admission_pending_tenant_texts((select seq from public.admission_pending_tenant_texts(0, 1)), 500))
+  + 1, (select count(*)::int from public.admission_pending_tenant_texts(0, 500)), 'the next page continues after the cursor');
+select is((select count(*)::int from public.admission_tenant_texts() where status = 'pending' and not superseded), 0, 'the history holds no decidable value');
+
+-- More actors: a lead, another gym's owner, and anonymous callers (Sol R2 on #46).
+select pg_temp.reset_role();
+insert into auth.users (id, email, email_confirmed_at) values ('00000000-0000-0000-0000-0000000000a2', 'lee@a.test', now()) on conflict do nothing;
+insert into public.memberships (org_id, user_id, role) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '00000000-0000-0000-0000-0000000000a2', 'lead') on conflict do nothing;
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
+select throws_ok($$ select * from public.admission_pending_tenant_texts() $$, '42501', 'not a content publisher', 'a lead cannot list pending texts');
+select throws_ok(format($$ select public.admission_decide_tenant_text(%L, jsonb_build_object('decision', 'admitted', 'reason', 'x', 'textHash', %L)) $$,
+  current_setting('test.t3'), repeat('a', 64)), '42501', null, 'a lead cannot decide');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000b1');
+select throws_ok($$ select * from public.admission_tenant_texts() $$, '42501', 'not a content publisher', 'another gym''s owner cannot read the history');
+select pg_temp.anon();
+select throws_ok($$ select * from public.admission_pending_tenant_texts() $$, '42501', null, 'anonymous callers cannot list');
+select throws_ok(format($$ select public.admission_decide_tenant_text(%L, '{}'::jsonb) $$, current_setting('test.t3')), '42501', null, 'anonymous callers cannot decide');
 
 select * from finish();
 rollback;

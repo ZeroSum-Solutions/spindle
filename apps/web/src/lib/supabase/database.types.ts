@@ -1317,6 +1317,30 @@ export type Database = {
         Args: { p_decision: Json; p_text: string }
         Returns: string
       }
+      admission_pending_tenant_texts: {
+        Args: { p_after?: number; p_limit?: number }
+        Returns: {
+          course_id: string
+          course_title: string
+          decided_at: string
+          decided_by: string
+          org_id: string
+          org_name: string
+          org_slug: string
+          reason: string
+          revocation_reason: string
+          revoked_at: string
+          rules_version: string
+          saved_at: string
+          seq: number
+          slot: string
+          status: string
+          superseded: boolean
+          text: string
+          text_hash: string
+          text_id: string
+        }[]
+      }
       admission_tenant_texts: {
         Args: never
         Returns: {
@@ -1332,6 +1356,7 @@ export type Database = {
           revoked_at: string
           rules_version: string
           saved_at: string
+          seq: number
           slot: string
           status: string
           superseded: boolean

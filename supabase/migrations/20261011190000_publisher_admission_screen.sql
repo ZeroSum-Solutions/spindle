@@ -16,16 +16,15 @@ end;
 $$;
 
 /**
- * Held texts for review by a content publisher, with their gym, slot, course, full text, hash and
- * decision state. Every pending value that can still be decided is returned, never capped, so a
- * queue item cannot fall out of view; the history (decided, revoked, cleared and superseded values)
- * is the newest 500. `superseded` marks a value a newer save replaced (it can no longer be decided).
+ * The pending queue for a content publisher: every value that can still be decided, oldest first,
+ * one page at a time after a seq cursor (at most 500 per page, below PostgREST's max_rows), so the
+ * app can read the whole queue however long it is. Never capped as a whole.
  */
-create function public.admission_tenant_texts()
+create function public.admission_pending_tenant_texts(p_after bigint default 0, p_limit integer default 500)
 returns table (
   text_id uuid, org_id uuid, org_name text, org_slug text, slot text, course_id uuid, course_title text,
   text text, text_hash text, rules_version text, saved_at timestamptz, status text, superseded boolean,
-  decided_by uuid, decided_at timestamptz, reason text, revoked_at timestamptz, revocation_reason text
+  decided_by uuid, decided_at timestamptz, reason text, revoked_at timestamptz, revocation_reason text, seq bigint
 )
 language plpgsql stable security definer set search_path = ''
 as $$
@@ -35,24 +34,54 @@ begin
   end if;
   return query
     with held as (
-      select t.id, t.org_id, o.name, o.slug, t.slot, t.course_id, c.title, t.text, t.text_hash, t.rules_version, t.saved_at, t.seq,
+      select t.id, t.org_id, o.name, o.slug, t.slot, t.course_id, c.title, t.text, t.text_hash, t.rules_version, t.saved_at,
              private.tenant_text_status(t.id) as status,
              exists (select 1 from private.tenant_texts n where n.org_id = t.org_id and n.slot = t.slot
                      and n.course_id is not distinct from t.course_id and n.seq > t.seq) as superseded,
-             a.decided_by, a.decided_at, a.reason, r.revoked_at, r.reason as revocation_reason
+             a.decided_by, a.decided_at, a.reason, r.revoked_at, r.reason as revocation_reason, t.seq
       from private.tenant_texts t
       join public.orgs o on o.id = t.org_id
       left join public.courses c on c.id = t.course_id
       left join private.tenant_text_admissions a on a.text_id = t.id
       left join private.tenant_text_revocations r on r.text_id = t.id
       where t.text is not null
-    ),
-    queue as (select * from held h where h.status = 'pending' and not h.superseded),
-    history as (select * from held h where not (h.status = 'pending' and not h.superseded) order by h.seq desc limit 500)
-    select q.id, q.org_id, q.name, q.slug, q.slot, q.course_id, q.title, q.text, q.text_hash, q.rules_version, q.saved_at,
-           q.status, q.superseded, q.decided_by, q.decided_at, q.reason, q.revoked_at, q.revocation_reason
-    from (select * from queue union all select * from history) q
-    order by q.seq desc;
+    )
+    select * from held h where h.status = 'pending' and not h.superseded and h.seq > coalesce(p_after, 0)
+    order by h.seq limit least(greatest(coalesce(p_limit, 500), 1), 500);
+end;
+$$;
+
+/**
+ * The read-only history for a content publisher: decided, revoked, cleared and superseded values,
+ * newest first, the newest 500. Pending values are read through admission_pending_tenant_texts.
+ */
+create function public.admission_tenant_texts()
+returns table (
+  text_id uuid, org_id uuid, org_name text, org_slug text, slot text, course_id uuid, course_title text,
+  text text, text_hash text, rules_version text, saved_at timestamptz, status text, superseded boolean,
+  decided_by uuid, decided_at timestamptz, reason text, revoked_at timestamptz, revocation_reason text, seq bigint
+)
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  if (select auth.uid()) is null or not exists (select 1 from private.content_publishers p where p.user_id = (select auth.uid())) then
+    raise exception 'not a content publisher' using errcode = '42501';
+  end if;
+  return query
+    with held as (
+      select t.id, t.org_id, o.name, o.slug, t.slot, t.course_id, c.title, t.text, t.text_hash, t.rules_version, t.saved_at,
+             private.tenant_text_status(t.id) as status,
+             exists (select 1 from private.tenant_texts n where n.org_id = t.org_id and n.slot = t.slot
+                     and n.course_id is not distinct from t.course_id and n.seq > t.seq) as superseded,
+             a.decided_by, a.decided_at, a.reason, r.revoked_at, r.reason as revocation_reason, t.seq
+      from private.tenant_texts t
+      join public.orgs o on o.id = t.org_id
+      left join public.courses c on c.id = t.course_id
+      left join private.tenant_text_admissions a on a.text_id = t.id
+      left join private.tenant_text_revocations r on r.text_id = t.id
+      where t.text is not null
+    )
+    select * from held h where not (h.status = 'pending' and not h.superseded) order by h.seq desc limit 500;
 end;
 $$;
 
@@ -70,7 +99,7 @@ begin
 end;
 $$;
 
-revoke all on function public.is_content_publisher(), public.admission_tenant_texts(), public.admission_decide_tenant_text(uuid, jsonb)
+revoke all on function public.is_content_publisher(), public.admission_pending_tenant_texts(bigint, integer), public.admission_tenant_texts(), public.admission_decide_tenant_text(uuid, jsonb)
   from public, anon, authenticated, service_role;
-grant execute on function public.is_content_publisher(), public.admission_tenant_texts(), public.admission_decide_tenant_text(uuid, jsonb)
+grant execute on function public.is_content_publisher(), public.admission_pending_tenant_texts(bigint, integer), public.admission_tenant_texts(), public.admission_decide_tenant_text(uuid, jsonb)
   to authenticated;

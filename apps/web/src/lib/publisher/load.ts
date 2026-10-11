@@ -37,12 +37,28 @@ const rowSchema = z.object({
   reason: z.string().nullable(),
   revoked_at: z.string().nullable(),
   revocation_reason: z.string().nullable(),
+  seq: z.number().int(),
 });
 export type HeldTextRow = z.infer<typeof rowSchema>;
 
-/** Every saved held text, newest first (at most 500), validated at the boundary. */
+const PAGE = 500;
+
+/**
+ * The whole pending queue, page by page after a seq cursor (each page stays under PostgREST's
+ * max_rows), then the newest 500 history rows. The queue is never truncated (Sol R2 on #46).
+ */
 export async function heldTexts(supabase: Client): Promise<HeldTextRow[]> {
+  const pending: HeldTextRow[] = [];
+  for (let after = 0; ; ) {
+    const { data, error } = await supabase.rpc("admission_pending_tenant_texts", { p_after: after, p_limit: PAGE });
+    if (error) throw new Error("Could not load the held texts.");
+    const page = z.array(rowSchema).max(PAGE).parse(data);
+    pending.push(...page);
+    if (page.length < PAGE) break;
+    after = page.at(-1)!.seq;
+  }
   const { data, error } = await supabase.rpc("admission_tenant_texts");
   if (error) throw new Error("Could not load the held texts.");
-  return z.array(rowSchema).max(500).parse(data);
+  const history = z.array(rowSchema).max(PAGE).parse(data);
+  return [...pending.reverse(), ...history];
 }
