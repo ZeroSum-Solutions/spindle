@@ -38,15 +38,35 @@ export PGOPTIONS="-c statement_timeout=30s -c lock_timeout=30s -c idle_in_transa
 psql() { command psql "$DB" -X -q -v ON_ERROR_STOP=1 "$@"; }
 q() { PGAPPNAME="$RUN-probe" psql -At -c "$1"; }
 
-# Bounded wait for one child; prints nothing, returns its status or 124 on timeout.
+# >>> process control (sourced by content-publishing-race-proc.test.sh)
+# OWNED lists only children not yet reaped. A PID counts as running only while
+# this shell's job table says so: once a child is reaped (by wait or by bash
+# itself), its number may belong to an unrelated process and is never signalled.
+running() { case " $(jobs -rp | tr '\n' ' ') " in *" $1 "*) return 0 ;; esac; return 1; }
+forget() { OWNED=$(echo " $OWNED " | sed "s/ $1 / /"); }
+# Bounded wait for one child; returns its status (and forgets it) or 124 on timeout.
 wait_child() { # $1 pid, $2 seconds
-  local n=$(( $2 * 20 ))
-  while kill -0 "$1" 2>/dev/null; do
+  local n=$(( $2 * 20 )) status=0
+  while running "$1"; do
     n=$((n - 1)); [ "$n" -gt 0 ] || return 124
     sleep 0.05
   done
-  local status=0; wait "$1" || status=$?; return "$status"
+  wait "$1" 2>/dev/null || status=$?
+  forget "$1"
+  return "$status"
 }
+stop_children() {
+  local pid
+  for pid in $OWNED; do if running "$pid"; then kill -TERM "$pid" 2>/dev/null || true; fi; done
+  for pid in $OWNED; do
+    if ! wait_child "$pid" 5; then
+      if running "$pid"; then kill -KILL "$pid" 2>/dev/null || true; fi
+      wait "$pid" 2>/dev/null || true
+      forget "$pid"
+    fi
+  done
+}
+# <<< process control
 # Polls with a new connection each try, so activity and lock views are fresh.
 poll() { # $1 SQL returning t when ready, $2 tries of 50 ms
   local i
@@ -83,12 +103,11 @@ SQL
 }
 
 cleanup() {
-  local status=$? pid
+  local status=$?
   trap - EXIT INT TERM
   q "select count(pg_terminate_backend(pid)) from pg_stat_activity
      where application_name like '$RUN-%' and application_name <> '$RUN-probe'" >/dev/null 2>&1 || true
-  for pid in $OWNED; do kill -TERM "$pid" 2>/dev/null || true; done
-  for pid in $OWNED; do wait_child "$pid" 5 || { kill -KILL "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; }; done
+  stop_children
   if ! remove_fixtures; then echo "not ok - cleanup failed; synthetic fixtures may remain" >&2; status=1; fi
   rm -rf "$TMP"
   exit "$status"

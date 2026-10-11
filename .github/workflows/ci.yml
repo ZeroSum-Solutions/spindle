@@ -51,7 +51,9 @@ jobs:
       - name: Owner race test
         run: supabase/tests/race/owner-race.sh
       - name: Content publishing race test
-        run: supabase/tests/race/content-publishing-race.sh
+        run: |
+          supabase/tests/race/content-publishing-race-proc.test.sh
+          supabase/tests/race/content-publishing-race.sh
       - name: End-to-end tests (production build)
         run: |
           pnpm --filter web exec playwright install --with-deps chromium
