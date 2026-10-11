@@ -182,6 +182,8 @@ test.describe.serial("learner flow", () => {
     await expect(p.getByText("Gym method").first()).toBeVisible();
     await expect(p.getByText("Science", { exact: true })).toHaveCount(1); // the legend only
     await expect(p.locator('[data-support="science"]')).toHaveCount(0);
+    // CI must exercise this path: a stack without Storage is an environment failure there, never a silent skip.
+    if (process.env.CI) expect(storageUp, "Storage API is not reachable; CI must run the media case").toBe(true);
     test.skip(!storageUp, "Storage API is not running on this stack; media positive path not exercised");
     const img = p.getByRole("img", { name: "Synthetic gym figure" });
     await expect(img).toHaveAttribute("referrerpolicy", "no-referrer");
