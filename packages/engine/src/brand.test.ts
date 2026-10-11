@@ -168,7 +168,7 @@ describe("brandToCssVars", () => {
     expect(vars["--color-brand"]).toBe("light-dark(#7a1f2b, #f2877e)");
     // Hover moves away from the surface: darker in light, lighter in dark. The soft tint sits over each theme's surface.
     expect(vars["--color-brand-hover"]).toBe(`light-dark(${mix("#7A1F2B", "#000000", 0.15)}, ${mix("#F2877E", "#FFFFFF", 0.15)})`);
-    expect(vars["--color-brand-soft"]).toBe(`light-dark(${mix("#7A1F2B", PALETTE.light.surface, 0.9)}, ${mix("#F2877E", PALETTE.dark.surface, 0.85)})`);
+    expect(vars["--color-brand-soft"]).toBe(`light-dark(${mix("#7A1F2B", PALETTE.light.surface, 0.9)}, ${mix("#F2877E", PALETTE.dark.surface, 0.9)})`);
     expect(vars["--focus-ring"]).toBe(vars["--color-brand"]);
   });
 

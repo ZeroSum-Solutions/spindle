@@ -2,7 +2,7 @@
 // `VersionTenantText` rows (course_title, course_blurb, welcome): every tenant text field is either
 // live admitted text or null (pending, revoked or absent), so components never receive unadmitted
 // text, and a later adapter only maps rows onto these fields. Pure helpers, unit-tested.
-import { ATLAS, brandTokens, TENANT_TEXT_FALLBACKS as ENGINE_FALLBACKS, validateOrgBrand } from "@spindle/engine";
+import { PALETTE, lightDark, themedBrandTokens, TENANT_TEXT_FALLBACKS as ENGINE_FALLBACKS, validateOrgBrand, type BrandTokens, type Theme } from "@spindle/engine";
 import { COVER_PATTERNS, type BrandFont, type CoverPattern, type CurriculumLayer, type ModalityTag } from "@spindle/schema";
 
 /** Fixed Spindle text shown while a tenant slot is pending (DESIGN.md › Brand, held identity text), from the shared rule set. */
@@ -29,17 +29,26 @@ export const MODALITY_LABELS: Record<ModalityTag, string> = {
 export { COVER_PATTERNS };
 export type { CoverPattern, ModalityTag };
 
-/** Mirrors #38's `CourseCover`: a pattern and two literal colours, drawn by Spindle. Never an image. */
+/** Mirrors #38's `CourseCover`: a pattern and two colours, drawn by Spindle. Never an image. */
 export interface CoverView {
   pattern: CoverPattern;
-  /** #RRGGBB */
+  /** #RRGGBB, or light-dark(#RRGGBB, #RRGGBB) for a Spindle or accent cover that follows the theme. */
   background: string;
-  /** #RRGGBB, drawn faintly over the background. */
+  /** Same form, drawn faintly over the background. */
   foreground: string;
 }
 
-/** The colours a branded member page draws with: exactly what the engine's `brandTokens` derives. */
-export type BrandColors = ReturnType<typeof brandTokens>;
+/**
+ * The colours a branded member page draws with: exactly what the engine's `brandTokens` derives for each
+ * Lab theme, as light-dark(light, dark) CSS values, so the scene follows the reader's theme.
+ */
+export type BrandColors = Record<keyof BrandTokens, string>;
+
+/** Both themes' tokens as light-dark() values. */
+export function themedColors(tokens: Record<Theme, BrandTokens>): BrandColors {
+  const keys = Object.keys(tokens.light) as (keyof BrandTokens)[];
+  return Object.fromEntries(keys.map((k) => [k, lightDark(tokens.light[k], tokens.dark[k])])) as BrandColors;
+}
 
 /** A gym's brand as member pages see it. `name` is null while it is pending admission. */
 export interface MemberBrandView {
@@ -84,12 +93,12 @@ export interface CoachNoteView {
 
 /**
  * A gym brand's member colours, or null when the brand is refused. The engine decides: the stored
- * brand must pass `validateOrgBrand` (every AA pair, including chip text on the band tint), and
- * the colours are `brandTokens`. No colour maths here.
+ * brand must pass `validateOrgBrand` (every AA pair in both themes, including chip text on the band
+ * tint), and the colours are `brandTokens` per theme. No colour maths here.
  */
 export function memberColors(brand: unknown): BrandColors | null {
   const result = validateOrgBrand(brand);
-  return result.ok ? brandTokens(result.brand.colors) : null;
+  return result.ok ? themedColors(themedBrandTokens(result.brand.colors)) : null;
 }
 
 /** A gym method course with no cover of its own: diagonal in the accent (spec rev4 §2). */
@@ -117,5 +126,9 @@ export const courseTitle = (course: Pick<CourseCardView, "title">) => course.tit
 /** "Note from {frozen display name}", or the fixed fallback when none was frozen. */
 export const noteFrom = (note: Pick<CoachNoteView, "displayName">) => note.displayName ?? TENANT_TEXT_FALLBACKS.brandName;
 
-/** Spindle's neutral cover for Base and Modality cards: an ink pattern on surface-muted. */
-export const NEUTRAL_COVER = { pattern: "dots", background: ATLAS.surfaceMuted, foreground: ATLAS.ink } as const satisfies CoverView;
+/** Spindle's neutral cover for Base and Modality cards: an ink pattern on surface-muted, in each theme. */
+export const NEUTRAL_COVER = {
+  pattern: "dots",
+  background: lightDark(PALETTE.light.surfaceMuted, PALETTE.dark.surfaceMuted),
+  foreground: lightDark(PALETTE.light.ink, PALETTE.dark.ink),
+} as const satisfies CoverView;

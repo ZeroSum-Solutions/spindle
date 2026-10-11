@@ -18,17 +18,21 @@ export interface CatalogScene {
 }
 
 /**
- * A scene's colours, decided by the engine: the brand must pass validateOrgBrand (as save_org_brand
- * will), and the colours are brandTokens. A refused preview brand is a fixture error.
+ * A scene's colours, decided by the engine: the brand must pass validateOrgBrand in both themes (as
+ * save_org_brand will), and the colours are brandTokens per theme. A refused preview brand is a fixture error.
  */
-function colours(name: string, font: BrandFont, accent: string, onAccent: string, band: string): BrandColors {
-  const result = memberColors({ mark: { kind: "text" }, colors: { accent, onAccent, band }, font });
+function colours(name: string, font: BrandFont, colors: { accent: string; onAccent: string; accentDark: string; onAccentDark: string; band: string }): BrandColors {
+  const result = memberColors({ mark: { kind: "text" }, colors, font });
   if (!result) throw new Error(`preview brand ${name} must pass validateOrgBrand`);
   return result;
 }
 
-const STRENGTH = colours("Example Strength Club", "barlow-condensed", "#7a1b26", "#ffffff", "#17232b");
-const PILATES = colours("Example Pilates Studio", "fraunces", "#2f6b57", "#ffffff", "#e8efe6");
+/** The synthetic catalog brands. Their colours are shared with the e2e suite (helpers/catalog.ts). */
+export const STRENGTH_COLORS = { accent: "#7a1b26", onAccent: "#ffffff", accentDark: "#f2877e", onAccentDark: "#0b0d12", band: "#17232b" } as const;
+// A plum, not a green: a green accent sits too close to Science and is refused.
+export const PILATES_COLORS = { accent: "#5b3a7a", onAccent: "#ffffff", accentDark: "#c3a6ff", onAccentDark: "#0b0d12", band: "#e8efe6" } as const;
+const STRENGTH = colours("Example Strength Club", "barlow-condensed", STRENGTH_COLORS);
+const PILATES = colours("Example Pilates Studio", "fraunces", PILATES_COLORS);
 
 const LINKS: NavLink[] = [
   { label: "Courses", href: "#courses" },

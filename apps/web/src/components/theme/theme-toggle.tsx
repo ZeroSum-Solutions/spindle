@@ -1,0 +1,53 @@
+"use client";
+
+import { Moon, Sun } from "lucide-react";
+import { useSyncExternalStore } from "react";
+import { THEME_KEY, isThemeChoice, type ThemeChoice } from "./theme";
+
+const DARK_QUERY = "(prefers-color-scheme: dark)";
+
+/** The theme in effect: the reader's stored choice on <html data-theme>, else the system setting. */
+function current(): ThemeChoice {
+  const chosen = document.documentElement.dataset.theme;
+  if (isThemeChoice(chosen)) return chosen;
+  return window.matchMedia(DARK_QUERY).matches ? "dark" : "light";
+}
+
+function subscribe(onChange: () => void) {
+  const media = window.matchMedia(DARK_QUERY);
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  media.addEventListener("change", onChange);
+  return () => {
+    observer.disconnect();
+    media.removeEventListener("change", onChange);
+  };
+}
+
+/**
+ * Switches between Lab Light and Lab Dark and keeps the choice. The label names the action, not the state;
+ * the icon shows the theme you will get. Before hydration it renders the same accessible button.
+ */
+export function ThemeToggle({ className = "" }: { className?: string }) {
+  const theme = useSyncExternalStore(subscribe, current, () => null);
+  const next: ThemeChoice = theme === "dark" ? "light" : "dark";
+  return (
+    <button
+      type="button"
+      aria-label="Switch light or dark theme"
+      data-theme-toggle
+      data-theme-current={theme ?? undefined}
+      onClick={() => {
+        document.documentElement.dataset.theme = next;
+        try {
+          localStorage.setItem(THEME_KEY, next);
+        } catch {
+          // Storage blocked: the choice holds for this page only.
+        }
+      }}
+      className={`pressable inline-flex size-11 shrink-0 items-center justify-center rounded-control border border-control text-text hover:bg-surface-muted ${className}`}
+    >
+      {next === "light" ? <Sun aria-hidden className="size-5" /> : <Moon aria-hidden className="size-5" />}
+    </button>
+  );
+}

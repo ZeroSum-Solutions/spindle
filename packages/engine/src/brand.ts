@@ -112,7 +112,7 @@ export function themeAccent(colors: TenantBrand["colors"], theme: Theme) {
 /**
  * The colours a brand's inputs become in one theme. The tenant cannot set these directly. Hover moves
  * the accent away from the surface (15% toward black in light, toward white in dark); the soft tint is
- * the accent at 10% (light) or 15% (dark) over the surface. P4-A2 band tokens: the band defaults to the
+ * the accent at 10% over the theme's surface. P4-A2 band tokens: the band defaults to the
  * theme's canvas; `onBand` is light or graphite ink, whichever has the higher ratio (light on a tie);
  * `bandTint` mixes onBand 12% into the band (chips); `bandEdge` mixes it 20% in (the hairline).
  */
@@ -125,7 +125,7 @@ export function brandTokens(colors: TenantBrand["colors"], theme: Theme) {
   return {
     accent: accent.toLowerCase(),
     accentHover: mix(accent, theme === "light" ? "#000000" : "#FFFFFF", 0.15),
-    accentSoft: mix(accent, p.surface, theme === "light" ? 0.9 : 0.85),
+    accentSoft: mix(accent, p.surface, 0.9),
     onAccent: onAccent.toLowerCase(),
     band,
     onBand,

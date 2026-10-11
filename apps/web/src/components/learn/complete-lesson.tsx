@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, type ReactNode } from "react";
+import { useActionState, useEffect, useId, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, LoaderCircle } from "lucide-react";
 import { savedMessage, type CompleteState } from "@/lib/learning/completion";
@@ -49,6 +49,7 @@ export function CompletionView({
   receipt: ReactNode;
   action: (form: FormData) => void;
 }) {
+  const errorId = `${useId()}complete-error`;
   // One live region stays mounted across every state, so screen readers announce the
   // result; focus moves to the confirmation because the button it was on is gone.
   const saved = useRef<HTMLDivElement>(null);
@@ -82,14 +83,14 @@ export function CompletionView({
         <button
           type="submit"
           disabled={pending}
-          aria-describedby={state.status === "error" ? "complete-error" : undefined}
-          className="inline-flex min-h-12 min-w-56 items-center justify-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover disabled:cursor-progress disabled:opacity-80"
+          aria-describedby={state.status === "error" ? errorId : undefined}
+          className="inline-flex min-h-12 min-w-56 items-center justify-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover disabled:cursor-progress disabled:opacity-80"
         >
           {pending ? <LoaderCircle aria-hidden strokeWidth={1.75} className="size-5 animate-spin motion-reduce:animate-none" /> : null}
           {pending ? "Saving…" : state.status === "error" ? "Try again" : "Mark lesson complete"}
         </button>
         {state.status === "error" ? (
-          <p id="complete-error" className="confirm-appear rounded-small bg-danger-soft px-3 py-2 text-danger">
+          <p id={errorId} className="confirm-appear rounded-small bg-danger-soft px-3 py-2 text-danger">
             {state.message}
           </p>
         ) : null}
@@ -109,7 +110,7 @@ export function CompletionView({
 /** Completion check. `animate` draws the stroke once (320ms); reduced motion shows it finished. */
 export function ConfirmCheck({ animate = false }: { animate?: boolean }) {
   return (
-    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink text-on-ink">
       <svg
         viewBox="0 0 24 24"
         aria-hidden
@@ -136,7 +137,7 @@ function NextAction({ next }: { next: NextStep }) {
   return (
     <Link
       href={next.href}
-      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover sm:w-auto"
+      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover sm:w-auto"
     >
       {next.label}
       <ArrowRight aria-hidden strokeWidth={1.75} className="size-4 shrink-0" />

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 // DESIGN.md (the contract) and globals.css (what the app draws with) must carry the same
-// type, spacing, radius, elevation and motion tokens. Colours are covered by atlas-sync.test.ts.
+// colour (in both themes), type, spacing, radius, elevation and motion tokens.
 const css = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 const design = readFileSync(new URL("../../../../../DESIGN.md", import.meta.url), "utf8");
 
@@ -40,6 +40,31 @@ function cssValues(name: string): string[] {
 const fm = frontMatter();
 
 describe("DESIGN.md front matter and globals.css carry the same tokens", () => {
+  const colours = Object.entries(fm.colors ?? {}).filter(([k]) => !k.endsWith("-dark")) as [string, string][];
+  it("lists a dark value for every colour", () => {
+    expect(colours.length).toBeGreaterThan(30);
+    for (const [name] of colours) expect(fm.colors, name).toHaveProperty(`${name}-dark`);
+  });
+
+  it("re-declares every light-dark colour token on .theme-scope, with the same values", () => {
+    const block = (start: string) => {
+      const from = css.indexOf(start);
+      return css.slice(from, css.indexOf("\n}\n", from));
+    };
+    const decls = (text: string) => [...text.matchAll(/(--color-[\w-]+):\s*(light-dark\([^;]+\));/g)].map((m) => `${m[1]}: ${m[2]}`);
+    const theme = decls(block("@theme {"));
+    expect(theme.length).toBeGreaterThan(30);
+    expect(decls(block(".theme-scope {"))).toEqual(theme);
+  });
+
+  it.each(colours)("colour %s reaches the theme as light-dark(light, dark)", (name, light) => {
+    const dark = fm.colors![`${name}-dark`] as string;
+    const pair = `light-dark(${light.toLowerCase()}, ${dark.toLowerCase()})`;
+    const same = light.toLowerCase() === dark.toLowerCase();
+    // A colour that is the same in both themes (the media panel) may be written once.
+    expect(cssValues(`color-${name}`).map((v) => v.toLowerCase()), `--color-${name}`).toContain(same ? light.toLowerCase() : pair);
+  });
+
   it("defines the redesign type roles", () => {
     expect(Object.keys(fm.typography ?? {})).toEqual(
       expect.arrayContaining(["display", "title", "heading", "heading-lesson", "section", "subhead", "reading", "ui", "label", "eyebrow", "code"]),

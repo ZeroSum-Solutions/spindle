@@ -1,105 +1,121 @@
 @import "tailwindcss";
 
 /*
- * Spindle Pressroom tokens. Root DESIGN.md is the contract; keep these values in sync with its
- * front matter and its Elevation and Motion tables (lib/theme/tokens-sync.test.ts and
- * atlas-sync.test.ts assert it). Light only: a dark theme is deferred until it is designed and
- * checked, so the OS dark setting must not half-invert the UI.
+ * Spindle Lab tokens, light and dark. Root DESIGN.md is the contract; keep these values in sync with its
+ * front matter and its Elevation and Motion tables (lib/theme/tokens-sync.test.ts and atlas-sync.test.ts
+ * assert it). Every colour is light-dark(light, dark): the theme follows the reader's system setting
+ * until they choose one with the theme toggle, which sets data-theme on <html> before first paint
+ * (components/theme/theme-script.tsx), so the page never shows the wrong theme.
  */
 :root {
+  color-scheme: light dark;
+  --background: var(--color-canvas);
+  --foreground: var(--color-text);
+}
+:root[data-theme="light"] {
   color-scheme: light;
-  --background: #f3efe6;
-  --foreground: #111111;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Archivo for UI and headings, Newsreader for reading, IBM Plex Mono for numerals and labels (all SIL OFL 1.1). */
-  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  /* Archivo (wide, display), IBM Plex Sans (UI and reading), IBM Plex Mono (numerals, readouts, labels); all SIL OFL 1.1. */
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
   --font-display: var(--font-archivo), system-ui, sans-serif;
-  --font-reading: var(--font-newsreader), Georgia, serif;
+  --font-reading: var(--font-plex-sans), system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 }
 
 @theme {
-  /* Fixed Spindle colours (a gym brand never changes these; ATLAS in @spindle/engine mirrors them). */
-  --color-primary: #111111;
-  --color-ink: #111111;
-  --color-ink-hover: #2a2a2a;
-  --color-on-ink: #ffffff;
-  --color-canvas: #f3efe6;
-  --color-surface: #fffdf8;
-  --color-surface-muted: #eee9de;
-  --color-text: #111111;
-  --color-text-muted: #4a463f;
-  --color-border: #d9d2c4;
-  --color-control: #7a7468;
-  /* Pressroom Blue: Spindle's own signal colour for bands, numerals and the seal. Not a tenant slot. */
-  --color-signal: #1d2be6;
-  /* The signal on ink surfaces (5.8:1 on #111111); #1d2be6 is only 2.3:1 there. */
-  --color-signal-bright: #6e85ff;
-  /* The stop stripe on the ink stop-and-refer panel (5.0:1 on ink). Red is otherwise reserved for errors. */
-  --color-stop: #f04438;
-  /* Tenant-overridable accent set (P4-A core). Spindle's default accent is Pressroom Blue;
-     hover and soft follow the engine's derivation (15% toward black, 90% toward white). */
-  --color-brand: #1d2be6;
-  --color-brand-hover: #1925c4;
-  --color-brand-soft: #e8eafd;
-  --color-on-brand: #ffffff;
-  /* Tenant band (P4-A2, DESIGN.md › Colors). A gym's band replaces --color-band on its member pages;
-     on-band, band-tint and band-edge are derived from it, never set by the tenant. */
-  --color-band: #fffdf8;
-  --color-on-band: #111111;
-  --color-band-tint: #e2e1dc;
-  --color-band-edge: #cfceca;
-  --color-science: #0b6b50;
-  --color-science-soft: #eaf5f0;
-  --color-practice: #8a4b10;
-  --color-practice-soft: #fff3e6;
-  --color-caution: #6b5300;
-  --color-caution-soft: #fff6d1;
-  --color-caution-border: #a88600;
-  --color-danger: #b42318;
-  --color-danger-soft: #fff0ee;
+  /* Fixed Spindle colours, light-dark(light, dark). A gym brand never changes these; PALETTE in @spindle/engine mirrors them. */
+  --color-canvas: light-dark(#f4f5f7, #0b0d12);
+  --color-surface: light-dark(#ffffff, #181c25);
+  --color-surface-muted: light-dark(#ebedf1, #20242f);
+  /* The reading sheet under lesson prose: white in light, a lifted graphite in dark. */
+  --color-sheet: light-dark(#ffffff, #161a22);
+  --color-text: light-dark(#12151c, #f2f4f8);
+  --color-text-muted: light-dark(#4a5160, #b4bac6);
+  --color-primary: light-dark(#12151c, #f2f4f8);
+  --color-ink: light-dark(#12151c, #f2f4f8);
+  --color-ink-hover: light-dark(#2a2f3a, #d9dde4);
+  --color-on-ink: light-dark(#ffffff, #0b0d12);
+  --color-border: light-dark(#d7dbe2, #2a2f3a);
+  --color-control: light-dark(#737a89, #6b7385);
+  /* Signal magenta: place, the primary action, the seal. Deepened in light so it passes AA as text. Never evidence or reward. */
+  --color-signal: light-dark(#c8195f, #ff3b8e);
+  --color-signal-hover: light-dark(#aa1551, #ff589f);
+  --color-on-signal: light-dark(#ffffff, #0b0d12);
+  /* Tenant-overridable accent set (P4-A core). Spindle's default accent is the signal; hover moves away from
+     the surface (15% toward black in light, toward white in dark); soft is 10% accent over the surface. */
+  --color-brand: light-dark(#c8195f, #ff3b8e);
+  --color-brand-hover: light-dark(#aa1551, #ff589f);
+  --color-brand-soft: light-dark(#fae8ef, #2f1f30);
+  --color-on-brand: light-dark(#ffffff, #0b0d12);
+  /* Tenant band (P4-A2, DESIGN.md › Colors). A gym's band (one colour in both themes) replaces --color-band on its
+     member pages; on-band, band-tint and band-edge are derived from it, never set by the tenant. Default: the canvas. */
+  --color-band: light-dark(#f4f5f7, #0b0d12);
+  --color-on-band: light-dark(#12151c, #f2f4f8);
+  --color-band-tint: light-dark(#d9dadd, #27292e);
+  --color-band-edge: light-dark(#c7c8cb, #393b40);
+  --color-science: light-dark(#0b6b50, #3ddc97);
+  --color-science-soft: light-dark(#e6f4ee, #192a2b);
+  --color-practice: light-dark(#8a4b10, #ffb547);
+  --color-practice-soft: light-dark(#fff1e0, #292625);
+  --color-caution: light-dark(#6b5300, #e9d55b);
+  --color-caution-soft: light-dark(#fff6d1, #272927);
+  --color-caution-border: light-dark(#a88600, #8f7f2e);
+  --color-danger: light-dark(#b42318, #ff6b5f);
+  --color-danger-soft: light-dark(#fdecea, #34252c);
+  /* Media: a video panel stays midnight in both themes. */
+  --color-media: #0b0d12;
+  --color-on-media: #f2f4f8;
+  /* Stop and refer: the loudest element in each theme, inverted against its surroundings (an ink panel in
+     light, the only light panel in dark) with a red stop stripe. Red is otherwise reserved for errors. Never animated. */
+  --color-stop-panel: light-dark(#12151c, #f2f4f8);
+  --color-on-stop-panel: light-dark(#f2f4f8, #0b0d12);
+  --color-stop-panel-muted: light-dark(#b4bac6, #3a3f4b);
+  --color-stop: light-dark(#ff6b5f, #d92d20);
 
   /* Type: the front matter holds the desktop value; the base value here is the phone value. */
-  --text-display: 3rem;
-  --text-display--line-height: 0.95;
-  --text-display--letter-spacing: -0.01em;
-  --text-display--font-weight: 900;
-  --text-title: 2.5rem;
-  --text-title--line-height: 0.98;
-  --text-title--letter-spacing: -0.005em;
-  --text-title--font-weight: 900;
-  --text-heading: 2.25rem;
-  --text-heading--line-height: 0.98;
-  --text-heading--letter-spacing: -0.005em;
-  --text-heading--font-weight: 900;
-  --text-heading-lesson: 2.5rem;
-  --text-heading-lesson--line-height: 0.98;
-  --text-heading-lesson--letter-spacing: -0.005em;
-  --text-heading-lesson--font-weight: 900;
-  --text-section: 1.75rem;
-  --text-section--line-height: 1.05;
-  --text-section--letter-spacing: 0em;
+  --text-display: 2.25rem;
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 800;
+  --text-title: 2rem;
+  --text-title--line-height: 1.05;
+  --text-title--letter-spacing: -0.015em;
+  --text-title--font-weight: 800;
+  --text-heading: 1.75rem;
+  --text-heading--line-height: 1.08;
+  --text-heading--letter-spacing: -0.015em;
+  --text-heading--font-weight: 800;
+  --text-heading-lesson: 1.75rem;
+  --text-heading-lesson--line-height: 1.08;
+  --text-heading-lesson--letter-spacing: -0.015em;
+  --text-heading-lesson--font-weight: 800;
+  --text-section: 1.3125rem;
+  --text-section--line-height: 1.18;
+  --text-section--letter-spacing: -0.01em;
   --text-section--font-weight: 800;
-  --text-subhead: 1.25rem;
-  --text-subhead--line-height: 1.25;
+  --text-subhead: 1.0625rem;
+  --text-subhead--line-height: 1.3;
   --text-subhead--font-weight: 700;
   --text-reading: 1.125rem;
-  --text-reading--line-height: 1.6;
+  --text-reading--line-height: 1.65;
   --text-reading--font-weight: 400;
   --text-ui: 1rem;
   --text-ui--line-height: 1.5;
   --text-ui--font-weight: 500;
   --text-label: 0.875rem;
-  --text-label--line-height: 1.4;
+  --text-label--line-height: 1.45;
   --text-label--font-weight: 500;
   --text-eyebrow: 0.75rem;
-  --text-eyebrow--line-height: 1.3;
-  --text-eyebrow--letter-spacing: 0.08em;
-  --text-eyebrow--font-weight: 600;
+  --text-eyebrow--line-height: 1.35;
+  --text-eyebrow--letter-spacing: 0.12em;
+  --text-eyebrow--font-weight: 500;
   --text-code: 0.8125rem;
   --text-code--line-height: 1.5;
   --text-code--font-weight: 400;
@@ -116,17 +132,16 @@
   --spacing-page: 64px;
   --spacing-hero: 96px;
 
-  /* Shape: Pressroom is sharp. */
-  --radius-small: 2px;
-  --radius-control: 4px;
-  --radius-card: 6px;
-  --radius-plate: 8px;
+  /* Shape: tight, instrument-like radii. */
+  --radius-small: 4px;
+  --radius-control: 6px;
+  --radius-card: 8px;
+  --radius-plate: 10px;
   --radius-pill: 9999px;
 
-  /* Elevation: flat surfaces; shadows only on floating layers, and one hard "print" offset for emphasis. */
-  --shadow-raise: 0 1px 0 #d9d2c4, 0 6px 16px rgb(17 17 17 / 0.06);
-  --shadow-float: 0 -1px 0 #d9d2c4, 0 -10px 28px rgb(17 17 17 / 0.10);
-  --shadow-print: 6px 6px 0 #111111;
+  /* Elevation: surfaces layer by tone; a 1px top light edge in dark; shadows only on floating layers. */
+  --shadow-raise: inset 0 1px 0 light-dark(rgb(255 255 255 / 0), rgb(255 255 255 / 0.05)), 0 8px 24px -16px light-dark(rgb(18 21 28 / 0.22), rgb(0 0 0 / 0.8));
+  --shadow-float: inset 0 1px 0 light-dark(rgb(255 255 255 / 0), rgb(255 255 255 / 0.06)), 0 -12px 32px -12px light-dark(rgb(18 21 28 / 0.18), rgb(0 0 0 / 0.85));
 
   /* Motion curves (motion-craft): strong ease-out for entries, ease-in-out for moves, a drawer curve. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -139,18 +154,19 @@
 
 @media (min-width: 768px) {
   :root {
-    --text-display: 7.5rem;
-    --text-display--line-height: 0.92;
-    --text-title: 4rem;
-    --text-title--line-height: 0.96;
-    --text-heading: 3.5rem;
-    --text-heading--line-height: 0.96;
-    --text-heading-lesson: 4rem;
-    --text-heading-lesson--line-height: 0.96;
-    --text-section: 2.25rem;
-    --text-section--line-height: 1.02;
-    --text-subhead: 1.375rem;
-    --text-reading--line-height: 1.65;
+    --text-display: 4.75rem;
+    --text-display--line-height: 0.98;
+    --text-display--letter-spacing: -0.03em;
+    --text-title: 3.5rem;
+    --text-title--line-height: 1;
+    --text-heading: 2.5rem;
+    --text-heading--line-height: 1.04;
+    --text-heading-lesson: 3rem;
+    --text-heading-lesson--line-height: 1.04;
+    --text-section: 1.75rem;
+    --text-section--line-height: 1.12;
+    --text-subhead: 1.1875rem;
+    --text-subhead--line-height: 1.25;
     --spacing-block: 28px;
     --spacing-section: 80px;
     --spacing-page: 112px;
@@ -159,10 +175,14 @@
 }
 
 @layer base {
-  /* Display faces (in the base layer, so a utility such as font-mono still wins): headings and display steps use Archivo condensed; long text uses Newsreader. A gym's
-     own display font, set inline on the band, header name and its own course cards, wins over these. */
+  /* Faces (in the base layer, so a utility such as font-mono still wins): headings and display steps use
+     Archivo at its widest; prose and UI use IBM Plex Sans; data uses Plex Mono. A gym's own display font, set
+     inline on the band, header name and its own course cards, wins over these. */
   :root {
-    --display-stretch: 72%;
+    --display-stretch: 125%;
+    --subhead-stretch: 112%;
+    /* The reading measure: about 66 characters of Plex Sans at the reading size. */
+    --measure-reading: 66ch;
   }
   h1,
   h2,
@@ -171,9 +191,13 @@
   .text-title,
   .text-heading,
   .text-heading-lesson,
-  .text-section {
+  .text-section,
+  .text-subhead {
     font-family: var(--font-display);
     text-wrap: balance;
+    /* The wide face makes long words long: break rather than scroll sideways at 320px. */
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
   .text-display,
   .text-title,
@@ -182,9 +206,17 @@
   .text-section {
     font-stretch: var(--display-stretch);
   }
+  .text-subhead {
+    font-stretch: var(--subhead-stretch);
+  }
   .text-reading {
     font-family: var(--font-reading);
     text-wrap: pretty;
+  }
+  /* A reading column may be wider than its prose (figures, tables); the prose itself keeps the measure. */
+  .text-reading :where(p, li, blockquote, dd),
+  p.text-reading {
+    max-width: var(--measure-reading);
   }
   /* Labels, numerals and controls stay in the UI face even inside a reading column. */
   .text-label,
@@ -246,7 +278,75 @@
   --duration-reveal: 480ms;
   --duration-step: 640ms;
   --duration-logo: 720ms;
-  --duration-celebrate: 1100ms;
+  --duration-celebrate: 1000ms;
+}
+
+/*
+ * A container that pins its own color-scheme (the /design kit's side-by-side theme panes) re-declares the
+ * colour tokens: a custom property resolves light-dark() where it is declared, so the values inherited
+ * from :root would keep the page's theme. Same values as @theme (asserted in tokens-sync.test.ts). The scheme is set
+ * by class, not inline style, because the build lowers light-dark() to variables that only a stylesheet color-scheme sets.
+ */
+.theme-scope-light {
+  color-scheme: light;
+}
+.theme-scope-dark {
+  color-scheme: dark;
+}
+.theme-scope {
+  --color-canvas: light-dark(#f4f5f7, #0b0d12);
+  --color-surface: light-dark(#ffffff, #181c25);
+  --color-surface-muted: light-dark(#ebedf1, #20242f);
+  --color-sheet: light-dark(#ffffff, #161a22);
+  --color-text: light-dark(#12151c, #f2f4f8);
+  --color-text-muted: light-dark(#4a5160, #b4bac6);
+  --color-primary: light-dark(#12151c, #f2f4f8);
+  --color-ink: light-dark(#12151c, #f2f4f8);
+  --color-ink-hover: light-dark(#2a2f3a, #d9dde4);
+  --color-on-ink: light-dark(#ffffff, #0b0d12);
+  --color-border: light-dark(#d7dbe2, #2a2f3a);
+  --color-control: light-dark(#737a89, #6b7385);
+  --color-signal: light-dark(#c8195f, #ff3b8e);
+  --color-signal-hover: light-dark(#aa1551, #ff589f);
+  --color-on-signal: light-dark(#ffffff, #0b0d12);
+  --color-brand: light-dark(#c8195f, #ff3b8e);
+  --color-brand-hover: light-dark(#aa1551, #ff589f);
+  --color-brand-soft: light-dark(#fae8ef, #2f1f30);
+  --color-on-brand: light-dark(#ffffff, #0b0d12);
+  --color-band: light-dark(#f4f5f7, #0b0d12);
+  --color-on-band: light-dark(#12151c, #f2f4f8);
+  --color-band-tint: light-dark(#d9dadd, #27292e);
+  --color-band-edge: light-dark(#c7c8cb, #393b40);
+  --color-science: light-dark(#0b6b50, #3ddc97);
+  --color-science-soft: light-dark(#e6f4ee, #192a2b);
+  --color-practice: light-dark(#8a4b10, #ffb547);
+  --color-practice-soft: light-dark(#fff1e0, #292625);
+  --color-caution: light-dark(#6b5300, #e9d55b);
+  --color-caution-soft: light-dark(#fff6d1, #272927);
+  --color-caution-border: light-dark(#a88600, #8f7f2e);
+  --color-danger: light-dark(#b42318, #ff6b5f);
+  --color-danger-soft: light-dark(#fdecea, #34252c);
+  --color-stop-panel: light-dark(#12151c, #f2f4f8);
+  --color-on-stop-panel: light-dark(#f2f4f8, #0b0d12);
+  --color-stop-panel-muted: light-dark(#b4bac6, #3a3f4b);
+  --color-stop: light-dark(#ff6b5f, #d92d20);
+}
+
+/* Theme-only content (two versions of a raster or SVG file): follows the toggle, else the system setting.
+   Unlayered, so it wins over a display utility on the same element. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .theme-dark-only {
+    display: none;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-light-only {
+    display: none;
+  }
+}
+:root[data-theme="light"] .theme-dark-only,
+:root[data-theme="dark"] .theme-light-only {
+  display: none;
 }
 
 body {
@@ -255,8 +355,8 @@ body {
   font-family: var(--font-sans);
 }
 
-/* One visible focus treatment everywhere: 3px brand ring, offset from the control.
-   Dark surfaces set --focus-ring to a light colour (Pressroom Blue is 2.3:1 on ink). */
+/* One visible focus treatment everywhere: a 3px ring in the brand colour (the signal by default), offset
+   from the control. It passes 3:1 on every surface in both themes; a gym brand's ring is checked the same way. */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 3px solid var(--focus-ring, var(--color-brand));
   outline-offset: 4px;
@@ -299,9 +399,15 @@ details[open] > summary .disclosure-chevron {
   background-position: 0 100%, 0 100%;
   background-repeat: no-repeat;
 }
+/* Lab segments: done is ink, the current place is the signal, the rest are hairlines. */
+.measure-done {
+  background: var(--color-ink);
+}
 .measure-current {
-  background: repeating-linear-gradient(-63.43deg, var(--color-ink) 0 2px, transparent 2px 5px);
-  box-shadow: inset 0 0 0 1px var(--color-ink);
+  background: var(--color-signal);
+}
+.measure-rest {
+  box-shadow: inset 0 0 0 1px var(--color-control);
 }
 @keyframes motion-token-fill {
   from {
@@ -320,7 +426,7 @@ details[open] > summary .disclosure-chevron {
 }
 /* Brand surfaces only: reveal the wordmark with an edge that rises along the cut. Never on app routes. */
 .logo-reveal {
-  animation: logo-reveal 560ms var(--ease-out) both;
+  animation: logo-reveal var(--duration-logo) var(--ease-out) both;
 }
 @keyframes logo-reveal {
   from {

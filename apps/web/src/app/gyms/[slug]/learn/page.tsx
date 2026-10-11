@@ -66,7 +66,7 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
               </h2>
               <Link
                 href={`${base}/${resume.id}/${resume.view.next!.slug}`}
-                className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover"
+                className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover"
               >
                 Resume lesson
                 <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />

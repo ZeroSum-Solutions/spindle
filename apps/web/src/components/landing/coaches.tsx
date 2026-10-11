@@ -114,7 +114,7 @@ function Hero({ brand }: { brand: Brand }) {
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <Link
               href={SIGN_IN}
-              className="inline-flex min-h-12 items-center gap-2 rounded-control bg-ink px-5 font-medium text-white transition-colors duration-[var(--duration-feedback)] hover:bg-ink-hover"
+              className="inline-flex min-h-12 items-center gap-2 rounded-control bg-ink px-5 font-medium text-on-ink transition-colors duration-[var(--duration-feedback)] hover:bg-ink-hover"
             >
               Sign in
               <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />
@@ -261,10 +261,10 @@ function Swatch({ swatch }: { swatch: ThemeSwatch }) {
   const { brand, checks, font } = swatch;
   const passing = checks.filter((c) => c.pass).length;
   const rows: { label: string; value: string; sample: ReactNode }[] = [
-    { label: "Links and focus", value: brand.colors.accent, sample: <span className="size-5 rounded-small bg-brand" /> },
+    { label: "Links and focus", value: `${brand.colors.accent} / ${brand.colors.accentDark}`, sample: <span className="size-5 rounded-small bg-brand" /> },
     {
       label: "Text on the accent",
-      value: brand.colors.onAccent,
+      value: `${brand.colors.onAccent} / ${brand.colors.onAccentDark}`,
       sample: <span className="size-5 rounded-small border border-border bg-on-brand" />,
     },
   ];
@@ -296,7 +296,7 @@ function Swatch({ swatch }: { swatch: ThemeSwatch }) {
         <p className="border-t border-border bg-surface px-4 py-2 text-label text-text-muted">{BASE_ATTRIBUTION}</p>
       </div>
       <figcaption data-allow-number className="text-label text-text-muted">
-        {passing} of {checks.length} contrast checks pass WCAG 2.2 AA, in every state.
+        {passing} of {checks.length} checks pass in light and dark: WCAG 2.2 AA in every state, and distinct from Spindle&apos;s colours.
       </figcaption>
     </figure>
   );
@@ -328,19 +328,19 @@ function WhiteLabel({ swatches }: { swatches: ThemeSwatch[] }) {
 
 function Closing({ brand }: { brand: Brand }) {
   return (
-    <section aria-labelledby="coaches-closing-title" className="bg-ink text-white [--focus-ring:var(--color-white)]">
+    <section aria-labelledby="coaches-closing-title" className="bg-ink text-on-ink [--focus-ring:var(--color-on-ink)]">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-start gap-6 px-4 py-16 md:px-8 md:py-24">
-        <Wordmark src={brand.wordmark.onInk} brand={brand} />
+        <Wordmark brand={brand} surface="ink" />
         <h2 id="coaches-closing-title" className="max-w-[20ch] text-display text-balance">
           Start with your gym.
         </h2>
-        <p className="max-w-[52ch] text-reading text-white/80">
+        <p className="max-w-[52ch] text-reading text-on-ink/80">
           Sign in to start a gym and invite your trainers, or to join the gym that invited you. We email you a <span data-allow-number>6-digit</span> code; the same step creates
           your account.
         </p>
         <Link
           href={SIGN_IN}
-          className="inline-flex min-h-12 items-center gap-2 rounded-control bg-white px-5 font-medium text-ink transition-colors duration-[var(--duration-feedback)] hover:bg-surface-muted"
+          className="inline-flex min-h-12 items-center gap-2 rounded-control bg-on-ink px-5 font-medium text-ink transition-colors duration-[var(--duration-feedback)] hover:bg-surface-muted"
         >
           Sign in
           <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />

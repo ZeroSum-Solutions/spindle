@@ -68,7 +68,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
         {view.next ? (
           <Link
             href={`${base}/${view.next.slug}`}
-            className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover"
+            className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover"
           >
             {view.done === 0 ? "Start course" : "Resume lesson"}
             <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />
