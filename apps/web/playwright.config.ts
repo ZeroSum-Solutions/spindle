@@ -12,6 +12,7 @@ export default defineConfig({
     { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /zoom\.spec\.ts$/ },
     // 200% zoom of a 1280px window, without viewport emulation: headless Chromium has no zoom control, so
     // the window itself is what 200% zoom produces (640 CSS px at devicePixelRatio 2).
+    // Accepted as the WCAG 1.4.10 reflow equivalent of 200% zoom at 1280px (1280 / 2 = 640 CSS px), LEAD disposition on #42 R2.
     {
       name: "chromium-zoom-200",
       testMatch: /zoom\.spec\.ts$/,

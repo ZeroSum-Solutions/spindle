@@ -60,6 +60,18 @@ export async function noOverflow(page: Page, what: string) {
         .map((el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""} ${el.scrollWidth}>${el.clientWidth}`),
     );
     expect(wide, `${s.id}: overflowing or clipped content, ${what}`).toEqual([]);
+    // Vertical clipping: nothing under overflow hidden or clip may be taller than its box (cut-off text).
+    const tall = await scene(page, s.id).evaluate((root) =>
+      [root, ...root.querySelectorAll("*")]
+        .filter((el) => {
+          if (el instanceof SVGElement || el.clientHeight === 0) return false;
+          const cs = getComputedStyle(el);
+          const clips = [cs.overflowY, cs.overflowX].some((o) => o === "hidden" || o === "clip");
+          return clips && el.scrollHeight > el.clientHeight + 1;
+        })
+        .map((el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""} ${el.scrollHeight}>${el.clientHeight}`),
+    );
+    expect(tall, `${s.id}: vertically clipped content, ${what}`).toEqual([]);
   }
 }
 

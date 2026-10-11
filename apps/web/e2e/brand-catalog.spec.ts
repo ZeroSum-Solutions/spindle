@@ -32,30 +32,44 @@ test.describe("P4-A2 brand components", () => {
     });
   }
 
-  test("every computed colour is the brand's own (brandTokens) or a fixed Atlas colour", async ({ page }) => {
+  test("every computed colour is the brand's own (brandTokens) or a fixed Atlas colour, in default, hover and focus states", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await open(page);
     for (const s of SCENES) {
       const allowed = new Set([...Object.values(s.colors), ...ATLAS_FIXED].map(rgb));
-      const seen = await scene(page, s.id).evaluate((root) => {
-        const out: string[] = [];
-        for (const el of [root, ...root.querySelectorAll("*")]) {
-          // Pattern covers and the Spindle symbol are exempt (decorative; DESIGN.md › Colors).
-          if (el.closest("svg[data-pattern]") || el.tagName === "IMG") continue;
-          const cs = getComputedStyle(el);
-          const add = (v: string) => {
-            if (!/rgba\(0, 0, 0, 0\)|transparent/.test(v)) out.push(v);
-          };
-          add(cs.color);
-          add(cs.backgroundColor);
-          if (parseFloat(cs.borderTopWidth) > 0) add(cs.borderTopColor);
-          if (parseFloat(cs.borderLeftWidth) > 0) add(cs.borderLeftColor);
-          if (cs.outlineStyle !== "none") add(cs.outlineColor);
-          if (cs.textDecorationLine !== "none") add(cs.textDecorationColor);
-        }
-        return [...new Set(out)];
-      });
-      expect(seen.filter((c) => !allowed.has(c)), `${s.id}: colours outside the allowed set`).toEqual([]);
+      const root = scene(page, s.id);
+      const card = root.locator("a[data-course-card]").first();
+      const states: [string, () => Promise<void>][] = [
+        ["default", async () => {}],
+        ["card hover", () => card.hover()],
+        ["header link focus", () => root.locator("header a").first().focus()],
+        ["action focus", () => root.locator("[data-catalog-action]").focus()],
+        ["card focus", () => card.focus()],
+      ];
+      for (const [state, enter] of states) {
+        await enter();
+        // Colour transitions (120ms) must finish, so only final colours are measured.
+        await page.evaluate(() => Promise.all(document.getAnimations().map((x) => x.finished)));
+        const seen = await root.evaluate((el0) => {
+          const out: string[] = [];
+          for (const el of [el0, ...el0.querySelectorAll("*")]) {
+            // Pattern covers and the Spindle symbol are exempt (decorative; DESIGN.md › Colors).
+            if (el.closest("svg[data-pattern]") || el.tagName === "IMG") continue;
+            const cs = getComputedStyle(el);
+            const add = (v: string) => {
+              if (!/rgba\(0, 0, 0, 0\)|transparent/.test(v)) out.push(v);
+            };
+            add(cs.color);
+            add(cs.backgroundColor);
+            if (parseFloat(cs.borderTopWidth) > 0) add(cs.borderTopColor);
+            if (parseFloat(cs.borderLeftWidth) > 0) add(cs.borderLeftColor);
+            if (cs.outlineStyle !== "none") add(cs.outlineColor);
+            if (cs.textDecorationLine !== "none") add(cs.textDecorationColor);
+          }
+          return [...new Set(out)];
+        });
+        expect(seen.filter((c) => !allowed.has(c)), `${s.id}: colours outside the allowed set, ${state}`).toEqual([]);
+      }
     }
   });
 
