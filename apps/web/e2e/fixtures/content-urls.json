@@ -1,0 +1,150 @@
+[
+ {
+  "url": "https://example.org",
+  "sqlAccepts": true
+ },
+ {
+  "url": "https://example.org/a/b.png",
+  "sqlAccepts": true
+ },
+ {
+  "url": "https://cdn.example.org:8443/a/b.png?v=2#top",
+  "sqlAccepts": true
+ },
+ {
+  "url": "https://example.org:65535/x",
+  "sqlAccepts": true
+ },
+ {
+  "url": "https://example.org:1/x",
+  "sqlAccepts": true
+ },
+ {
+  "url": "https://EXAMPLE.org/x",
+  "sqlAccepts": true
+ },
+ {
+  "url": "https://a-b.example.org/x%20y",
+  "sqlAccepts": true
+ },
+ {
+  "url": "https://example.org/a<b>",
+  "sqlAccepts": true
+ },
+ {
+  "url": "https://example.org/\u00fc.png",
+  "sqlAccepts": true
+ },
+ {
+  "url": "https://example.org/?q=a b",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://example.org/a\ufeffb.png",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://example.org/a\u2028b.png",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://example.org/a\u00a0b.png",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://example.org/a\u0085b.png",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://example.org/a\u180eb.png",
+  "sqlAccepts": true
+ },
+ {
+  "url": "https://user:pass@example.org/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://example.org:0/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://example.org:99999/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://example.org:/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://1.2.3.999/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://example.123/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://xn--zz.org/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://-a.org/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "https://a..org/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "http://example.org/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "//example.org/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "/media/cuff.png",
+  "sqlAccepts": true
+ },
+ {
+  "url": "/media/v-1/clip_2.mp4",
+  "sqlAccepts": true
+ },
+ {
+  "url": "/media/%2e%2e/x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "/media/../x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "/media/./x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "/media/cuff.png?v=2",
+  "sqlAccepts": false
+ },
+ {
+  "url": "/media/cuff.png#x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "/media//x",
+  "sqlAccepts": false
+ },
+ {
+  "url": "/",
+  "sqlAccepts": false
+ },
+ {
+  "url": "/a\ufeff.png",
+  "sqlAccepts": false
+ },
+ {
+  "url": "javascript:alert(1)",
+  "sqlAccepts": false
+ }
+]
