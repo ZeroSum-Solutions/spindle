@@ -16,6 +16,7 @@ import { DIAGRAM_SAMPLES } from "./diagram-samples";
 import { CompletionBoard, LogoReveal } from "./motion-board";
 import { QuizBoard } from "./quiz-board";
 import { BrandPresenceBoard } from "./brand-presence-board";
+import { FoundationsBoard } from "./foundations-board";
 import { ModuleStatusCard } from "@/components/learn/module-status";
 
 // Design specimen for development only. It mounts the real learner components with
@@ -156,32 +157,8 @@ export default function DesignSpecimen() {
         Design specimen, development only. Synthetic data; nothing here is saved or real curriculum.
       </p>
 
-      <Section title="Brand">
-        <div className="flex flex-wrap items-end gap-8">
-          {[120, 160, 240].map((w) => (
-            <figure key={w} className="flex flex-col gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG */}
-              <img src="/brand/spindle-wordmark-ink.svg" alt={`Spindle wordmark at ${w}px`} width={w} height={Math.round(w * 0.2746)} />
-              <figcaption className="font-mono text-code text-text-muted">{w}px</figcaption>
-            </figure>
-          ))}
-          <figure className="flex flex-col gap-2 rounded-card bg-ink p-6">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG */}
-            <img src="/brand/spindle-wordmark-white.svg" alt="Spindle wordmark reversed" width={160} height={44} />
-            <figcaption className="font-mono text-code text-white">reverse</figcaption>
-          </figure>
-          <figure className="flex flex-col gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG */}
-            <img src="/brand/spindle-wordmark-cobalt.svg" alt="Spindle wordmark cobalt" width={160} height={44} />
-            <figcaption className="font-mono text-code text-text-muted">cobalt</figcaption>
-          </figure>
-          <figure className="flex items-end gap-3">
-            {[16, 24, 32, 48].map((s) => (
-              // eslint-disable-next-line @next/next/no-img-element -- static brand SVG
-              <img key={s} src="/brand/spindle-symbol.svg" alt={`Spindle symbol at ${s}px`} width={s} height={s} />
-            ))}
-          </figure>
-        </div>
+      <Section title="Foundations">
+        <FoundationsBoard />
       </Section>
 
       <Section title="Labels">
