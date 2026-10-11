@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Catalog, Course, Lesson, LessonBlock } from "@spindle/schema";
+import { parseCatalog, type Catalog, type Course, type Lesson, type LessonBlock } from "@spindle/schema";
 import {
   completeLesson,
   coursePercent,
@@ -56,6 +56,10 @@ const firstCourse = (catalog: Catalog): Course => catalog.courses[0]!;
 describe("catalog contract", () => {
   it("accepts a valid catalog", () => {
     expect(() => validateCatalog(fixture(), provenance, claims)).not.toThrow();
+  });
+
+  it("accepts the existing fixture through the runtime schema, then validates it", () => {
+    expect(() => validateCatalog(parseCatalog(fixture()), provenance, claims)).not.toThrow();
   });
 
   it("rejects duplicate lesson slugs inside a course", () => {
