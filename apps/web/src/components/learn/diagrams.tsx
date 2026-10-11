@@ -20,7 +20,7 @@ export const DIAGRAMS: Readonly<Record<string, DiagramEntry>> = {
         "Sternoclavicular joint: the collarbone meets the breastbone.",
         "Acromioclavicular joint: the collarbone meets the top of the shoulder blade.",
         "Glenohumeral joint: the ball and socket (highlighted).",
-        "Scapulothoracic: the shoulder blade glides over the ribs (dashed: behind the ribs).",
+        "The shoulder blade, which lies behind the ribs (dashed).",
       ],
     },
   },
@@ -29,6 +29,15 @@ export const DIAGRAMS: Readonly<Record<string, DiagramEntry>> = {
     legend: { kind: "panels", items: ["Arm by the side", "Arm level with the shoulder", "Arm overhead"] },
   },
 };
+
+/**
+ * The drawing for a diagram id, or undefined. Only the registry's own keys count: an id
+ * like "toString" or "constructor" passes the content schema but must not resolve to an
+ * inherited property.
+ */
+export function diagramFor(id: string): DiagramEntry | undefined {
+  return Object.hasOwn(DIAGRAMS, id) ? DIAGRAMS[id] : undefined;
+}
 
 export function DiagramFigure({ entry }: { entry: DiagramEntry }) {
   return (

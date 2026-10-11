@@ -20,24 +20,26 @@ function Svg({ title, desc, viewBox, children }: { title: string; desc: string; 
   );
 }
 
-function Marker({ x, y, n }: { x: number; y: number; n: number }) {
-  return (
-    <g>
-      <circle cx={x} cy={y} r={11} {...STROKE} style={{ fill: "var(--color-surface)" }} />
-      <text x={x} y={y + 4.5} textAnchor="middle" fontSize={13} fontWeight={500} fill="currentColor" stroke="none" fontFamily="var(--font-geist-mono), monospace">
-        {n}
-      </text>
-    </g>
-  );
-}
+/**
+ * Numbered markers, in drawing coordinates. They render as HTML over the drawing, so the
+ * numbers stay at the 14px label size at every width instead of shrinking with the SVG.
+ */
+export const SHOULDER_MARKERS = [
+  { n: 1, x: 100, y: 84 },
+  { n: 2, x: 290, y: 76 },
+  { n: 3, x: 300, y: 136 },
+  { n: 4, x: 250, y: 250 },
+] as const;
+const SHOULDER_VIEW = { width: 440, height: 340 };
 
-/** The shoulder complex, right shoulder from the front: four numbered joints, the ball and socket highlighted. */
+/** The shoulder complex, left shoulder from the front (the subject's left): four numbered places, the ball and socket highlighted. */
 export function ShoulderComplex() {
   return (
+    <div className="relative">
     <Svg
-      viewBox="0 0 440 340"
-      title="The shoulder complex, right shoulder seen from the front"
-      desc="Schematic line drawing. The collarbone runs from the breastbone to the top of the shoulder blade. The ball at the top of the upper arm bone sits against a shallow socket on the shoulder blade, which lies behind the ribs. Numbers mark the sternoclavicular joint (1), the acromioclavicular joint (2), the glenohumeral ball-and-socket joint (3, highlighted) and the shoulder blade's gliding contact with the ribs (4)."
+      viewBox={`0 0 ${SHOULDER_VIEW.width} ${SHOULDER_VIEW.height}`}
+      title="The shoulder complex, left shoulder seen from the front"
+      desc="Schematic line drawing. The collarbone runs from the breastbone to the top of the shoulder blade. The ball at the top of the upper arm bone sits against a shallow socket on the shoulder blade, which lies behind the ribs. Numbers mark the sternoclavicular joint (1), the acromioclavicular joint (2), the glenohumeral ball-and-socket joint (3, highlighted) and the shoulder blade, which lies behind the ribs (4)."
     >
       {/* Ribs and breastbone, for context. */}
       <path d="M66 70 h26 q7 0 7 7 v74 q0 9 -9 11 h-22 q-9 -2 -9 -11 v-74 q0 -7 7 -7 z" {...CONTEXT} />
@@ -61,11 +63,19 @@ export function ShoulderComplex() {
       <circle cx={344} cy={133} r={26} {...STROKE} style={{ fill: "var(--color-brand-soft)" }} />
       <path d="M330 155 C 334 190 336 240 336 324" {...STROKE} />
       <path d="M368 143 C 370 160 366 190 362 230 C 360 260 360 290 362 324" {...STROKE} />
-      <Marker x={100} y={84} n={1} />
-      <Marker x={290} y={76} n={2} />
-      <Marker x={300} y={136} n={3} />
-      <Marker x={250} y={250} n={4} />
     </Svg>
+      {SHOULDER_MARKERS.map(({ n, x, y }) => (
+        <span
+          key={n}
+          aria-hidden
+          data-marker={n}
+          style={{ left: `${(x / SHOULDER_VIEW.width) * 100}%`, top: `${(y / SHOULDER_VIEW.height) * 100}%` }}
+          className="absolute flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[1.75px] border-ink bg-surface font-mono text-label font-medium text-ink"
+        >
+          {n}
+        </span>
+      ))}
+    </div>
   );
 }
 

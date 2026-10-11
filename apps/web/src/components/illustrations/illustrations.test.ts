@@ -23,11 +23,28 @@ describe("original illustrations", () => {
     expect(html).toMatch(/vector-effect="non-scaling-stroke"/);
   });
 
-  it("numbers every marker in the shoulder diagram and keys each in the legend", () => {
+  it("numbers every marker in the shoulder diagram as HTML at label size, and keys each in the legend", () => {
     const html = drawings["shoulder-complex-front"]!;
-    const markers = [...html.matchAll(/<text[^>]*>(\d)<\/text>/g)].map((m) => m[1]);
+    const markers = [...html.matchAll(/data-marker="(\d)"[^>]*class="[^"]*text-label[^"]*"[^>]*>(\d)</g)].map((m) => m[2]);
     expect(markers).toEqual(["1", "2", "3", "4"]);
+    // No number is set inside the SVG, where it would shrink with the drawing.
+    expect(html).not.toMatch(/<text[^>]*>\d<\/text>/);
     expect(html.match(/<li/g)).toHaveLength(4);
+  });
+
+  it("says which shoulder it is: the subject's left, seen from the front", () => {
+    expect(drawings["shoulder-complex-front"]).toMatch(/<title[^>]*>The shoulder complex, left shoulder seen from the front<\/title>/);
+  });
+
+  it("makes no claim that the shoulder blade glides over the ribs", () => {
+    expect(drawings["shoulder-complex-front"]).not.toMatch(/glid/i);
+  });
+
+  it("keeps the layer-stack notes out of the SVG, as HTML text at label size", () => {
+    const html = drawings["layer-stack"]!;
+    const svg = html.slice(html.indexOf("<svg"), html.indexOf("</svg>"));
+    expect(svg).not.toContain("Your cues, your system, your name");
+    expect(html).toMatch(/<dl class="[^"]*text-label[^"]*"[\s\S]*Your cues, your system, your name/);
   });
 
   it("names the brand it is given", () => {
