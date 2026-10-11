@@ -38,7 +38,9 @@ main(async () => {
       const cr = action.notice.origin === "crossref" ? await getCrossrefWork(ctx, s.doi).catch(() => null) : null;
       const notice = cr?.retractionNotices[0] ? { ...action.notice, reference: cr.retractionNotices[0] } : action.notice;
       const flagged = dry ? "dry run" : serviceValue(`public.publisher_record_retraction(${lit(publisherId())}, ${lit(s.id)}, ${lit(JSON.stringify(notice))}::jsonb)`);
-      console.log(`RETRACTED ${s.doi}: recorded (${notice.origin}, ${notice.reference}); versions flagged: ${flagged}`);
+      console.log(dry
+        ? `RETRACTED ${s.doi}: would record (${notice.origin}, ${notice.reference}); dry run, nothing written`
+        : `RETRACTED ${s.doi}: recorded (${notice.origin}, ${notice.reference}); versions flagged: ${flagged}`);
     }
   }
   if (noDoi !== "0") console.log(`${noDoi} cited sources have no DOI (textbook or nomenclature): check them by hand; this run is not clean`);
