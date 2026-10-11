@@ -339,6 +339,12 @@ select results_eq($$select has_function_privilege('anon', f, 'execute') from unn
   'anonymous callers can execute none of the brand RPCs');
 
 -- 4. CourseCardDto -------------------------------------------------------------------------------
+-- Scoped to this test's courses: a shared stack may already hold real global versions.
+create function pg_temp.mine(cards jsonb) returns setof jsonb language sql as $$
+  select c from jsonb_array_elements(cards) c
+  where c ->> 'courseId' in ('a1000000-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000000',
+    'b9000000-0000-4000-8000-000000000001', 'b9000000-0000-4000-8000-000000000002')
+$$;
 create function pg_temp.hinge() returns jsonb language sql as $$ select jsonb_build_object('id', 'a1000000-0000-4000-8000-000000000000',
   'slug', 'hinge', 'layer', 'method', 'title', 'Hinge basics', 'subtitle', 'Draft summary, not held', 'description', '', 'level', 'foundation',
   'outcomes', '[]'::jsonb, 'cover', jsonb_build_object('kind', 'pattern', 'pattern', 'dots', 'background', '#0b3d2e', 'foreground', '#ffffff'),
@@ -365,7 +371,7 @@ select pg_temp.decide(pg_temp.id('bl'), 'admitted');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
 select pg_temp.keep('v1', public.publish_course('a1000000-0000-4000-8000-000000000000'));
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
-select is(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), jsonb_build_array(jsonb_build_object(
+select is((select jsonb_agg(c) from pg_temp.mine(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c), jsonb_build_array(jsonb_build_object(
   'versionId', pg_temp.id('v1'), 'courseId', 'a1000000-0000-4000-8000-000000000000', 'layer', 'method', 'layerLabel', 'Gym method',
   'title', 'Hinge basics', 'summary', 'Hinge patterns for new lifters.',
   'cover', jsonb_build_object('kind', 'pattern', 'pattern', 'dots', 'background', '#0b3d2e', 'foreground', '#ffffff'),
@@ -392,18 +398,18 @@ from (values
     'layer', 'modality', 'title', 'Yoga modality', 'subtitle', '',
     'parts', jsonb_build_array(jsonb_build_object('lessons', jsonb_build_array(jsonb_build_object('durationMinutes', 20))))))) as v (id, cid, layer, snap);
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
-select is((select jsonb_agg(c ->> 'versionId' order by c ->> 'versionId') from jsonb_array_elements(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c),
+select is((select jsonb_agg(c ->> 'versionId' order by c ->> 'versionId') from pg_temp.mine(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c),
   (select jsonb_agg(x order by x) from unnest(array[pg_temp.id('v2')::text, 'b9100000-0000-4000-8000-000000000001', 'b9100000-0000-4000-8000-000000000002']) x),
   'cards list the latest version of each course (v2, not v1), the global courses, and no unpublished draft');
-select is((select c - 'versionId' - 'courseId' from jsonb_array_elements(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c where c ->> 'layer' = 'base'),
+select is((select c - 'versionId' - 'courseId' from pg_temp.mine(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c where c ->> 'layer' = 'base'),
   jsonb_build_object('layer', 'base', 'layerLabel', 'Base', 'title', 'Shoulder base', 'summary', 'Base summary', 'cover', null, 'tags', '["mobility"]'::jsonb,
     'lessonCount', 2, 'durationMinutes', 22, 'publishedBySpindle', true, 'seal', true),
   'a base card: Spindle cover, the seal, published by Spindle, its subtitle as summary');
-select is((select c - 'versionId' - 'courseId' from jsonb_array_elements(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c where c ->> 'layer' = 'modality'),
+select is((select c - 'versionId' - 'courseId' from pg_temp.mine(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c where c ->> 'layer' = 'modality'),
   jsonb_build_object('layer', 'modality', 'layerLabel', 'Modality', 'title', 'Yoga modality', 'summary', null, 'cover', null, 'tags', '[]'::jsonb,
     'lessonCount', 1, 'durationMinutes', 20, 'publishedBySpindle', true, 'seal', false),
   'a modality card: Spindle cover, no seal, published by Spindle');
-select is((select (c ->> 'durationMinutes')::integer from jsonb_array_elements(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c where c ->> 'layer' = 'method'),
+select is((select (c ->> 'durationMinutes')::integer from pg_temp.mine(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c where c ->> 'layer' = 'method'),
   9, 'the gym card reads the latest version');
 select pg_temp.reset_role();
 select pg_temp.keep('rev0', (select ('00000000-0000-4000-8000-' || lpad(revision::text, 12, '0'))::uuid from private.org_brand_revision where org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'));
@@ -414,15 +420,15 @@ select pg_temp.keep('tt', (select id from private.tenant_texts where slot = 'cou
 select pg_temp.as_service();
 select public.publisher_revoke_tenant_text('00000000-0000-0000-0000-0000000000c1', pg_temp.id('tt'), '{"reason": "x"}');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
-select is((select c ->> 'title' from jsonb_array_elements(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c where c ->> 'layer' = 'method'),
+select is((select c ->> 'title' from pg_temp.mine(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c where c ->> 'layer' = 'method'),
   'Untitled course', 'a revoked title reads as the fallback on the card');
-select is((select c -> 'summary' from jsonb_array_elements(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c where c ->> 'layer' = 'method'),
+select is((select c -> 'summary' from pg_temp.mine(public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')) c where c ->> 'layer' = 'method'),
   'null'::jsonb, 'and a revoked blurb leaves it');
 select pg_temp.reset_role();
 select is((select revision from private.org_brand_revision where org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
   right(pg_temp.id('rev0')::text, 12)::bigint + 2, 'each course-text revocation moves the revision (cards changed under the same version id)');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000b1');
-select is((select count(*) filter (where c ->> 'layer' = 'method') || '/' || count(*) from jsonb_array_elements(public.member_course_cards('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')) c),
+select is((select count(*) filter (where c ->> 'layer' = 'method') || '/' || count(*) from pg_temp.mine(public.member_course_cards('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')) c),
   '0/2', 'another gym sees the global courses and none of gym A''s');
 select throws_ok($$select public.member_course_cards('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')$$, '42501', 'not a member of this gym', 'nor read gym A''s cards');
 
