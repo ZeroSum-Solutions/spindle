@@ -98,6 +98,7 @@ export function BrandedLearnerPreview({ brand, font, slug }: { brand: ValidatedB
       data-brand-preview={brand.name}
       aria-labelledby={`${slug}-mark`}
       style={brandToCssVars(brand) as CSSProperties}
+      data-brand-scope=""
       className={`${font.className} flex min-w-0 flex-col overflow-hidden rounded-card border border-border bg-canvas`}
     >
       <header className="flex min-h-16 items-center justify-between gap-3 border-b border-border bg-surface px-4 md:px-6">

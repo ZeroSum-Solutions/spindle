@@ -1,14 +1,18 @@
-import type { CoverView } from "./view";
+import type { CSSProperties } from "react";
+import { paintPair, type CoverView } from "./view";
 
 // Spindle-drawn 16:9 covers. Geometry only, from an enum; the colours are the course's two
-// validated literals, the foreground drawn at 18% (spec rev4 §2). Decorative: hidden from
-// assistive technology and free of text.
+// validated literals (or a pair per theme for Spindle and accent covers), passed as literal hex
+// variables that the .course-cover rule in globals.css resolves per theme. The foreground is drawn at
+// 18% (spec rev4 §2). Decorative: hidden from assistive technology and free of text.
 
 const W = 320;
 const H = 180;
 
 export function CourseCover({ cover }: { cover: CoverView }) {
-  const line = { stroke: cover.foreground, strokeOpacity: 0.18, strokeWidth: 1.5, fill: "none", vectorEffect: "non-scaling-stroke" } as const;
+  const [bg, fg] = [paintPair(cover.background), paintPair(cover.foreground)];
+  const vars = { "--cover-bg-light": bg.light, "--cover-bg-dark": bg.dark, "--cover-fg-light": fg.light, "--cover-fg-dark": fg.dark } as CSSProperties;
+  const line = { stroke: "currentColor", strokeOpacity: 0.18, strokeWidth: 1.5, fill: "none", vectorEffect: "non-scaling-stroke" } as const;
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
@@ -16,9 +20,10 @@ export function CourseCover({ cover }: { cover: CoverView }) {
       focusable="false"
       preserveAspectRatio="xMidYMid slice"
       data-pattern={cover.pattern}
-      className="block aspect-video h-auto w-full"
+      className="course-cover block aspect-video h-auto w-full"
+      style={vars}
     >
-      <rect width={W} height={H} fill={cover.background} />
+      <rect width={W} height={H} className="course-cover-bg" />
       {cover.pattern === "solid" ? (
         // One quiet slanted rule, the Cut 03 angle, so a solid cover still reads as designed.
         <path d={`M ${W - 72} ${H} L ${W - 72 + 0.2126 * H} 0`} {...line} />
@@ -31,7 +36,7 @@ export function CourseCover({ cover }: { cover: CoverView }) {
         </>
       ) : null}
       {cover.pattern === "dots"
-        ? Array.from({ length: 16 * 9 }, (_, i) => <circle key={i} cx={10 + (i % 16) * 20} cy={10 + Math.floor(i / 16) * 20} r={2} fill={cover.foreground} fillOpacity={0.18} />)
+        ? Array.from({ length: 16 * 9 }, (_, i) => <circle key={i} cx={10 + (i % 16) * 20} cy={10 + Math.floor(i / 16) * 20} r={2} fill="currentColor" fillOpacity={0.18} />)
         : null}
       {cover.pattern === "rings" ? Array.from({ length: 9 }, (_, i) => <circle key={i} cx={W - 64} cy={H - 36} r={18 + i * 26} {...line} />) : null}
       {cover.pattern === "waves"

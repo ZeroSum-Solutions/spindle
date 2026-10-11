@@ -53,7 +53,7 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
   return (
     <LearnShell gym={ctx.org.name} back={{ href: `/gyms/${ctx.org.slug}`, label: ctx.org.name }}>
       <div data-layout="column" className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <h1 className="text-heading font-medium">Your courses</h1>
+      <h1 className="text-heading">Your courses</h1>
       {items.length === 0 ? (
         <p className="rounded-card border border-border bg-surface p-6 text-text-muted">Nothing is assigned to you in this gym yet.</p>
       ) : (
@@ -66,7 +66,7 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
               </h2>
               <Link
                 href={`${base}/${resume.id}/${resume.view.next!.slug}`}
-                className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover"
+                className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover"
               >
                 Resume lesson
                 <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />
@@ -108,7 +108,7 @@ function BrandedCatalog({
   const of = (layer: CourseCardView["layer"]) => entries.flatMap((e) => (e.card && e.card.layer === layer ? [e.card] : []));
   const earlier = new Map(entries.flatMap((e) => (e.card ? [[e.card.id, e.earlier] as const] : [])));
   return (
-    <div className={`${font.className} flex flex-1 flex-col bg-canvas`} style={brandScopeVars(brand.colors) as CSSProperties}>
+    <div className={`${font.className} flex flex-1 flex-col bg-canvas`} style={brandScopeVars(brand.colors) as CSSProperties} data-brand-scope="" data-brand-band="">
       <BrandHeader
         brand={brand}
         fontFamily={font.family}

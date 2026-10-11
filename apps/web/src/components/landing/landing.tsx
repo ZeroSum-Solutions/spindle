@@ -4,6 +4,8 @@ import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { LayerLabel, SupportLabel } from "../learn/labels";
 import type { Brand } from "../../lib/brand";
 import { LayerStack } from "../illustrations/layer-stack";
+import { ThemeToggle } from "../theme/theme-toggle";
+import { ThemedWordmark } from "../ui/themed-wordmark";
 
 // Signed-out landing page. Honest copy only: no testimonials, counts or claims we
 // cannot show. Science statements never appear here, because nothing on this page
@@ -40,19 +42,9 @@ const promises = (name: string) => [
   "No streaks, leaderboards or confetti.",
 ];
 
-/** Keeps the supplied wordmark's aspect ratio: fixed width, height from the file's own proportions. */
-export function Wordmark({ src, brand, className = "" }: { src: string; brand: Brand; className?: string }) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element -- a static SVG gains nothing from the optimizer
-    <img
-      src={src}
-      alt=""
-      width={brand.wordmark.width}
-      height={brand.wordmark.height}
-      style={{ width: brand.wordmark.width, height: "auto", aspectRatio: `${brand.wordmark.width} / ${brand.wordmark.height}` }}
-      className={className}
-    />
-  );
+/** The brand's wordmark in the theme in effect; `surface="ink"` on ink panels, which invert with the theme. */
+export function Wordmark({ brand, surface = "page", className = "" }: { brand: Brand; surface?: "page" | "ink"; className?: string }) {
+  return <ThemedWordmark brand={brand} surface={surface} className={className} />;
 }
 
 /** The signed-out site header: the wordmark home link, the coaches page and sign-in. */
@@ -61,7 +53,7 @@ export function SiteHeader({ brand, current }: { brand: Brand; current?: "/coach
     <header className="border-b border-border bg-surface">
       <div className="mx-auto flex min-h-16 w-full max-w-[1200px] items-center justify-between gap-4 px-4 md:px-8">
         <Link href="/" className="-mx-1 inline-flex min-h-11 items-center px-1" aria-label={`${brand.name}, home`}>
-          <Wordmark src={brand.wordmark.onLight} brand={brand} className="logo-reveal" />
+          <Wordmark brand={brand} className="logo-reveal" />
         </Link>
         <nav aria-label="Site" className="flex items-center gap-2 sm:gap-4">
           <Link
@@ -77,6 +69,7 @@ export function SiteHeader({ brand, current }: { brand: Brand; current?: "/coach
           >
             Sign in
           </Link>
+          <ThemeToggle />
         </nav>
       </div>
     </header>
@@ -140,7 +133,7 @@ export function SectionHead({ id, title, children }: { id: string; title: string
   return (
     <div className="flex max-w-[44rem] flex-col gap-3">
       <span aria-hidden className="cut-tick text-ink" />
-      <h2 id={id} className="text-heading font-medium text-balance text-text">
+      <h2 id={id} className="text-heading text-balance text-text">
         {title}
       </h2>
       {children ? <p className="text-reading text-text-muted">{children}</p> : null}
@@ -154,7 +147,7 @@ function Hero({ brand }: { brand: Brand }) {
       <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 items-center gap-12 px-4 pt-12 pb-16 md:px-8 md:pt-20 md:pb-24 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
         <div className="flex flex-col gap-6">
           <p className="text-label font-medium text-text-muted">For coaches, gyms and the trainers they teach</p>
-          <h1 id="hero-title" className="text-display font-medium text-balance text-text">
+          <h1 id="hero-title" className="text-display text-balance text-text">
             Your method, on a base that shows its work.
           </h1>
           <p className="max-w-[52ch] text-reading text-text-muted">
@@ -164,7 +157,7 @@ function Hero({ brand }: { brand: Brand }) {
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <Link
               href={SIGN_IN}
-              className="inline-flex min-h-12 items-center gap-2 rounded-control bg-ink px-5 font-medium text-white transition-colors duration-[var(--duration-feedback)] hover:bg-ink-hover"
+              className="inline-flex min-h-12 items-center gap-2 rounded-control bg-ink px-5 font-medium text-on-ink transition-colors duration-[var(--duration-feedback)] hover:bg-ink-hover"
             >
               Sign in
               <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />
@@ -351,18 +344,18 @@ function Building() {
 
 function Closing({ brand }: { brand: Brand }) {
   return (
-    <section aria-labelledby="closing-title" className="bg-ink text-white [--focus-ring:var(--color-white)]">
+    <section aria-labelledby="closing-title" className="bg-ink text-on-ink [--focus-ring:var(--color-on-ink)]">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-start gap-6 px-4 py-16 md:px-8 md:py-24">
-        <Wordmark src={brand.wordmark.onInk} brand={brand} />
-        <h2 id="closing-title" className="max-w-[20ch] text-display font-medium text-balance">
+        <Wordmark brand={brand} surface="ink" />
+        <h2 id="closing-title" className="max-w-[20ch] text-display text-balance">
           Bring your method.
         </h2>
-        <p className="max-w-[52ch] text-reading text-white/80">
+        <p className="max-w-[52ch] text-reading text-on-ink/80">
           Sign in to join your gym, or start one and invite your trainers. Writing and publishing your own courses is planned for a later release.
         </p>
         <Link
           href={SIGN_IN}
-          className="inline-flex min-h-12 items-center gap-2 rounded-control bg-white px-5 font-medium text-ink transition-colors duration-[var(--duration-feedback)] hover:bg-surface-muted"
+          className="inline-flex min-h-12 items-center gap-2 rounded-control bg-on-ink px-5 font-medium text-ink transition-colors duration-[var(--duration-feedback)] hover:bg-surface-muted"
         >
           Sign in
           <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />

@@ -9,7 +9,7 @@ export function BaseSeal({ strip = false }: { strip?: boolean }) {
   return (
     <span data-base-seal className={`inline-flex items-center gap-2 text-label text-text-muted ${strip ? "w-full border-y border-border py-2.5" : ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG, decorative beside the text */}
-      <img src="/brand/spindle-symbol.svg" alt="" width={16} height={16} className="size-4 shrink-0 rounded-[3px]" />
+      <img src="/brand/spindle-symbol-small.svg" alt="" width={16} height={16} className="size-4 shrink-0 rounded-[3px]" />
       {BASE_ATTRIBUTION}
     </span>
   );

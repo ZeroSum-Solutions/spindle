@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Check, LoaderCircle, RotateCcw, X } from "lucide-react";
 import { fieldName, neededToPass, type QuizQuestionView, type QuizState } from "@/lib/learning/quiz";
 
@@ -67,6 +67,7 @@ export function QuizView({
   onNewAttempt?: () => void;
   newAttemptReady?: boolean;
 }) {
+  const statusId = `${useId()}quiz-status`;
   const resultRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (state.status === "result") resultRef.current?.focus();
@@ -81,7 +82,7 @@ export function QuizView({
         {questions.length} {questions.length === 1 ? "question" : "questions"}. You need {neededToPass(questions.length)} correct to pass. You can try as many
         times as you like; your best attempt counts.
       </p>
-      <form action={action} className="flex flex-col gap-6" aria-describedby="quiz-status">
+      <form action={action} className="flex flex-col gap-6" aria-describedby={statusId}>
         {questions.map((q, i) => {
           // A lesson heading before the first question of each lesson.
           const heading = q.lessonTitle && q.lessonTitle !== questions[i - 1]?.lessonTitle ? q.lessonTitle : null;
@@ -108,7 +109,7 @@ export function QuizView({
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex min-h-12 min-w-56 items-center justify-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover disabled:cursor-progress disabled:opacity-80"
+            className="inline-flex min-h-12 min-w-56 items-center justify-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover disabled:cursor-progress disabled:opacity-80"
           >
             {pending ? <LoaderCircle aria-hidden strokeWidth={1.75} className="size-5 animate-spin motion-reduce:animate-none" /> : null}
             {pending ? "Submitting…" : "Submit answers"}
@@ -116,7 +117,7 @@ export function QuizView({
         )}
       </form>
 
-      <div id="quiz-status" aria-live="polite" className="flex flex-col gap-3">
+      <div id={statusId} aria-live="polite" className="flex flex-col gap-3">
         {state.status === "error" ? (
           <div role="alert" data-error-kind={state.kind} className="flex flex-col items-start gap-2 rounded-small bg-danger-soft px-3 py-2 text-sm text-danger">
             <p>{state.message}</p>

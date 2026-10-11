@@ -68,7 +68,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
         <div className="lg:sticky lg:top-6 lg:self-start">
           <LessonOutline view={view} base={courseHref} currentId={lesson.id} />
         </div>
-        <article className="flex min-w-0 max-w-[68ch] flex-col gap-8 text-reading" aria-labelledby="lesson-title">
+        <article className="flex min-w-0 max-w-[46rem] flex-col gap-8 text-reading" aria-labelledby="lesson-title">
           <header className="flex flex-col gap-3">
             <p className="flex flex-wrap items-center gap-2 text-label text-text-muted">
               <LayerLabel layer={view.layer} />
@@ -77,7 +77,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
                 Lesson {index + 1} of {lessons.length} · {state.partTitle}
               </span>
             </p>
-            <h1 id="lesson-title" className="text-heading-lesson font-medium text-text">
+            <h1 id="lesson-title" className="text-heading-lesson text-text">
               {lesson.title}
             </h1>
             <p className="text-label text-text-muted">

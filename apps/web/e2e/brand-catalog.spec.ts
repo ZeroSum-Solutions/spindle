@@ -121,10 +121,10 @@ test.describe("P4-A2 brand components", () => {
     for (const card of await s.locator("[data-course-card]").all()) await expect(card.locator("a")).toHaveCount(0);
     const method = s.locator('[data-course-card][data-layer="method"]').first();
     await method.hover();
-    await expect(method).toHaveCSS("border-top-color", "rgb(117, 132, 145)");
+    await expect(method).toHaveCSS("border-top-color", "rgb(115, 122, 137)");
     const bare = scene(page, "pilates").locator("[data-course-card]", { hasText: "Mat class structure" });
     await expect(bare.locator("svg[data-pattern]")).toHaveAttribute("data-pattern", "diagonal");
-    await expect(bare.locator("svg[data-pattern] rect")).toHaveAttribute("fill", PILATES.accent);
+    await expect(bare.locator("svg[data-pattern] rect")).toHaveCSS("fill", rgb(PILATES.accent));
   });
 
   test("the coach note sits on surface with the practice rule, label and caption", async ({ page }) => {
