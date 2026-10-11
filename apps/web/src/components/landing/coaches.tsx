@@ -308,7 +308,7 @@ function WhiteLabel({ swatches }: { swatches: ThemeSwatch[] }) {
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
         <div className="flex flex-col gap-4">
           <SectionHead id="brand-title" title="Your name on it, with the evidence colours kept honest.">
-            A gym brand will change four things: the mark, links, the current-lesson marker and the focus ring. Science, practice, caution and danger
+            A gym brand will change only the mark, links, the current-lesson marker, selected controls, the focus ring and the heading font. Science, practice, caution and danger
             colours never change, and neither does the line that credits the base.
           </SectionHead>
           <p className="flex flex-wrap items-center gap-2 text-label text-text-muted">

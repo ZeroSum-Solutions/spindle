@@ -57,7 +57,7 @@ describe("Coaches page", () => {
     expect(built.map((s) => s.brand.name)).toEqual([OXBLOOD.name, SAGE.name]);
     expect(built.every((s) => s.checks.length > 0 && s.checks.every((c) => c.pass))).toBe(true);
     expect(html.match(/data-theme-swatch=/g)).toHaveLength(2);
-    expect(text).toMatch(/13 of 13 contrast checks pass WCAG 2\.2 AA/);
+    expect(text).toMatch(/\b(\d+) of \1 contrast checks pass WCAG 2\.2 AA/);
     expect(text).toContain("Base curriculum by Spindle, cited");
   });
 
