@@ -59,7 +59,6 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
           </IntegrityAlert>
         ) : null}
 
-        {view.delta ? <VersionNotice delta={view.delta} versionNumber={view.versionNumber} credited={view.lessons.some((l) => l.state === "credited")} /> : null}
 
         {view.next ? (
           <Link
@@ -70,8 +69,10 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
             <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />
           </Link>
         ) : (
-          <p className="rounded-card border border-border bg-surface p-4 font-medium">You completed every lesson in v{view.versionNumber}.</p>
+          <p className="rounded-card bg-surface-muted p-4 font-medium">You completed every lesson in v{view.versionNumber}.</p>
         )}
+
+        {view.delta ? <VersionNotice delta={view.delta} versionNumber={view.versionNumber} credited={view.lessons.some((l) => l.state === "credited")} /> : null}
 
         {parts.map(({ partId, title, lessons }) => (
           <section key={partId} className="flex flex-col gap-2">

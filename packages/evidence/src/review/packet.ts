@@ -85,6 +85,15 @@ const claimContentSchema = z.strictObject({
   sourceIds: z.array(uuid).min(1).max(20),
 });
 
+const claimView = z.array(z.strictObject({ claimId: uuid, statement: z.string().min(1), population: z.string().min(1) }));
+/** Content shape per item kind, as the builders produce it. */
+const CONTENT_SCHEMAS: Partial<Record<ItemKind, z.ZodType>> = {
+  claim: claimContentSchema,
+  course: z.looseObject({ title: z.string().min(1), parts: z.array(z.unknown()) }),
+  block: z.strictObject({ lessonId: uuid, ordinal: z.number().int().min(1), block: z.looseObject({ kind: z.string().min(1) }), claims: claimView }),
+  lesson: z.strictObject({ lesson: z.looseObject({ id: z.string().min(1), blocks: z.array(z.unknown()) }), claims: claimView }),
+};
+
 /** The stored-packet boundary: every field, so a hand-edited or truncated packet fails before review or recording. */
 const packetSchema = z.strictObject({
   version: z.literal(PACKET_VERSION),
@@ -112,7 +121,8 @@ export function assertPacket(packet: ReviewPacket): void {
   const shape = packetSchema.safeParse(packet);
   if (!shape.success) fail(shape.error.issues.slice(0, 3).map((i) => `${i.path.join(".")}: ${i.message}`).join("; "));
   for (const item of packet.items) {
-    if (item.kind === "claim" && !claimContentSchema.safeParse(item.content).success) fail(`claim item ${item.id} has malformed content`);
+    const schema = CONTENT_SCHEMAS[item.kind];
+    if (schema && !schema.safeParse(item.content).success) fail(`${item.kind} item ${item.id} has malformed content`);
   }
   if (packet.version !== PACKET_VERSION) fail(`version must be ${PACKET_VERSION}`);
   if (packet.items.length === 0) fail("it has no items");

@@ -117,7 +117,7 @@ export async function ingestPaper(ctx: EvidenceContext, ref: { pmid?: string; do
   }
 
   // The matched Europe PMC record's types, else the PubMed record's (the Crossref fallback has none).
-  const pubTypes = epmc?.pubTypes ?? pubmed?.pubTypes ?? [];
+  const pubTypes = epmc?.pubTypes?.length ? epmc.pubTypes : (pubmed?.pubTypes ?? []);
   const title = check?.title ?? epmc?.title ?? pubmed?.title ?? null;
   const kind = paperKind(pubTypes);
   if (!kind) issues.push(`publication types (${pubTypes.join(", ") || "none"}) are not a systematic review, meta-analysis or position stand`);
