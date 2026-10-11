@@ -103,10 +103,11 @@ export const evidenceEntrySchema = z.strictObject({
     .array(
       z.strictObject({
         origin: z.enum(["europepmc-fulltext", "publisher-excerpt"]),
-        locator: z.string().min(1).max(300),
-        text: z.string().min(1).max(MAX_SECTION_CHARS),
+        // Nonblank after trimming, whoever wrote the stored file (Sol R1 PR31-04).
+        locator: z.string().max(300).refine((v) => v.trim().length > 0, "a locator is required"),
+        text: z.string().max(MAX_SECTION_CHARS).refine((v) => v.trim().length > 0, "excerpt text is required"),
         license: z.string().min(1).max(200).optional(),
-        attribution: z.string().min(1).max(500).optional(),
+        attribution: z.string().max(500).refine((v) => v.trim().length > 0, "an attribution is required").optional(),
       }),
     )
     .max(40)
@@ -221,6 +222,12 @@ export function assertPacket(packet: ReviewPacket): void {
     if (packet.rubric === "segments" && item.kind !== "segment") fail(`a segments packet cannot hold ${item.id}`);
   }
   if (packet.rubric !== "claims" && !packet.safetyRules?.trim()) fail(`a ${packet.rubric} review needs the safety rules`);
+  // One entry per source, so the per-source excerpt caps hold for the packet (Sol R1 PR31-03).
+  const seen = new Set<string>();
+  for (const e of packet.evidence) {
+    if (seen.has(e.sourceId)) fail(`evidence for source ${e.sourceId} appears twice`);
+    seen.add(e.sourceId);
+  }
   for (const e of packet.evidence) {
     if (!e.text.trim()) fail(`evidence ${e.sourceId} has no text`);
   }

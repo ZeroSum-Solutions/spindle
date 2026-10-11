@@ -1,7 +1,7 @@
 // D-13 full-text sections and publisher excerpts. Synthetic JATS and text only; no network.
 import { describe, expect, it } from "vitest";
-import { getEuropePmcFullText, jatsSections, MAX_SECTION_CHARS, publisherExcerpt, selectSections, type Excerpt } from "./fulltext";
-import { evidenceEntrySchema, reviewPrompt, type EvidenceEntry, type ReviewPacket } from "./review/index";
+import { fullTextLicense, getEuropePmcFullText, jatsSections, MAX_SECTION_CHARS, publisherExcerpt, selectSections, type Excerpt } from "./fulltext";
+import { assertPacket, evidenceEntrySchema, reviewPrompt, type EvidenceEntry, type ReviewPacket } from "./review/index";
 import { testContext } from "./testing";
 
 const JATS = `<?xml version="1.0"?><!DOCTYPE article PUBLIC "-//NLM//DTD JATS//EN" "x.dtd">
@@ -95,5 +95,61 @@ describe("getEuropePmcFullText", () => {
     const missing = testContext([["PMC9/fullTextXML", () => new Response("", { status: 404 })]]);
     expect(await getEuropePmcFullText(missing.ctx, "PMC9")).toBeNull();
     await expect(getEuropePmcFullText(ok.ctx, "../x")).rejects.toThrow(/PMCID/);
+  });
+});
+
+describe("Sol R1 on #31", () => {
+  it("PR31-01: gates on every recorded licence, OpenAlex's included", () => {
+    expect(fullTextLicense({ unpaywall: "cc-by", europepmc: "cc by" })).toBe("cc-by");
+    expect(() => fullTextLicense({ unpaywall: "cc-by", europepmc: "cc by", openalex: "cc-by-nc" })).toThrow(/cc-by-nc.*not open/);
+    expect(() => fullTextLicense({})).toThrow(/no licence recorded/);
+  });
+
+  const table = (cells: string) => `<article><body><sec><title>S</title><p>x</p></sec></body><floats-group>
+    <table-wrap><label>Table 9</label><caption><p>Synthetic.</p></caption><table><thead><tr><th>Group</th><th>Treatment</th><th>Outcome</th></tr></thead>
+    <tbody>${cells}</tbody></table></table-wrap></floats-group></article>`;
+
+  it("PR31-02: keeps empty cells in their columns", () => {
+    const t = jatsSections(table("<tr><td>A</td><td/><td>10</td></tr>")).find((x) => x.locator === "Table: Table 9")!;
+    expect(t.text).toBe("Synthetic. Group: A; Treatment: ; Outcome: 10.");
+  });
+
+  it("PR31-02: refuses a table with merged cells instead of mislabelling its values", () => {
+    const sections = jatsSections(table('<tr><td rowspan="2">A</td><td>x</td><td>10</td></tr><tr><td>y</td><td>20</td></tr>'));
+    expect(() => selectSections(sections, ["Table 9"], "cc-by")).toThrow(/merged cells/);
+    expect(sections.find((x) => x.locator === "Table: Table 9")?.text ?? "").not.toMatch(/Treatment: 20/);
+  });
+
+  it("PR31-05: matches table labels exactly and section names as whole words of one heading", () => {
+    const sections = [
+      { locator: "Table: Table 1", text: "one" },
+      { locator: "Table: Table 10", text: "ten" },
+      { locator: "Section: 4. Normal Scapulothoracic Articulation", text: "normal" },
+      { locator: "Section: 5. Abnormal Scapulothoracic Articulation", text: "abnormal" },
+    ];
+    expect(selectSections(sections, ["Table 1"], "cc-by").map((x) => x.locator)).toEqual(["Table: Table 1"]);
+    expect(selectSections(sections, ["Normal Scapulothoracic"], "cc-by").map((x) => x.locator)).toEqual(["Section: 4. Normal Scapulothoracic Articulation"]);
+  });
+
+  const entry: EvidenceEntry = {
+    sourceId: "11111111-1111-4111-8111-111111111111", kind: "position_stand", title: "Synthetic pathway", identifiers: { doi: "10.5555/x" },
+    text: "Synthetic abstract.", textOrigin: "europepmc-med", retraction: "not_retracted", checkedAt: "2026-10-11T00:00:00Z", year: 2025, journal: "Synthetic Journal",
+  };
+
+  it("PR31-04: refuses blank locators, attributions and excerpt text at the packet boundary", () => {
+    for (const x of [{ locator: " " }, { attribution: " " }, { text: "  " }]) {
+      expect(() => evidenceEntrySchema.parse({ ...entry, excerpts: [{ origin: "publisher-excerpt", locator: "p. 1", text: "Words.", attribution: "Synthetic.", ...x }] })).toThrow();
+    }
+  });
+
+  it("PR31-03: refuses two evidence entries for one source in a packet", () => {
+    const words = { ...entry, excerpts: [{ origin: "publisher-excerpt" as const, locator: "p. 1", text: "w ".repeat(300), attribution: "Synthetic." }] };
+    const packet = {
+      version: 1, rubric: "claims", createdAt: "2026-10-11T00:00:00Z",
+      items: [{ id: "claim:22222222-2222-4222-8222-222222222222", kind: "claim", target: "22222222-2222-4222-8222-222222222222", expectedHash: "a".repeat(64),
+        content: { statement: "S.", evidenceLevel: "x", population: "x", sourceIds: [entry.sourceId] } }],
+      evidence: [words, words],
+    } as unknown as ReviewPacket;
+    expect(() => assertPacket(packet)).toThrow(/appears twice/);
   });
 });
