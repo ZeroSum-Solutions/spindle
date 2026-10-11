@@ -8,6 +8,7 @@ const BASE = "https://www.ebi.ac.uk/europepmc/webservices/rest/search";
 const resultSchema = z.object({
   id: z.string(),
   pmid: z.string().optional(),
+  pmcid: z.string().optional(),
   doi: z.string().optional(),
   title: z.string(),
   pubYear: z.string().regex(/^\d{4}$/).optional(),
@@ -32,6 +33,8 @@ export interface EuropePmcWork extends WorkSummary {
   pubTypes?: string[];
   /** True for Europe PMC's copy of the PubMed record (source MED): its year and journal are PubMed's. */
   medRecord?: boolean;
+  /** The PubMed Central id, when the article has a PMC copy (D-13 full text). */
+  pmcid?: string;
 }
 
 export async function searchEuropePmc(
@@ -62,6 +65,7 @@ export async function searchEuropePmc(
       year: r.pubYear ? Number(r.pubYear) : undefined,
       journal: r.journalInfo?.journal?.title,
       medRecord: r.source === "MED",
+      ...(r.pmcid && /^PMC\d{1,9}$/.test(r.pmcid) ? { pmcid: r.pmcid } : {}),
       isReview: types.some((t) => /review|meta-analysis/i.test(t) && !/retract/i.test(t)),
       ...retractionFromPubTypes(types),
       citedByCount: r.citedByCount,

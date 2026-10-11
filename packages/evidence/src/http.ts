@@ -71,6 +71,8 @@ export interface RequestOptions {
   nullStatuses?: readonly number[];
   /** Only this success status counts; any other 2xx is a validation error (for example oEmbed's 200-only rule). */
   requireStatus?: number;
+  /** "text" returns the body as a string (validated by the schema) instead of parsing JSON. */
+  responseType?: "json" | "text";
 }
 
 export interface Http {
@@ -202,7 +204,7 @@ export function createHttp(options: HttpOptions = {}): Http {
     try {
       lastStart.set(host, now()); // stamped in the same synchronous step as the send
       const res = await doFetch(url, {
-        headers: { Accept: "application/json", "User-Agent": opts.userAgent, ...opts.headers },
+        headers: { Accept: opts.responseType === "text" ? "application/xml, text/plain" : "application/json", "User-Agent": opts.userAgent, ...opts.headers },
         signal: AbortSignal.timeout(timeoutMs),
       });
       if (!res.ok) {
@@ -228,10 +230,13 @@ export function createHttp(options: HttpOptions = {}): Http {
         throw new EvidenceValidationError(`HTTP ${res.status} from ${safeUrl}; only ${opts.requireStatus} is accepted`, safeUrl);
       }
       const text = await res.text(); // body timeouts land in the catch below and are retried
-      try {
-        body = JSON.parse(text);
-      } catch {
-        throw new EvidenceValidationError(`Response from ${safeUrl} is not valid JSON`, safeUrl);
+      if (opts.responseType === "text") body = text;
+      else {
+        try {
+          body = JSON.parse(text);
+        } catch {
+          throw new EvidenceValidationError(`Response from ${safeUrl} is not valid JSON`, safeUrl);
+        }
       }
     } catch (err) {
       if (err instanceof EvidenceHttpError || err instanceof EvidenceValidationError) throw err;

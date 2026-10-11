@@ -1,0 +1,183 @@
+// D-13 full-text sections and publisher excerpts. Synthetic JATS and text only; no network.
+import { describe, expect, it } from "vitest";
+import { fullTextLicense, getEuropePmcFullText, jatsSections, MAX_SECTION_CHARS, publisherExcerpt, selectSections, type Excerpt } from "./fulltext";
+import { assertPacket, evidenceEntrySchema, reviewPrompt, type EvidenceEntry, type ReviewPacket } from "./review/index";
+import { testContext } from "./testing";
+
+const JATS = `<?xml version="1.0"?><!DOCTYPE article PUBLIC "-//NLM//DTD JATS//EN" "x.dtd">
+<article><front><article-meta><abstract><p>Abstract text is not a section.</p></abstract></article-meta></front>
+<body>
+<sec id="s1"><title>1. Anatomy</title><p>The scapula is a flat bone &amp; rests on the thorax (p &lt; 0.05).</p>
+  <fig id="f1"><label>Figure 1</label><caption><p>Figure caption is skipped.</p></caption></fig>
+  <sec id="s1a"><title>1.1 Muscles</title><p>Serratus anterior attaches to the <italic>medial</italic> border.</p>
+    <table-wrap id="t1"><label>Table 1</label><caption><p>Synthetic muscles.</p></caption><table><thead><tr><th>Muscle</th><th>Insertion</th></tr></thead>
+      <tbody><tr><td>Subscapularis</td><td>Lesser tubercle</td></tr><tr><td>Supraspinatus</td><td>Greater <italic>tubercle</italic></td></tr></tbody></table>
+      <table-wrap-foot><p>Synthetic footnote.</p></table-wrap-foot></table-wrap></sec>
+  <p>After the subsection.<![CDATA[ x<y ]]></p></sec>
+<sec id="s2"><title>2. Treatment</title><p>Not anatomy.</p></sec>
+</body><back><ref-list><ref><p>Reference text.</p></ref></ref-list></back>
+<floats-group><table-wrap id="t2"><label>Table 2</label><caption><p>Floating table.</p></caption><table><thead><tr><th>X</th><th>Y</th></tr></thead><tbody><tr><td>A</td><td>B</td></tr></tbody></table></table-wrap></floats-group></article>`;
+
+describe("jatsSections", () => {
+  it("returns body sections with their own prose and a title path, then tables as header: value rows, skipping figures, front and back", () => {
+    expect(jatsSections(JATS)).toEqual([
+      { locator: "Section: 1. Anatomy > 1.1 Muscles", text: "Serratus anterior attaches to the medial border." },
+      { locator: "Section: 1. Anatomy", text: "The scapula is a flat bone & rests on the thorax (p < 0.05). After the subsection. x<y" },
+      { locator: "Section: 2. Treatment", text: "Not anatomy." },
+      { locator: "Table: Table 1", text: "Synthetic muscles. Muscle: Subscapularis; Insertion: Lesser tubercle. Muscle: Supraspinatus; Insertion: Greater tubercle. Synthetic footnote." },
+      { locator: "Table: Table 2", text: "Floating table. X: A; Y: B." },
+    ]);
+  });
+});
+
+describe("selectSections", () => {
+  const sections = jatsSections(JATS);
+  it("picks the named sections under an open licence", () => {
+    const picked = selectSections(sections, ["anatomy"], "cc-by");
+    expect(picked.map((p) => p.locator)).toEqual(["Section: 1. Anatomy > 1.1 Muscles", "Section: 1. Anatomy"]);
+    expect(selectSections(sections, ["Table 1"], "cc-by").map((p) => p.locator)).toEqual(["Table: Table 1"]);
+    expect(picked.every((p) => p.origin === "europepmc-fulltext" && p.license === "cc-by")).toBe(true);
+  });
+  it.each([
+    ["a closed licence", ["anatomy"], "All rights reserved", /needs an open licence/],
+    ["a restricted CC licence", ["anatomy"], "cc-by-nc", /needs an open licence/],
+    ["an unknown section", ["methods"], "cc-by", /no section matches "methods"/],
+    ["no section", [], "cc-by", /at least one section/],
+  ])("refuses %s", (_n, wanted, license, error) => {
+    expect(() => selectSections(sections, wanted as string[], license as string)).toThrow(error as RegExp);
+  });
+  it("refuses an oversize section", () => {
+    expect(() => selectSections([{ locator: "Section: Huge", text: "x".repeat(MAX_SECTION_CHARS + 1) }], ["huge"], "cc0")).toThrow(/name a subsection/);
+  });
+});
+
+describe("publisherExcerpt", () => {
+  const words = (n: number) => Array.from({ length: n }, (_, i) => `w${i}`).join(" ");
+  it("adds an attributed excerpt with a locator, up to 300 words per source", () => {
+    const first = publisherExcerpt([], words(200), "p. 4, PICO 6", "Synthetic pathway, 2025.");
+    expect(first).toMatchObject({ origin: "publisher-excerpt", locator: "p. 4, PICO 6", attribution: "Synthetic pathway, 2025." });
+    expect(() => publisherExcerpt([first], words(101), "p. 5", "Synthetic pathway, 2025.")).toThrow(/301 words; the limit is 300/);
+    expect(() => publisherExcerpt([first], words(100), "p. 5", "Synthetic pathway, 2025.")).not.toThrow();
+  });
+  it("needs a locator and an attribution", () => {
+    expect(() => publisherExcerpt([], "text", " ", "a")).toThrow(/locator/);
+    expect(() => publisherExcerpt([], "text", "p. 1", "")).toThrow(/attribution/);
+  });
+});
+
+describe("excerpts at the packet boundary", () => {
+  const entry: EvidenceEntry = {
+    sourceId: "11111111-1111-4111-8111-111111111111", kind: "position_stand", title: "Synthetic pathway", identifiers: { doi: "10.5555/x" },
+    text: "Synthetic abstract.", textOrigin: "europepmc-med", retraction: "not_retracted", checkedAt: "2026-10-11T00:00:00Z", year: 2025, journal: "Synthetic Journal",
+  };
+  const excerpt = (x: Partial<Excerpt>): Excerpt => ({ origin: "publisher-excerpt", locator: "p. 4", text: "Synthetic words.", attribution: "Synthetic, 2025.", ...x });
+  it("accepts attributed excerpts and open full text", () => {
+    expect(() => evidenceEntrySchema.parse({ ...entry, excerpts: [excerpt({}), excerpt({ origin: "europepmc-fulltext", license: "CC BY 4.0", attribution: undefined })] })).not.toThrow();
+  });
+  it.each([
+    ["full text under a closed licence", [excerpt({ origin: "europepmc-fulltext", license: "All rights reserved", attribution: undefined })], /open licence/],
+    ["an unattributed publisher excerpt", [excerpt({ attribution: undefined })], /attribution/],
+    ["more than 300 words of publisher excerpts", [excerpt({ text: "w ".repeat(200) }), excerpt({ text: "w ".repeat(101) })], /300 words/],
+  ])("refuses %s", (_n, excerpts, error) => {
+    expect(() => evidenceEntrySchema.parse({ ...entry, excerpts })).toThrow(error);
+  });
+  it("tells Sol to say when an excerpt is too short", () => {
+    const prompt = reviewPrompt({ version: 1, rubric: "claims", createdAt: "2026-10-11T00:00:00Z", items: [], evidence: [] } as unknown as ReviewPacket);
+    expect(prompt).toMatch(/say in a BLOCK finding\s+that the excerpt is insufficient/);
+  });
+});
+
+describe("getEuropePmcFullText", () => {
+  it("fetches the JATS text for a PMCID and maps 404 to null", async () => {
+    const ok = testContext([["PMC123/fullTextXML", () => new Response(JATS, { status: 200 })]]);
+    expect(await getEuropePmcFullText(ok.ctx, "PMC123")).toBe(JATS);
+    expect(ok.calls[0]!.headers.Accept).toMatch(/xml/);
+    const missing = testContext([["PMC9/fullTextXML", () => new Response("", { status: 404 })]]);
+    expect(await getEuropePmcFullText(missing.ctx, "PMC9")).toBeNull();
+    await expect(getEuropePmcFullText(ok.ctx, "../x")).rejects.toThrow(/PMCID/);
+  });
+});
+
+describe("Sol R1 on #31", () => {
+  it("PR31-01: gates on every recorded licence, OpenAlex's included", () => {
+    expect(fullTextLicense({ unpaywall: "cc-by", europepmc: "cc by" })).toBe("cc-by");
+    expect(() => fullTextLicense({ unpaywall: "cc-by", europepmc: "cc by", openalex: "cc-by-nc" })).toThrow(/cc-by-nc.*not open/);
+    expect(() => fullTextLicense({})).toThrow(/no licence recorded/);
+  });
+
+  const table = (cells: string) => `<article><body><sec><title>S</title><p>x</p></sec></body><floats-group>
+    <table-wrap><label>Table 9</label><caption><p>Synthetic.</p></caption><table><thead><tr><th>Group</th><th>Treatment</th><th>Outcome</th></tr></thead>
+    <tbody>${cells}</tbody></table></table-wrap></floats-group></article>`;
+
+  it("PR31-02: keeps empty cells in their columns", () => {
+    const t = jatsSections(table("<tr><td>A</td><td/><td>10</td></tr>")).find((x) => x.locator === "Table: Table 9")!;
+    expect(t.text).toBe("Synthetic. Group: A; Treatment: ; Outcome: 10.");
+  });
+
+  it("PR31-02: refuses a table with merged cells instead of mislabelling its values", () => {
+    const sections = jatsSections(table('<tr><td rowspan="2">A</td><td>x</td><td>10</td></tr><tr><td>y</td><td>20</td></tr>'));
+    expect(() => selectSections(sections, ["Table 9"], "cc-by")).toThrow(/merged cells/);
+    expect(sections.find((x) => x.locator === "Table: Table 9")?.text ?? "").not.toMatch(/Treatment: 20/);
+  });
+
+  it("PR31-05: matches table labels exactly and section names as whole words of one heading", () => {
+    const sections = [
+      { locator: "Table: Table 1", text: "one" },
+      { locator: "Table: Table 10", text: "ten" },
+      { locator: "Section: 4. Normal Scapulothoracic Articulation", text: "normal" },
+      { locator: "Section: 5. Abnormal Scapulothoracic Articulation", text: "abnormal" },
+    ];
+    expect(selectSections(sections, ["Table 1"], "cc-by").map((x) => x.locator)).toEqual(["Table: Table 1"]);
+    expect(selectSections(sections, ["Normal Scapulothoracic"], "cc-by").map((x) => x.locator)).toEqual(["Section: 4. Normal Scapulothoracic Articulation"]);
+  });
+
+  const entry: EvidenceEntry = {
+    sourceId: "11111111-1111-4111-8111-111111111111", kind: "position_stand", title: "Synthetic pathway", identifiers: { doi: "10.5555/x" },
+    text: "Synthetic abstract.", textOrigin: "europepmc-med", retraction: "not_retracted", checkedAt: "2026-10-11T00:00:00Z", year: 2025, journal: "Synthetic Journal",
+  };
+
+  it("PR31-04: refuses blank locators, attributions and excerpt text at the packet boundary", () => {
+    for (const x of [{ locator: " " }, { attribution: " " }, { text: "  " }]) {
+      expect(() => evidenceEntrySchema.parse({ ...entry, excerpts: [{ origin: "publisher-excerpt", locator: "p. 1", text: "Words.", attribution: "Synthetic.", ...x }] })).toThrow();
+    }
+  });
+
+  it("PR31-03: refuses two evidence entries for one source in a packet", () => {
+    const words = { ...entry, excerpts: [{ origin: "publisher-excerpt" as const, locator: "p. 1", text: "w ".repeat(300), attribution: "Synthetic." }] };
+    const packet = {
+      version: 1, rubric: "claims", createdAt: "2026-10-11T00:00:00Z",
+      items: [{ id: "claim:22222222-2222-4222-8222-222222222222", kind: "claim", target: "22222222-2222-4222-8222-222222222222", expectedHash: "a".repeat(64),
+        content: { statement: "S.", evidenceLevel: "x", population: "x", sourceIds: [entry.sourceId] } }],
+      evidence: [words, words],
+    } as unknown as ReviewPacket;
+    expect(() => assertPacket(packet)).toThrow(/appears twice/);
+  });
+
+  it.each([
+    ["a decimal-encoded span", '<tr><td rowspan="&#50;">A</td><td>x</td><td>10</td></tr><tr><td>y</td><td>20</td></tr>'],
+    ["a hex-encoded span", '<tr><td rowspan="&#x32;">A</td><td>x</td><td>10</td></tr><tr><td>y</td><td>20</td></tr>'],
+    ["an unquoted span", "<tr><td colspan=2>A</td><td>10</td></tr>"],
+    ["a ragged row", "<tr><td>A</td><td>x</td></tr>"],
+  ])("PR31-02 R2: refuses a table that is not a plain grid: %s", (_n, cells) => {
+    const sections = jatsSections(table(cells));
+    expect(() => selectSections(sections, ["Table 9"], "cc-by")).toThrow(/plain grid/);
+  });
+
+  it("PR31-02 R2: refuses a table without a header row", () => {
+    const xml = `<article><body><sec><title>S</title><p>x</p></sec></body><floats-group><table-wrap><label>Table 8</label><table><tbody><tr><td>A</td></tr></tbody></table></table-wrap></floats-group></article>`;
+    expect(() => selectSections(jatsSections(xml), ["Table 8"], "cc-by")).toThrow(/plain grid/);
+  });
+
+  it("PR31-02 R2: accepts an explicit span of 1", () => {
+    const t = jatsSections(table('<tr><td rowspan="1" colspan="&#49;">A</td><td>x</td><td>10</td></tr>')).find((x) => x.locator === "Table: Table 9")!;
+    expect(t.unsupported).toBeUndefined();
+  });
+
+  it("PR31-R3-01: refuses a table with more than one header row", () => {
+    const xml = `<article><body><sec><title>S</title><p>x</p></sec></body><floats-group><table-wrap><label>Table 7</label><table>
+      <thead><tr><th>Placebo</th><th>Treatment</th></tr><tr><th>Events</th><th>Events</th></tr></thead>
+      <tbody><tr><td>10</td><td>20</td></tr></tbody></table></table-wrap></floats-group></article>`;
+    expect(() => selectSections(jatsSections(xml), ["Table 7"], "cc-by")).toThrow(/plain grid/);
+  });
+});
+

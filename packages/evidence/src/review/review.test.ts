@@ -275,6 +275,24 @@ describe("runReview fails closed", () => {
   });
 });
 
+describe("a refused review keeps the raw answer for diagnosis (dry run 3, finding E)", () => {
+  it("stores Sol's answer privately in the failed outcome, and the recorder still records nothing", async () => {
+    const p = claimPacket();
+    const warned = { ...approve(`claim:${C1}`), findings: [{ severity: "WARN", item: "statement", note: "Synthetic warning text." }] };
+    const outcome = await runReview(p, runner(answer([warned, approve(`claim:${C2}`)])), () => NOW);
+    expect(outcome.ok).toBe(false);
+    if (outcome.ok) return;
+    expect(outcome.errors.join(" ")).toMatch(/cannot carry a BLOCK or WARN/);
+    expect(outcome.rawAnswer).toContain("Synthetic warning text.");
+    expect(() => receiptCalls(p, outcome, NOW)).toThrow(/not recording a failed review/);
+  });
+
+  it("bounds the stored answer", async () => {
+    const outcome = await runReview(claimPacket(), runner("x".repeat(300_000)), () => NOW);
+    expect(!outcome.ok && outcome.rawAnswer?.length).toBe(200_000);
+  });
+});
+
 describe("hardening (internal review)", () => {
   it("records from the raw answer, never from edited outcome items", async () => {
     const p = claimPacket();

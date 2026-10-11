@@ -5,6 +5,8 @@ import { createHash } from "node:crypto";
 import { lessonBlockSchema, lessonSchema } from "@spindle/schema";
 import { z } from "zod";
 import { GUIDANCE_TYPES, overrideKind, REFERENCE_TYPES, type KindOverrideType } from "../ingest";
+import { isOpenLicense } from "../ingest";
+import { MAX_EXCERPT_WORDS_PER_SOURCE, MAX_FULLTEXT_CHARS_PER_SOURCE, MAX_SECTION_CHARS, wordCount, type Excerpt } from "../fulltext";
 import type { RetractionState } from "../retraction";
 import { descriptionTimesError } from "../video/timestamps";
 
@@ -45,6 +47,8 @@ export interface EvidenceEntry {
   journal?: string;
   /** D-12: the kind was recorded by a publisher override of PubMed's labels; the reviewer sees why. */
   kindOverride?: { documentType: KindOverrideType; justification: string; publicationTypes: string[] };
+  /** D-13: open-licence full-text sections or a short publisher excerpt, each with a locator. Private only. */
+  excerpts?: Excerpt[];
 }
 
 export interface ReviewPacket {
@@ -95,7 +99,31 @@ export const evidenceEntrySchema = z.strictObject({
       publicationTypes: z.array(z.string().min(1).max(200)).min(1).max(30),
     })
     .optional(),
+  excerpts: z
+    .array(
+      z.strictObject({
+        origin: z.enum(["europepmc-fulltext", "publisher-excerpt"]),
+        // Nonblank after trimming, whoever wrote the stored file (Sol R1 PR31-04).
+        locator: z.string().max(300).refine((v) => v.trim().length > 0, "a locator is required"),
+        text: z.string().max(MAX_SECTION_CHARS).refine((v) => v.trim().length > 0, "excerpt text is required"),
+        license: z.string().min(1).max(200).optional(),
+        attribution: z.string().max(500).refine((v) => v.trim().length > 0, "an attribution is required").optional(),
+      }),
+    )
+    .max(40)
+    .optional(),
 })
+  // D-13: full text only under an open licence; publisher excerpts at most 300 words per source, attributed.
+  .refine((e) => (e.excerpts ?? []).every((x) => x.origin !== "europepmc-fulltext" || isOpenLicense(x.license)), { message: "full-text excerpts need an open licence" })
+  .refine((e) => (e.excerpts ?? []).every((x) => x.origin !== "publisher-excerpt" || !!x.attribution), { message: "a publisher excerpt needs its attribution" })
+  .refine(
+    (e) => (e.excerpts ?? []).filter((x) => x.origin === "publisher-excerpt").reduce((n, x) => n + wordCount(x.text), 0) <= MAX_EXCERPT_WORDS_PER_SOURCE,
+    { message: `publisher excerpts are limited to ${MAX_EXCERPT_WORDS_PER_SOURCE} words per source` },
+  )
+  .refine(
+    (e) => (e.excerpts ?? []).filter((x) => x.origin === "europepmc-fulltext").reduce((n, x) => n + x.text.length, 0) <= MAX_FULLTEXT_CHARS_PER_SOURCE,
+    { message: `full-text excerpts are limited to ${MAX_FULLTEXT_CHARS_PER_SOURCE} characters per source` },
+  )
   .refine((e) => !e.kindOverride || e.kind === overrideKind(e.kindOverride.documentType), { message: "the kind override does not match the source kind" })
   .refine((e) => e.kind !== "foundation_reference" || e.kindOverride !== undefined, { message: "a foundation reference needs its kind override" })
   // Papers carry the year and journal a claim may cite (Sol R1 PR26-05); textbooks and nomenclature need not.
@@ -194,6 +222,12 @@ export function assertPacket(packet: ReviewPacket): void {
     if (packet.rubric === "segments" && item.kind !== "segment") fail(`a segments packet cannot hold ${item.id}`);
   }
   if (packet.rubric !== "claims" && !packet.safetyRules?.trim()) fail(`a ${packet.rubric} review needs the safety rules`);
+  // One entry per source, so the per-source excerpt caps hold for the packet (Sol R1 PR31-03).
+  const seen = new Set<string>();
+  for (const e of packet.evidence) {
+    if (seen.has(e.sourceId)) fail(`evidence for source ${e.sourceId} appears twice`);
+    seen.add(e.sourceId);
+  }
   for (const e of packet.evidence) {
     if (!e.text.trim()) fail(`evidence ${e.sourceId} has no text`);
   }

@@ -68,6 +68,7 @@ main(async () => {
   if (!outcome.ok) {
     console.log("NOT APPROVED (nothing will be recorded):");
     for (const e of outcome.errors) console.log(`  - ${e}`);
+    if (outcome.rawAnswer) console.log(`  the reviewer's raw answer is kept in ${join(out, "outcome.json")} (private)`);
     return 1;
   }
   console.log(`reviewed by ${outcome.run.model}, session ${outcome.run.session}; record with record-review.ts --dir ${out}`);
