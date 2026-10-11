@@ -23,10 +23,18 @@ export const LOGO_MAX_BYTES = 512 * 1024;
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, "must be a #RRGGBB colour");
 
 /**
+ * Characters that draw nothing but are classed as letters or symbols: default-ignorable code points
+ * (the Hangul fillers U+115F, U+1160, U+3164 and U+FFA0 among them) and the Braille blank U+2800.
+ * They may appear in a name but never count as its visible text.
+ */
+const BLANK = /[\p{Default_Ignorable_Code_Point}\u2800]/gu;
+
+/**
  * A display name: plain text, no markup, no links, and no invisible characters. Control characters
  * (C0, DEL, C1), format characters (zero-width spaces and joiners, word joiners, the byte-order
  * mark, bidi embeddings, overrides and isolates) and line or paragraph separators are refused,
- * and at least one visible letter, digit, punctuation mark or symbol is required.
+ * and at least one visible letter, digit, punctuation mark or symbol is required (blank fillers
+ * such as U+3164 and U+2800 do not count).
  */
 const plainName = z
   .string()
@@ -35,7 +43,7 @@ const plainName = z
   .max(60)
   .refine((s) => !/[<>{}\\`]|https?:|www\./i.test(s), "must be plain text")
   .refine((s) => !/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(s), "must not contain control, format or invisible characters")
-  .refine((s) => /[\p{L}\p{N}\p{P}\p{S}]/u.test(s), "must contain visible text");
+  .refine((s) => /[\p{L}\p{N}\p{P}\p{S}]/u.test(s.replace(BLANK, "")), "must contain visible text");
 
 /**
  * A raster logo the gym uploaded to its own brand folder. Only the object's file name is stored
