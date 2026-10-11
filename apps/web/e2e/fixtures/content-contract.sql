@@ -61,7 +61,8 @@ $$;
 select set_config('c2.base_version', public.publisher_publish_course('c2c2c2c2-0000-4000-8000-0000000000a1',
   'c2c2c2c2-0000-4000-8000-000000000c01')::text, true);
 
--- Link ingress: each URL as an image source in a draft, in its own savepoint.
+-- Link ingress: each URL as a resource link in a draft, in its own savepoint. (Media src must be a stored
+-- file since P18-06; links keep the full link grammar.)
 do $$
 declare
   item record;
@@ -75,9 +76,8 @@ begin
           'title', 'Probe', 'summary', '', 'lessons', jsonb_build_array(jsonb_build_object(
             'id', 'c2c2c2c2-0000-4000-8000-000000000c32', 'slug', 'probe', 'title', 'Probe', 'summary', '',
             'durationMinutes', 1, 'format', 'article', 'objectives', '[]'::jsonb, 'anatomyIds', '[]'::jsonb,
-            'blocks', jsonb_build_array(jsonb_build_object('kind', 'image', 'content', jsonb_build_object(
-              'kind', 'image', 'src', item.url, 'alt', 'Probe', 'caption', '', 'provenanceId', 'c2-probe'))),
-            'media', '[]'::jsonb, 'resources', '[]'::jsonb))))));
+            'blocks', jsonb_build_array(jsonb_build_object('kind', 'paragraph', 'content', 'Probe.', 'support', 'practice-based', 'claimIds', '[]'::jsonb)),
+            'media', '[]'::jsonb, 'resources', jsonb_build_array(jsonb_build_object('label', 'Probe', 'href', item.url, 'type', 'reference'))))))));
       insert into c2_urls values (item.ord, item.url, true, null);
     exception when others then
       insert into c2_urls values (item.ord, item.url, false, sqlerrm);

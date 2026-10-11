@@ -61,6 +61,9 @@ export interface IngestedPaper {
   journal?: string;
   year?: number;
   kind: PaperKind | null;
+  /** D-13: the PMC copy and the licences both records give, for full-text excerpts. */
+  pmcid?: string;
+  licenses?: { unpaywall?: string; europepmc?: string; openalex?: string };
   /** Present when the kind comes from a D-12 override rather than PubMed's publication types. */
   kindOverride?: KindOverrideRequest & { publicationTypes: string[] };
   abstract: { text: string; origin: "europepmc-med" | "crossref" } | null;
@@ -211,6 +214,12 @@ export async function ingestPaper(
     title,
     ...(journal ? { journal } : {}),
     ...(year !== undefined ? { year } : {}),
+    ...(epmc?.pmcid ? { pmcid: epmc.pmcid } : {}),
+    licenses: {
+      ...(check?.oa.license ? { unpaywall: check.oa.license } : {}),
+      ...(epmc?.oa?.license ? { europepmc: epmc.oa.license } : {}),
+      ...(check?.openalexLicense ? { openalex: check.openalexLicense } : {}),
+    },
     kind,
     ...(kindOverride ? { kindOverride } : {}),
     abstract,

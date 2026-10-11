@@ -98,7 +98,6 @@ const blockVariants = z.discriminatedUnion("kind", [
   }),
   z.strictObject({ kind: z.literal("image"), content: mediaAssetSchema }),
   z.strictObject({ kind: z.literal("checklist"), content: z.array(requiredText).min(1).max(100), ...supported }),
-  z.strictObject({ kind: z.literal("diagram"), content: z.strictObject({ diagramId: idSchema, caption: text }) }),
   z.strictObject({
     kind: z.literal("quiz"),
     content: z
@@ -114,7 +113,22 @@ const blockVariants = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("video"), content: videoSegmentSchema }),
 ]);
 
-export const lessonBlockSchema = blockVariants.superRefine((block, ctx) => {
+/** Legacy diagram block (before R16): parses so historical snapshots stay readable; validateCatalog refuses it. */
+const legacyDiagramSchema = z.strictObject({ kind: z.literal("diagram"), content: z.strictObject({ diagramId: idSchema, caption: text }) });
+
+/** The reviewable diagram block (R16): alt, caption and legend text live in the lesson and are hashed and reviewed. */
+const diagramSchema = z.strictObject({
+  kind: z.literal("diagram"),
+  content: z.strictObject({
+    diagramId: idSchema,
+    alt: requiredText.max(500),
+    caption: text.max(1000),
+    legend: z.array(z.strictObject({ key: idSchema, label: requiredText.max(100), text: text.max(1000) })).max(20),
+  }),
+  ...supported,
+});
+
+export const lessonBlockSchema = z.union([blockVariants, diagramSchema, legacyDiagramSchema]).superRefine((block, ctx) => {
   if (!("support" in block)) return;
   const { support, claimIds } = block;
   if (new Set(claimIds).size !== claimIds.length) {
@@ -233,4 +247,19 @@ export function lessonViewCourse(course: LearnerCourse): LessonViewCourse {
       })),
     })),
   };
+}
+
+const STORED_CONTENT = /^\/media\/content\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/;
+const STORED_ORG = /^\/media\/org\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/;
+
+/**
+ * Whose stored file a media src is (P18-06): global media under /media/content/, or one gym's under
+ * /media/org/<gym id>/. Null for anything else (external URLs, other site paths, dot segments).
+ * The database applies the same rule to new authoring and at publish.
+ */
+export function storedMediaOwner(src: string): { area: "content" } | { area: "org"; orgId: string } | null {
+  if (src.split("/").some((seg) => seg === "." || seg === "..")) return null;
+  if (STORED_CONTENT.test(src)) return { area: "content" };
+  const m = STORED_ORG.exec(src);
+  return m ? { area: "org", orgId: m[1]! } : null;
 }

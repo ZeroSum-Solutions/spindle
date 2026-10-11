@@ -42,13 +42,33 @@ export interface VideoSegment {
   caption: string;
 }
 
+/** One labelled part of a diagram. `key` names the drawing's anchor; the text is reviewed teaching text. */
+export interface DiagramLegendItem {
+  key: string;
+  label: string;
+  text: string;
+}
+
+/**
+ * A diagram's reviewable content (Sol R16): everything a learner reads lives here and is hashed with the
+ * lesson. Code supplies only the drawing geometry, keyed by diagramId, with no explanatory text.
+ */
+export interface DiagramContent {
+  diagramId: string;
+  alt: string;
+  caption: string;
+  legend: DiagramLegendItem[];
+}
+
 export type LessonBlock =
   | { kind: "heading"; content: string }
   | ({ kind: "paragraph"; content: string } & Supported)
   | ({ kind: "callout"; content: { label: string; text: string } } & Supported)
   | { kind: "image"; content: MediaAsset }
   | ({ kind: "checklist"; content: string[] } & Supported)
+  /** Legacy diagram (before R16): readable in old snapshots, refused in new authoring and at publish. */
   | { kind: "diagram"; content: { diagramId: string; caption: string } }
+  | ({ kind: "diagram"; content: DiagramContent } & Supported)
   | ({
       kind: "quiz";
       content: { prompt: string; options: string[]; answerIndex: number; explanation: string };
