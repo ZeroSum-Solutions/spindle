@@ -23,6 +23,18 @@ export interface Excerpt {
   attribution?: string;
 }
 
+/**
+ * The open licence full text may be used under. Every licence any record gives (Unpaywall, Europe
+ * PMC, OpenAlex) must be open; one restricted or unknown record refuses it (Sol R1 PR31-01).
+ */
+export function fullTextLicense(licenses: { unpaywall?: string; europepmc?: string; openalex?: string }): string {
+  const given = [licenses.unpaywall, licenses.europepmc, licenses.openalex].filter((l): l is string => !!l);
+  if (given.length === 0) throw new Error("no licence recorded for this article; full text needs an open licence");
+  const closed = given.find((l) => !isOpenLicense(l));
+  if (closed) throw new Error(`licence ${JSON.stringify(closed)} is not open (CC BY, CC0 or public domain); use a publisher excerpt instead`);
+  return given[0]!;
+}
+
 export const wordCount = (text: string): number => text.trim().split(/\s+/).filter(Boolean).length;
 
 const ENTITY = /&(?:#(\d{1,7})|#x([\da-fA-F]{1,6})|(lt|gt|quot|apos|amp|nbsp));/g;
@@ -39,7 +51,11 @@ const TOKEN = /<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>|<\?[\s\S]*?\?>|<!(?!\[
 /** Text inside these elements is not section prose. */
 const SKIP = new Set(["fig", "fn-group", "ref-list", "supplementary-material", "disp-formula", "inline-formula", "graphic", "media", "label"]);
 
-interface TableState { label: string; caption: string; head: string[][]; rows: string[][]; row: string[] | null; cell: string | null; part: "label" | "caption" | "head" | "body" | "foot" | null; foot: string }
+interface TableState { label: string; caption: string; head: string[][]; rows: string[][]; row: string[] | null; cell: string | null; part: "label" | "caption" | "head" | "body" | "foot" | null; foot: string; merged: boolean }
+
+/** A cell spanning rows or columns: without a real grid its values would be mislabelled (Sol R1 PR31-02). */
+const SPAN = /\b(?:rowspan|colspan)\s*=\s*["']?\s*([0-9]+)/gi;
+const spans = (attrs: string | undefined) => [...(attrs ?? "").matchAll(SPAN)].some((m) => Number(m[1]) > 1);
 
 function tableText(t: TableState): string {
   const head = t.head[t.head.length - 1] ?? [];
@@ -52,9 +68,16 @@ function tableText(t: TableState): string {
  * title path, then one entry per table ("Table: <label>"): caption, rows as "header: value" pairs,
  * and table footnotes. Figures, references and the front matter are skipped.
  */
-export function jatsSections(xml: string): { locator: string; text: string }[] {
-  const out: { locator: string; text: string }[] = [];
-  const tables: { locator: string; text: string }[] = [];
+export interface JatsSection {
+  locator: string;
+  text: string;
+  /** Why this part cannot be excerpted (for example a table with merged cells). */
+  unsupported?: string;
+}
+
+export function jatsSections(xml: string): JatsSection[] {
+  const out: JatsSection[] = [];
+  const tables: JatsSection[] = [];
   let table: TableState | null = null;
   const secs: { title: string; parts: string[] }[] = [];
   const stack: string[] = [];
@@ -69,9 +92,16 @@ export function jatsSections(xml: string): { locator: string; text: string }[] {
     if (text) out.push({ locator: `Section: ${[...secs.map((s) => s.title), sec.title].filter(Boolean).join(" > ")}`, text });
   };
   for (const m of xml.matchAll(TOKEN)) {
-    const [, cdata, slash, name, , selfClose, text] = m;
+    const [, cdata, slash, name, attrs, selfClose, text] = m;
     if (name) {
-      if (selfClose) continue;
+      if (selfClose) {
+        // An empty cell keeps its column.
+        if (table && inBody && !skip && (name === "td" || name === "th")) {
+          if (spans(attrs)) table.merged = true;
+          table.row?.push("");
+        }
+        continue;
+      }
       if (table && inBody && !skip) {
         if (!slash) {
           stack.push(name);
@@ -81,7 +111,10 @@ export function jatsSections(xml: string): { locator: string; text: string }[] {
           else if (name === "tbody") table.part = "body";
           else if (name === "table-wrap-foot") table.part = "foot";
           else if (name === "tr") table.row = [];
-          else if (name === "td" || name === "th") table.cell = "";
+          else if (name === "td" || name === "th") {
+            table.cell = "";
+            if (spans(attrs)) table.merged = true;
+          }
           continue;
         }
         while (stack.length && stack[stack.length - 1] !== name) stack.pop();
@@ -96,7 +129,8 @@ export function jatsSections(xml: string): { locator: string; text: string }[] {
         else if (name === "table-wrap") {
           const label = table.label.replace(/\s+/g, " ").trim() || `Table ${tables.length + 1}`;
           const text = tableText(table);
-          if (text) tables.push({ locator: `Table: ${label}`, text });
+          if (table.merged) tables.push({ locator: `Table: ${label}`, text: "", unsupported: "it has merged cells (rowspan or colspan); quote it as a publisher excerpt instead" });
+          else if (text) tables.push({ locator: `Table: ${label}`, text });
           table = null;
         }
         continue;
@@ -107,7 +141,7 @@ export function jatsSections(xml: string): { locator: string; text: string }[] {
         if (name === "body" || name === "floats-group") inBody++;
         if (!inBody) continue;
         if (name === "table-wrap" && !skip) {
-          table = { label: "", caption: "", head: [], rows: [], row: null, cell: null, part: null, foot: "" };
+          table = { label: "", caption: "", head: [], rows: [], row: null, cell: null, part: null, foot: "", merged: false };
           continue;
         }
         if (SKIP.has(name)) skip++;
@@ -160,14 +194,32 @@ export async function getEuropePmcFullText(ctx: EvidenceContext, pmcid: string):
  * Full-text excerpts for the sections whose locator contains one of `wanted` (case-insensitive).
  * Refused unless the licence is open, every wanted name matches, and the sizes fit.
  */
-export function selectSections(sections: readonly { locator: string; text: string }[], wanted: readonly string[], license: string): Excerpt[] {
+/**
+ * Whether a requested name picks this part: a table by its exact label ("Table 1" never picks
+ * "Table 10"), a section when the name appears as whole words inside one heading of its title
+ * path ("Normal Scapulothoracic" never picks "Abnormal Scapulothoracic …") (Sol R1 PR31-05).
+ */
+export function sectionMatches(locator: string, wanted: string): boolean {
+  const w = wanted.trim().toLowerCase();
+  if (locator.startsWith("Table: ")) return locator.slice(7).trim().toLowerCase() === w;
+  if (/^table\s/i.test(w)) return false;
+  const words = new RegExp(`(^|[^\\p{L}\\p{N}])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^\\p{L}\\p{N}])`, "u");
+  return locator.replace(/^Section:\s*/, "").split(" > ").some((heading) => words.test(heading.toLowerCase()));
+}
+
+/**
+ * Full-text excerpts for the requested sections and tables. Refused unless the licence is open,
+ * every requested name matches, nothing chosen is unsupported, and the sizes fit.
+ */
+export function selectSections(sections: readonly JatsSection[], wanted: readonly string[], license: string): Excerpt[] {
   if (!isOpenLicense(license)) throw new Error(`full text needs an open licence (CC BY, CC0 or public domain), not ${JSON.stringify(license)}`);
   if (wanted.length === 0) throw new Error("name at least one section");
   const picked: Excerpt[] = [];
   for (const w of wanted) {
-    const hits = sections.filter((s) => s.locator.toLowerCase().includes(w.toLowerCase()));
+    const hits = sections.filter((s) => sectionMatches(s.locator, w));
     if (hits.length === 0) throw new Error(`no section matches ${JSON.stringify(w)}; sections: ${sections.map((s) => s.locator).join(" | ").slice(0, 1500)}`);
     for (const h of hits) {
+      if (h.unsupported) throw new Error(`${h.locator} cannot be excerpted: ${h.unsupported}`);
       if (h.text.length > MAX_SECTION_CHARS) throw new Error(`${h.locator} has ${h.text.length} characters; the limit is ${MAX_SECTION_CHARS}: name a subsection`);
       if (!picked.some((p) => p.locator === h.locator)) picked.push({ origin: "europepmc-fulltext", locator: h.locator.slice(0, 300), text: h.text, license });
     }

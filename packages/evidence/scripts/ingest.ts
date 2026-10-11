@@ -15,19 +15,11 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { createContext } from "../src/context";
-import { getEuropePmcFullText, jatsSections, selectSections, type Excerpt } from "../src/fulltext";
-import { ingestPaper, isOpenLicense, type IngestedPaper, type KindOverrideType } from "../src/ingest";
+import { fullTextLicense, getEuropePmcFullText, jatsSections, selectSections, type Excerpt } from "../src/fulltext";
+import { ingestPaper, type KindOverrideType } from "../src/ingest";
 import { evidenceEntrySchema, evidenceMatchesSource, type EvidenceEntry } from "../src/review/packet";
 import { AS_SERVICE, args, dir, evidencePath, lit, main, publisherId, readJson, sourceIdentities, sql, writeJson } from "./lib/cli";
 
-/** The open licence full text may be used under: every licence the records give must be open. */
-function fullTextLicense(paper: IngestedPaper): string {
-  const given = [paper.licenses?.unpaywall, paper.licenses?.europepmc].filter((l): l is string => !!l);
-  if (given.length === 0) throw new Error("no licence recorded for this article; full text needs an open licence");
-  const closed = given.find((l) => !isOpenLicense(l));
-  if (closed) throw new Error(`licence ${JSON.stringify(closed)} is not open (CC BY, CC0 or public domain); use a publisher excerpt instead`);
-  return given[0]!;
-}
 
 main(async () => {
   const a = args();
@@ -35,6 +27,8 @@ main(async () => {
   const doi = a.get("doi");
   const ctx = createContext();
   ctx.requireEmail();
+  // Full text is stored only with the evidence entry --add-source writes (Sol R1 PR31-07).
+  if (a.get("full-text") !== undefined && !a.has("add-source")) throw new Error("--full-text needs --add-source");
   const overrideType = a.get("kind-override");
   const justification = a.get("justification");
   if ((overrideType === undefined) !== (justification === undefined)) throw new Error("--kind-override <type> and --justification <text> go together");
@@ -79,14 +73,25 @@ main(async () => {
   // D-13: keep publisher excerpts from the previous file; add the requested open full-text sections.
   const excerpts: Excerpt[] = [];
   if (existsSync(evidencePath(sourceId))) {
-    const previous = readJson<EvidenceEntry>(evidencePath(sourceId));
+    // Keep publisher excerpts only from a valid file for this same source (Sol R1 PR31-06).
+    const parsed = evidenceEntrySchema.safeParse(readJson<unknown>(evidencePath(sourceId)));
+    const previous = parsed.success ? (parsed.data as EvidenceEntry) : null;
+    const same =
+      previous !== null &&
+      previous.sourceId === sourceId &&
+      (previous.identifiers.doi ?? "").toLowerCase() === (entry.identifiers.doi ?? "").toLowerCase() &&
+      (previous.identifiers.pmid ?? null) === (entry.identifiers.pmid ?? null);
+    if (!same) {
+      console.log(`refused: the existing evidence file for ${sourceId} is unreadable or belongs to another source; move it aside and ingest again`);
+      return 1;
+    }
     excerpts.push(...(previous.excerpts ?? []).filter((x) => x.origin === "publisher-excerpt"));
   }
   const wanted = a.get("full-text");
   if (wanted) {
     let picked: Excerpt[];
     try {
-      const license = fullTextLicense(paper);
+      const license = fullTextLicense(paper.licenses ?? {});
       if (!paper.pmcid) throw new Error("no PubMed Central copy, so no open full text");
       const xml = await getEuropePmcFullText(ctx, paper.pmcid);
       if (!xml) throw new Error(`Europe PMC has no open full text for ${paper.pmcid}`);
