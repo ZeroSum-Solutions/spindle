@@ -4,7 +4,7 @@ Status: draft for review, 2026-10-11; converted to US care pathways under D-18 t
 
 Every criterion below cites a source from the list at the end, by its id (for example [S1]). The three referral tiers are **our own mapping** of those sources onto what a trainer in the United States can act on; no single source defines them. Where a rule has no direct source, it says **Spindle policy** and names the nearest support. We paraphrase every source. Short quotes are marked and attributed.
 
-Care pathways are US pathways (D-18): 911 and the emergency department, urgent care or the client's primary care provider the same day, and a primary care provider or a licensed physical therapist for routine follow-up. US public-domain sources come first for that wording. The clinical red flags still rest on specialist shoulder guidance from the British Elbow & Shoulder Society (BESS) where no US source states them: clinical facts are international, and only the care pathway is American.
+Care pathways are US pathways (D-18): 911 for emergencies, urgent care or the client's primary care provider the same day, and a primary care provider or a licensed physical therapist for routine follow-up. US public-domain sources come first for that wording. The clinical red flags still rest on specialist shoulder guidance from the British Elbow & Shoulder Society (BESS) where no US source states them: clinical facts are international, and only the care pathway is American.
 
 ## 1. Trainer scope and wording
 
@@ -24,7 +24,7 @@ Rules for lesson text, quizzes and video context:
   | "A physical therapist or doctor can assess this." | "This will fix the rotator cuff." |
 
 - **Promise nothing about outcomes.** No "fixes", "bulletproofs" or "cures".
-- **Refer to the right place in plain words:** call 911 or go to the emergency department (ED, often called the ER); urgent care or the client's primary care provider (PCP) the same day; or a primary care provider or a licensed physical therapist. If the problem may be life-threatening, call 911 [S14], [S15].
+- **Refer to the right place in plain words:** call 911 for any emergency sign, and never drive the client or suggest they get a ride; urgent care or the client's primary care provider (PCP) the same day; or a primary care provider or a licensed physical therapist. If the problem may be life-threatening, call 911 [S14], [S15].
 - **Physical therapy without a referral.** Every US state allows some form of direct access to a physical therapist, but the provisions and limits differ by state [S21]. A trainer may suggest seeing a licensed physical therapist; the trainer never implies a diagnosis, and the physical therapist decides whether the client also needs a physician.
 - **Keep routine referrals calm.** US orthopedic patient guidance says that when shoulder pain is less severe it may be safe to rest for a few days, and to see a doctor if symptoms persist [S20]. For subacromial shoulder pain, BESS reports that most people improve within about three months [S3]. That figure is for subacromial pain only; it is never used to delay an urgent or emergency referral.
 
@@ -38,7 +38,7 @@ The base shoulder module teaches trainers to work with healthy adults whose shou
 | After shoulder surgery, or a recent dislocation or fracture, still in rehabilitation | Outside the base module. Follow the treating clinician's plan; do not progress it on your own. | Spindle policy. Nearest support: get medical clearance and use the exercises the treating professional prescribes [S11]; after a dislocation, rehabilitation with physical therapy restores range and strength before load is added [S18]; the PAR-Q+ asks whether a doctor has said to do only medically supervised activity [S13]. |
 | Diagnosed neurological condition affecting the arm or neck | Outside the base module. | Spindle policy. Nearest support: the PAR-Q+ follow-up asks about neurological conditions before exercise [S13]; numbness is among the listed symptoms of a dislocated shoulder [S18]. |
 | Diagnosed shoulder condition under current care (for example frozen shoulder, a known cuff tear, instability) | Outside the base module; work only within the clinician's plan. | Physical therapy is the primary treatment for frozen shoulder [S19]. BESS lists cuff tears, instability and frozen shoulder among the conditions primary care must not miss [S3]. Over 40, a traumatic dislocation often comes with a cuff tear, which needs assessment [S8]. Training within the clinician's plan is Spindle policy. |
-| Children and adolescents with shoulder pain | Outside the base module. **Urgent tier:** stop shoulder loading, and tell the young person and their parent or guardian to get care the same day, at urgent care or with their primary care provider, for assessment and, if needed, referral to orthopedics. Emergency tier if any emergency criterion applies. | BESS 2025 lists a child or adolescent with shoulder pain as a red flag that needs urgent specialist (orthopedic) assessment [S3]. The same-day US pathway is Spindle policy. |
+| Children and adolescents with shoulder pain | Outside the base module. **Urgent tier:** stop shoulder loading, and tell the young person and their parent or guardian to get a same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation. Emergency tier if any emergency criterion applies. | BESS 2025 lists a child or adolescent with shoulder pain as a red flag that needs urgent specialist (orthopedic) assessment [S3]. The same-day US pathway is Spindle policy. |
 | Anyone with a warning sign from section 3 or 4 | Stop and refer. | See sections 3 and 4. |
 
 ## 3. Stop rules
@@ -62,15 +62,15 @@ The trainer's job is to pick the tier and say it plainly. The trainer never deci
 
 **Use the highest tier that any sign matches.** An emergency sign overrides every urgent or routine sign, and an urgent sign overrides every routine sign. Each presentation below appears in exactly one tier.
 
-### Emergency: call 911 or go to the emergency department (ER) now
+### Emergency: call 911 now
 
 | Criterion | Source |
 |---|---|
-| Chest pain that feels tight, crushing or squeezing, or chest pain that spreads to the arm, neck or jaw; severe difficulty breathing; the person collapses or does not respond normally | [S16], [S17]; call 911 when a problem may be life-threatening [S14], [S15] |
-| After an injury (a fall, an impact, a joint that "popped out", a seizure or an electric shock), the client cannot move the arm, or the shoulder looks out of place or has changed shape. Do not move the arm or try to put it back. Do not let the client drive themselves. | [S18], [S15]; BESS: an unreduced dislocation needs same-day emergency referral [S1], [S2], [S4] |
+| Chest pain that feels tight, crushing or squeezing, or chest pain that spreads to the arm, neck or jaw; severe difficulty breathing; the person collapses or does not respond normally. For these signs, call 911 now; do not drive the client or let anyone else drive them. | [S16], [S17] (NHLBI: call 911, and do not have someone else drive you); call 911 when a problem may be life-threatening [S14], [S15] |
+| After an injury (a fall, an impact, a joint that "popped out", a seizure or an electric shock), the client cannot move the arm, or the shoulder looks out of place or has changed shape. Do not move the arm or try to put it back. Call 911; do not drive the client or let them drive themselves. | [S18], [S15]; BESS: an unreduced dislocation needs same-day emergency referral [S1], [S2], [S4] |
 | Signs of a joint infection: the shoulder is suddenly very painful **and** red or warm, **or** the client has a fever or feels unwell with shoulder pain | BESS: a suspected infected joint needs same-day emergency referral [S1], [S2], [S4]; any evidence of infection needs immediate referral [S3] |
 
-Note on infection: A trainer cannot tell whether a joint is infected, and BESS asks for same-day emergency referral when infection is suspected. Spindle's rule is therefore deliberately strict: fever or feeling unwell with shoulder pain goes to the emergency department, not to a same-day appointment. That strict mapping is **Spindle policy**. A shoulder that feels hot or cold to the touch, or is badly swollen, without sudden severe pain, redness, fever or feeling unwell, stays urgent.
+Note on infection: A trainer cannot tell whether a joint is infected, and BESS asks for same-day emergency referral when infection is suspected. Spindle's rule is therefore deliberately strict: fever or feeling unwell with shoulder pain is an emergency: call 911, not a same-day appointment. That strict mapping is **Spindle policy**. A shoulder that feels hot or cold to the touch, or is badly swollen, without sudden severe pain, redness, fever or feeling unwell, stays urgent.
 
 ### Urgent: urgent care or the client's primary care provider (PCP), the same day
 
@@ -88,7 +88,7 @@ Only when no emergency sign is present.
 | Severe pain in both shoulders | Spindle policy. Nearest support: BESS treats inflammation in several joints as a red flag [S1], [S2], [S4]. |
 | A new lump, mass or swelling around the shoulder | BESS: a suspected tumor is a red flag for fast-track specialist referral [S1], [S3], [S4] |
 | New pain, swelling or stiffness in several joints at once | BESS: a rheumatological red flag that needs urgent referral [S1], [S2], [S4] |
-| A child or adolescent with shoulder pain: urgent care or the PCP the same day, for assessment and, if needed, referral to orthopedics; tell a parent or guardian | BESS 2025: a red flag that needs urgent specialist (orthopedic) assessment [S3] |
+| A child or adolescent with shoulder pain: a same-day medical assessment, at urgent care or with the PCP, to arrange an urgent orthopedic evaluation; tell a parent or guardian | BESS 2025: a red flag that needs urgent specialist (orthopedic) assessment [S3] |
 
 ### Routine: a primary care provider or a licensed physical therapist (direct access varies by state)
 
@@ -128,7 +128,7 @@ Each lesson review checks:
 6. A missing or unapproved claim is never relabeled as practice: the statement is removed or rewritten as a coaching recommendation that says nothing about the body.
 7. The chosen video segment and the context around it follow the same rules (no cure claims, no loading through warning signs).
 8. Outcomes are not promised.
-9. Care pathways are US pathways (911 and the emergency department; urgent care or the PCP the same day; a PCP or a licensed physical therapist), with no UK service named.
+9. Care pathways are US pathways (call 911 for every emergency sign, with no private transport; urgent care or the PCP the same day; a PCP or a licensed physical therapist), with no UK service named.
 
 ## 8. Known gaps
 

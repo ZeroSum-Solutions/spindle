@@ -7,7 +7,7 @@
   "reviewNotes": [
     "The tier, stop-rule and exclusion checklists are parsed from docs/curriculum/SAFETY.md (bounded at the next heading; malformed tables stop the build); regenerate whenever SAFETY.md changes.",
     "Scenario answers give the first action, the tier, who to contact and how soon. Scenarios stay ungraded.",
-    "D-18 (2026-10-11): converted to US care pathways (911 and the emergency department; urgent care or the primary care provider the same day; a primary care provider or a licensed physical therapist) and US spelling. Needs Sol re-review before the v2 publish."
+    "D-18 (2026-10-11): converted to US care pathways (911 for every emergency sign, never private transport; urgent care or the primary care provider the same day; a primary care provider or a licensed physical therapist) and US spelling. Needs Sol re-review before the v2 publish."
   ],
   "claimSlots": [
     {
@@ -74,7 +74,7 @@
     },
     {
       "prompt": "Fever and shoulder pain.",
-      "goodAnswer": "Stop all exercise; emergency: call 911 or go to the emergency department now. This strict mapping is Spindle policy (SAFETY.md, note on infection).",
+      "goodAnswer": "Stop all exercise; emergency: call 911 now; do not drive the client. This strict mapping is Spindle policy (SAFETY.md, note on infection).",
       "safety": "SAFETY.md section 4 and its note on infection"
     },
     {
@@ -137,13 +137,13 @@
       },
       {
         "kind": "heading",
-        "content": "Emergency: call 911 or go to the emergency department (ER) now"
+        "content": "Emergency: call 911 now"
       },
       {
         "kind": "checklist",
         "content": [
-          "Chest pain that feels tight, crushing or squeezing, or chest pain that spreads to the arm, neck or jaw; severe difficulty breathing; the person collapses or does not respond normally",
-          "After an injury (a fall, an impact, a joint that \"popped out\", a seizure or an electric shock), the client cannot move the arm, or the shoulder looks out of place or has changed shape. Do not move the arm or try to put it back. Do not let the client drive themselves.",
+          "Chest pain that feels tight, crushing or squeezing, or chest pain that spreads to the arm, neck or jaw; severe difficulty breathing; the person collapses or does not respond normally. For these signs, call 911 now; do not drive the client or let anyone else drive them.",
+          "After an injury (a fall, an impact, a joint that \"popped out\", a seizure or an electric shock), the client cannot move the arm, or the shoulder looks out of place or has changed shape. Do not move the arm or try to put it back. Call 911; do not drive the client or let them drive themselves.",
           "Signs of a joint infection: the shoulder is suddenly very painful and red or warm, or the client has a fever or feels unwell with shoulder pain"
         ],
         "support": "practice-based",
@@ -153,7 +153,7 @@
         "kind": "callout",
         "content": {
           "label": "Note on infection",
-          "text": "A trainer cannot tell whether a joint is infected, and BESS asks for same-day emergency referral when infection is suspected. Spindle's rule is therefore deliberately strict: fever or feeling unwell with shoulder pain goes to the emergency department, not to a same-day appointment. That strict mapping is Spindle policy. A shoulder that feels hot or cold to the touch, or is badly swollen, without sudden severe pain, redness, fever or feeling unwell, stays urgent."
+          "text": "A trainer cannot tell whether a joint is infected, and BESS asks for same-day emergency referral when infection is suspected. Spindle's rule is therefore deliberately strict: fever or feeling unwell with shoulder pain is an emergency: call 911, not a same-day appointment. That strict mapping is Spindle policy. A shoulder that feels hot or cold to the touch, or is badly swollen, without sudden severe pain, redness, fever or feeling unwell, stays urgent."
         },
         "support": "practice-based",
         "claimIds": []
@@ -175,7 +175,7 @@
           "Severe pain in both shoulders",
           "A new lump, mass or swelling around the shoulder",
           "New pain, swelling or stiffness in several joints at once",
-          "A child or adolescent with shoulder pain: urgent care or the PCP the same day, for assessment and, if needed, referral to orthopedics; tell a parent or guardian"
+          "A child or adolescent with shoulder pain: a same-day medical assessment, at urgent care or with the PCP, to arrange an urgent orthopedic evaluation; tell a parent or guardian"
         ],
         "support": "practice-based",
         "claimIds": []
@@ -232,7 +232,7 @@
           "After shoulder surgery, or a recent dislocation or fracture, still in rehabilitation - Outside the base module. Follow the treating clinician's plan; do not progress it on your own.",
           "Diagnosed neurological condition affecting the arm or neck - Outside the base module.",
           "Diagnosed shoulder condition under current care (for example frozen shoulder, a known cuff tear, instability) - Outside the base module; work only within the clinician's plan.",
-          "Children and adolescents with shoulder pain - Outside the base module. Urgent tier: stop shoulder loading, and tell the young person and their parent or guardian to get care the same day, at urgent care or with their primary care provider, for assessment and, if needed, referral to orthopedics. Emergency tier if any emergency criterion applies.",
+          "Children and adolescents with shoulder pain - Outside the base module. Urgent tier: stop shoulder loading, and tell the young person and their parent or guardian to get a same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation. Emergency tier if any emergency criterion applies.",
           "Anyone with a warning sign in the lists in this lesson - Stop and refer."
         ],
         "support": "practice-based",

@@ -159,11 +159,58 @@ if len(notes_on_infection) != 1:
     raise SystemExit("SAFETY.md: expected one 'Note on infection' line")
 INFECTION_NOTE = clean(notes_on_infection[0][len("Note on infection: "):])
 TIER_LEAD = {
-    "emergency": "Emergency: call 911 or go to the emergency department (ER) now.",
+    "emergency": "Emergency: call 911 now. Do not drive the client or let anyone drive them.",
     "urgent": "Urgent: urgent care or the client's primary care provider (PCP), the same day.",
     "routine": "Routine: a primary care provider or a licensed physical therapist (direct access to physical therapy varies by state).",
 }
 HIGHEST = "Use the highest tier that any sign matches."
+
+# Tier floors (Sol R1 on #52): every referral criterion and stop rule keeps at least the tier it had
+# on 2026-10-11 (main 88335f9, before the D-18 conversion). A tier may rise, never fall. Each key
+# phrase must sit in exactly one tier table, at or above its floor; the build stops otherwise.
+RANK = {"routine": 0, "urgent": 1, "emergency": 2}
+TIER_FLOOR = [
+    ("Chest pain that feels tight", "emergency"), ("the client cannot move the arm, or the shoulder looks out of place", "emergency"),
+    ("Signs of a joint infection", "emergency"),
+    ("Sudden or very bad shoulder pain", "urgent"), ("New loss of active movement", "urgent"), ("After an injury, pain and weakness", "urgent"),
+    ("Any other new shoulder pain that started after an injury", "urgent"), ("has changed shape or is badly swollen, with no injury", "urgent"),
+    ("Pins and needles that do not go away", "urgent"), ("feels hot or cold to the touch", "urgent"), ("Severe pain in both shoulders", "urgent"),
+    ("A new lump, mass or swelling", "urgent"), ("several joints at once", "urgent"), ("A child or adolescent with shoulder pain", "urgent"),
+    ("is getting worse. Refer now", "routine"), ("has not improved after 2 weeks", "routine"), ("is very difficult", "routine"),
+    ("worse at night", "routine"), ("persists after the trainer", "routine"),
+]
+STOP_FLOOR = [  # (key phrase in "Stop when", tier word the action must name, or a higher one)
+    ("cannot move the arm, or the shoulder looks out of place", "emergency"), ("Signs of a joint infection", "emergency"),
+    ("Arm pain together with chest pain", "emergency"), ("New loss of active movement", "urgent"),
+    ("pain and weakness, but the arm still moves", "urgent"), ("Numbness, pins and needles", "urgent"),
+]
+def check_tier_floors():
+    errors = []
+    for phrase, floor in TIER_FLOOR:
+        found = [tier for tier, rows in TIER.items() if any(phrase in r for r in rows)]
+        if len(found) != 1:
+            errors.append(f"{phrase!r} is in {len(found)} tier tables")
+        elif RANK[found[0]] < RANK[floor]:
+            errors.append(f"{phrase!r} fell from {floor} to {found[0]}")
+    for phrase, floor in STOP_FLOOR:
+        rows = [r for r in STOP_ROWS if phrase in r.split(" - ")[0]]
+        if len(rows) != 1:
+            errors.append(f"stop rule {phrase!r} found {len(rows)} times")
+            continue
+        action = rows[0].split(" - ", 1)[1].lower()
+        if not any(tier in action for tier, rank in RANK.items() if rank >= RANK[floor]):
+            errors.append(f"stop rule {phrase!r} no longer names {floor} or higher")
+    # Emergencies always mean calling 911, never private transport (Sol R1 on #52, BLOCK 2).
+    if "call 911" not in TIER_LEAD["emergency"] or "emergency department" in TIER_LEAD["emergency"]:
+        errors.append("the emergency lead must say call 911 and must not offer the emergency department")
+    if not any("call 911" in r and "do not drive" in r for r in TIER["emergency"]):
+        errors.append("the cardiac emergency criterion must say call 911 and do not drive")
+    # A child's specialist referral is unconditional (Sol R1 on #52, BLOCK 3).
+    child = [r for r in TIER["urgent"] if "A child or adolescent" in r]
+    if not child or "urgent orthopedic evaluation" not in child[0] or "if needed" in child[0]:
+        errors.append("the child row must require an urgent orthopedic evaluation, unconditionally")
+    if errors:
+        raise SystemExit("SAFETY.md tier floors: " + "; ".join(errors))
 
 # Canonical stop-rule wording, reused beside screens and progressions (SAFETY.md sections 3 and 4).
 STOP_SESSION = "Stop shoulder loading for the rest of the session."
@@ -482,10 +529,10 @@ l4_scen = [
   {"prompt": "Pins and needles in the arm that have not gone away.", "goodAnswer": "Stop shoulder loading; urgent: urgent care or their primary care provider today.", "safety": "SAFETY.md section 4"},
   {"prompt": "A mild ache after last week's pressing that settled within a day; no pain during sets; no warning signs.", "goodAnswer": "Continue; consider load or range for this session; stop shoulder loading if pain comes on during a set.", "safety": "SAFETY.md section 3"},
   {"prompt": "Pain that has not improved after 2 weeks of leaving out the provoking movements.", "goodAnswer": "Stop shoulder loading for this session; routine referral: a primary care provider or a physical therapist.", "safety": "SAFETY.md section 4"},
-  {"prompt": "A 16-year-old says the shoulder hurts after training.", "goodAnswer": "Stop shoulder loading; urgent: tell a parent or guardian; urgent care or their primary care provider the same day, for assessment and, if needed, referral to orthopedics.", "safety": "SAFETY.md sections 2 and 4"},
+  {"prompt": "A 16-year-old says the shoulder hurts after training.", "goodAnswer": "Stop shoulder loading; urgent: tell a parent or guardian; a same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation.", "safety": "SAFETY.md sections 2 and 4"},
   {"prompt": "Could a careful screen ever clear a client for training?", "goodAnswer": "No. A trainer's screen shows how a movement looks today; it never diagnoses or clears anyone (Spindle policy, SAFETY.md section 1).", "safety": "SAFETY.md section 1"},
 ]
-notes4 = ["D-18 (2026-10-11): converted to US care pathways (911 and the emergency department; urgent care or the primary care provider the same day; a primary care provider or a licensed physical therapist) and US spelling. Needs Sol re-review before the v2 publish.", "The tier callouts are generated from SAFETY.md, so they match it exactly.", "The scope question ('can a screen clear a client?') is an ungraded discussion item, not a graded science question.", "Every screen has its own stop-and-refer block beside it."]
+notes4 = ["D-18 (2026-10-11): converted to US care pathways (911 for every emergency sign, never private transport; urgent care or the primary care provider the same day; a primary care provider or a licensed physical therapist) and US spelling. Needs Sol re-review before the v2 publish.", "The tier callouts are generated from SAFETY.md, so they match it exactly.", "The scope question ('can a screen clear a client?') is an ungraded discussion item, not a graded science question.", "Every screen has its own stop-and-refer block beside it."]
 
 # ---------------------------------------------------------------- lesson 5
 
@@ -659,7 +706,7 @@ l7 = {
     stop(TINGLE, ACTIVE_LOSS, TRAUMA, NIGHT, WORSENING, UNDER_18),
     H("What to do"),
     P("Build strength for the rotator cuff and the shoulder blade muscles, rotation strength through the trunk and hips, and controlled deceleration work. Progress one thing at a time, with the same stop rules as lesson 6."),
-    stop("Pain while throwing, a loss of velocity with pain, or a \"dead arm\": stop throwing as well as shoulder loading, and refer at the tier that matches.", TINGLE, WORSENING, UNDER_18 + " Same day, at urgent care or with their primary care provider, for assessment and, if needed, referral to orthopedics."),
+    stop("Pain while throwing, a loss of velocity with pain, or a \"dead arm\": stop throwing as well as shoulder loading, and refer at the tier that matches.", TINGLE, WORSENING, UNDER_18 + " A same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation."),
     C(POLICY, "Throwing workload, pitch counts and return-to-throwing decisions are for the athlete's sport coach and treating clinician. Your strength work supports that plan; it does not replace it. " + BOUNDARY),
     P("Coaches in other rotational sports, such as racquet sports, swimming and combat sports, can use the same approach: record range the same way over time, build strength, follow the stop rules, and agree workload with the sport coach."),
     H("Check your understanding"),
@@ -676,7 +723,7 @@ l7_slots = [
    "note": "Wording Sol approved in the claim dry run (round 4). It reports the retroversion difference without saying it causes the range difference."},
   {"slot": "claim-slot:l7-injury-risk", "statement": "Evidence linking shoulder range of motion to injury in overhead athletes is uncertain and sport-specific: no statistically significant pooled association for the measures examined (2018 meta-analysis); external rotation insufficiency associated with injury in professional pitchers from three pooled studies, interpreted with caution (2020 meta-analysis of prospective cohorts); range among several risk factors, with inconsistent injury definitions (2025 systematic review).", "candidateSources": [KELLER, POZZI, SALAMH], "note": "Association, not individual prediction."},
 ]
-l7_scen = [{"prompt": "A 15-year-old pitcher says the shoulder hurts after games.", "goodAnswer": "Stop throwing and shoulder loading in the session; urgent: tell the athlete and a parent or guardian to get care the same day, at urgent care or with their primary care provider, for assessment and, if needed, referral to orthopedics; emergency if any emergency sign.", "safety": "SAFETY.md sections 2 and 4"}]
+l7_scen = [{"prompt": "A 15-year-old pitcher says the shoulder hurts after games.", "goodAnswer": "Stop throwing and shoulder loading in the session; urgent: tell the athlete and a parent or guardian to get a same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation; emergency (call 911) if any emergency sign.", "safety": "SAFETY.md sections 2 and 4"}]
 notes7 = ["The pitching-kinetics section, its objective and its quiz were removed: the only source (Fleisig 1995) is a primary study, which the claim pipeline does not admit, and no qualifying systematic review states those two moments (the 2023 normative meta-analysis by Mine et al. does not).",
           "The rotation record is qualitative (no angles or totals), because a trainer set-up without a defined zero and stabilization cannot give repeatable numbers.", "The stop blocks use SAFETY.md's tiers: persistent night pain with stiffness is routine; persistent pins and needles is urgent; inability to move after trauma is emergency.",
           "Throwing workload is stated as Spindle policy, not science. The cross-sport paragraph makes no claim about shared mechanics."]
@@ -700,7 +747,7 @@ l8 = {
     C(POLICY, BOUNDARY),
     H("Which tier: the highest one that matches"),
     P(f"{HIGHEST} An emergency sign overrides every urgent or routine sign, and an urgent sign overrides every routine sign."),
-    H("Emergency: call 911 or go to the emergency department (ER) now"),
+    H("Emergency: call 911 now"),
     L(TIER["emergency"]),
     C("Note on infection", INFECTION_NOTE),
     H("Urgent: urgent care or the client's primary care provider, the same day"),
@@ -750,11 +797,11 @@ l8_scen = [
   {"prompt": "A new lump above the collarbone.", "goodAnswer": "Stop shoulder loading; urgent: urgent care or their primary care provider today.", "safety": "SAFETY.md section 4"},
   {"prompt": "Shoulder pain that has gotten worse every day this week; no other sign.", "goodAnswer": "Stop shoulder loading for this session; routine referral now: a primary care provider or a physical therapist, without waiting for 2 weeks.", "safety": "SAFETY.md sections 3 and 4"},
   {"prompt": "After a fall, the client cannot move the arm.", "goodAnswer": "Stop; emergency: call 911 now; do not move the arm or try to put it back; do not let them drive.", "safety": "SAFETY.md sections 3 and 4"},
-  {"prompt": "Fever and shoulder pain.", "goodAnswer": "Stop all exercise; emergency: call 911 or go to the emergency department now. This strict mapping is Spindle policy (SAFETY.md, note on infection).", "safety": "SAFETY.md section 4 and its note on infection"},
+  {"prompt": "Fever and shoulder pain.", "goodAnswer": "Stop all exercise; emergency: call 911 now; do not drive the client. This strict mapping is Spindle policy (SAFETY.md, note on infection).", "safety": "SAFETY.md section 4 and its note on infection"},
   {"prompt": "An ache after training that settled within a day; no other sign.", "goodAnswer": "Continue; stop shoulder loading if pain comes on during a set.", "safety": "SAFETY.md section 3"},
 ]
 notes8 = ["The tier, stop-rule and exclusion checklists are parsed from docs/curriculum/SAFETY.md (bounded at the next heading; malformed tables stop the build); regenerate whenever SAFETY.md changes.",
-          "Scenario answers give the first action, the tier, who to contact and how soon. Scenarios stay ungraded.", "D-18 (2026-10-11): converted to US care pathways (911 and the emergency department; urgent care or the primary care provider the same day; a primary care provider or a licensed physical therapist) and US spelling. Needs Sol re-review before the v2 publish."]
+          "Scenario answers give the first action, the tier, who to contact and how soon. Scenarios stay ungraded.", "D-18 (2026-10-11): converted to US care pathways (911 for every emergency sign, never private transport; urgent care or the primary care provider the same day; a primary care provider or a licensed physical therapist) and US spelling. Needs Sol re-review before the v2 publish."]
 
 # ---------------------------------------------------------------- render, check, write
 
@@ -934,6 +981,7 @@ def restore(replaced, backups):
     return failed
 
 if __name__ == "__main__":
+    check_tier_floors()
     files = render()
     write_atomically(files)
     print(f"wrote {len(files)} drafts")

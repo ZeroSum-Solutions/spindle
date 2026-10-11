@@ -138,13 +138,14 @@ const LESSON_PINS: Record<string, { shows: string[]; never: string[] }> = {
     never: ["The serratus anterior attaches"],
   },
   "when-to-refer-out": {
-    shows: ["For the three urgent red flags below, Spindle's stop rule comes first", "Emergency: call 911 or go to the emergency department (ER) now"],
+    shows: ["For the three urgent red flags below, Spindle's stop rule comes first", "Emergency: call 911 now"],
     never: [],
   },
 };
 
 /** D-18: UK care-pathway names that no published lesson may show. */
-const UK_SERVICES = ["NHS", "A&E", "999", "GP appointment", "your GP", "physiotherapist", "parent or carer"];
+// Word-bounded, so "1999" or "1110" never match, while "see a GP" and "call 111" do (Sol R1 on #52).
+const UK_SERVICES = [/\bNHS\b/, /A&E/, /\b999\b/, /\b111\b/, /\bGPs?\b/, /physiotherapist/i, /parent or carer/i];
 
 /** SAFETY.md rule 6 in lesson 8: the practice-based "What you do first" box, then the three graded adverse-case questions. */
 const ADVERSE_CASE_PROMPTS = [

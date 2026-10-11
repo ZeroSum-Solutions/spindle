@@ -222,12 +222,12 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 4. *How to see it.* [P] Measure rotation the same way each time; note change across a season.
 5. *What to do.* [P] Strength for the cuff and scapular muscles, trunk and hip rotation work, deceleration work; workload is the coach's and clinician's decision.
 6. [P] Rotational sports beyond throwing (racquet, swimming, combat) as practice context.
-7. [!] Pain while throwing, loss of velocity with pain, a "dead arm", or numbness: stop throwing and refer (SAFETY §3, §4). Young throwers with shoulder pain: urgent tier, urgent care or their primary care provider the same day, for assessment and, if needed, referral to orthopedics, with a parent or guardian told (SAFETY §2, §4).
+7. [!] Pain while throwing, loss of velocity with pain, a "dead arm", or numbness: stop throwing and refer (SAFETY §3, §4). Young throwers with shoulder pain: urgent tier, a same-day medical assessment at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation, with a parent or guardian told (SAFETY §2, §4).
 
 **Graded quiz candidates**
 - What range pattern is common in a thrower's throwing arm? (More external, less internal rotation) [§2]
 
-**Scenario (ungraded):** A 15-year-old pitcher says the shoulder hurts after games. What do you do? (Stop throwing and shoulder loading in your session; urgent tier: tell the athlete and a parent or guardian to get care the same day, at urgent care or with their primary care provider, for assessment and, if needed, referral to orthopedics; emergency if any emergency sign is present. SAFETY §2, §4.)
+**Scenario (ungraded):** A 15-year-old pitcher says the shoulder hurts after games. What do you do? (Stop throwing and shoulder loading in your session; urgent tier: tell the athlete and a parent or guardian to get a same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation; emergency if any emergency sign is present. SAFETY §2, §4.)
 
 **Video slots:** C1: when to train internal rotation for throwers.
 

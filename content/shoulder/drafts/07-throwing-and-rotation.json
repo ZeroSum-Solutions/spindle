@@ -67,7 +67,7 @@
   "scenarios": [
     {
       "prompt": "A 15-year-old pitcher says the shoulder hurts after games.",
-      "goodAnswer": "Stop throwing and shoulder loading in the session; urgent: tell the athlete and a parent or guardian to get care the same day, at urgent care or with their primary care provider, for assessment and, if needed, referral to orthopedics; emergency if any emergency sign.",
+      "goodAnswer": "Stop throwing and shoulder loading in the session; urgent: tell the athlete and a parent or guardian to get a same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation; emergency (call 911) if any emergency sign.",
       "safety": "SAFETY.md sections 2 and 4"
     }
   ],
@@ -196,7 +196,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain while throwing, a loss of velocity with pain, or a \"dead arm\": stop throwing as well as shoulder loading, and refer at the tier that matches. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. Pain that is getting worse: routine referral now; do not wait. Anyone under 18 with shoulder pain: urgent, today; tell a parent or guardian. Same day, at urgent care or with their primary care provider, for assessment and, if needed, referral to orthopedics. This never clears anyone and never names an injury. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain while throwing, a loss of velocity with pain, or a \"dead arm\": stop throwing as well as shoulder loading, and refer at the tier that matches. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. Pain that is getting worse: routine referral now; do not wait. Anyone under 18 with shoulder pain: urgent, today; tell a parent or guardian. A same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation. This never clears anyone and never names an injury. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []

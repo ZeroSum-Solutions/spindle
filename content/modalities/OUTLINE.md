@@ -136,10 +136,10 @@ Courses use wholly synthetic teaching scenarios only, never real or identifiable
   - **The abstract holds no findings,** so no claim can be staged until the full text is read (D-13 excerpt or full text).
 - **S2. Youth athletic development consensus.** The IOC consensus calls for one evidence-informed approach to developing healthy, resilient young athletes, at every level of participation. Specific recommendations need the full text.
   - Source: Bergeron MF, et al. International Olympic Committee consensus statement on youth athletic development. *Br J Sports Med* 2015;49(13):843-851. PMID 26084524, doi:10.1136/bjsports-2015-094962. License: none stated.
-- **S3. Specialising and injury.** Youth athletes who specialized in one sport had a higher injury risk than those who sampled several sports. This is an association from observational studies.
+- **S3. Specializing and injury.** Youth athletes who specialized in one sport had a higher injury risk than those who sampled several sports. This is an association from observational studies.
   - Source: Carder SL, et al. The concept of sport sampling versus sport specialization: preventing youth athlete injury: a systematic review and meta-analysis. *Am J Sports Med* 2020;48(11):2850-2857. PMID 31961703, doi:10.1177/0363546519899380. License: none stated.
   - Evidence: 6 studies, 5,736 athletes aged 7 to 18.
-- **S4. Specialisation consensus.** A consensus found no evidence that early specialization benefits young children in most sports. It named overuse injury and burnout as risks.
+- **S4. Specialization consensus.** A consensus found no evidence that early specialization benefits young children in most sports. It named overuse injury and burnout as risks.
   - Source: LaPrade RF, et al. AOSSM early sport specialization consensus statement. *Orthop J Sports Med* 2016;4(4):2325967116644241. PMID 27169132, PMC4853833, doi:10.1177/2325967116644241. License: CC BY-NC-ND.
 - **S5. A definition.** A Delphi panel defined sport specialization as intentional, focused participation in one sport for most of the year, which restricts other sports.
   - Source: Bell DR, et al. Consensus definition of sport specialization in youth athletes using a Delphi approach. *J Athl Train* 2021;56(11):1239-1251. PMID 33787895, PMC8582622, doi:10.4085/1062-6050-0725.20. License: none stated.
