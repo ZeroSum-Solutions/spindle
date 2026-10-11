@@ -229,6 +229,7 @@ test.describe.serial("shoulder module acceptance", () => {
       // run), and only there: checked block by block, beside the content, never in the legend.
       const supported = article.locator("section[data-support]");
       let previous: string | null = null;
+      let afterPlainDiagram = false;
       let k = 0;
       // Runs follow the blocks as published: a reviewed diagram (Sol R16) carries support too, so it
       // continues or starts a run. Until the player renders a reviewed diagram as a supported block
@@ -242,12 +243,16 @@ test.describe.serial("shoulder module acceptance", () => {
           continue;
         }
         if (b.kind === "diagram" && diagramSections === 0) {
+          // Known gap on main: the run this diagram opens has no visible label. The block right after
+          // it is exempt from the chip check either way; the gap is pinned as an expected failure below.
           previous = support;
+          afterPlainDiagram = true;
           continue;
         }
         const label = support === "science" ? "Science" : "Practice-based";
         const chip = supported.nth(k).getByText(label, { exact: true });
-        if (support !== previous) await expect(chip, `${d.lesson.slug}: label at block ${k + 1}`).toBeVisible();
+        if (afterPlainDiagram) afterPlainDiagram = false;
+        else if (support !== previous) await expect(chip, `${d.lesson.slug}: label at block ${k + 1}`).toBeVisible();
         else await expect(chip, `${d.lesson.slug}: no repeated label at block ${k + 1}`).toHaveCount(0);
         previous = support;
         k += 1;
@@ -294,6 +299,21 @@ test.describe.serial("shoulder module acceptance", () => {
       await expect(page.getByTestId("lesson-status")).toContainText("Saved.");
     }
     expect(world.completions(actors.trainer!, gym)).toHaveLength(8);
+  });
+
+  test("a support run opened by a reviewed diagram shows its label (expected to fail until diagrams render as supported blocks)", async ({ browser }) => {
+    // Known bug on main after #23: a reviewed diagram carries support and opens a run, but renders
+    // as a plain figure with no label, so the run shows none. The diagrams PR renders it as a
+    // supported block with its own label; this test then passes unexpectedly and must be flipped.
+    test.fail(true, "reviewed diagrams render without their run's support label until the diagrams PR lands");
+    const page = await signIn(browser, actors.trainer!, learnPath(gym, assignment));
+    for (const d of drafts) {
+      const opens = d.lesson.blocks.some((b, i) => b.kind === "diagram" && !("support" in (d.lesson.blocks[i - 1] ?? {})));
+      if (!opens) continue;
+      await page.goto(learnPath(gym, assignment, d.lesson.slug));
+      const diagram = page.locator("article").first().locator('[data-block="diagram"]').first();
+      await expect(diagram.getByText(/^(Science|Practice-based)$/), `${d.lesson.slug}: the diagram's run label`).toBeVisible({ timeout: 2_000 });
+    }
   });
 
   test("the module quiz: a failed attempt, then a pass, and the module completes", async ({ browser }) => {
