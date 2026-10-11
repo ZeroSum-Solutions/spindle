@@ -49,13 +49,13 @@ def src(kind, citation, rights, **ids):
 
 CC_BY_FULL = "Full text read through the Europe PMC API. " + OPEN_ACCESS_NOTE
 FRANK = src("review", "Frank RM, Ramirez J, Chalmers PN, McCormick FM, Romeo AA. Scapulothoracic anatomy and snapping scapula syndrome. Anat Res Int. 2013;2013:635628.",
-            "CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/). " + CC_BY_FULL, doi="10.1155/2013/635628", pmid="24369502", pmcid="PMC3863500")
+            "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). " + CC_BY_FULL, doi="10.1155/2013/635628", pmid="24369502", pmcid="PMC3863500")
 CAVANAUGH = src("review", "Cavanaugh E, Arcot Santillan A, Hoshikawa K, Giambini H. Subregions of the rotator cuff muscles present distinct anatomy, biomechanics, and function. Sports (Basel). 2024;12(12):349.",
                 "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). " + CC_BY_FULL, doi="10.3390/sports12120349", pmid="39728889", pmcid="PMC11679125")
-VIJIAN = src("review", "Vijian K, Cheng YT, Idris Z, et al. Manual muscle testing of the scapula and the upper limb through bedside examination. Malays J Med Sci. 2023;30(1):198-212.",
+VIJIAN = src("paper", "Vijian K, Cheng YT, Idris Z, et al. Manual muscle testing of the scapula and the upper limb through bedside examination. Malays J Med Sci. 2023;30(1):198-212. (Brief Communication.)",
              "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). " + CC_BY_FULL, doi="10.21315/mjms2023.30.1.17", pmid="36875200", pmcid="PMC9984099")
 JACINTO = src("review", "Jacinto J, Camões-Barbosa A, Carda S, Hoad D, Wissel J. A practical guide to botulinum neurotoxin treatment of shoulder spasticity 1: anatomy, physiology, and goal setting. Front Neurol. 2022;13:1004629.",
-              "CC BY per the Europe PMC licence record (https://creativecommons.org/licenses/by/4.0/ is the journal's usual licence; the version is not stated in the record). " + CC_BY_FULL, doi="10.3389/fneur.2022.1004629", pmid="36324373", pmcid="PMC9618862")
+              "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), confirmed through the article's licence link. " + CC_BY_FULL, doi="10.3389/fneur.2022.1004629", pmid="36324373", pmcid="PMC9618862")
 # OpenStax is not a claim source: its terms forbid ingestion into AI models. It appears only as an
 # optional further-reading link, with its licence shown.
 OPENSTAX_READING = {"label": "Further reading (not a claim source): OpenStax Anatomy and Physiology 2e, section 9.6, the shoulder joint. CC BY-NC-SA 4.0.",
@@ -201,7 +201,7 @@ l1 = {
   "blocks": [
     P("This lesson gives you a working map of the shoulder: where the bones meet, what supports the ball and socket, and which muscles do the moving. Every later lesson in this module uses this map."),
     H("Three bones, three joints and a gliding contact"),
-    S("Three bones make the shoulder: the upper arm bone (humerus), the shoulder blade (scapula) and the collarbone (clavicle). The ball-and-socket joint (glenohumeral joint) joins the arm to the shoulder blade. The acromioclavicular joint joins the collarbone to the bony tip at the top of the shoulder blade (the acromion), and the sternoclavicular joint joins the collarbone to the breastbone. Beyond those two collarbone joints, the shoulder blade has no other attachment to the ribcage.", "claim-slot:l1-bones-joints"),
+    S("Three bones make the shoulder: the upper arm bone (humerus), the shoulder blade (scapula) and the collarbone (clavicle). The ball-and-socket joint (glenohumeral joint) joins the arm to the shoulder blade. The acromioclavicular joint joins the collarbone to the bony tip at the top of the shoulder blade (the acromion), and the sternoclavicular joint joins the collarbone to the breastbone. There is no direct bony joint between the shoulder blade and the ribcage; muscles connect them.", "claim-slot:l1-bones-joints"),
     S("The shoulder blade also slides over the back of the ribcage. That gliding contact is often called the scapulothoracic joint, but it has no cartilage, joint lining or capsule: the shoulder blade slides on layers of muscle and bursae, and muscles hold it in place.", "claim-slot:l1-scapulothoracic"),
     D("shoulder-complex-front", "The shoulder complex, left shoulder seen from the front: the three joints, with the shoulder blade lying behind the ribs. Schematic, not to scale."),
     H("A small, shallow socket"),
@@ -237,7 +237,7 @@ l1 = {
   "media": [], "resources": [OPENSTAX_READING],
 }
 l1_slots = [
-  {"slot": "claim-slot:l1-bones-joints", "statement": "The shoulder comprises the humerus, scapula and clavicle, articulating at the glenohumeral, acromioclavicular and sternoclavicular joints; beyond the acromioclavicular and sternoclavicular joints, the scapula has no other attachment to the thorax.", "candidateSources": [FRANK]},
+  {"slot": "claim-slot:l1-bones-joints", "statement": "The shoulder comprises the humerus, scapula and clavicle, articulating at the glenohumeral, acromioclavicular and sternoclavicular joints; there is no osseous or ligamentous joint between the scapula and the thorax, which are connected by muscles.", "candidateSources": [FRANK]},
   {"slot": "claim-slot:l1-scapulothoracic", "statement": "The scapulothoracic articulation has no articular cartilage, synovium or capsule; the scapula slides on bursal and muscular planes and is held in place by its muscular attachments.", "candidateSources": [FRANK]},
   {"slot": "claim-slot:l1-shallow-socket", "statement": "The glenohumeral joint is the most mobile joint in the body, owing partly to its lack of osseous constraint; the glenoid articular surface is one third to one quarter the size of the humeral head, and the fibrocartilaginous labrum increases its depth and surface area.", "candidateSources": [FRANK, HOWELL]},
   {"slot": "claim-slot:l1-cuff", "statement": "The rotator cuff comprises supraspinatus, infraspinatus, teres minor and subscapularis, which originate on the scapula and attach to the humerus, forming a cuff around the glenohumeral joint that is crucial for shoulder stability.", "candidateSources": [CAVANAUGH, FRANK]},
@@ -247,7 +247,7 @@ l1_slots = [
 l1_scen = [{"prompt": "A client points to the front of the shoulder and asks: \"Is that my rotator cuff?\"", "goodAnswer": "Describe the area; say you do not diagnose; ask how it behaves. If it hurts during training: stop shoulder loading for the session and apply the referral tiers.", "safety": "SAFETY.md sections 1 and 3"}]
 notes1 = ["Anatomy claims rest on open CC BY reviews read in full through Europe PMC (Frank 2013, Cavanaugh 2024, Vijian 2023, Jacinto 2022) plus two abstracts. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
           "The scapulothoracic statement is restored because Frank 2013 states it; 'most of the force' stays removed. The capsule statement was dropped: no open source read states it.",
-          "Diagram shoulder-complex-front depends on the original drawing in apps/web from PR #17 (the subject's left shoulder from the front). Until #17 is on main, the player shows 'not available yet' with this caption; the lesson must not publish before #17 lands. shoulder-cuff-and-movers is a planned slot and says so."]
+          "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. shoulder-cuff-and-movers is a planned slot and says so."]
 
 # ---------------------------------------------------------------- lesson 2
 
@@ -303,7 +303,7 @@ l2_scen = [
   {"prompt": "Same client, but the shoulder aches more with each rep.", "goodAnswer": "Stop shoulder loading for this session. If the pain is getting worse: routine referral now (GP or physiotherapist). If it has not improved after 2 weeks: routine referral. Urgent or emergency if those signs appear.", "safety": "SAFETY.md sections 3 and 4"},
 ]
 notes2 = ["The force-couple section and its quiz were removed: no accessible source stated the named-muscle formulation (Ludewig's full text could not be retrieved; OpenStax's table contradicts it).",
-          "Diagram scapula-upward-rotation depends on the original drawing from PR #17; until #17 is on main the player shows 'not available yet'. The lesson must not publish before #17 lands."]
+          "Diagram scapula-upward-rotation is the original drawing in apps/web, on main since PR #17 (08747d7), so the caption describes an existing figure."]
 
 # ---------------------------------------------------------------- lesson 3
 
@@ -744,33 +744,64 @@ def render():
     return files
 
 def write_atomically(files):
-    """Writes every draft or none. All new contents go to temporary files first; then each file
-    is swapped in. If any step fails, files already swapped are restored from their previous
-    contents and every temporary file is removed, so a failed run leaves the folder as it was."""
-    previous = {name: (OUT / name).read_bytes() if (OUT / name).exists() else None for name in files}
-    temps = {}
+    """Writes every draft or none.
+
+    1. Every new content goes to a temporary file, and every existing draft is copied to a
+       backup file, before any draft is touched.
+    2. Each draft is swapped in with os.replace (atomic on one filesystem).
+    3. If any step fails, every draft already swapped is restored by os.replace from its
+       backup (or removed, if it did not exist before). Every restoration is attempted even
+       when another one fails. A backup whose restoration failed is kept, and a recovery
+       message names it, so no previous content is lost.
+    Temporary files and backups that are no longer needed are removed."""
+    staged = {}   # name -> temporary file with the new content
+    backups = {}  # name -> backup of the previous content (absent: the draft is new)
     replaced = []
     try:
         for name, text in files.items():
             fd, tmp = tempfile.mkstemp(dir=OUT, prefix=f".{name}.", suffix=".tmp")
-            temps[name] = tmp
+            staged[name] = tmp
             with os.fdopen(fd, "w") as f:
                 f.write(text)
+            if (OUT / name).exists():
+                fd, bak = tempfile.mkstemp(dir=OUT, prefix=f".{name}.", suffix=".bak")
+                backups[name] = bak
+                with os.fdopen(fd, "wb") as f:
+                    f.write((OUT / name).read_bytes())
         for name in files:
-            os.replace(temps[name], OUT / name)
-            del temps[name]
+            os.replace(staged[name], OUT / name)
+            del staged[name]
             replaced.append(name)
     except BaseException:
-        for name in replaced:
-            if previous[name] is None:
-                (OUT / name).unlink(missing_ok=True)
-            else:
-                (OUT / name).write_bytes(previous[name])
+        failed = restore(replaced, backups)
+        if failed:
+            print("build_drafts: the write failed and some drafts could not be restored. Recover them by hand:", file=sys.stderr)
+            for name, bak in failed:
+                print(f"  {bak} -> {OUT / name}" if bak else f"  remove {OUT / name} (it is new)", file=sys.stderr)
         raise
     finally:
-        for tmp in temps.values():
+        for tmp in staged.values():
             pathlib.Path(tmp).unlink(missing_ok=True)
+        for bak in backups.values():
+            pathlib.Path(bak).unlink(missing_ok=True)
 
-files = render()
-write_atomically(files)
-print(f"wrote {len(files)} drafts")
+def restore(replaced, backups):
+    """Restores every swapped draft; returns the ones that failed. A backup that was used is
+    removed from `backups`; one whose restoration failed is removed too, so the caller's
+    cleanup keeps it on disk for recovery."""
+    failed = []
+    for name in replaced:
+        bak = backups.pop(name, None)
+        try:
+            if bak is None:
+                (OUT / name).unlink(missing_ok=True)
+            else:
+                os.replace(bak, OUT / name)
+        except OSError:
+            failed.append((name, bak))
+    return failed
+
+if __name__ == "__main__":
+    files = render()
+    write_atomically(files)
+    print(f"wrote {len(files)} drafts")

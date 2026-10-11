@@ -28,7 +28,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - Point to where each structure is on a client, by surface landmarks.
 
 **Sections**
-1. *What it is: the parts.* [S] Bones: humerus, scapula, clavicle; joints: glenohumeral, acromioclavicular, sternoclavicular (the only bony joint between the shoulder girdle and the axial skeleton: the skull, spine and ribcage). Candidate evidence: open CC BY reviews read in full (Frank 2013, PMC3863500; Cavanaugh 2024; Vijian 2023; Jacinto 2022). OpenStax is not a claim source (its terms forbid ingestion into AI models); it is listed only as optional further reading. The scapulothoracic statement (no cartilage, lining or capsule; the shoulder blade slides on muscle and bursae) is supported by Frank 2013.
+1. *What it is: the parts.* [S] Bones: humerus, scapula, clavicle; joints: glenohumeral, acromioclavicular, sternoclavicular (the only bony joint between the shoulder girdle and the axial skeleton: the skull, spine and ribcage). There is no direct bony joint between the shoulder blade and the ribcage; muscles connect them. Candidate evidence: open CC BY articles read in full (Frank 2013, PMC3863500; Cavanaugh 2024; Vijian 2023; Jacinto 2022). OpenStax is not a claim source (its terms forbid ingestion into AI models); it is listed only as optional further reading. The scapulothoracic statement (no cartilage, lining or capsule; the shoulder blade slides on muscle and bursae, and muscles hold it in place) is supported by Frank 2013.
 2. *What it is: a shallow socket.* [S] The glenoid is shallow relative to the humeral head; the labrum deepens the socket, and the capsule and its ligaments help hold the joint stable. Candidate evidence: anatomy reference with an open consensus or review source.
 3. *What it is: the cuff.* [S] Four rotator cuff muscles (supraspinatus, infraspinatus, teres minor, subscapularis) and their role in keeping the humeral head centred during arm movement. Candidate evidence: a review of cuff function (e.g. a JOSPT clinical commentary on shoulder exercise rationale).
 4. *What it is: the big movers.* [S] Deltoid, pectoralis major, latissimus dorsi, trapezius, serratus anterior: what each moves. Candidate evidence: nomenclature plus a review.
@@ -37,7 +37,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 7. *What to do.* [P] Use the plain names with clients and the standard names with clinicians; one-line glossary card.
 8. [!] Short note: the lesson teaches location and function, never what is "wrong". A painful spot is described, not named as an injury (SAFETY §1).
 
-**Visuals:** original diagram of the shoulder complex from the front (the subject's left shoulder; drawing in PR #17); a planned diagram of the cuff around the humeral head.
+**Visuals:** original diagram of the shoulder complex from the front (the subject's left shoulder; drawing on main since PR #17); a planned diagram of the cuff around the humeral head.
 
 **Graded quiz candidates**
 - Which joint connects the arm to the scapula? (glenohumeral) [binds §1 claim]
