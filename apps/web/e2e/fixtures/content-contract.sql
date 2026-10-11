@@ -16,26 +16,41 @@ insert into private.content_publishers (user_id, note) values ('c2c2c2c2-0000-40
 create temp table c2_urls (ord integer primary key, url text not null, accepted boolean not null, error text);
 grant insert on c2_urls to service_role;
 
--- Global base course: evidence, reviews and publication as the service role.
+-- Global base course: evidence, synthetic review receipts (ADR 0007; no model
+-- is called) and publication as the service role.
 select set_config('role', 'service_role', true), set_config('request.jwt.claims', '{"role":"service_role"}', true);
 select set_config('c2.source', public.publisher_add_source('c2c2c2c2-0000-4000-8000-0000000000a1',
   '{"kind": "systematic_review", "title": "Synthetic contract review", "doi": "10.5555/C2.CONTRACT", "license": "CC BY 4.0"}')::text, true);
 select set_config('c2.claim', public.publisher_add_claim('c2c2c2c2-0000-4000-8000-0000000000a1', jsonb_build_object(
   'statement', 'Synthetic contract claim.', 'evidenceLevel', 'synthetic', 'population', 'synthetic adults',
   'sourceIds', jsonb_build_array(current_setting('c2.source'))))::text, true);
+select set_config('c2.run', '{"model": "synthetic-fixture", "session": "ci-contract",
+  "packetDigest": "0000000000000000000000000000000000000000000000000000000000000003", "reviewedAt": "2026-10-01T00:00:00Z"}', true);
 select public.publisher_review_claim('c2c2c2c2-0000-4000-8000-0000000000a1', current_setting('c2.claim')::uuid,
   jsonb_build_object('decision', 'approved', 'expiresAt', to_char(now() + interval '1 year', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+    'expectedHash', public.publisher_claim_target('c2c2c2c2-0000-4000-8000-0000000000a1', current_setting('c2.claim')::uuid) ->> 'hash',
+    'run', current_setting('c2.run')::jsonb,
     'receipt', jsonb_build_object('existenceCheckedAt', '2026-10-01T00:00:00Z', 'faithfulness', 'faithful',
       'retractionCheckedAt', '2026-10-01T00:00:00Z')));
 select public.publisher_save_course_draft('c2c2c2c2-0000-4000-8000-0000000000a1',
   replace($c2json$__BASE__$c2json$, '__CLAIM__', current_setting('c2.claim'))::jsonb);
 do $$
 declare
-  b uuid;
+  l jsonb;
+  b jsonb;
 begin
-  for b in select lb.id from public.lesson_blocks lb join public.lessons l on l.id = lb.lesson_id
-           where l.course_id = 'c2c2c2c2-0000-4000-8000-000000000c01' and lb.support = 'science' loop
-    perform public.publisher_review_block('c2c2c2c2-0000-4000-8000-0000000000a1', b, '{"verdict": "supported"}');
+  for l in select * from jsonb_array_elements(public.publisher_review_targets('c2c2c2c2-0000-4000-8000-0000000000a1',
+           'c2c2c2c2-0000-4000-8000-000000000c01') -> 'lessons') loop
+    for b in select * from jsonb_array_elements(l -> 'blocks') loop
+      if jsonb_array_length(b -> 'claimIds') > 0 then
+        perform public.publisher_review_block('c2c2c2c2-0000-4000-8000-0000000000a1', (b ->> 'blockId')::uuid,
+          jsonb_build_object('verdict', 'supported', 'expectedHash', b -> 'hash', 'claimIds', b -> 'claimIds',
+            'run', current_setting('c2.run')::jsonb));
+      end if;
+    end loop;
+    perform public.publisher_review_lesson('c2c2c2c2-0000-4000-8000-0000000000a1', (l ->> 'lessonId')::uuid,
+      jsonb_build_object('verdict', 'clean', 'expectedHash', l -> 'hash', 'claimIds', l -> 'claimIds',
+        'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', current_setting('c2.run')::jsonb));
   end loop;
 end;
 $$;
