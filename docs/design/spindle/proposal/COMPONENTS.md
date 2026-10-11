@@ -21,7 +21,7 @@ Use the shadcn primitives already in Spindle. Radix handles composite interactio
 
 21st.dev metadata candidates: 19143 simple onboarding progress, 29801 stepper, 973 motion accordion, 28550 segmented pill. Animated stepper 28558 and registration stepper 8864 are references only. No paid source was retrieved. Check the exact per-item license and dependency chain before adopting code. Do not add a general animation dependency to replace one native disclosure.
 
-The included HTML uses native details, radio inputs, buttons and labels. It demonstrates local quiz, completion outcomes, outline and theme comparison. It does not implement auth, tenancy, claims, actual progress, publishing or content approval.
+The original HTML specimen is not included in this repository. The app's development-only `/design` route replaces it.
 
 ## Motion and accessibility acceptance
 

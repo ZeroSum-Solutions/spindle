@@ -163,7 +163,7 @@ Controls 8px, content cards 12px, badges 4px. Use pills for compact optional fil
 
 Round two replaces the original three logo concepts with six KIE-generated studies: Aperture, Parallax, Cut wordmark, Humanist wordmark, Link / SP and Offset. The user prefers the Cut wordmark; its diagonal cut belongs on the d ascender, never the l, which must stay solid to avoid reading as another i. Preserve the cut in the i dot. SVGs are editable traces of generated originals. A selected preview is local state, not a saved brand approval. Use a full wordmark at 120px wide or larger and inspect each symbol at 16, 24 and 32px before choosing a favicon. Keep clear space at least a quarter of symbol height. Never stretch or decorate the mark.
 
-Alternate palettes were revised after user feedback. Observatory uses midnight ink (#121526), periwinkle (#A8B8FF) and silver-white (#F4F5FF). Fieldnotes uses white (#FFFFFF), graphite (#272334) and violet (#6139B5), with a pale lavender secondary canvas. Teal, cream and rust are retired from those alternatives. Atlas tokens are unchanged. alternate-palettes.json records complete role values. These alternatives remain comparison studies, not promised app features.
+Alternate palettes were revised after user feedback. Observatory uses midnight ink (#121526), periwinkle (#A8B8FF) and silver-white (#F4F5FF). Fieldnotes uses white (#FFFFFF), graphite (#272334) and violet (#6139B5), with a pale lavender secondary canvas. Teal, cream and rust are retired from those alternatives. Atlas tokens are unchanged. These alternatives remain comparison studies, not promised app features.
 
 ## Components
 
@@ -199,4 +199,4 @@ Fast feedback 120ms; disclosure 180ms; drawer 240ms; ease cubic-bezier(.2,.8,.2,
 
 ## Source ledger
 
-Research: [Vercel workbook](https://claude-design-blueprint.vercel.app/), [Alpine Bio](https://alpbio.com), [Attio](https://attio.com), [Microsoft Learn module reference](https://refero.design/pages/14c43ec8-d00c-4461-be8b-2c25d178ffd6), [Motion Primitives](https://motion-primitives.com), [Logo System](https://logosystem.co), [Fonts In Use](https://fontsinuse.com), [Krug](https://sensible.com/dont-make-me-think/), [ASD-STE100](https://www.asd-ste100.org). RESEARCH.md records the complete resource scan and decisions. Sources inform patterns; no third-party brand or art is licensed by being listed here.
+Research: [Vercel workbook](https://claude-design-blueprint.vercel.app/), [Alpine Bio](https://alpbio.com), [Attio](https://attio.com), [Microsoft Learn module reference](https://refero.design/pages/14c43ec8-d00c-4461-be8b-2c25d178ffd6), [Motion Primitives](https://motion-primitives.com), [Logo System](https://logosystem.co), [Fonts In Use](https://fontsinuse.com), [Krug](https://sensible.com/dont-make-me-think/), [ASD-STE100](https://www.asd-ste100.org). Sources inform patterns; no third-party brand or art is licensed by being listed here.
