@@ -18,7 +18,7 @@ pnpm check            # lint, typecheck, tests, build
 pnpm dev              # http://localhost:3000
 ```
 
-See [AGENTS.md](AGENTS.md) for conventions, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
+See [AGENTS.md](AGENTS.md) for conventions, [docs/TESTING.md](docs/TESTING.md) for verification, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## License
 - Application code: [AGPL-3.0-only](LICENSE)
