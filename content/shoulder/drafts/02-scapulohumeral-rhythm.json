@@ -11,55 +11,46 @@
   "claimSlots": [
     {
       "slot": "claim-slot:l2-scapular-motions",
-      "statement": "During humeral elevation the scapula upwardly rotates and tilts posteriorly; its internal or external rotation on the thorax varies with the plane of elevation and through the range.",
-      "evidenceLevel": "Narrative review; in vivo kinematic study (bone pins)",
-      "population": "\"8 healthy volunteers (5 men, 3 women)\" (McClure 2001); normal scapular kinematics during arm elevation, reviewed by Ludewig 2009.",
+      "statement": "In asymptomatic individuals, the scapula moves from the very beginning of arm elevation toward upward rotation and posterior tilt, with a trend toward external rotation.",
+      "domain": "applied",
+      "evidenceLevel": "Systematic review with multilevel meta-regression",
+      "population": "\"asymptomatic individuals\" (Fernández-Matías 2025, which reviewed \"healthy individuals and those with RCRSP\").",
       "candidateSources": [
         {
-          "kind": "paper",
-          "citation": "Ludewig PM, Reynolds JF. The association of scapular kinematics and glenohumeral joint pathologies. J Orthop Sports Phys Ther. 2009;39(2):90-104.",
-          "doi": "10.2519/jospt.2009.2808",
-          "pmid": "19194022",
-          "pmcid": "PMC2730194",
-          "rights": "Author manuscript free to read in PMC (PMC2730194); no open licence stated; treat as all rights reserved. Cited and paraphrased only."
-        },
-        {
-          "kind": "paper",
-          "citation": "McClure PW, Michener LA, Sennett BJ, Karduna AR. Direct 3-dimensional measurement of scapular kinematics during dynamic movements in vivo. J Shoulder Elbow Surg. 2001;10(3):269-277.",
-          "doi": "10.1067/mse.2001.112954",
-          "pmid": "11408911",
-          "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
+          "kind": "meta_analysis",
+          "citation": "Fernández-Matías R, Ballesteros-Frutos J, Gallardo-Zamora P, Requejo-Salinas N, Caballero-Pozo I, Ludewig P, Lluch-Girbés E. Scapular kinematics variability in individuals with and without rotator cuff-related shoulder pain: a systematic review with multilevel meta-regression. Braz J Phys Ther. 2025;29(6):101261.",
+          "doi": "10.1016/j.bjpt.2025.101261",
+          "pmid": "40845626",
+          "pmcid": "PMC12398250",
+          "rights": "Copyright Associação Brasileira de Pesquisa e Pós-Graduação em Fisioterapia, published by Elsevier; the PubMed record says all rights reserved and Europe PMC lists no licence. Free to read in PMC. Abstract read on PubMed. Cited and paraphrased only."
         }
-      ]
+      ],
+      "note": "Replaces Ludewig 2009 (narrative review) and McClure 2001 (primary study), which the claim pipeline does not admit."
     },
     {
       "slot": "claim-slot:l2-shared-ratio",
-      "statement": "Humeral elevation is shared between glenohumeral and scapulothoracic motion; an overall ratio of about 2:1 is commonly reported, but the ratio varies between individuals, across the range of elevation and with external load.",
-      "evidenceLevel": "Laboratory kinematic studies",
-      "population": "\"25 normal subjects\" (McQuade 1998); the Inman 1944 record has no abstract, so its population is not quoted.",
+      "statement": "In asymptomatic individuals, a systematic review with multilevel meta-regression estimated the ratio of humerothoracic elevation to scapular upward rotation at about 2.9:1 to 3.1:1, found great variability in scapular kinematics, and did not support a constant 3:1 scapulohumeral rhythm.",
+      "domain": "applied",
+      "evidenceLevel": "Systematic review with multilevel meta-regression",
+      "population": "\"asymptomatic individuals\" (Fernández-Matías 2025, which reviewed \"healthy individuals and those with RCRSP\").",
       "candidateSources": [
         {
-          "kind": "paper",
-          "citation": "Inman VT, Saunders JB, Abbott LC. Observations of the function of the shoulder joint. 1944. Reprinted in Clin Orthop Relat Res. 1996;(330):3-12.",
-          "doi": "10.1097/00003086-199609000-00002",
-          "pmid": "8804269",
-          "rights": "No open licence found; treat as all rights reserved. No abstract available; metadata only. Cited and paraphrased only."
-        },
-        {
-          "kind": "paper",
-          "citation": "McQuade KJ, Smidt GL. Dynamic scapulohumeral rhythm: the effects of external resistance during elevation of the arm in the scapular plane. J Orthop Sports Phys Ther. 1998;27(2):125-133.",
-          "doi": "10.2519/jospt.1998.27.2.125",
-          "pmid": "9475136",
-          "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
+          "kind": "meta_analysis",
+          "citation": "Fernández-Matías R, Ballesteros-Frutos J, Gallardo-Zamora P, Requejo-Salinas N, Caballero-Pozo I, Ludewig P, Lluch-Girbés E. Scapular kinematics variability in individuals with and without rotator cuff-related shoulder pain: a systematic review with multilevel meta-regression. Braz J Phys Ther. 2025;29(6):101261.",
+          "doi": "10.1016/j.bjpt.2025.101261",
+          "pmid": "40845626",
+          "pmcid": "PMC12398250",
+          "rights": "Copyright Associação Brasileira de Pesquisa e Pós-Graduação em Fisioterapia, published by Elsevier; the PubMed record says all rights reserved and Europe PMC lists no licence. Free to read in PMC. Abstract read on PubMed. Cited and paraphrased only."
         }
       ],
-      "note": "Inman is the 1944 study reprinted in 1996 (metadata only); McQuade and Smidt show the load effect. Keep the variation clause."
+      "note": "Replaces Inman 1944 (no abstract) and McQuade 1998 (primary study). The ratio is humerothoracic elevation to scapular upward rotation, not the classic glenohumeral-to-scapulothoracic 2:1."
     },
     {
       "slot": "claim-slot:l2-dyskinesis",
-      "statement": "Observable scapular dyskinesis is common in people without shoulder pain and, on its own, does not identify a shoulder injury.",
-      "evidenceLevel": "Consensus statement; cross-sectional study",
-      "population": "\"67 with shoulder pain and 68 healthy controls\" (Plummer 2017); shoulder injuries in general (Kibler 2013 Scapular Summit consensus).",
+      "statement": "Scapular dyskinesis is present in a high percentage of shoulder injuries, but its exact role in causing or worsening shoulder dysfunction is not clearly defined.",
+      "domain": "applied",
+      "evidenceLevel": "Consensus statement",
+      "population": "People with shoulder injuries (Kibler 2013, Scapular Summit consensus).",
       "candidateSources": [
         {
           "kind": "consensus",
@@ -67,16 +58,9 @@
           "doi": "10.1136/bjsports-2013-092425",
           "pmid": "23580420",
           "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
-        },
-        {
-          "kind": "paper",
-          "citation": "Plummer HA, Sum JC, Pozzi F, Varghese R, Michener LA. Observational scapular dyskinesis: known-groups validity in patients with and without shoulder pain. J Orthop Sports Phys Ther. 2017;47(8):530-537.",
-          "doi": "10.2519/jospt.2017.7268",
-          "pmid": "28683230",
-          "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
         }
       ],
-      "note": "Present-pain and diagnostic interpretation only. No claim about future injury: a prospective meta-analysis (Hogan 2021, PMID 33211975) would need its own reviewed claim."
+      "note": "Wording Sol approved on Kibler alone in the claim dry run (round 3). Plummer 2017 (primary study) is dropped; no claim about people without pain or about identifying injury."
     }
   ],
   "scenarios": [
@@ -99,10 +83,10 @@
     "durationMinutes": 12,
     "format": "article",
     "objectives": [
-      "Describe the shoulder blade movements that happen consistently when the arm is raised, and the one that varies.",
-      "Explain that raising the arm is shared between the ball-and-socket joint and the shoulder blade, and that the share varies.",
+      "Describe the shoulder blade movements that happen as the arm is raised.",
+      "Explain that raising the arm is shared with the shoulder blade, and that the share varies between people.",
       "Watch a client raise their arms and describe what you see in plain words.",
-      "Explain why a visible difference in shoulder blade movement is not, on its own, a sign of injury."
+      "Explain why a visible difference in shoulder blade movement is something to watch and re-check, not a diagnosis."
     ],
     "anatomyIds": [
       "UBERON:0001467",
@@ -122,7 +106,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "When the arm is raised, the shoulder blade does not stay still. It rotates upward, so the socket turns to face more toward the ceiling, and it tilts backward at the top. How much it also turns around the ribcage, inward or outward, depends on the direction the arm is raised and how high it goes.",
+        "content": "When the arm is raised, the shoulder blade does not stay still. From the very start of the raise it rotates upward, so the socket turns to face more toward the ceiling, and it tilts backward. It also tends to turn outward around the ribcage.",
         "support": "science",
         "claimIds": [
           "claim-slot:l2-scapular-motions"
@@ -141,7 +125,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Raising the arm is shared between the ball-and-socket joint and the shoulder blade. Over the whole movement the ball-and-socket joint often contributes about twice as much as the shoulder blade, but that ratio is not fixed: it differs between people, changes through the range, and changes with load.",
+        "content": "Raising the arm is shared with the shoulder blade. A review that pooled studies of people without shoulder pain estimated that the arm rises about three degrees for every degree the shoulder blade rotates upward. Shoulder blade movement varied a lot between people, and the review did not support a fixed ratio.",
         "support": "science",
         "claimIds": [
           "claim-slot:l2-shared-ratio"
@@ -159,11 +143,17 @@
       },
       {
         "kind": "paragraph",
-        "content": "Visible differences in how the shoulder blade moves, often called scapular dyskinesis, are common in people who have no shoulder pain. On their own they do not show that someone is injured.",
+        "content": "Changes in how the shoulder blade moves, often called scapular dyskinesis, are present in a high percentage of shoulder injuries. An international consensus statement concluded that their exact role in causing or worsening shoulder problems is not clearly defined.",
         "support": "science",
         "claimIds": [
           "claim-slot:l2-dyskinesis"
         ]
+      },
+      {
+        "kind": "paragraph",
+        "content": "So treat a visible difference as something to watch and re-check, not as a diagnosis. It never tells you on its own what is wrong, or that nothing is.",
+        "support": "practice-based",
+        "claimIds": []
       },
       {
         "kind": "heading",
@@ -221,7 +211,7 @@
             "None: the shoulder blade stays still"
           ],
           "answerIndex": 0,
-          "explanation": "As the arm rises, the shoulder blade rotates upward and tilts backward. Its turning around the ribcage varies with the direction and height of the raise."
+          "explanation": "From the start of the raise, the shoulder blade rotates upward and tilts backward, and it tends to turn outward around the ribcage."
         },
         "support": "science",
         "claimIds": [
@@ -231,14 +221,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "How is raising the arm shared between the ball-and-socket joint and the shoulder blade?",
+          "prompt": "How is raising the arm shared with the shoulder blade?",
           "options": [
-            "A fixed 2:1 in everyone",
-            "The share varies between people, through the range and with load",
+            "A fixed ratio in everyone",
+            "On average about three degrees of arm rise per degree of shoulder blade rotation, with large differences between people",
             "The shoulder blade does most of the work"
           ],
           "answerIndex": 1,
-          "explanation": "About 2:1 is a common average over the whole movement, but the ratio varies between people, through the range and with load."
+          "explanation": "Pooled studies of people without shoulder pain estimated about 3:1 on average, but shoulder blade movement varied a lot between people, so no fixed ratio holds."
         },
         "support": "science",
         "claimIds": [
@@ -248,14 +238,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "A client with no shoulder pain shows a shoulder blade that lifts away from the ribs when lowering the arms. What does that tell you on its own?",
+          "prompt": "What did an international consensus statement conclude about scapular dyskinesis?",
           "options": [
-            "They have a shoulder injury",
-            "Nothing certain: this is common in people without pain",
-            "They must stop all overhead training"
+            "It is present in a high percentage of shoulder injuries, but its exact role in causing or worsening them is not clearly defined",
+            "It always causes shoulder injury",
+            "It is never seen with shoulder injuries"
           ],
-          "answerIndex": 1,
-          "explanation": "Visible changes in shoulder blade movement are common in people without pain, so on their own they do not show an injury."
+          "answerIndex": 0,
+          "explanation": "It is common in shoulder injuries, but its exact role in causing or worsening shoulder problems is not clearly defined."
         },
         "support": "science",
         "claimIds": [

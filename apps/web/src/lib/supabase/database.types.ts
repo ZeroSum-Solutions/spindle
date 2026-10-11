@@ -845,6 +845,11 @@ export type Database = {
       practice_media_checks: {
         Row: {
           checked_at: string
+          context: Json | null
+          described_at: string | null
+          describer_cost_usd: number | null
+          describer_model: string | null
+          describer_run_id: string | null
           id: string
           kind: string
           media_id: string
@@ -857,6 +862,11 @@ export type Database = {
         }
         Insert: {
           checked_at: string
+          context?: Json | null
+          described_at?: string | null
+          describer_cost_usd?: number | null
+          describer_model?: string | null
+          describer_run_id?: string | null
           id?: string
           kind: string
           media_id: string
@@ -869,6 +879,11 @@ export type Database = {
         }
         Update: {
           checked_at?: string
+          context?: Json | null
+          described_at?: string | null
+          describer_cost_usd?: number | null
+          describer_model?: string | null
+          describer_run_id?: string | null
           id?: string
           kind?: string
           media_id?: string
@@ -880,6 +895,13 @@ export type Database = {
           seq?: never
         }
         Relationships: [
+          {
+            foreignKeyName: "practice_media_checks_describer_run_id_fkey"
+            columns: ["describer_run_id"]
+            isOneToOne: false
+            referencedRelation: "review_runs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "practice_media_checks_media_id_fkey"
             columns: ["media_id"]
@@ -1425,6 +1447,7 @@ export type Database = {
           available: boolean
           channel: string
           media_id: string
+          review: string
           state: string
           title: string
         }[]
