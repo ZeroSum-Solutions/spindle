@@ -1,10 +1,27 @@
 import { redirect } from "next/navigation";
-import type { z } from "zod";
+import { z } from "zod";
 
-/** Only same-site relative paths are allowed as post-sign-in destinations. */
+const BASE = "http://spindle.invalid";
+
+/**
+ * Only same-origin relative paths are allowed as post-sign-in destinations.
+ * Rejects protocol-relative ("//x"), backslash ("/\x") and control-character tricks.
+ */
 export function safeNext(value: unknown, fallback = "/gyms"): string {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : fallback;
+  if (typeof value !== "string" || !value.startsWith("/") || /[\\\u0000-\u001f\u007f]/.test(value)) return fallback;
+  try {
+    const url = new URL(value, BASE);
+    return url.origin === BASE ? `${url.pathname}${url.search}${url.hash}` : fallback;
+  } catch {
+    return fallback;
+  }
 }
+
+export const slugSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9][a-z0-9-]{1,46}[a-z0-9]$/, "Use 3–48 lowercase letters, numbers or hyphens.");
 
 /** Parses FormData with a zod schema, redirecting back with a message on failure. */
 export function parseForm<T extends z.ZodType>(schema: T, form: FormData, back: string): z.infer<T> {

@@ -11,10 +11,11 @@ const emailSchema = z.object({
 });
 
 export async function sendCode(form: FormData) {
-  const { email, next } = parseForm(emailSchema, form, "/sign-in");
+  const back = `/sign-in?next=${encodeURIComponent(safeNext(form.get("next")))}`;
+  const { email, next } = parseForm(emailSchema, form, back);
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
-  if (error) fail("/sign-in", "We could not send a code. Try again in a minute.");
+  if (error) fail(back, "We could not send a code. Try again in a minute.");
   redirect(`/sign-in/verify?email=${encodeURIComponent(email)}&next=${encodeURIComponent(safeNext(next))}`);
 }
 
@@ -25,7 +26,7 @@ const codeSchema = z.object({
 });
 
 export async function verifyCode(form: FormData) {
-  const back = `/sign-in/verify?email=${encodeURIComponent(String(form.get("email") ?? ""))}`;
+  const back = `/sign-in/verify?email=${encodeURIComponent(String(form.get("email") ?? ""))}&next=${encodeURIComponent(safeNext(form.get("next")))}`;
   const { email, code, next } = parseForm(codeSchema, form, back);
   const supabase = await createClient();
   const { error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });

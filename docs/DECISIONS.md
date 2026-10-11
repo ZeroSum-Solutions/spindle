@@ -10,3 +10,4 @@ Numbered owner decisions. A later decision names the one it supersedes. Hard-to-
 | D-04 | 2026-10-10 | Curriculum: foundations from consensus references, applied claims from recent systematic reviews; not built on an existing atom library. | ADR 0003 |
 | D-05 | 2026-10-10 | Free scholarly APIs (PubMed, Europe PMC, OpenAlex, Crossref, Unpaywall, Semantic Scholar, Wikidata, wger) feed the claim pipeline. | ADR 0004 |
 | D-06 | 2026-10-10 | CI on GitHub-hosted runners only. Local checks run on the laptop. | ADR 0002 |
+| D-07 | 2026-10-10 | Phase 1 proves tenant isolation for the tables that exist (orgs, memberships, invites). The "tenants can't write global rows" and storage-path checks move to phase 2, where the first global table (curricula) and the first bucket are created. The plan v3 phase 1 row is updated to match. | Lead decision (ordering); Sol spec review flagged the scope change |

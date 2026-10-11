@@ -42,8 +42,9 @@ export type Database = {
           email: string
           expires_at: string
           id: string
-          invited_by: string
+          invited_by: string | null
           org_id: string
+          revoked_at: string | null
           role: Database["public"]["Enums"]["member_role"]
           token_hash: string
         }
@@ -54,8 +55,9 @@ export type Database = {
           email: string
           expires_at?: string
           id?: string
-          invited_by: string
+          invited_by?: string | null
           org_id: string
+          revoked_at?: string | null
           role: Database["public"]["Enums"]["member_role"]
           token_hash: string
         }
@@ -66,8 +68,9 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
-          invited_by?: string
+          invited_by?: string | null
           org_id?: string
+          revoked_at?: string | null
           role?: Database["public"]["Enums"]["member_role"]
           token_hash?: string
         }
@@ -153,6 +156,7 @@ export type Database = {
         Args: { member: string; target_org: string }
         Returns: undefined
       }
+      revoke_invite: { Args: { invite_id: string }; Returns: undefined }
       set_member_role: {
         Args: {
           member: string

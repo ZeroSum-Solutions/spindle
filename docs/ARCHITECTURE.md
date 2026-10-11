@@ -33,7 +33,9 @@ Global rows have `org_id = null` and can only be written by the content-publishe
 ## Tenancy and identity
 - **Identity:** Supabase Auth, with Spindle's own accounts.
 - **Roles:** `owner`, `lead` and `trainer`. Only owners change roles, and the last owner can't be removed.
-- **RLS:** every operation is covered. Composite foreign keys keep each child row in its parent's tenant.
+- **RLS:** every operation is either covered by a policy or not granted at all; a pgTAP privilege matrix asserts this. Writes to memberships and invites go only through security-definer functions that check roles. Composite foreign keys keep each child row in its parent's tenant.
+- **Serialization:** membership changes lock the org row, so concurrent owner changes can't leave a gym without an owner (race test in `supabase/tests/race/`).
+- **Invites:** single-use, 7-day, revocable; tokens stored as SHA-256; accepted only by an account whose confirmed email matches.
 - **Service-key paths** bypass RLS, so each has its own tests.
 
 ## Client insights (not built)

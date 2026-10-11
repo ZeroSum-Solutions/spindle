@@ -21,14 +21,14 @@ async function latestCode(email: string): Promise<string> {
   throw new Error(`no sign-in code for ${email}`);
 }
 
-async function signIn(browser: Browser, email: string, next = "/gyms"): Promise<Page> {
+async function signIn(browser: Browser, email: string, next = "/gyms", expected = next): Promise<Page> {
   const page = await (await browser.newContext()).newPage();
   await page.goto(`/sign-in?next=${encodeURIComponent(next)}`);
   await page.getByLabel("Email").fill(email);
   await page.getByRole("button", { name: "Email me a code" }).click();
   await page.getByLabel("6-digit code").fill(await latestCode(email));
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL(`**${next}`);
+  await page.waitForURL(`**${expected}`);
   return page;
 }
 
@@ -48,6 +48,11 @@ test("each gym's data stays inside that gym", async ({ browser }) => {
   await a.getByRole("button", { name: "Create invite link" }).click();
   const link = await a.getByTestId("invite-link").innerText();
   expect(link).toMatch(/^\/invite\/[0-9a-f]{48}$/);
+  // The token never enters the address bar, and a reload does not show it again.
+  expect(a.url()).not.toContain(link.slice(8));
+  await a.reload();
+  await expect(a.getByTestId("invite-link")).toHaveCount(0);
+  await expect(a.getByText(tess)).toBeVisible(); // listed under pending invites
 
   // Bob cannot use Tess's invite, and cannot see gym A.
   const b = await signIn(browser, bob, link);
@@ -67,7 +72,15 @@ test("each gym's data stays inside that gym", async ({ browser }) => {
   await expect(t.getByText("trainer").first()).toBeVisible();
   await expect(t.getByRole("button", { name: "Create invite link" })).toHaveCount(0);
 
-  // Alice now sees two members.
+  // Alice now sees two members, and Tess's invite is no longer pending.
   await a.reload();
   await expect(a.locator("section li")).toHaveCount(2);
+});
+
+test("sign-in never redirects off-site", async ({ browser }) => {
+  const attempts = ["//evil.example", "/\\evil.example", "https://evil.example"];
+  for (const [i, next] of attempts.entries()) {
+    const page = await signIn(browser, `carol-${run}-${i}@c.test`, next, "/gyms");
+    expect(new URL(page.url()).host).toBe("127.0.0.1:3100");
+  }
 });

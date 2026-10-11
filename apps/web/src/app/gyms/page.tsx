@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Button, ErrorNote, Field, Page } from "@/components/ui";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, currentUser } from "@/lib/supabase/server";
 import { signOut } from "../sign-in/actions";
 import { createGym } from "./actions";
 
@@ -19,13 +19,17 @@ export default function GymsPage({ searchParams }: PageProps<"/gyms">) {
 }
 
 async function GymList({ searchParams }: { searchParams: PageProps<"/gyms">["searchParams"] }) {
-  const params = await searchParams;
+  const [params, me] = await Promise.all([searchParams, currentUser()]);
+  if (!me) return null;
   const supabase = await createClient();
-  const { data: memberships } = await supabase
+  // RLS shows every membership in my gyms; I only want my own rows.
+  const { data: memberships, error } = await supabase
     .from("memberships")
     .select("role, orgs(name, slug)")
+    .eq("user_id", me.id)
     .order("created_at");
-  const gyms = (memberships ?? []).flatMap((m) => (m.orgs ? [{ ...m.orgs, role: m.role }] : []));
+  if (error) throw new Error("Could not load your gyms. Try again.");
+  const gyms = memberships.flatMap((m) => (m.orgs ? [{ ...m.orgs, role: m.role }] : []));
 
   return (
     <>
