@@ -74,6 +74,8 @@ const HASH = /^[0-9a-f]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const uuid = z.string().regex(UUID);
 
+const PAPER_KINDS = new Set(["systematic_review", "meta_analysis", "position_stand", "foundation_reference"]);
+
 export const evidenceEntrySchema = z.strictObject({
   sourceId: uuid,
   kind: z.enum(["systematic_review", "meta_analysis", "position_stand", "textbook", "nomenclature", "foundation_reference"]),
@@ -94,7 +96,9 @@ export const evidenceEntrySchema = z.strictObject({
     .optional(),
 })
   .refine((e) => !e.kindOverride || e.kind === overrideKind(e.kindOverride.documentType), { message: "the kind override does not match the source kind" })
-  .refine((e) => e.kind !== "foundation_reference" || e.kindOverride !== undefined, { message: "a foundation reference needs its kind override" }) satisfies z.ZodType<EvidenceEntry>;
+  .refine((e) => e.kind !== "foundation_reference" || e.kindOverride !== undefined, { message: "a foundation reference needs its kind override" })
+  // Papers carry the year and journal a claim may cite (Sol R1 PR26-05); textbooks and nomenclature need not.
+  .refine((e) => !PAPER_KINDS.has(e.kind) || (e.year !== undefined && !!e.journal), { message: "paper evidence needs its year and journal" }) satisfies z.ZodType<EvidenceEntry>;
 
 const claimContentSchema = z.strictObject({
   statement: z.string().min(1).max(2000),
@@ -201,8 +205,8 @@ export const MAX_EVIDENCE_AGE_DAYS = 30;
 export interface SourceIdentity {
   doi: string | null;
   pmid: string | null;
-  /** D-12: whether the database records a kind override; when known, the evidence must show it. */
-  overridden?: boolean;
+  /** D-12: the override the database records (null for none); when known, the evidence must show exactly it. */
+  override?: { documentType: string; justification: string; publicationTypes: string[] } | null;
   url?: string | null;
   kind: string;
 }
@@ -211,7 +215,12 @@ export interface SourceIdentity {
 export function evidenceMatchesSource(e: EvidenceEntry, s: SourceIdentity | undefined): boolean {
   if (!s || e.kind !== s.kind) return false;
   if (!s.doi && !s.pmid && !s.url) return false;
-  if (s.overridden !== undefined && (e.kindOverride !== undefined) !== s.overridden) return false;
+  if (s.override !== undefined) {
+    const a = e.kindOverride;
+    const b = s.override;
+    if ((a === undefined) !== (b === null)) return false;
+    if (a && b && (a.documentType !== b.documentType || a.justification !== b.justification || JSON.stringify(a.publicationTypes) !== JSON.stringify(b.publicationTypes))) return false;
+  }
   if (s.doi && (e.identifiers.doi ?? "").toLowerCase() !== s.doi.toLowerCase()) return false;
   if (s.pmid && e.identifiers.pmid !== s.pmid) return false;
   if (!s.doi && !s.pmid && s.url && e.identifiers.url !== s.url) return false;

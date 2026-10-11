@@ -53,6 +53,10 @@ main(async () => {
   if (existing) {
     // Refresh only with an entry that matches the existing source's full identity; otherwise keep the old file (Sol N02).
     const identity = sourceIdentities([existing]).get(existing);
+    // The stored override is immutable: a refresh carries it, not this run's wording (Sol R1 PR26-04).
+    if (identity?.override && entry.kindOverride && identity.override.documentType === entry.kindOverride.documentType) {
+      entry.kindOverride = { ...identity.override, documentType: entry.kindOverride.documentType };
+    }
     if (!evidenceMatchesSource(entry, identity)) {
       console.log(`refused: the new evidence does not match source ${existing} (kind ${identity?.kind}, DOI ${identity?.doi}, PMID ${identity?.pmid ?? "none"}); the previous evidence file is unchanged`);
       return 1;

@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(199);
+select plan(206);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -1080,6 +1080,35 @@ insert into public.claims (id, statement, evidence_level, population, created_by
 values ('76000000-0000-4000-8000-0000000000dd', 'Smuggled applied claim.', 'x', 'x', '00000000-0000-0000-0000-0000000000c1');
 select throws_ok(format($$insert into public.claim_sources values ('76000000-0000-4000-8000-0000000000dd', %L)$$, pg_temp.id('fr_src')),
   '23514', 'only a foundation claim can cite a foundation reference', 'even the table owner cannot attach a foundation reference to an applied claim');
+
+-- Sol R1 on #26: restricted licences, every study and notice type, and truncation.
+select pg_temp.as_service();
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.5', pg_temp.frov(), 'CC BY-NC-SA 4.0'))$$,
+  '22023', 'invalid source.license: a foundation reference must carry an open licence (CC BY, CC0 or public domain)',
+  'a restricted CC licence is not open (PR26-01)');
+select lives_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.6', pg_temp.frov(), 'CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)'))$$,
+  'CC BY with a version and a link is open');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.8', pg_temp.ov('position_stand', '["Multicenter Study", "Journal Article"]')))$$,
+  '22023', 'invalid source.kindOverride.publicationTypes: name a study or notice type; only guidance documents and open references can be overridden',
+  'any study type blocks an override (PR26-02)');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.9', pg_temp.ov('position_stand', '["Expression of Concern"]')))$$,
+  '22023', 'invalid source.kindOverride.publicationTypes: name a study or notice type; only guidance documents and open references can be overridden',
+  'a notice blocks an override (PR26-02)');
+select pg_temp.reset_role();
+select throws_ok('truncate public.source_kind_overrides cascade', 'P0001', 'source_kind_overrides cannot be truncated',
+  'even the table owner cannot truncate overrides (PR26-06)');
+
+create function pg_temp.old_hash(cid uuid) returns text language sql security definer as $$
+  select private.sha256(jsonb_build_object('id', c.id, 'statement', c.statement, 'evidenceLevel', c.evidence_level,
+    'population', c.population, 'sourceIds', coalesce((select jsonb_agg(cs.source_id order by cs.source_id)
+      from public.claim_sources cs where cs.claim_id = c.id), '[]'::jsonb)))
+  from public.claims c where c.id = cid
+$$;
+create function pg_temp.hash_of(cid uuid) returns text language sql security definer as $$ select private.claim_hash(cid) $$;
+select is(pg_temp.hash_of('76000000-0000-4000-8000-0000000000dd'), pg_temp.old_hash('76000000-0000-4000-8000-0000000000dd'),
+  'an applied claim keeps the hash it had before D-12');
+select isnt(pg_temp.hash_of(pg_temp.id('fr_claim')), pg_temp.old_hash(pg_temp.id('fr_claim')),
+  'a foundation claim''s hash covers its domain');
 
 select * from finish();
 rollback;

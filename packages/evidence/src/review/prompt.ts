@@ -5,14 +5,15 @@ import { canonicalJson, type ReviewPacket } from "./packet";
 const CLAIM_RUBRIC = `For each claim item: approve only if the supplied evidence text, read on its own, fully supports the statement
 for the stated population, without extrapolation. A drafter's summary is not evidence. If evidence is missing,
 incomplete or only partly supports the claim, reject it. Set faithfulness to "faithful" only when you approve.
-Each evidence entry's title, year and journal come from its PubMed record, not from the drafter; a claim may cite
-them. An entry with kindOverride is a document whose type a publisher recorded because PubMed mislabels it: approve
-a claim that relies on it only if its text itself reads as that kind of guidance document (a position stand,
-guideline, consensus statement or care pathway from a professional body); otherwise reject with a BLOCK on the
-evidence level. Each claim has a domain. A "foundation" claim states anatomy or nomenclature (structure, names,
-attachments, what a part is) and may rest on a foundation_reference source (an open anatomy or nomenclature
-reference). Reject a foundation claim that asserts an effect, risk, treatment, prevalence or prognosis, and reject
-any claim whose only support is a foundation_reference unless it is a foundation claim of that kind.`;
+Each evidence entry's year and journal come from its PubMed record (the title from Crossref or PubMed), not from
+the drafter; a claim may cite them. An entry with kindOverride had its type recorded by a publisher because PubMed
+labels it otherwise. For a guidance override (position_stand, clinical_guideline, consensus_statement, care_pathway),
+approve a claim that relies on it only if its text itself reads as that kind of guidance from a professional body;
+otherwise reject with a BLOCK on the evidence level.
+For a reference override (anatomy_reference, nomenclature_reference), the source is an open anatomy or nomenclature reference, not guidance: it may support only a
+"foundation" claim. Each claim has a domain. A "foundation" claim states anatomy or nomenclature (structure, names,
+attachments, what a part is); reject a foundation claim that asserts an effect, risk, treatment, prevalence or
+prognosis, and reject any claim whose only support is a reference override unless it is such a foundation claim.`;
 
 const CONTENT_RUBRIC = `For each block item: "supported" only if its cited claims together fully support exactly what the block says.
 For each lesson and course item: apply the safety rules below, check that nothing is diagnostic or overclaims, that

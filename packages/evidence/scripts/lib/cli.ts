@@ -83,11 +83,14 @@ export function main(fn: () => Promise<number>): void {
 }
 
 /** The immutable identity (doi, pmid, url, kind) of each source, from the database. */
-export function sourceIdentities(ids: readonly string[]): Map<string, { doi: string | null; pmid: string | null; url: string | null; kind: string; overridden: boolean }> {
+export type StoredOverride = { documentType: string; justification: string; publicationTypes: string[] };
+
+export function sourceIdentities(ids: readonly string[]): Map<string, { doi: string | null; pmid: string | null; url: string | null; kind: string; override: StoredOverride | null }> {
   if (ids.length === 0) return new Map();
   for (const id of ids) requireUuid(id, "source id");
   const rows = JSON.parse(sql(`select coalesce(json_agg(json_build_object('id', s.id, 'doi', s.doi, 'pmid', s.pmid, 'url', s.url, 'kind', s.kind,
-      'overridden', exists (select 1 from public.source_kind_overrides o where o.source_id = s.id))), '[]')
-    from public.sources s where s.id in (${ids.map(lit).join(", ")})`)) as { id: string; doi: string | null; pmid: string | null; url: string | null; kind: string; overridden: boolean }[];
-  return new Map(rows.map((r) => [r.id, { doi: r.doi, pmid: r.pmid, url: r.url, kind: r.kind, overridden: r.overridden }]));
+      'override', (select json_build_object('documentType', o.document_type, 'justification', o.justification, 'publicationTypes', o.publication_types)
+                   from public.source_kind_overrides o where o.source_id = s.id))), '[]')
+    from public.sources s where s.id in (${ids.map(lit).join(", ")})`)) as { id: string; doi: string | null; pmid: string | null; url: string | null; kind: string; override: StoredOverride | null }[];
+  return new Map(rows.map((r) => [r.id, { doi: r.doi, pmid: r.pmid, url: r.url, kind: r.kind, override: r.override }]));
 }

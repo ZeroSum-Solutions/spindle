@@ -47,6 +47,9 @@ $$;
 create trigger source_kind_overrides_guard
 before insert or update or delete on public.source_kind_overrides
 for each row execute function private.guard_source_kind_override();
+create trigger source_kind_overrides_no_truncate
+before truncate on public.source_kind_overrides
+for each statement execute function private.guard_truncate();
 
 -- Only foundation claims cite foundation references, whoever writes the rows; a claim's
 -- domain never changes once it has sources.
@@ -128,10 +131,13 @@ begin
     perform private.jstr(ov -> 'justification', 'source.kindOverride.justification', 40, 2000);
     pub_types := private.jstrs(ov -> 'publicationTypes', 'source.kindOverride.publicationTypes', 1, 30, 200);
     if exists (select 1 from jsonb_array_elements_text(pub_types) t
-               where t ~* '(trial|observational|cohort|case.control|case reports?|comparative study|evaluation study|cross-sectional|letter|comment|editorial|retract|erratum|preprint)') then
+               where t ~* '(trial|stud(y|ies)|observational|cohort|case.control|case reports?|cross-sectional|letter|comment|editorial|news|interview|retract|erratum|correct|expression of concern|preprint|dataset)') then
       perform private.jfail('source.kindOverride.publicationTypes', 'name a study or notice type; only guidance documents and open references can be overridden');
     end if;
-    if kind = 'foundation_reference' and (p_source ->> 'license') !~* '^\s*(cc[- ]?by|cc0|public[- ]domain)' then
+    -- Only CC BY (any version), CC0 and public domain; restricted CC variants are refused. The
+    -- name is normalised as in packages/evidence (ingest.ts normalizeLicense).
+    if kind = 'foundation_reference' and regexp_replace(regexp_replace(lower(btrim(regexp_replace(p_source ->> 'license', '[(,;].*$', ''))),
+         '[\s_]+', '-', 'g'), '-+', '-', 'g') !~ '^(cc-by(-[0-9](\.[0-9])?)?|cc0(-1\.0)?|public-domain)$' then
       perform private.jfail('source.license', 'a foundation reference must carry an open licence (CC BY, CC0 or public domain)');
     end if;
   end if;

@@ -26,8 +26,16 @@ export type KindOverrideType = (typeof GUIDANCE_TYPES)[number] | (typeof REFEREN
 export const overrideKind = (t: KindOverrideType): "position_stand" | "foundation_reference" =>
   (REFERENCE_TYPES as readonly string[]).includes(t) ? "foundation_reference" : "position_stand";
 
-/** An open licence: what a foundation reference must carry. */
-export const OPEN_LICENSE = /^\s*(cc[- ]?by|cc0|public[- ]domain)/i;
+/**
+ * An open licence: what a foundation reference must carry. Only CC BY (any version), CC0 and
+ * public domain; restricted CC variants (NC, ND, SA) are refused (Sol R1 PR26-01). The name is
+ * normalised: text after "(", "," or ";" is ignored, case and separators are folded.
+ */
+export function normalizeLicense(license: string): string {
+  return license.split(/[(,;]/)[0]!.trim().toLowerCase().replace(/[\s_]+/g, "-").replace(/-+/g, "-");
+}
+export const OPEN_LICENSE = /^(cc-by(-\d(\.\d)?)?|cc0(-1\.0)?|public-domain)$/;
+export const isOpenLicense = (license: string | null | undefined): boolean => OPEN_LICENSE.test(normalizeLicense(license ?? ""));
 
 /**
  * D-12: a publisher's assertion that PubMed mislabels a guidance document, or that an open
@@ -83,7 +91,8 @@ export function paperKind(pubTypes: readonly string[]): PaperKind | null {
 }
 
 /** Publication types that name a study or a notice: an override is refused for them (D-12). */
-export const NOT_GUIDANCE = /(trial|observational|cohort|case.control|case reports?|comparative study|evaluation study|cross-sectional|letter|comment|editorial|retract|erratum|preprint)/i;
+export const NOT_GUIDANCE =
+  /(trial|stud(y|ies)|observational|cohort|case.control|case reports?|cross-sectional|letter|comment|editorial|news|interview|retract|erratum|correct|expression of concern|preprint|dataset)/i;
 
 /** Null when the override may apply to these publication types, otherwise why not. */
 export function overrideRefusal(
@@ -97,7 +106,7 @@ export function overrideRefusal(
   const bad = pubTypes.find((t) => NOT_GUIDANCE.test(t));
   if (bad) return `publication type "${bad}" names a study or notice; only guidance documents and open references can be overridden`;
   if (![...GUIDANCE_TYPES, ...REFERENCE_TYPES].includes(o.documentType)) return "unknown document type";
-  if (overrideKind(o.documentType) === "foundation_reference" && !OPEN_LICENSE.test(license ?? "")) {
+  if (overrideKind(o.documentType) === "foundation_reference" && !isOpenLicense(license)) {
     return `a foundation reference must carry an open licence (CC BY, CC0 or public domain), not ${JSON.stringify(license ?? "none")}`;
   }
   if (o.justification.trim().length < 40) return "the justification must say why (at least 40 characters)";
@@ -172,17 +181,22 @@ export async function ingestPaper(
   const detected = paperKind(pubTypes);
   let kind = detected;
   let kindOverride: IngestedPaper["kindOverride"];
+  // An override is judged on every label either record gives (Sol R1 PR26-02).
+  const allTypes = [...new Set([...(epmc?.pubTypes ?? []), ...(pubmed?.pubTypes ?? [])])];
   if (opts.kindOverride) {
-    const refusal = overrideRefusal(pubTypes, detected, opts.kindOverride, check?.oa.license);
+    const refusal = overrideRefusal(allTypes, paperKind(allTypes) ?? detected, opts.kindOverride, check?.oa.license);
     if (refusal) issues.push(`kind override refused: ${refusal}`);
     else {
       kind = overrideKind(opts.kindOverride.documentType);
-      kindOverride = { ...opts.kindOverride, justification: opts.kindOverride.justification.trim(), publicationTypes: [...pubTypes] };
+      kindOverride = { ...opts.kindOverride, justification: opts.kindOverride.justification.trim(), publicationTypes: allTypes };
     }
   }
   if (!kind) issues.push(`publication types (${pubTypes.join(", ") || "none"}) are not a systematic review, meta-analysis or position stand`);
-  const year = epmc?.year ?? pubmed?.year;
-  if (year === undefined) issues.push("no publication year on the record; a reviewer could not check a dated claim");
+  // Year and journal only from PubMed or Europe PMC's MED copy of it (Sol R1 PR26-07).
+  const med = epmc?.medRecord ? epmc : null;
+  const year = pubmed?.year ?? med?.year;
+  const journal = pubmed?.journal ?? med?.journal;
+  if (year === undefined || !journal) issues.push("no publication year or journal from a PubMed record; a reviewer could not check a dated claim");
   const flaggedElsewhere =
     pubmed?.isRetracted === true || pubmed?.isRetractionNotice === true || retractionFromPubTypes(pubTypes).isRetracted || retractionFromPubTypes(pubTypes).isRetractionNotice;
   const retraction: RetractionState = check ? retractionState(check, flaggedElsewhere) : flaggedElsewhere ? "retracted" : "unknown";
@@ -190,13 +204,13 @@ export async function ingestPaper(
   if (retraction === "unknown") issues.push("retraction status unknown; never treated as not retracted");
 
   const ready =
-    doi !== null && title !== null && kind !== null && year !== undefined && !issues.some((i) => i.startsWith("kind override refused")) && abstract !== null && abstract.text.length >= MIN_ABSTRACT_CHARS &&
+    doi !== null && title !== null && kind !== null && year !== undefined && !!journal && !issues.some((i) => i.startsWith("kind override refused")) && abstract !== null && abstract.text.length >= MIN_ABSTRACT_CHARS &&
     retraction === "not_retracted" && !issues.some((i) => /lists DOI|has no record for PMID|no record ties PMID|PubMed returned PMID/.test(i));
   return {
     doi,
     pmid,
     title,
-    ...(epmc?.journal ?? pubmed?.journal ? { journal: epmc?.journal ?? pubmed?.journal } : {}),
+    ...(journal ? { journal } : {}),
     ...(year !== undefined ? { year } : {}),
     kind,
     ...(kindOverride ? { kindOverride } : {}),

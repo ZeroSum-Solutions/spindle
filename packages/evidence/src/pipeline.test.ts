@@ -21,7 +21,7 @@ function epmc(overrides: Record<string, unknown> = {}) {
   };
 }
 const esummary = (doi = DOI, pubtype = ["Meta-Analysis"]) => ({
-  result: { uids: [PMID], [PMID]: { uid: PMID, title: "Synthetic review.", pubtype, pubdate: "2020 Jun", articleids: [{ idtype: "doi", value: doi }] } },
+  result: { uids: [PMID], [PMID]: { uid: PMID, title: "Synthetic review.", pubtype, pubdate: "2020 Jun", fulljournalname: "Synthetic Journal", articleids: [{ idtype: "doi", value: doi }] } },
 });
 const clean = (extra: [string, unknown][] = []) => [
   ...extra,
@@ -48,7 +48,7 @@ describe("ingestPaper", () => {
   });
 
   it("blocks a PMID and DOI that no record ties together", async () => {
-    const noDoi = { result: { uids: [PMID], [PMID]: { uid: PMID, title: "Synthetic review.", pubtype: ["Meta-Analysis"], articleids: [] } } };
+    const noDoi = { result: { uids: [PMID], [PMID]: { uid: PMID, title: "Synthetic review.", pubtype: ["Meta-Analysis"], pubdate: "2020", fulljournalname: "Synthetic Journal", articleids: [] } } };
     const { ctx } = testContext(clean([["esummary.fcgi", noDoi], ["europepmc", epmc({ doi: undefined })]]));
     const paper = await ingestPaper(ctx, { pmid: PMID, doi: DOI });
     expect(paper.status).toBe("blocked");
@@ -69,7 +69,7 @@ describe("ingestPaper", () => {
   });
 
   it("R06: adopts the DOI from the matching MED record when PubMed lists none", async () => {
-    const noDoi = { result: { uids: [PMID], [PMID]: { uid: PMID, title: "Synthetic review.", pubtype: ["Meta-Analysis"], articleids: [] } } };
+    const noDoi = { result: { uids: [PMID], [PMID]: { uid: PMID, title: "Synthetic review.", pubtype: ["Meta-Analysis"], pubdate: "2020", fulljournalname: "Synthetic Journal", articleids: [] } } };
     const { ctx } = testContext(clean([["esummary.fcgi", noDoi], ["europepmc", epmc()]]));
     expect(await ingestPaper(ctx, { pmid: PMID })).toMatchObject({ status: "ready", doi: DOI });
   });
