@@ -62,3 +62,14 @@ export const VIDEO_URL_SECONDS = 60;
 export function isVideoType(contentType: string | undefined): boolean {
   return /^video\/(mp4|webm)$/.test((contentType ?? "").toLowerCase().split(";")[0]!.trim());
 }
+
+/**
+ * Like resolveContentUrl, for media the player loads on its own (images, video files). Video hosts
+ * load only through the click-to-load registry player (ADR 0007), so legacy video-host media renders
+ * as unavailable and nothing is requested from YouTube. Resource links keep resolveContentUrl: a
+ * link is followed only on a click.
+ */
+export function resolveMediaUrl(src: string, owner: { orgId: string | null }): ResolvedLink {
+  if (isVideoHostUrl(src)) return { kind: "unavailable" };
+  return resolveContentUrl(src, owner);
+}

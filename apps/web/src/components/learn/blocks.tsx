@@ -1,7 +1,7 @@
 import { ExternalLink, ImageOff, TriangleAlert } from "lucide-react";
 import type { LessonBlock, LessonResource, MediaAsset } from "@spindle/schema";
 import type { ClaimView } from "@/lib/learning/load";
-import { resolveContentUrl } from "@/lib/learning/media";
+import { resolveContentUrl, resolveMediaUrl } from "@/lib/learning/media";
 import { ClaimDisclosure } from "./claim-disclosure";
 import { SupportLabel } from "./labels";
 import { MediaImage, MediaUnavailable, MediaVideo } from "./media-image";
@@ -96,7 +96,7 @@ function BlockBody({ block, index }: { block: SupportedBlock; index: number }) {
 }
 
 function Figure({ asset, orgId }: { asset: MediaAsset; orgId: string | null }) {
-  const link = resolveContentUrl(asset.src, { orgId });
+  const link = resolveMediaUrl(asset.src, { orgId });
   return (
     <figure data-block="image" className="flex flex-col gap-2">
       {link.kind === "unavailable" ? (
