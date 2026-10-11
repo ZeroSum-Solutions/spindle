@@ -13,6 +13,8 @@
     {
       "slot": "claim-slot:l7-load-moments",
       "statement": "In 26 skilled healthy adult pitchers (1995), critical shoulder kinetics occurred shortly before maximum shoulder external rotation (high internal rotation torque) and shortly after ball release (high compressive force).",
+      "evidenceLevel": "Laboratory biomechanical study (high-speed motion analysis)",
+      "population": "\"26 highly skilled, healthy adult pitchers\" (Fleisig 1995).",
       "candidateSources": [
         {
           "kind": "paper",
@@ -27,6 +29,8 @@
     {
       "slot": "claim-slot:l7-adaptation",
       "statement": "In professional baseball pitchers, the throwing shoulder shows on average less internal rotation and more external rotation than the non-throwing shoulder, with a bilateral difference in humeral retroversion contributing.",
+      "evidenceLevel": "Systematic review (level of evidence 4)",
+      "population": "Professional baseball pitchers: the rotation result pools 13 studies of 1,101 professional pitchers (Paul 2025, whose overall eligibility was \"nonrecreational baseball pitchers\").",
       "candidateSources": [
         {
           "kind": "systematic_review",
@@ -41,6 +45,8 @@
     {
       "slot": "claim-slot:l7-injury-risk",
       "statement": "Evidence linking shoulder range of motion to injury in overhead athletes is uncertain and sport-specific: no statistically significant pooled association for the measures examined (2018 meta-analysis); external rotation insufficiency associated with injury in professional pitchers from three pooled studies, interpreted with caution (2020 meta-analysis of prospective cohorts); range among several risk factors, with inconsistent injury definitions (2025 systematic review).",
+      "evidenceLevel": "Systematic reviews with meta-analysis; systematic review of prospective studies",
+      "population": "\"overhead athletes\" (Keller 2018); \"overhead athletes from Olympic or college sports\", with pooled data from \"professional baseball pitchers\" (Pozzi 2020); \"the athletic population\" (Salamh 2025).",
       "candidateSources": [
         {
           "kind": "meta_analysis",
@@ -62,6 +68,8 @@
           "kind": "systematic_review",
           "citation": "Salamh P, Bullock G, Chester R, Daniell H, et al. Risk factors associated with new onset of shoulder pain and injury among the athletic population: a systematic review of the literature. Int J Sports Phys Ther. 2025;20(3).",
           "doi": "10.26603/001c.129462",
+          "pmid": "40041538",
+          "pmcid": "PMC11872537",
           "url": "https://ijspt.scholasticahq.com/article/129462",
           "rights": "CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/) per the article page's licence metadata; not confirmed in the article text: treat as unresolved for reuse. Publisher text read. Cited and paraphrased only."
         }
