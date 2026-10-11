@@ -13,6 +13,7 @@ import type { ClaimView } from "@/lib/learning/load";
 import type { CourseView, LessonView } from "@/lib/learning/view";
 import { CompletionBoard, LogoReveal } from "./motion-board";
 import { QuizBoard } from "./quiz-board";
+import { BrandPresenceBoard } from "./brand-presence-board";
 import { ModuleStatusCard } from "@/components/learn/module-status";
 
 // Design specimen for development only. It mounts the real learner components with
@@ -211,6 +212,10 @@ export default function DesignSpecimen() {
         <p className="text-label text-text-muted">
           Tenant brands render on their own test-only page, <a href="/brand-preview" className="text-brand underline underline-offset-2 hover:text-brand-hover">/brand-preview</a>.
         </p>
+      </Section>
+
+      <Section title="Brand presence tokens (P4-A2)">
+        <BrandPresenceBoard />
       </Section>
 
       <Section title="Module status and graded quiz">

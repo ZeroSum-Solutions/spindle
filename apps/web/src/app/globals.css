@@ -32,6 +32,12 @@
   --color-brand-hover: #1b40a6;
   --color-brand-soft: #eaf0ff;
   --color-on-brand: #ffffff;
+  /* Tenant band (P4-A2, DESIGN.md › Colors). A gym's band replaces --color-band on its member pages;
+     on-band, band-tint and band-edge are derived from it, never set by the tenant. */
+  --color-band: #ffffff;
+  --color-on-band: #17232b;
+  --color-band-tint: #e3e5e6;
+  --color-band-edge: #d1d3d5;
   --color-science: #0b6b50;
   --color-science-soft: #eaf5f0;
   --color-practice: #8a4b10;
