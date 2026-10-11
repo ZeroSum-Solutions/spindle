@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isVideoObject, resolveContentUrl, SERVABLE_MEDIA, storageObjectFor } from "./media";
+import { isVideoType, resolveContentUrl, SERVABLE_MEDIA, storageObjectFor } from "./media";
 
 const GYM = "00000000-0000-4000-8000-000000000500";
 const OTHER = "00000000-0000-4000-8000-000000000501";
@@ -57,7 +57,7 @@ describe("SERVABLE_MEDIA", () => {
   );
 });
 
-describe("isVideoObject", () => {
-  it.each(["a/clip.mp4", "a/clip.WEBM"])("redirects %s", (name) => expect(isVideoObject(name)).toBe(true));
-  it.each(["a/clip.mp4.png", "a/clip.mov", "a/mp4", "a/clip.png"])("streams or refuses %s", (name) => expect(isVideoObject(name)).toBe(false));
+describe("isVideoType", () => {
+  it.each(["video/mp4", "video/webm", "VIDEO/MP4", "video/mp4; codecs=avc1"])("redirects %s", (type) => expect(isVideoType(type)).toBe(true));
+  it.each(["image/png", "video/quicktime", "application/mp4", "", undefined])("does not redirect %s", (type) => expect(isVideoType(type)).toBe(false));
 });

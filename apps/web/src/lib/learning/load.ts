@@ -2,7 +2,7 @@ import "server-only";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { slugSchema } from "@/lib/forms";
-import { fetchAll } from "./paginate";
+import { fetchAll, fetchByIds } from "./paginate";
 import { createClient, currentUser } from "@/lib/supabase/server";
 import {
   completionsFrom,
@@ -229,11 +229,17 @@ export async function claimEvidence(ctx: LearnerGym, claimIds: string[]): Promis
   const ids = [...new Set(claimIds)];
   const result = new Map<string, ClaimView>();
   if (ids.length === 0) return result;
-  const { data, error } = await ctx.supabase
-    .from("claims")
-    .select("id, statement, evidence_level, population, claim_sources(sources(id, kind, title, doi, pmid, url, locator, license, source_retractions(recorded_at)))")
-    .in("id", ids);
-  if (error) throw new Error("Could not load sources.");
+  let data;
+  try {
+    data = await fetchByIds(ids, (batch) =>
+      ctx.supabase
+        .from("claims")
+        .select("id, statement, evidence_level, population, claim_sources(sources(id, kind, title, doi, pmid, url, locator, license, source_retractions(recorded_at)))")
+        .in("id", batch),
+    );
+  } catch {
+    throw new Error("Could not load sources.");
+  }
   for (const claim of data) {
     const sources = (claim.claim_sources ?? []).flatMap((cs) => (cs.sources ? [cs.sources] : []));
     result.set(claim.id, {

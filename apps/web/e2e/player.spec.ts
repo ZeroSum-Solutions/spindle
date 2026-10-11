@@ -90,7 +90,7 @@ test.describe.serial("learner flow", () => {
           if (error) throw new Error(`upload failed: ${error.message}`);
           world.uploads.push({ client: a.client, bucket: "org-media", name });
           // Synthetic bytes labelled video/mp4: enough to prove signing, redirect and ranges.
-          const clip = `${gymA.id}/${world.run}/clip.mp4`;
+          const clip = `${gymA.id}/${world.run}/clip-mp4`;
           const { error: videoError } = await a.client.storage.from("org-media").upload(clip, Buffer.alloc(4096, 7), { contentType: "video/mp4" });
           if (videoError) throw new Error(`video upload failed: ${videoError.message}`);
           world.uploads.push({ client: a.client, bucket: "org-media", name: clip });
@@ -110,7 +110,7 @@ test.describe.serial("learner flow", () => {
         blocks: [practice("Synthetic house cue.")],
         media: [
           { kind: "image", src: `/media/org/${gymA.id}/${world.run}/figure.png`, alt: "Synthetic gym figure", caption: "", provenanceId: "synthetic" },
-          { kind: "video", src: `/media/org/${gymA.id}/${world.run}/clip.mp4`, alt: "Synthetic gym clip", caption: "", provenanceId: "synthetic" },
+          { kind: "video", src: `/media/org/${gymA.id}/${world.run}/clip-mp4`, alt: "Synthetic gym clip", caption: "", provenanceId: "synthetic" },
         ],
       },
     ]));
@@ -183,6 +183,10 @@ test.describe.serial("learner flow", () => {
       await expect(p.getByRole("main")).toBeVisible();
       expect(await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), path).toBe(0);
     }
+    // Long identifiers in open sources wrap instead of widening the page.
+    await p.locator('[data-block="paragraph"][data-support="science"] summary').click();
+    await expect(p.getByRole("link", { name: /DOI 10\.5555/ })).toBeVisible();
+    expect(await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), "sources open at 320px").toBe(0);
   });
 
   test("method course is practice-based only and serves its gym's media to members", async ({ browser }) => {
@@ -209,13 +213,13 @@ test.describe.serial("learner flow", () => {
 
     // Stored video: the member gets a redirect to a signed Storage URL that lives at most
     // 60 s and serves byte ranges; another gym's member gets the same 404 as anything else.
-    await expect(p.locator('video[aria-label="Synthetic gym clip"] source')).toHaveAttribute("src", `/media/org/${gymA.id}/${world.run}/clip.mp4`);
-    const clip = `/media/org/${gymA.id}/${world.run}/clip.mp4`;
+    await expect(p.locator('video[aria-label="Synthetic gym clip"] source')).toHaveAttribute("src", `/media/org/${gymA.id}/${world.run}/clip-mp4`);
+    const clip = `/media/org/${gymA.id}/${world.run}/clip-mp4`;
     const redirect = await p.request.get(clip, { maxRedirects: 0 });
     expect(redirect.status()).toBe(302);
     expect(redirect.headers()["cache-control"]).toBe("private, no-store");
     const location = new URL(redirect.headers()["location"]!);
-    expect(location.pathname).toContain(`/storage/v1/object/sign/org-media/${gymA.id}/${world.run}/clip.mp4`);
+    expect(location.pathname).toContain(`/storage/v1/object/sign/org-media/${gymA.id}/${world.run}/clip-mp4`);
     const token = location.searchParams.get("token")!;
     const claims = JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString()) as { iat: number; exp: number };
     expect(claims.exp - claims.iat).toBeLessThanOrEqual(60);

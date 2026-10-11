@@ -1,6 +1,7 @@
 import { ChevronDown, ExternalLink, TriangleAlert } from "lucide-react";
 import type { ClaimView, SourceView } from "@/lib/learning/load";
 import { formatDate } from "@/lib/learning/format";
+import { doiHref } from "@/lib/learning/links";
 
 const KIND: Record<string, string> = {
   textbook: "Textbook",
@@ -46,7 +47,7 @@ export function ClaimDisclosure({
                       A source for this claim was retracted after publishing
                     </p>
                   ) : null}
-                  <p className="text-text">{claim.statement}</p>
+                  <p className="break-words text-text">{claim.statement}</p>
                   <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-label">
                     <dt className="text-text-muted">Evidence</dt>
                     <dd>{claim.evidenceLevel}</dd>
@@ -72,13 +73,13 @@ export function ClaimDisclosure({
 
 function SourceItem({ source }: { source: SourceView }) {
   const links = [
-    source.doi ? { href: `https://doi.org/${source.doi}`, label: `DOI ${source.doi}` } : null,
+    source.doi ? { href: doiHref(source.doi), label: `DOI ${source.doi}` } : null,
     source.pmid ? { href: `https://pubmed.ncbi.nlm.nih.gov/${source.pmid}/`, label: `PMID ${source.pmid}` } : null,
     source.url && !source.doi && !source.pmid ? { href: source.url, label: "Source page" } : null,
   ].filter((l): l is { href: string; label: string } => l !== null);
   return (
     <li className="rounded-small bg-surface-muted p-3">
-      <p className="font-medium">{source.title}</p>
+      <p className="break-words font-medium">{source.title}</p>
       <p className="text-label text-text-muted">
         {KIND[source.kind] ?? source.kind}
         {source.locator ? `, ${source.locator}` : ""}
@@ -86,14 +87,14 @@ function SourceItem({ source }: { source: SourceView }) {
       {source.retractedAt ? (
         <p className="text-label font-medium text-caution">Retracted, recorded {formatDate(source.retractedAt)}</p>
       ) : null}
-      <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+      <p className="mt-1 flex min-w-0 flex-wrap gap-x-4 gap-y-1">
         {links.map((l) => (
           <a
             key={l.href}
             href={l.href}
             rel="noopener noreferrer"
             target="_blank"
-            className="inline-flex min-h-11 items-center gap-1 font-mono text-code text-brand underline underline-offset-4 hover:text-brand-hover"
+            className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-1 break-all font-mono text-code text-brand underline underline-offset-4 hover:text-brand-hover"
           >
             {l.label}
             <ExternalLink aria-hidden strokeWidth={1.75} className="size-3.5" />

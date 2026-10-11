@@ -24,15 +24,44 @@ export function assertLoopback(url: string, what: string): void {
     throw new Error(`player fixtures refuse a non-local ${what} (${host})`);
   }
 }
-assertLoopback(DB_URL, "database");
+
+const PLAIN_NAME = /^[A-Za-z0-9_]{1,63}$/;
+
+/**
+ * psql arguments and environment built only from validated parts of a database URL.
+ * psql would otherwise honour host/hostaddr/service query parameters in the URI and
+ * PGHOST, PGHOSTADDR, PGSERVICE and friends in the environment, any of which could
+ * point it at another machine. So: no query string, a loopback host, a numeric port,
+ * plain user and database names, and a child environment with every PG* variable
+ * removed except the ones set here.
+ */
+export function psqlConnection(url: string, env: Record<string, string | undefined>): { args: string[]; env: Record<string, string> } {
+  assertLoopback(url, "database");
+  const u = new URL(url);
+  if (u.protocol !== "postgresql:" && u.protocol !== "postgres:") throw new Error("player fixtures need a postgresql:// database URL");
+  if (u.search || u.hash) throw new Error("player fixtures refuse database URL parameters");
+  const port = u.port || "5432";
+  const user = decodeURIComponent(u.username) || "postgres";
+  const database = decodeURIComponent(u.pathname.slice(1)) || "postgres";
+  if (!/^\d{1,5}$/.test(port) || !PLAIN_NAME.test(user) || !PLAIN_NAME.test(database)) {
+    throw new Error("player fixtures refuse an unusual database port, user or name");
+  }
+  const clean = Object.fromEntries(Object.entries(env).filter((e): e is [string, string] => !e[0].startsWith("PG") && e[1] !== undefined));
+  return {
+    args: ["-h", u.hostname.replace(/^\[(.*)\]$/, "$1"), "-p", port, "-U", user, "-d", database, "-w"],
+    env: {
+      ...clean,
+      PGPASSWORD: decodeURIComponent(u.password),
+      PGCONNECT_TIMEOUT: "5",
+      PGOPTIONS: "-c statement_timeout=20s -c lock_timeout=10s",
+    },
+  };
+}
+const DB = psqlConnection(DB_URL, process.env);
 
 /** Runs SQL as the database owner and returns trimmed, unaligned output. Never logs values. */
 export function sql(text: string): string {
-  return execFileSync("psql", [DB_URL, "-v", "ON_ERROR_STOP=1", "-X", "-q", "-At"], {
-    input: text,
-    encoding: "utf8",
-    env: { ...process.env, PGCONNECT_TIMEOUT: "5", PGOPTIONS: "-c statement_timeout=20s -c lock_timeout=10s" },
-  }).trim();
+  return execFileSync("psql", [...DB.args, "-v", "ON_ERROR_STOP=1", "-X", "-q", "-At"], { input: text, encoding: "utf8", env: DB.env as NodeJS.ProcessEnv }).trim();
 }
 
 const lit = (v: string) => `'${v.replace(/'/g, "''")}'`;
@@ -166,7 +195,7 @@ export class PlayerWorld {
   readonly doi: string;
 
   constructor() {
-    this.doi = `10.5555/spindle-e2e.${this.run}`;
+    this.doi = `10.5555/spindle-e2e.${this.run}.a-deliberately-long-synthetic-suffix-that-must-wrap-0123456789abcdef`;
   }
 
   email(name: string): string {

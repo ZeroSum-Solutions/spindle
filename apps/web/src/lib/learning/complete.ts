@@ -5,10 +5,9 @@ import { z } from "zod";
 import { slugSchema } from "@/lib/forms";
 import { createClient, currentUser } from "@/lib/supabase/server";
 
-export type CompleteState =
-  | { status: "idle" }
-  | { status: "saved"; completedAt: string; versionNumber: number }
-  | { status: "error"; message: string };
+import { savedState, type CompleteState, type RootRow } from "./completion";
+
+export type { CompleteState } from "./completion";
 
 const completeSchema = z.object({ gym: slugSchema, assignmentId: z.uuid(), lessonId: z.uuid() });
 
@@ -56,14 +55,20 @@ export async function completeLesson(route: LessonRoute): Promise<CompleteState>
 
   const { data: completionId, error } = await supabase.rpc("complete_lesson", { p_assignment: assignment.id, p_lesson: lessonId });
   if (error || !completionId) return NOT_SAVED;
-  const { data: saved, error: readError } = await supabase
-    .from("lesson_completions")
-    .select("completed_at")
-    .eq("id", completionId)
-    .eq("user_id", me.id)
-    .maybeSingle();
+  const own = (id: string) =>
+    supabase.from("lesson_completions").select("completed_at, origin_completion_id, version_id").eq("id", id).eq("user_id", me.id).maybeSingle();
+  const { data: saved, error: readError } = await own(completionId);
   if (readError || !saved) return NOT_SAVED;
+  // A carried row is credit from an earlier completion, not a completion made here.
+  let root: RootRow | null = null;
+  if (saved.origin_completion_id) {
+    const { data: origin } = await own(saved.origin_completion_id);
+    if (origin) {
+      const { data: version } = await supabase.from("curriculum_versions").select("version_number").eq("id", origin.version_id).maybeSingle();
+      root = { completed_at: origin.completed_at, versionNumber: version?.version_number ?? null };
+    }
+  }
 
   revalidatePath(`/gyms/${gym}/learn`, "layout");
-  return { status: "saved", completedAt: saved.completed_at, versionNumber: assignment.curriculum_versions.version_number };
+  return savedState(assignment.curriculum_versions.version_number, saved, root);
 }

@@ -2,8 +2,7 @@
 
 import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
-import type { CompleteState } from "@/lib/learning/complete";
-import { formatDate } from "@/lib/learning/format";
+import { savedMessage, type CompleteState } from "@/lib/learning/completion";
 
 /**
  * Marks the lesson done through `complete`, a server action bound to the rendered
@@ -57,7 +56,7 @@ export function CompletionView({
       <div ref={saved} tabIndex={-1} data-testid="lesson-status" className="confirm-appear flex items-center gap-3 rounded-card border border-border bg-surface p-4">
         <ConfirmCheck animate />
         <p>
-          <span className="font-medium">Saved.</span> Lesson completed for v{state.versionNumber} on {formatDate(state.completedAt)}.
+          <span className="font-medium">{savedMessage(state).lead}</span> {savedMessage(state).text}
         </p>
       </div>
     );
@@ -93,7 +92,7 @@ export function CompletionView({
     <div className="flex flex-col gap-3">
       {body}
       <p aria-live="polite" className="sr-only">
-        {pending ? "Saving your progress." : state.status === "saved" ? `Saved. Lesson completed for version ${state.versionNumber}.` : state.status === "error" ? state.message : ""}
+        {pending ? "Saving your progress." : state.status === "saved" ? `${savedMessage(state).lead} ${savedMessage(state).text}` : state.status === "error" ? state.message : ""}
       </p>
     </div>
   );

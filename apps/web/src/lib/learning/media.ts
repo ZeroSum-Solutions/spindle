@@ -54,7 +54,7 @@ export const SERVABLE_MEDIA = /^(image\/(png|jpeg|gif|webp|avif)|application\/pd
 /** How long a signed video URL lives. Players need byte ranges, which Storage serves directly. */
 export const VIDEO_URL_SECONDS = 60;
 
-/** Video objects are redirected to a short-lived signed Storage URL instead of streamed. */
-export function isVideoObject(name: string): boolean {
-  return /\.(mp4|webm)$/i.test(name);
+/** Video is redirected to a short-lived signed Storage URL instead of streamed. Decided by the object's stored MIME type. */
+export function isVideoType(contentType: string | undefined): boolean {
+  return /^video\/(mp4|webm)$/.test((contentType ?? "").toLowerCase().split(";")[0]!.trim());
 }

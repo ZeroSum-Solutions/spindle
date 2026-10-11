@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { CompletionView } from "@/components/learn/complete-lesson";
-import type { CompleteState } from "@/lib/learning/complete";
+import type { CompleteState } from "@/lib/learning/completion";
 
 type Demo = "idle" | "pending" | "saved" | "error" | "done";
 

@@ -1,5 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { fetchAll, PAGE_SIZE } from "./paginate";
+import { fetchAll, fetchByIds, PAGE_SIZE } from "./paginate";
+
+describe("fetchByIds", () => {
+  it("returns all 1,050 claims from a client capped at 1,000 rows per request", async () => {
+    const ids = Array.from({ length: 1050 }, (_, i) => `claim-${i}`);
+    const sizes: number[] = [];
+    const capped = (batch: string[]) => {
+      sizes.push(batch.length);
+      return Promise.resolve({ data: batch.slice(0, 1000).map((id) => ({ id })), error: null });
+    };
+    const rows = await fetchByIds(ids, capped);
+    expect(rows.map((r) => r.id)).toEqual(ids);
+    expect(Math.max(...sizes)).toBeLessThanOrEqual(200);
+  });
+
+  it("makes no request for no ids", async () => {
+    let calls = 0;
+    await fetchByIds([], () => {
+      calls++;
+      return Promise.resolve({ data: [], error: null });
+    });
+    expect(calls).toBe(0);
+  });
+});
 
 // A stub that behaves like PostgREST with max_rows = 1000: it never returns more than the cap.
 function table(count: number, cap = 1000) {
