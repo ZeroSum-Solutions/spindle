@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
 import { completeLesson, type CompleteState } from "@/app/gyms/[slug]/learn/actions";
 import { formatDate } from "@/lib/learning/format";
@@ -55,45 +55,59 @@ export function CompletionView({
   action: (form: FormData) => void;
   children?: ReactNode;
 }) {
+  // One live region stays mounted across every state, so screen readers announce the
+  // result; focus moves to the confirmation because the button it was on is gone.
+  const saved = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (state.status === "saved") saved.current?.focus();
+  }, [state.status]);
+
+  let body: ReactNode;
   if (state.status === "saved") {
-    return (
-      <div role="status" data-testid="lesson-status" className="confirm-appear flex items-center gap-3 rounded-card border border-border bg-surface p-4">
+    body = (
+      <div ref={saved} tabIndex={-1} data-testid="lesson-status" className="confirm-appear flex items-center gap-3 rounded-card border border-border bg-surface p-4">
         <ConfirmCheck animate />
         <p>
           <span className="font-medium">Saved.</span> Lesson completed for v{state.versionNumber} on {formatDate(state.completedAt)}.
         </p>
       </div>
     );
-  }
-  if (done) {
-    return (
+  } else if (done) {
+    body = (
       <div data-testid="lesson-status" className="flex items-center gap-3 rounded-card border border-border bg-surface p-4">
         <ConfirmCheck />
         <p>{receipt}</p>
       </div>
     );
-  }
-  return (
-    <form action={action} className="flex flex-col gap-3">
-      {receipt ? <p className="text-text-muted">{receipt}</p> : null}
-      {children}
-      <button
-        type="submit"
-        disabled={pending}
-        aria-describedby={state.status === "error" ? "complete-error" : undefined}
-        className="inline-flex min-h-12 min-w-56 items-center justify-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover disabled:cursor-progress disabled:opacity-80"
-      >
-        {pending ? <LoaderCircle aria-hidden strokeWidth={1.75} className="size-5 animate-spin motion-reduce:animate-none" /> : null}
-        {pending ? "Saving…" : state.status === "error" ? "Try again" : "Mark lesson complete"}
-      </button>
-      <div aria-live="polite">
+  } else {
+    body = (
+      <form action={action} className="flex flex-col gap-3">
+        {receipt ? <p className="text-text-muted">{receipt}</p> : null}
+        {children}
+        <button
+          type="submit"
+          disabled={pending}
+          aria-describedby={state.status === "error" ? "complete-error" : undefined}
+          className="inline-flex min-h-12 min-w-56 items-center justify-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover disabled:cursor-progress disabled:opacity-80"
+        >
+          {pending ? <LoaderCircle aria-hidden strokeWidth={1.75} className="size-5 animate-spin motion-reduce:animate-none" /> : null}
+          {pending ? "Saving…" : state.status === "error" ? "Try again" : "Mark lesson complete"}
+        </button>
         {state.status === "error" ? (
-          <p id="complete-error" role="alert" className="confirm-appear rounded-small bg-danger-soft px-3 py-2 text-danger">
+          <p id="complete-error" className="confirm-appear rounded-small bg-danger-soft px-3 py-2 text-danger">
             {state.message}
           </p>
         ) : null}
-      </div>
-    </form>
+      </form>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      {body}
+      <p aria-live="polite" className="sr-only">
+        {pending ? "Saving your progress." : state.status === "saved" ? `Saved. Lesson completed for version ${state.versionNumber}.` : state.status === "error" ? state.message : ""}
+      </p>
+    </div>
   );
 }
 

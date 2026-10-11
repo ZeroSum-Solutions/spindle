@@ -51,8 +51,8 @@ describe("resolveContentUrl", () => {
 });
 
 describe("SERVABLE_MEDIA", () => {
-  it.each(["image/png", "image/webp", "video/mp4", "application/pdf"])("serves %s", (type) => expect(SERVABLE_MEDIA.test(type)).toBe(true));
-  it.each(["image/svg+xml", "text/html", "application/octet-stream", "image/png; charset=x", ""])("refuses %s", (type) =>
+  it.each(["image/png", "image/webp", "application/pdf"])("serves %s", (type) => expect(SERVABLE_MEDIA.test(type)).toBe(true));
+  it.each(["video/mp4", "image/svg+xml", "text/html", "application/octet-stream", "image/png; charset=x", ""])("refuses %s", (type) =>
     expect(SERVABLE_MEDIA.test(type)).toBe(false),
   );
 });

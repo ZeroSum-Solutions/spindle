@@ -1,7 +1,7 @@
 import type { DeltaView } from "@/lib/learning/view";
 
 /** What changed between the learner's previous assigned version and this one. */
-export function VersionNotice({ delta, versionNumber }: { delta: DeltaView; versionNumber: number }) {
+export function VersionNotice({ delta, versionNumber, credited = false }: { delta: DeltaView; versionNumber: number; credited?: boolean }) {
   const rows: [string, string[]][] = [
     ["Changed (open again if you had completed them)", delta.changed],
     ["Added", delta.added],
@@ -25,7 +25,7 @@ export function VersionNotice({ delta, versionNumber }: { delta: DeltaView; vers
             ))}
         </dl>
       ) : (
-        <p>No lesson changed. Your credit carried over.</p>
+        <p>No lesson changed.{credited ? " Your credit carried over." : ""}</p>
       )}
       <p className="text-label text-text-muted">Unchanged lessons you completed carry their credit, linked to your original completion.</p>
     </section>

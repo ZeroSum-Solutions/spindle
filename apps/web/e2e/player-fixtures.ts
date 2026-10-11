@@ -290,6 +290,15 @@ export class PlayerWorld {
       + (select count(*) from public.orgs where id in (${orgs}))
       + (select count(*) from public.courses where id in (${courses}))
       + (select count(*) from public.sources where created_by = ${p})
+      + (select count(*) from public.claims where created_by = ${p})
+      + (select count(*) from public.claim_reviews where reviewer = ${p})
+      + (select count(*) from public.binding_reviews where reviewer = ${p})
+      + (select count(*) from public.source_retractions where recorded_by = ${p})
+      + (select count(*) from public.curriculum_versions where course_id in (${courses}))
+      + (select count(*) from public.assignments where user_id in (${users}))
+      + (select count(*) from public.lesson_completions where user_id in (${users}))
+      + (select count(*) from private.content_publishers where user_id = ${p})
+      + (select count(*) from private.content_audit where actor in (${users}))
       + (select count(*) from storage.objects where name like ${lit(`%/${this.run}/%`)})`);
     if (left !== "0") throw new Error(`cleanup left ${left} run-owned rows`);
   }

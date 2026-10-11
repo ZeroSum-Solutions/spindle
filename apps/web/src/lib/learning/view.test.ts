@@ -141,6 +141,12 @@ describe("courseView", () => {
     expect(inV1.next).toBeNull();
   });
 
+  it("does not reopen a lesson in an older version because a newer version was completed", () => {
+    const completions = completionsFrom([row(5, V2, L2, hash("d"), "2026-10-06T10:00:00+00:00")]);
+    const inV1 = courseView({ current: v1, completions, versionNumbers: numbers, flaggedClaimIds: [] });
+    expect(inV1.lessons.map((l) => l.state)).toEqual(["todo", "todo", "todo"]);
+  });
+
   it("keeps root lineage in v3: credit points at the v1 completion, not the v2 copy", () => {
     const completions = completionsFrom([
       row(1, V1, L1, hash("a"), "2026-10-01T10:00:00+00:00"),

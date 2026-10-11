@@ -48,5 +48,8 @@ export function resolveContentUrl(src: string, owner: { orgId: string | null }):
   return { kind: "media", url: src };
 }
 
-/** Content types the media handler will serve. Anything else is refused, never sniffed. */
-export const SERVABLE_MEDIA = /^(image\/(png|jpeg|gif|webp|avif)|video\/(mp4|webm)|application\/pdf)$/;
+/**
+ * Content types the media handler will serve. Anything else is refused, never sniffed.
+ * No video yet: Safari needs byte-range responses to play it, which the handler does not serve.
+ */
+export const SERVABLE_MEDIA = /^(image\/(png|jpeg|gif|webp|avif)|application\/pdf)$/;

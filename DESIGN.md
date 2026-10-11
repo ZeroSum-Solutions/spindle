@@ -157,7 +157,7 @@ Geist for everything readable, Geist Mono only for identifiers and versions (`v2
 
 - App frame up to 1440px; content columns up to 768px for lists and overviews.
 - Player at 1024px and wider: a 240px course outline beside the reading column. Below 1024px the same outline, in the same order with the same current item, sits in a native disclosure above the lesson.
-- One column below 768px, 16px gutters. No horizontal scrolling at 320px (asserted in the e2e capture step).
+- One column below 768px, 16px gutters. No horizontal scrolling at 320px (asserted in `e2e/player.spec.ts`).
 - The course list leads with a single "Resume lesson" action, taken from the newest assigned version of each course. Older versions of a course stay reachable from its row.
 - Curriculum layer (Base, Modality, Gym method) labels a course. Science or practice-based labels a block. They are separate axes and never stand in for each other.
 
@@ -181,7 +181,7 @@ Native elements first; no component library is installed. Lucide (ISC) is the on
 | VersionNotice | `components/learn/version-notice.tsx` | changed, added, removed lessons; nothing changed |
 | CompletionView | `components/learn/complete-lesson.tsx` | idle, pending (button disabled, "Saving…"), saved for vN (after server confirmation only), failed with retry, done or credited on load (static) |
 | QuizSelfCheck | `components/learn/quiz-self-check.tsx` | unanswered, selected, feedback after "Check answer". Says it is not saved or graded; graded quizzes are phase 3 |
-| MediaImage | `components/learn/media-image.tsx` | loaded; not available (missing, refused or failed object), never a broken image |
+| MediaImage, MediaVideo | `components/learn/media-image.tsx` | loaded; not available (missing, refused or failed object), never a broken image or player. Storage video is not served until the media handler supports byte ranges |
 | CourseRow, LessonOutline | `components/learn/` | progress as literal text plus a decorative bar; current lesson; earlier versions |
 | IntegrityAlert, VersionUnavailable | `components/learn/` | caution; failure |
 
@@ -219,4 +219,4 @@ The completion check is a custom inline SVG stroke (a few hundred bytes of marku
 
 ## Accessibility
 
-WCAG 2.2 AA. Keyboard reachable with a 3px cobalt focus ring offset 4px. Live regions announce save results. Icon-only controls have names. Future lesson diagrams are SVG with `<title>` and `<desc>`; until a diagram asset exists, the block says it is not available.
+WCAG 2.2 AA. Keyboard reachable with a 3px cobalt focus ring offset 4px. One live region stays mounted and announces saving, saved and failed; focus moves to the confirmation after a save. Icon-only controls have names. Future lesson diagrams are SVG with `<title>` and `<desc>`; until a diagram asset exists, the block says it is not available.

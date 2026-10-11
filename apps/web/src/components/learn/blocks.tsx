@@ -4,7 +4,7 @@ import type { ClaimView } from "@/lib/learning/load";
 import { resolveContentUrl } from "@/lib/learning/media";
 import { ClaimDisclosure } from "./claim-disclosure";
 import { SupportLabel } from "./labels";
-import { MediaImage, MediaUnavailable } from "./media-image";
+import { MediaImage, MediaUnavailable, MediaVideo } from "./media-image";
 import { QuizSelfCheck } from "./quiz-self-check";
 
 export interface BlockContext {
@@ -96,12 +96,11 @@ function Figure({ asset, orgId }: { asset: MediaAsset; orgId: string | null }) {
   const link = resolveContentUrl(asset.src, { orgId });
   return (
     <figure data-block="image" className="flex flex-col gap-2">
-      {link.kind === "unavailable" ? (
+      {asset.kind === "video" ? (
+        // Storage video waits for byte-range support in the media handler.
+        link.kind === "external" ? <MediaVideo src={link.url} alt={asset.alt} /> : <MediaUnavailable alt={asset.alt} kind="video" />
+      ) : link.kind === "unavailable" ? (
         <MediaUnavailable alt={asset.alt} />
-      ) : asset.kind === "video" ? (
-        <video controls preload="none" className="w-full rounded-card bg-surface-muted" aria-label={asset.alt}>
-          <source src={link.url} />
-        </video>
       ) : (
         <MediaImage src={link.url} alt={asset.alt} />
       )}

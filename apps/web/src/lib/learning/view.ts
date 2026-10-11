@@ -194,7 +194,10 @@ export function courseView(input: CourseViewInput): CourseView {
         return { ...base, state: "credited", completedAt: origin.completedAt, origin };
       }
       const hash = hashes.get(lesson.id);
-      const doneElsewhere = completions.some((c) => c.lessonId === lesson.id && c.versionId !== current.id && c.contentHash !== hash);
+      // Only an earlier version's completion can reopen a lesson; a newer one says nothing about this version.
+      const doneElsewhere = completions.some(
+        (c) => c.lessonId === lesson.id && c.contentHash !== hash && (versionNumbers.get(c.versionId) ?? Infinity) < current.versionNumber,
+      );
       if (doneElsewhere) return { ...base, state: "updated" };
       if (before && !before.has(lesson.id)) return { ...base, state: "new" };
       return { ...base, state: "todo" };

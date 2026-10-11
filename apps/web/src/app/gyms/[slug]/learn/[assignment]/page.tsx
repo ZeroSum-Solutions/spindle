@@ -59,7 +59,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
           </IntegrityAlert>
         ) : null}
 
-        {view.delta ? <VersionNotice delta={view.delta} versionNumber={view.versionNumber} /> : null}
+        {view.delta ? <VersionNotice delta={view.delta} versionNumber={view.versionNumber} credited={view.lessons.some((l) => l.state === "credited")} /> : null}
 
         {view.next ? (
           <Link

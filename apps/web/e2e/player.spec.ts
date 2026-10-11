@@ -168,6 +168,13 @@ test.describe.serial("learner flow", () => {
       els.map((e) => e.getAttribute("href") ?? e.getAttribute("src") ?? ""),
     );
     expect(hrefs.filter((h) => /^(javascript|data):/i.test(h))).toEqual([]);
+    // The player reflows at 320px without sideways scrolling.
+    await p.setViewportSize({ width: 320, height: 700 });
+    for (const path of [learn(gymA), learn(gymA, assignments.partial), learn(gymA, assignments.partial, "lesson-one")]) {
+      await p.goto(path);
+      await expect(p.locator("main")).toBeVisible();
+      expect(await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), path).toBe(0);
+    }
   });
 
   test("method course is practice-based only and serves its gym's media to members", async ({ browser }) => {
