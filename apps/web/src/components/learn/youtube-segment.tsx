@@ -39,6 +39,10 @@ export function YouTubeSegment({
       <p className="flex flex-wrap items-center gap-2 text-label text-text-muted">
         <SupportLabel support="practice-based" />
         <span>Optional video</span>
+        {availability?.review === "model-described" ? (
+          // D-11: a model described this segment and Sol reviewed the description; a person has not checked it yet.
+          <span data-review="model-described">· Clip described by a model; human check pending</span>
+        ) : null}
       </p>
       {state === "off" ? (
         <p data-video="off" className="rounded-card bg-surface-muted p-4 text-base text-text-muted">

@@ -1,5 +1,5 @@
 // Presentation rules for the lesson player, pure so they are unit-tested.
-import type { LessonBlock } from "@spindle/schema";
+import type { LessonViewBlock } from "@spindle/schema";
 import { formatDate } from "./format";
 import type { LessonView } from "./view";
 
@@ -9,7 +9,7 @@ import type { LessonView } from "./view";
  * diagram ends the run. Every block keeps its support in data and in its margin rule.
  * `runKey` lets the caller split runs further, e.g. a withdrawn science block starts its own.
  */
-export function supportLabelPlan(blocks: readonly LessonBlock[], runKey: (block: Extract<LessonBlock, { support: unknown }>) => string = (block) => block.support): boolean[] {
+export function supportLabelPlan(blocks: readonly LessonViewBlock[], runKey: (block: Extract<LessonViewBlock, { support: unknown }>) => string = (block) => block.support): boolean[] {
   let previous: string | null = null;
   return blocks.map((block) => {
     const support = "support" in block ? runKey(block) : null;
