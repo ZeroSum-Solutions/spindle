@@ -32,7 +32,7 @@ test.describe("app header", () => {
     await page.goto("/sign-in");
     const heading = page.getByRole("heading", { level: 1, name: "Sign in" });
     await expect(heading).toBeVisible();
-    const mark = await page.locator("header img").first().boundingBox();
+    const mark = await page.locator("header img:visible").first().boundingBox();
     const content = await heading.boundingBox();
     expect(Math.abs(mark!.x - content!.x), `wordmark at ${mark!.x}, content at ${content!.x}`).toBeLessThanOrEqual(1);
   });

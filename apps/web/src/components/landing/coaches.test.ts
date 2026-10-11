@@ -2,11 +2,11 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { SPINDLE } from "../../lib/brand";
-import { LIGHT_SAGE, OXBLOOD, SAGE } from "../../lib/theme/preview-brands";
+import { PALE_SAGE, OXBLOOD, HARBOR } from "../../lib/theme/preview-brands";
 import { CAPABILITIES, COACH_MODALITIES, Coaches, exampleSwatches } from "./coaches";
 import { copyProblems } from "./honesty";
 
-const html = renderToStaticMarkup(createElement(Coaches, { brand: SPINDLE, swatches: exampleSwatches([OXBLOOD, SAGE], () => ({ className: "", family: "inherit" })) }));
+const html = renderToStaticMarkup(createElement(Coaches, { brand: SPINDLE, swatches: exampleSwatches([OXBLOOD, HARBOR], () => ({ className: "", family: "inherit" })) }));
 const text = html.replace(/<[^>]+>/g, " ");
 
 describe("Coaches page", () => {
@@ -53,11 +53,11 @@ describe("Coaches page", () => {
 
   it("builds the swatches through the real validator and leaves out a refused theme", () => {
     const font = () => ({ className: "", family: "inherit" });
-    const built = exampleSwatches([OXBLOOD, LIGHT_SAGE, SAGE], font);
-    expect(built.map((s) => s.brand.name)).toEqual([OXBLOOD.name, SAGE.name]);
+    const built = exampleSwatches([OXBLOOD, PALE_SAGE, HARBOR], font);
+    expect(built.map((s) => s.brand.name)).toEqual([OXBLOOD.name, HARBOR.name]);
     expect(built.every((s) => s.checks.length > 0 && s.checks.every((c) => c.pass))).toBe(true);
     expect(html.match(/data-theme-swatch=/g)).toHaveLength(2);
-    expect(text).toMatch(/\b(\d+) of \1 contrast checks pass WCAG 2\.2 AA/);
+    expect(text).toMatch(/\b(\d+) of \1 checks pass in light and dark: WCAG 2\.2 AA in every state/);
     expect(text).toContain("Base curriculum by Spindle, cited");
   });
 

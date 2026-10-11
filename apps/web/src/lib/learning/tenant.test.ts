@@ -31,3 +31,25 @@ describe("member reads fail closed", () => {
     expect(String(err)).not.toContain("Example Pilates Studio");
   });
 });
+
+// Sol R2 on #51: a brand saved before Lab has no dark accent pair. The read must still parse, and the
+// page then renders the standard Spindle look (brandFromDto refuses it), never an error page.
+describe("a legacy stored brand (no dark accent pair)", () => {
+  const LEGACY = {
+    orgId: ORG.id,
+    revision: 2,
+    name: "Your gym",
+    nameAdmitted: false,
+    brand: { mark: { kind: "text" }, colors: { accent: "#506e4b", onAccent: "#ffffff", band: "#0b3d2e" }, font: "geist" },
+    texts: {},
+  };
+  it("parses through the loader", async () => {
+    const dto = await memberBrand(ctx({ data: LEGACY, error: null }));
+    expect(dto.brand?.colors).toEqual(LEGACY.brand.colors);
+  });
+  it("renders unbranded: the adapter refuses it", async () => {
+    const { brandFromDto } = await import("../../components/brand/adapt");
+    const dto = await memberBrand(ctx({ data: LEGACY, error: null }));
+    expect(brandFromDto(dto)).toBeNull();
+  });
+});

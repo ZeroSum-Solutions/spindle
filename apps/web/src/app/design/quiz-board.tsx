@@ -4,7 +4,7 @@ import { QuizView } from "@/components/learn/module-quiz";
 import type { QuizQuestionView, QuizState } from "@/lib/learning/quiz";
 
 // Development-only specimen of the graded quiz states, with synthetic questions.
-const QUESTIONS: QuizQuestionView[] = [
+export const QUESTIONS: QuizQuestionView[] = [
   { questionId: "l1:q1", lessonTitle: "Synthetic lesson one", prompt: "Synthetic graded question one?", options: ["Synthetic option A", "Synthetic option B"] },
   { questionId: "l2:q1", lessonTitle: "Synthetic lesson two", prompt: "Synthetic graded question two?", options: ["Synthetic option A", "Synthetic option B", "Synthetic option C"] },
 ];

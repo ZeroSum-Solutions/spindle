@@ -19,7 +19,7 @@ async function expectCoaches(page: Page) {
   // Two theme swatches rendered by the validator, each passing every check.
   const swatches = page.locator("[data-theme-swatch]");
   await expect(swatches).toHaveCount(2);
-  for (const s of await swatches.all()) await expect(s).toContainText(/(\d+) of \1 contrast checks pass/);
+  for (const s of await swatches.all()) await expect(s).toContainText(/(\d+) of \1 checks pass in light and dark/);
 }
 
 test.describe("coaches page", () => {
@@ -64,7 +64,7 @@ test.describe("coaches page", () => {
       expect(info.style, info.name).toBe("solid");
       expect(info.width, info.name).toBeGreaterThanOrEqual(3);
       // Cobalt on light surfaces; white on the closing ink band (DESIGN.md › Accessibility).
-      expect(info.color, info.name).toBe(info.onInk ? "rgb(255, 255, 255)" : "rgb(36, 83, 212)");
+      expect(info.color, info.name).toBe(info.onInk ? "rgb(255, 255, 255)" : "rgb(200, 25, 95)");
       seen.add(info.id);
     }
     expect(seen.size, "every visible focusable element is reached by Tab").toBe(total);

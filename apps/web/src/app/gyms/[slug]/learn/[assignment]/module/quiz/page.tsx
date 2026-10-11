@@ -51,7 +51,7 @@ async function Quiz({ params }: PageProps<"/gyms/[slug]/learn/[assignment]/modul
             <LayerLabel layer={view.layer} />
             <VersionTag n={view.versionNumber} />
           </p>
-          <h1 className="text-heading font-medium">Module quiz</h1>
+          <h1 className="text-heading">Module quiz</h1>
           <p className="text-reading text-text-muted">{view.title}</p>
         </header>
         <ModuleStatusCard status={status} quizHref={null} />

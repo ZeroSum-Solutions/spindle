@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contrast, isHex, luminance, mix } from "./contrast";
+import { contrast, isHex, luminance, mix, oklab, oklabDistance } from "./contrast";
 
 // A small deterministic generator, so the property tests are repeatable.
 function* colours(seed: number, n: number): Generator<string> {
@@ -59,5 +59,30 @@ describe("WCAG 2.2 contrast", () => {
       expect(isHex(bad)).toBe(false);
       expect(() => contrast(bad, "#FFFFFF")).toThrow();
     }
+  });
+});
+
+describe("OKLab distance", () => {
+  it("matches Ottosson's reference points", () => {
+    const [l, a, b] = oklab("#FFFFFF");
+    expect(l).toBeCloseTo(1, 6);
+    expect(a).toBeCloseTo(0, 6);
+    expect(b).toBeCloseTo(0, 6);
+    const red = oklab("#FF0000");
+    expect(red[0]).toBeCloseTo(0.627955, 5);
+    expect(red[1]).toBeCloseTo(0.224863, 5);
+    expect(red[2]).toBeCloseTo(0.125846, 5);
+    expect(oklab("#000000")).toEqual([0, 0, 0]);
+  });
+
+  it("is zero for the same colour, symmetric and non-negative (property)", () => {
+    const list = [...colours(23, 200)];
+    for (let i = 0; i < list.length - 1; i++) {
+      const [x, y] = [list[i]!, list[i + 1]!];
+      expect(oklabDistance(x, x)).toBe(0);
+      expect(oklabDistance(x, y)).toBeCloseTo(oklabDistance(y, x), 12);
+      expect(oklabDistance(x, y)).toBeGreaterThanOrEqual(0);
+    }
+    expect(oklabDistance("#000000", "#FFFFFF")).toBeCloseTo(1, 6);
   });
 });
