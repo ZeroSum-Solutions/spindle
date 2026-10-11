@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(206);
+select plan(209);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -1109,6 +1109,18 @@ select is(pg_temp.hash_of('76000000-0000-4000-8000-0000000000dd'), pg_temp.old_h
   'an applied claim keeps the hash it had before D-12');
 select isnt(pg_temp.hash_of(pg_temp.id('fr_claim')), pg_temp.old_hash(pg_temp.id('fr_claim')),
   'a foundation claim''s hash covers its domain');
+
+select pg_temp.as_service();
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.7', pg_temp.frov(), 'CC BY 4.0; non-commercial use only'))$$,
+  '22023', 'invalid source.license: a foundation reference must carry an open licence (CC BY, CC0 or public domain)',
+  'a restriction after punctuation is not dropped (PR26-01 R2)');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.8', pg_temp.frov(), 'CC BY (NC-SA)'))$$,
+  '22023', 'invalid source.license: a foundation reference must carry an open licence (CC BY, CC0 or public domain)',
+  'a parenthesised restriction is not dropped (PR26-01 R2)');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.9', pg_temp.frov(), 'CC BY 4.0 (https://creativecommons.org/licenses/by-nc/4.0/)'))$$,
+  '22023', 'invalid source.license: a foundation reference must carry an open licence (CC BY, CC0 or public domain)',
+  'a licence URL must match an open licence');
+select pg_temp.reset_role();
 
 select * from finish();
 rollback;
