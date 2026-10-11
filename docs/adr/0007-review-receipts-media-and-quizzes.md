@@ -32,6 +32,12 @@
   - The script refuses a call that could take the month past $5 (private spend ledger) and refuses a second description of a clip within 90 days.
   - `version_media` reports a playable clip as `review: 'model-described'`. No human has checked it until the D-08 launch review, and the player must not claim otherwise.
 
+- **Storage-only lesson media (P18-06).** An image block's `src`, and every lesson media `src`, must be a stored file: `/media/content/...` for any course, or `/media/org/<the course's own gym id>/...` for gym content. Video comes only from registry video blocks; resource links are unaffected.
+  - Triggers on `lesson_blocks` and `lessons` refuse anything else for every writer (`private.media_src_ok`).
+  - The publish gate refuses rows saved before the rule.
+  - `validateCatalog` applies the same rule to authored content (`storedMediaOwner`).
+  - Snapshot parsing stays lenient, and the player shows non-storage media as unavailable.
+
 ## Why
 - Sol's plan review found that a recorder could stamp a verdict onto newer content, and that changed practice guidance could publish with no review (P3-04, P3-05). Both were reproduced on the phase-2 schema before this change. Content-addressed receipts with an atomic compare close both.
 - D-08 makes model review the build-time gate for base content. Gyms author their own method content, so the tenant path stays as it was.

@@ -122,6 +122,20 @@ describe("registry videos in a catalog", () => {
     expect(() => validateCatalog({ version: "t", courses: [lessonMedia] }, ...lookups)).toThrow(/video host/);
   });
 
+  it("require stored media: /media/content/ for global content, plus /media/org/<gym>/ for gym content (P18-06)", () => {
+    const c = course();
+    const withImage = (src: string, layer: Course["layer"] = "base"): Course => ({ ...c, layer, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, blocks: [{ kind: "image", content: { kind: "image", src, alt: "x", caption: "", provenanceId: "p1" } }] }] }] });
+    const withMedia = (src: string): Course => ({ ...c, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, media: [{ kind: "video", src, alt: "x", caption: "", provenanceId: "p1" }] }] }] });
+    const ok = (course: Course) => () => validateCatalog({ version: "t", courses: [course] }, ...lookups);
+    expect(ok(withImage("/media/content/shoulder/cuff.png"))).not.toThrow();
+    expect(ok(withImage("https://cdn.example.org/cuff.png"))).toThrow(/stored file/);
+    expect(ok(withImage("/media/org/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/x.png"))).toThrow(/stored file/);
+    expect(ok(withImage("/media/org/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/x.png", "method"))).not.toThrow();
+    expect(ok(withImage("/elsewhere/x.png"))).toThrow(/stored file/);
+    expect(ok(withMedia("https://cdn.example.org/clip.mp4"))).toThrow(/stored file/);
+    expect(ok(withMedia("/media/content/clip.mp4"))).not.toThrow();
+  });
+
   it("refuse the reserved lesson slug quiz in new content", () => {
     const c = course();
     const named: Course = { ...c, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, slug: "quiz" }] }] };

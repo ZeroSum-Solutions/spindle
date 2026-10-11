@@ -350,10 +350,11 @@ select throws_ok($$select public.publisher_save_course_draft('00000000-0000-0000
     jsonb_build_array(pg_temp.lesson('62000000-0000-4000-8000-000000000011', 'neg', jsonb_build_array(pg_temp.prac('x'))))),
     '{parts,0,lessons,0,title}', to_jsonb(E'\t\u00a0'::text)))$$,
   '22023', 'invalid course.parts[0].lessons[0].title: must be 1 to 200 characters', 'a whitespace-only title is blank');
-select lives_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https://cdn.example.org:8443/a/b.png?v=2#top', 'img:cuff-1'),
-  pg_temp.image('/media/shoulder/cuff_2.webp', 'p.1'), jsonb_build_object('kind', 'diagram', 'content',
+-- P18-06: image media must be stored files; https link grammar stays covered by the content contract's URL corpus.
+select lives_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('/media/content/a/b.png', 'img:cuff-1'),
+  pg_temp.image('/media/content/shoulder/cuff_2.webp', 'p.1'), jsonb_build_object('kind', 'diagram', 'content',
   jsonb_build_object('diagramId', 'shoulder.rhythm', 'caption', 'x'))))$$,
-  'safe https URLs, site paths and plain ids are accepted');
+  'stored media paths and plain ids are accepted');
 select throws_ok($$select public.publisher_add_claim('00000000-0000-0000-0000-0000000000c1',
   '{"statement": "x", "evidenceLevel": "x", "population": "x"}')$$,
   '22023', 'invalid claim.sourceIds: is required', 'a claim needs sources');

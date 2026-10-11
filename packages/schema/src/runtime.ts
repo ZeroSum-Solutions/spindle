@@ -232,3 +232,18 @@ export function lessonViewCourse(course: LearnerCourse): Course {
     })),
   };
 }
+
+const STORED_CONTENT = /^\/media\/content\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/;
+const STORED_ORG = /^\/media\/org\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/;
+
+/**
+ * Whose stored file a media src is (P18-06): global media under /media/content/, or one gym's under
+ * /media/org/<gym id>/. Null for anything else (external URLs, other site paths, dot segments).
+ * The database applies the same rule to new authoring and at publish.
+ */
+export function storedMediaOwner(src: string): { area: "content" } | { area: "org"; orgId: string } | null {
+  if (src.split("/").some((seg) => seg === "." || seg === "..")) return null;
+  if (STORED_CONTENT.test(src)) return { area: "content" };
+  const m = STORED_ORG.exec(src);
+  return m ? { area: "org", orgId: m[1]! } : null;
+}

@@ -55,7 +55,7 @@ const base: Course = {
               kind: "image",
               content: {
                 kind: "image",
-                src: "https://cdn.example.org:8443/a/b.png?v=2#top",
+                src: "/media/content/c2/cuff_1.png",
                 alt: "Shoulder",
                 caption: "",
                 provenanceId: "prov:c2.cuff-1",
@@ -71,8 +71,8 @@ const base: Course = {
             },
           ],
           media: [
-            { kind: "video", src: "/media/v-1/clip_2.mp4", alt: "Clip", caption: "Synthetic clip", provenanceId: "c2-clip" },
-            { kind: "diagram", src: "https://EXAMPLE.org/x", alt: "Diagram", caption: "", provenanceId: "C2.Diagram:1" },
+            { kind: "video", src: "/media/content/v-1/clip_2.mp4", alt: "Clip", caption: "Synthetic clip", provenanceId: "c2-clip" },
+            { kind: "diagram", src: "/media/content/C2/diagram.x", alt: "Diagram", caption: "", provenanceId: "C2.Diagram:1" },
           ],
         },
       ],
@@ -129,7 +129,7 @@ const method: Course = {
             { kind: "paragraph", content: "We cue ribs down.", support: "practice-based", claimIds: [] },
             { kind: "callout", content: { label: "Gym", text: "House rule." }, support: "practice-based", claimIds: [] },
             { kind: "checklist", content: ["Brace"], support: "practice-based", claimIds: [] },
-            { kind: "image", content: { kind: "image", src: "/media/cuff.png", alt: "Cuff", caption: "", provenanceId: "gym-1" } },
+            { kind: "image", content: { kind: "image", src: "/media/org/c2c2c2c2-0000-4000-8000-0000000000b1/cuff.png", alt: "Cuff", caption: "", provenanceId: "gym-1" } },
             { kind: "diagram", content: { diagramId: "d1", caption: "" } },
             {
               kind: "quiz",

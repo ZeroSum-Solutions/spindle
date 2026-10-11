@@ -1,6 +1,6 @@
 // Pure catalog functions. Ported from the trainer-academy prototype and changed
 // to take the catalog as an argument instead of importing compiled content.
-import { isVideoHostUrl, RESERVED_LESSON_SLUGS, type Catalog, type Course, type Lesson } from "@spindle/schema";
+import { isVideoHostUrl, RESERVED_LESSON_SLUGS, storedMediaOwner, type Catalog, type Course, type Lesson } from "@spindle/schema";
 
 export interface LessonLocation {
   course: Course;
@@ -38,6 +38,7 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
           if (block.kind === "image") {
             requireProvenance(provenance, block.content.provenanceId);
             requireNoVideoHost(lesson.id, block.content.src);
+            requireStoredMedia(course, lesson.id, block.content.src);
           }
           if (block.kind === "video") {
             invariant(course.layer !== "method", `${lesson.id} is gym method content and cannot embed registry videos`);
@@ -65,6 +66,7 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
         for (const media of lesson.media) {
           requireProvenance(provenance, media.provenanceId);
           requireNoVideoHost(lesson.id, media.src);
+          requireStoredMedia(course, lesson.id, media.src);
         }
       }
     });
@@ -74,6 +76,15 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
 function claimUnique(ids: Set<string>, id: string): void {
   invariant(!ids.has(id), `Duplicate id ${id}`);
   ids.add(id);
+}
+
+/**
+ * New content uses stored files only (P18-06): global media for any course, gym media only in gym
+ * method content (the catalog cannot know which gym, so the database checks the exact owner).
+ */
+function requireStoredMedia(course: Course, lessonId: string, src: string): void {
+  const owner = storedMediaOwner(src);
+  invariant(owner !== null && (owner.area === "content" || course.layer === "method"), `${lessonId} has media that is not a stored file (${src})`);
 }
 
 /** New content embeds video only through registry video blocks (ADR 0007). */
