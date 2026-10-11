@@ -11,6 +11,7 @@ import { learnPath, signIn } from "./helpers/sign-in";
 
 const world = new PlayerWorld();
 const media = new PracticeMedia(world);
+let playableId: string;
 const actors: Record<string, Actor> = {};
 let gym: { id: string; slug: string };
 let assignment: string;
@@ -54,7 +55,8 @@ test.describe.serial("click-to-load registry clips", () => {
     }
     gym = world.gym("v", actors.vowner!);
     world.join(gym, actors.vowner!, actors.vlearner!);
-    const playable = media.playable(CLIP, { title: "Synthetic clip title", channel: "Synthetic channel", available: true });
+    playableId = media.playable(CLIP, { title: "Synthetic clip title", channel: "Synthetic channel", available: true });
+    const playable = playableId;
     const off = media.playable(OFF, { title: "Synthetic off clip", channel: "Synthetic channel", available: true });
     const version = world.publishGlobal(
       courseJson(randomUUID(), randomUUID(), "base", "Synthetic video course", [
@@ -140,4 +142,54 @@ test.describe.serial("click-to-load registry clips", () => {
       await expect(playable.locator("iframe")).toHaveCount(0);
     });
   }
+
+  test("a player that never reports ready times out to unavailable, and the lesson completes without playing", async ({ browser }) => {
+    test.setTimeout(90_000);
+    const path = learnPath(gym, assignment, LESSON);
+    const page = await signIn(browser, actors.vlearner!, path);
+    await stubYouTube(page, "silent");
+    await page.reload();
+    const playable = clip(page, "playable");
+    await playable.getByRole("button", { name: /Play video/ }).click();
+    await expect(playable.locator('iframe[data-video="player"]')).toBeVisible();
+    // READY_TIMEOUT_MS is 15 s.
+    await expect(playable.locator('[data-video="unavailable"]')).toBeVisible({ timeout: 25_000 });
+    await expect(playable.locator("iframe")).toHaveCount(0);
+
+    // Completion never depends on a video: complete without playing, and it persists.
+    const fresh = await signIn(browser, actors.vlearner!, path);
+    await fresh.getByRole("button", { name: "Mark lesson complete" }).click();
+    await expect(fresh.getByTestId("lesson-status")).toContainText("Saved.");
+    await fresh.reload();
+    await expect(fresh.getByTestId("lesson-status")).toContainText(/Completed\.|Lesson complete/);
+  });
+
+  test("the player keeps its minimum size on a 320px screen", async ({ browser }) => {
+    const path = learnPath(gym, assignment, LESSON);
+    const page = await signIn(browser, actors.vlearner!, path, { width: 320, height: 700 });
+    await stubYouTube(page, "ready");
+    await page.reload();
+    const playable = clip(page, "playable");
+    await playable.getByRole("button", { name: /Play video/ }).click();
+    const box = (await playable.locator('iframe[data-video="player"]').boundingBox())!;
+    expect(box.width).toBeGreaterThanOrEqual(200);
+    expect(box.height).toBeGreaterThanOrEqual(200);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  });
+
+  // Last: it disables the playable clip for the rest of the run.
+  test("a clip switched off after the page loaded does not play: play rechecks the registry first", async ({ browser }) => {
+    const path = learnPath(gym, assignment, LESSON);
+    const page = await signIn(browser, actors.vlearner!, path);
+    const youtube: string[] = [];
+    page.on("request", (r) => {
+      if (/youtube|ytimg|googlevideo/.test(r.url())) youtube.push(r.url());
+    });
+    await expect(clip(page, "playable").getByRole("button", { name: /Play video/ })).toBeVisible();
+    media.disable(playableId);
+    await clip(page, "playable").getByRole("button", { name: /Play video/ }).click();
+    await expect(clip(page, "playable").locator('[data-video="blocked"]')).toContainText("This video can't be played right now.");
+    await expect(clip(page, "playable").locator("iframe")).toHaveCount(0);
+    expect(youtube).toEqual([]);
+  });
 });

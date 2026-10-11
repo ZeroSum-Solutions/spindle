@@ -59,8 +59,17 @@ test.describe.serial("graded module quiz", () => {
     const page = await signIn(browser, actors.learner!, quizPath());
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Module quiz");
     await expect(page.getByTestId("module-status")).toContainText("Quiz not taken yet: 2 questions, 2 correct to pass.");
-    // The answer key never reaches the page before submitting.
+    // The answer key never reaches the page before submitting: not in the HTML, and not in the
+    // RSC payloads a navigation fetches, for the quiz page and for lessons with graded questions.
     expect(await page.content()).not.toContain("Synthetic explanation");
+    for (const path of [quizPath(), learnPath(gymA, assignments.learner, "quiz-lesson-1"), learnPath(gymA, assignments.learner, "quiz-lesson-2")]) {
+      for (const headers of [{}, { RSC: "1" }] as Record<string, string>[]) {
+        const body = await (await page.request.get(path, { headers })).text();
+        expect(body, `${path} ${JSON.stringify(headers)}`).not.toContain("Synthetic explanation");
+        expect(body, `${path} ${JSON.stringify(headers)}`).not.toMatch(/"answerIndex"/);
+        expect(body.length).toBeGreaterThan(500);
+      }
+    }
 
     await answer(page, ["Synthetic one B", "Synthetic two C"]);
     await page.getByRole("button", { name: "Submit answers" }).click();
