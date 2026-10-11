@@ -49,6 +49,10 @@ describe("validateBrand", () => {
     expect(checks.filter((c) => c.state === "error").every((c) => c.foreground === ATLAS.danger)).toBe(true);
   });
 
+  it.each([["Café Fitness"], ["한국 체육관"], ["Gym ❤️"], ["Ünïcode 24/7"]])("accepts the real name %s", (name) => {
+    expect(validateBrand({ ...OXBLOOD, name }).ok).toBe(true);
+  });
+
   it("checks the text mark only when the mark is text", () => {
     expect(brandChecks(OXBLOOD).some((c) => c.role === "Text mark in the header")).toBe(true);
     expect(brandChecks({ ...OXBLOOD, mark: LOGO }).some((c) => c.role === "Text mark in the header")).toBe(false);
@@ -80,6 +84,13 @@ describe("validateBrand", () => {
     ["a C1 control in the name", { name: "Gym\u0085name" }],
     ["bidi overrides in the name", { name: "Gym\u202Espin\u202C" }],
     ["a bidi isolate in the name", { name: "Gym\u2066x\u2069" }],
+    // Fillers that Unicode classes as letters or symbols but that draw nothing.
+    ["a name of Hangul choseong fillers", { name: "\u115F\u115F" }],
+    ["a name of Hangul jungseong fillers", { name: "\u1160\u1160" }],
+    ["a name of Hangul fillers", { name: "\u3164\u3164" }],
+    ["a name of halfwidth Hangul fillers", { name: "\uFFA0\uFFA0" }],
+    ["a name of Braille blanks", { name: "\u2800\u2800" }],
+    ["a name of mixed blank fillers", { name: "\u3164 \u2800 \uFFA0" }],
     ["an empty name", { name: "   " }],
     ["a font that is not bundled", { font: "comic-sans" }],
     ["an SVG logo", { mark: { ...LOGO, key: "mark.svg", format: "svg" } }],
