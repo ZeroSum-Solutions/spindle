@@ -57,7 +57,7 @@ as $$
       "danger": "#b42318", "dangerSoft": "#fdecea", "hoverToward": "#000000", "softWeight": 0.9}'::jsonb
     when 'dark' then '{"label": "Dark theme", "canvas": "#0b0d12", "surface": "#181c25", "surfaceMuted": "#20242f",
       "text": "#f2f4f8", "textMuted": "#b4bac6", "signal": "#ff3b8e", "science": "#3ddc97", "practice": "#ffb547",
-      "danger": "#ff6b5f", "dangerSoft": "#34252c", "hoverToward": "#ffffff", "softWeight": 0.85}'::jsonb
+      "danger": "#ff6b5f", "dangerSoft": "#34252c", "hoverToward": "#ffffff", "softWeight": 0.9}'::jsonb
   end
 $$;
 
