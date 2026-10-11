@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { courseTagsSchema } from "./runtime";
 
 // Tenant brand (phase 4, P4-A; plan revision 2, theming security). A gym's brand is presentation
 // only: a plain-text name, a text mark or a raster logo, two literal colours and one bundled font.
@@ -72,7 +73,92 @@ export const tenantBrandSchema = z.strictObject({
     accent: hex,
     /** Text and icons on an accent-filled control. */
     onAccent: hex,
+    /** P4-A2: the header band and catalog hero. Absent means the Atlas surface. Text on it is ink or white, whichever reads better. */
+    band: hex.optional(),
   }),
   font: z.enum(Object.keys(BRAND_FONTS) as [BrandFont, ...BrandFont[]]),
 });
 export type TenantBrand = z.infer<typeof tenantBrandSchema>;
+
+// P4-A2 (spec revisions 3 to 4a) ---------------------------------------------------------------
+
+/**
+ * A gym's stored brand, as save_org_brand accepts it: the text mark, literal colours (with the
+ * optional header band) and one bundled font. No name (it is the held tenant text brand_name) and
+ * no logo (P4-A3).
+ */
+export const orgBrandInputSchema = z.strictObject({
+  mark: z.strictObject({ kind: z.literal("text") }),
+  colors: z.strictObject({ accent: hex, onAccent: hex, band: hex.optional() }),
+  font: z.enum(Object.keys(BRAND_FONTS) as [BrandFont, ...BrandFont[]]),
+});
+export type OrgBrandInput = z.infer<typeof orgBrandInputSchema>;
+
+const uuid = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, "must be a lowercase uuid");
+const lowerHex = z.string().regex(/^#[0-9a-f]{6}$/, "must be a lower-case #rrggbb colour");
+
+/**
+ * MemberBrandDto (public.member_brand): what a member's pages may show of the gym. `name` is the
+ * admitted brand name or "Your gym"; `texts` holds admitted catalog texts only. `brand` is null until
+ * the owner saves one. Cache brand-only output under org:{orgId}:brand:{revision}.
+ */
+export const memberBrandDtoSchema = z.strictObject({
+  orgId: uuid,
+  revision: z.number().int().nonnegative(),
+  name: z.string().min(1).max(60),
+  nameAdmitted: z.boolean(),
+  brand: z
+    .strictObject({
+      mark: z.strictObject({ kind: z.literal("text") }),
+      colors: z.strictObject({ accent: lowerHex, onAccent: lowerHex, band: lowerHex.optional() }),
+      font: z.enum(Object.keys(BRAND_FONTS) as [BrandFont, ...BrandFont[]]),
+    })
+    .nullable(),
+  texts: z.strictObject({
+    headline: z.string().min(1).max(60).optional(),
+    tagline: z.string().min(1).max(140).optional(),
+    coachName: z.string().min(1).max(60).optional(),
+    coachRole: z.string().min(1).max(60).optional(),
+  }),
+});
+export type MemberBrandDto = z.infer<typeof memberBrandDtoSchema>;
+export const parseMemberBrandDto = (value: unknown): MemberBrandDto => memberBrandDtoSchema.parse(value);
+
+/** The fixed layer labels on a course card (spec 2.3). Support stays per block, never a card label. */
+export const LAYER_LABELS = { base: "Base", modality: "Modality", method: "Gym method" } as const;
+
+/**
+ * CourseCardDto (public.member_course_cards). Base and modality cards use Spindle's cover
+ * (`cover: null`); `seal` marks base cards. A gym title whose admission was revoked reads
+ * "Untitled course"; a revoked blurb leaves `summary` null.
+ */
+export const courseCardDtoSchema = z
+  .strictObject({
+    versionId: uuid,
+    courseId: uuid,
+    layer: z.enum(["base", "modality", "method"]),
+    layerLabel: z.enum(["Base", "Modality", "Gym method"]),
+    title: z.string().min(1).max(200),
+    summary: z.string().min(1).max(300).nullable(),
+    cover: z
+      .strictObject({
+        kind: z.literal("pattern"),
+        pattern: z.enum(["solid", "diagonal", "grid", "dots", "rings", "waves"]),
+        background: lowerHex,
+        foreground: lowerHex,
+      })
+      .nullable(),
+    tags: courseTagsSchema,
+    lessonCount: z.number().int().nonnegative(),
+    durationMinutes: z.number().int().nonnegative(),
+    publishedBySpindle: z.boolean(),
+    seal: z.boolean(),
+  })
+  .refine((c) => c.layerLabel === LAYER_LABELS[c.layer], { message: "layer label must match the layer", path: ["layerLabel"] })
+  .refine((c) => c.layer === "method" || c.cover === null, { message: "only gym method courses carry a tenant cover", path: ["cover"] })
+  .refine((c) => c.seal === (c.layer === "base") && c.publishedBySpindle === (c.layer !== "method"), {
+    message: "seal and Spindle publication follow the layer",
+    path: ["seal"],
+  });
+export type CourseCardDto = z.infer<typeof courseCardDtoSchema>;
+export const parseCourseCards = (value: unknown): CourseCardDto[] => z.array(courseCardDtoSchema).max(1000).parse(value);
