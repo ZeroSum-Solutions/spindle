@@ -8,6 +8,7 @@ Nothing here is a lesson yet. Full drafting waits for the outline review and the
 
 - **[S]** a statement that will be a *Science* block. It needs an approved claim before it can be published. "Candidate evidence" names where we expect to look; nothing is cited until the claim pipeline has verified the source.
 - **[P]** a *Practice-based* block: coaching experience, cues, set-ups and progressions. It carries no claim and must not read like one.
+- **No downgrades.** If a science candidate gets no approved claim, the statement is removed, or rewritten as a coaching recommendation that says nothing about how the body works or what research shows. It never keeps its content under a practice-based label.
 - **[!]** a safety block, placed where the risk is. Wording follows SAFETY.md; "SAFETY §3" means its stop rules and "§4" its referral tiers.
 - **Graded quiz** candidates are science-only and each binds a claim. **Scenario** candidates are ungraded discussion until the claims they need are approved.
 - **Video slots** give a channel code and a topic only. Channel codes come from the private inspiration list; the LEAD admits each clip, the embed check runs, and the reviewer checks the segment. Videos are optional, practice-based, and never needed for completion.
@@ -28,7 +29,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 **Sections**
 1. *What it is: the parts.* [S] Bones: humerus, scapula, clavicle; joints: glenohumeral, acromioclavicular, sternoclavicular, and the scapulothoracic articulation (a gliding interface, not a true joint). Candidate evidence: official nomenclature (Terminologia Anatomica).
-2. *What it is: a shallow socket.* [S] The glenoid is shallow relative to the humeral head; the labrum and capsule deepen and hold it. Candidate evidence: anatomy reference with an open consensus or review source.
+2. *What it is: a shallow socket.* [S] The glenoid is shallow relative to the humeral head; the labrum deepens the socket, and the capsule and its ligaments help hold the joint stable. Candidate evidence: anatomy reference with an open consensus or review source.
 3. *What it is: the cuff.* [S] Four rotator cuff muscles (supraspinatus, infraspinatus, teres minor, subscapularis) and their role in keeping the humeral head centred during arm movement. Candidate evidence: a review of cuff function (e.g. a JOSPT clinical commentary on shoulder exercise rationale).
 4. *What it is: the big movers.* [S] Deltoid, pectoralis major, latissimus dorsi, trapezius, serratus anterior: what each moves. Candidate evidence: nomenclature plus a review.
 5. *Why it matters.* [P] Range and control trade off; a trainer's job is to load range the client can control.
@@ -54,13 +55,13 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 **One idea:** when the arm goes up, the shoulder blade moves with it; watching that shared movement is a core trainer skill.
 
 **Objectives**
-- Describe how the scapula moves when the arm is raised: upward rotation, posterior tilt, external rotation.
+- Describe how the scapula moves when the arm is raised: upward rotation and posterior tilt, with internal or external rotation that depends on the plane and range.
 - Explain that the humerus and scapula share elevation, and that the ratio varies.
 - Recognise the muscle pairs that rotate the scapula upward.
 - Watch a client's arm raise and describe what you see in plain words.
 
 **Sections**
-1. *What it is.* [S] During arm elevation the scapula upwardly rotates, tilts posteriorly and externally rotates. Candidate evidence: review of scapular kinematics (e.g. JOSPT 2009 review on scapular kinematics and shoulder pathology).
+1. *What it is.* [S] During arm elevation the scapula upwardly rotates and tilts posteriorly. Its internal or external rotation varies with the plane of elevation and through the range, so it is not taught as one fixed pattern. Candidate evidence: review of scapular kinematics (JOSPT 2009, open in PMC) and an in vivo 3D kinematic study.
 2. *What it is: the shared ratio.* [S] Arm elevation is shared between glenohumeral and scapulothoracic motion; the often-quoted ratio is about 2:1 overall, and it varies by person, plane and load. Candidate evidence: classic kinematic study plus a modern review. The block must say the ratio varies.
 3. *What it is: the force couple.* [S] Upper and lower trapezius with serratus anterior rotate the scapula upward. Candidate evidence: review of exercise rationale for scapular muscles.
 4. *Why it matters.* [S] Altered scapular movement is common in people with and without shoulder pain, so on its own it is not a diagnosis. Candidate evidence: scapular dyskinesis consensus statement (2013).
@@ -71,12 +72,12 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 **Visuals:** original animation-free diagram of scapular upward rotation at three arm angles.
 
 **Graded quiz candidates**
-- Name the three scapular motions during arm elevation. [§1]
+- Which two scapular motions happen consistently as the arm is raised overhead? (Upward rotation and posterior tilt; internal/external rotation varies with plane and range) [§1]
 - True or false: the glenohumeral-to-scapular ratio is a fixed 2:1 in everyone. (False: it varies) [§2]
 - Which muscles form the upward rotation force couple? [§3]
 - Does a visible change in scapular movement alone mean the client has a shoulder injury? (No) [§4]
 
-**Scenario (ungraded):** One shoulder blade "wings" a little when lowering from overhead; the client has no pain. Continue, adjust, or refer? (Continue with load they control; observe; no referral without warning signs.)
+**Scenario (ungraded):** As the client lowers the arms from overhead, the inner edge of one shoulder blade lifts slightly away from the ribs compared with the other side; the client has no pain. Continue, adjust, or refer? (Continue with load they control; observe; no referral without warning signs.)
 
 **Video slots:** C5: scapular function in pressing; C2: watching the arm raise from behind.
 
@@ -90,20 +91,20 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - Distinguish active from passive range, and range from control.
 - Recognise common restrictions trainers see: overhead reach, internal rotation, horizontal reach across the body.
 - Explain what research says about posture and shoulder pain.
-- Choose between mobility work, control work and referral.
+- Decide when a restriction is a training question and when it needs referral.
 
 **Sections**
 1. *What it is.* [P] Mobility (range you can reach) and stability (control of that range) as two coaching questions, not opposites.
-2. *Active vs passive.* [P] If you can move it there yourself versus if someone moves it for you; a big gap suggests control work, a shared limit suggests range work or referral.
-3. *Posture.* [S] Thoracic posture and rounded shoulders are weakly or inconsistently associated with shoulder pain. Candidate evidence: systematic review of thoracic posture and shoulder pain (2016). The block must not describe posture as damage.
-4. *Thoracic extension and overhead reach.* [S] Thoracic extension contributes to full arm elevation. Candidate evidence: kinematic study or review. Draft as practice if no approved claim exists.
+2. *Active vs passive.* [P] Range you can reach yourself versus range someone else can move you through. A difference is a reason to look closer, not a prescription; this lesson draws no training conclusion from it. [!] A new or substantial loss of active movement that has no clear explanation (the client cannot lift the arm themselves, even if you can move it for them) is an urgent referral, never something to train (SAFETY §3, §4).
+3. *Posture.* [S] A systematic review found moderate evidence of no difference in thoracic kyphosis (how rounded the upper back is) between people with and without shoulder pain. The claim is limited to thoracic posture and to association; it says nothing about rounded shoulders or about cause. Candidate evidence: systematic review of thoracic posture and shoulder pain, range and function (2016). The block must not describe posture as damage.
+4. *Upright posture and overhead reach.* [S] In single-session studies, people reach more maximum shoulder range in an upright posture than in a slouched one, with or without shoulder pain; whether that matters over time is unclear. Candidate evidence: the same 2016 systematic review. If no claim is approved, the section is removed (no downgrade).
 5. *How to see it.* [P] Overhead reach against a wall, standing back-to-wall arm raise, and a supine reach: compare sides and compare active with passive.
-6. *What to do.* [P] Ordered options: change the position, then add active range work, then load the new range. Re-check after.
-7. [!] Stiffness that does not go away, a big loss of movement, or pain that is worse at night: do not keep stretching into it; routine referral (SAFETY §3, §4). Sudden loss of movement after an injury: urgent.
+6. *What to do.* [P] For a long-standing, familiar, painless restriction with no warning sign: train in the range the client can control, change one thing at a time, and re-check. Anything new, unexplained or painful goes to SAFETY §3 and §4 first.
+7. [!] Stiffness that does not go away, a big loss of movement, or pain that is worse at night: do not keep stretching into it; routine referral (SAFETY §3, §4). After an injury, an arm the client cannot move: emergency. A new loss of active movement without an injury: urgent.
 8. [P] Contested models (for example fascial lines or rib-position stories) as clearly labelled practice context with a limited-evidence note, if used at all.
 
 **Graded quiz candidates**
-- What does the research say about rounded-shoulder posture and shoulder pain? (The association is weak or inconsistent) [§3]
+- What did a systematic review find when it compared upper-back rounding (thoracic kyphosis) in people with and without shoulder pain? (No difference, with moderate evidence; it does not show cause) [§3]
 
 **Scenario (ungraded):** A client cannot reach overhead on either side, but you can lift their arms higher passively with no pain. Which way do you go first? (Control work in the range; re-check.) Variant: stiffness for months with night pain, getting worse (routine referral).
 
@@ -117,12 +118,12 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 **Objectives**
 - Run three simple screens with clear start positions and what to look for.
-- Explain why single shoulder tests cannot identify a specific injury.
+- Explain why a trainer's screen can neither diagnose nor clear a shoulder.
 - Ask the questions that surface red flags before training the shoulder.
 - Choose the right referral tier from what you see and hear.
 
 **Sections**
-1. *Why screens are not tests.* [S] Individual physical examination tests have limited accuracy for identifying specific shoulder pathology. Candidate evidence: systematic review with meta-analysis of shoulder examination tests (2012 update).
+1. *Why screens are not tests.* [S] Even in clinicians' hands, individual physical examination tests have limited accuracy for identifying specific shoulder conditions; some help clinicians rule a condition in or out when combined with other findings. Candidate evidence: recent systematic review and meta-analysis of shoulder examination for subacromial bursitis and rotator cuff tears (2024, BMC Musculoskeletal Disorders, doi:10.1186/s12891-024-08144-z, CC BY-NC-ND 4.0); the 2012 meta-analysis update only as a bounded historical example.
 2. *Before you screen: questions.* [P] Recent injury? Pins and needles or numbness? Night pain? Fever or feeling unwell? Any diagnosed shoulder or neck condition? (Each maps to SAFETY §2 to §4.)
 3. [!] Red flags list in trainer words, with tiers (SAFETY §4 in full).
 4. *Screen 1: arm raise from behind.* [P] Start position, what to look for, what a side-to-side difference suggests. [!] Stop rules beside it.
@@ -132,14 +133,14 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 8. [P] Scripts for the referral conversation that do not alarm or diagnose.
 
 **Graded quiz candidates**
-- Can a single shoulder test tell you which structure is injured? (No: individual tests have limited accuracy) [§1]
+- Can a trainer use one screen to diagnose a shoulder problem or to clear a shoulder for training? (No) [§1, with SAFETY §1]
 - Adverse case questions bind a claim only when one is approved for that criterion; otherwise they stay in the scenario set.
 
 **Scenario (ungraded), adverse cases**
 - Shoulder looks out of place after a fall in class (emergency).
-- Pain and weakness lifting the arm after catching a heavy bar (urgent).
-- Pins and needles in the hand that do not go away (urgent).
-- Ache after pressing that settles within a day; no warning signs (continue; adjust load).
+- Pain and weakness lifting the arm after catching a heavy bar; the arm still moves and looks normal (urgent). Variant: after the same event the client cannot move the arm (emergency).
+- Pins and needles in the arm or hand that do not go away (urgent).
+- A mild ache after a pressing session that settles within a day, with no pain during the sets and no warning signs (continue; consider load or range for the next session; stop if pain comes on during a set).
 - Shoulder pain not better after 2 weeks of avoiding the provoking movement (routine).
 
 **Video slots:** C2: overhead mobility screen; none for red flags (text only).
@@ -148,25 +149,25 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 ## 5. Correctives and activation: what the evidence supports
 
-**One idea:** "activation" drills are useful warm-ups and practice for control; strength in range is what research supports most.
+**One idea:** "activation" drills are useful warm-ups and practice for control. Research on exercise for shoulder pain is clinical research, and it does not rank one approach above the others for trainers.
 
 **Objectives**
-- Explain what exercise therapy research shows for common non-traumatic shoulder pain.
-- Separate what is supported (progressive loading) from what is mostly coaching practice (activation sequences).
+- Explain what exercise therapy research shows for subacromial shoulder pain, and why that clinical evidence is not a trainer's treatment plan.
+- Separate what the research compared from what is coaching practice (activation sequences), without ranking approaches.
 - Build a short, ordered warm-up for the shoulder.
 - Know when a "corrective" should be a referral instead.
 
 **Sections**
-1. *What research supports.* [S] For subacromial (non-traumatic) shoulder pain, exercise therapy is a first-line treatment, and surgery to decompress the space did not outperform a placebo procedure in a large trial. Candidate evidence: BESS care pathway; randomised trial (2018). Wording stays within the population studied.
-2. *Progressive vs non-progressive.* [S] Candidate claim on progressive resisted exercise versus non-progressive exercise for rotator cuff related shoulder pain. Candidate evidence: systematic review and meta-analysis (2020). Draft as practice if the pooled result is not clear.
-3. *Scapular exercise.* [S] Candidate claim on exercises with high serratus anterior and lower trapezius activity relative to upper trapezius. Candidate evidence: EMG-based reviews of scapular exercise. Keep EMG claims modest: activity is not strength gain.
+1. *What research supports.* [S] For subacromial shoulder pain (one specific condition, diagnosed by a clinician), exercise therapy is a first-line treatment, and surgery to decompress the space did not outperform a placebo procedure in a large trial. Candidate evidence: BESS care pathway; randomised trial (2018). Wording stays within the population studied. That exercise therapy is planned and delivered by clinicians; the lesson says plainly that a trainer's loading is not the same thing and is not a treatment.
+2. *What the trials compared.* [S] For rotator cuff related shoulder pain, a 2020 systematic review compared each approach with placebo or no treatment, not with each other: progressive resisted exercise showed an uncertain clinical benefit, non-progressive exercise no significant benefit, and the certainty of the evidence was low. The block reports those comparisons and that uncertainty and ranks nothing. Candidate evidence: Naunton et al. 2020, Clinical Rehabilitation (PMID 32571081). If no claim is approved, the section is removed (no downgrade).
+3. *Scapular exercise.* [S] Candidate claim on exercises with high serratus anterior and lower trapezius activity relative to upper trapezius. Candidate evidence: EMG-based reviews of scapular exercise. Keep EMG claims modest: activity is not strength gain, and no exercise is called best.
 4. *Activation as practice.* [P] What activation drills are for in a session: rehearsal, attention, warm-up. What they are not: a fix.
 5. *How to see it.* [P] Does the client own the position under a light load? Re-check the screen from lesson 4.
 6. *What to do.* [P] Ordered warm-up: position, then light rotation work, then scapular control, then the session's first pattern with a light load. One to three cues each. Easier version for each drill.
 7. [!] "Correctives" never replace referral: anything on SAFETY §3 means stop; persistent or worsening pain means routine referral.
 
 **Graded quiz candidates**
-- For non-traumatic shoulder pain, what does research support as a first-line approach? (Exercise therapy) [§1]
+- For subacromial shoulder pain diagnosed by a clinician, what does UK specialist guidance give as a first-line treatment? (Exercise therapy, planned and delivered by clinicians) [§1]
 - Does higher EMG activity in an exercise mean it builds more strength? (Not necessarily) [§3]
 
 **Scenario (ungraded):** A client wants to "activate" for 20 minutes before every session. What do you keep, and what do you move into the main session?
@@ -190,7 +191,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 2. *Pressing.* [P] Bench, push-up, landmine: set-up, range, and choosing a variation. Cue definitions (for example "push the floor away", "bend the bar").
 3. *Pulling.* [P] Rows and pulldowns: range and scapular movement; balance pulling volume with pressing.
 4. *Overhead.* [P] Landmine to half-kneeling to standing press; when to pick which. [S] Candidate claim: overhead pressing requires full arm elevation with upward scapular rotation (links back to lesson 2).
-5. *Hypertrophy angle.* [S] Candidate claims on training volume and proximity to failure for muscle growth, kept general. Candidate evidence: meta-analyses on volume. Draft as practice if not approved.
+5. *Hypertrophy angle.* [S] Candidate claims on training volume and proximity to failure for muscle growth, kept general. Candidate evidence: meta-analyses on volume. If no claim is approved, the section is removed (no downgrade).
 6. *Progressions.* [P] One variable at a time: range, then load, then complexity. Re-check after each change.
 7. [!] Do not progress when pain rises with load, the client cannot control the range, or any SAFETY §3 sign appears. Beside each progression.
 
@@ -198,9 +199,9 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - What drives strength gains over time? (Progressive overload) [§1]
 - Which scapular motion must happen for full overhead reach? (Upward rotation) [§4]
 
-**Scenario (ungraded):** A client's shoulder aches at the bottom of a deep dumbbell bench press but not on push-ups. What do you change first? (Range or variation; re-check; refer if it persists or worsens.)
+**Scenario (ungraded):** A client's shoulder starts to ache at the bottom of a deep dumbbell bench press during the set; push-ups earlier felt fine. What do you do now, and what might change next time? (Now: stop shoulder loading for this session, per SAFETY §3. Next session, only if no warning sign remains: discuss a shorter range or another variation, and stop again if pain comes on. Refer routinely if the pain is getting worse, or has not improved after 2 weeks.)
 
-**Video slots:** C6: overhead press technique; C4: exercise selection for the deltoids; C7: evidence-based shoulder exercise ranking.
+**Video slots:** C6: overhead press technique; C4: exercise selection for the deltoids; C7: evidence on shoulder exercise selection (a segment that explains choices, never a ranking).
 
 ---
 
@@ -216,18 +217,18 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 **Sections**
 1. *What it is.* [S] Phases of the throw (wind-up, cocking, acceleration, deceleration, follow-through) and the large forces at the shoulder during arm cocking and deceleration. Candidate evidence: biomechanics study of pitching kinetics (1995).
-2. *Adaptations.* [S] Throwers often show more external and less internal rotation in the throwing arm; total rotational motion differences have been linked to injury risk in professional pitchers. Candidate evidence: prospective cohort study (2011). Wording stays within the population studied.
+2. *Adaptations.* [S] Throwers often show more external and less internal rotation in the throwing arm; whether these range differences predict injury is uncertain: a 2018 meta-analysis of overhead athletes found that no range measure reached statistical significance for predicting shoulder or elbow injury, although results leaned toward more injury with internal rotation loss. Candidate evidence: Keller et al. 2018, Sports Health (systematic review and meta-analysis, PMID 29381423, open in PMC); Wilk et al. 2011 (a case series in professional pitchers, level of evidence 4, PMID 21131681) only as a bounded historical example. Wording stays within the population studied.
 3. *Why it matters.* [P] Do not "correct" a normal thrower's adaptation; compare total rotation between sides and over time.
 4. *How to see it.* [P] Measure rotation the same way each time; note change across a season.
 5. *What to do.* [P] Strength for the cuff and scapular muscles, trunk and hip rotation work, deceleration work; workload is the coach's and clinician's decision.
 6. [P] Rotational sports beyond throwing (racquet, swimming, combat) as practice context.
-7. [!] Pain while throwing, loss of velocity with pain, a "dead arm", or numbness: stop throwing and refer (SAFETY §3, §4). Young throwers with shoulder pain: refer (SAFETY §2).
+7. [!] Pain while throwing, loss of velocity with pain, a "dead arm", or numbness: stop throwing and refer (SAFETY §3, §4). Young throwers with shoulder pain: urgent tier, an urgent GP appointment or NHS 111 the same day for referral to trauma and orthopaedics, with a parent or carer told (SAFETY §2, §4).
 
 **Graded quiz candidates**
 - In which phases are shoulder forces highest in a throw? (Arm cocking and deceleration) [§1]
 - What range pattern is common in a thrower's throwing arm? (More external, less internal rotation) [§2]
 
-**Scenario (ungraded):** A 15-year-old pitcher says the shoulder hurts after games. What do you do? (Stop throwing work in your session; refer: SAFETY §2.)
+**Scenario (ungraded):** A 15-year-old pitcher says the shoulder hurts after games. What do you do? (Stop throwing and shoulder loading in your session; urgent tier: tell the athlete and a parent or carer to get an urgent GP appointment or NHS 111 the same day, for referral to trauma and orthopaedics; emergency if any emergency sign is present. SAFETY §2, §4.)
 
 **Video slots:** C1: when to train internal rotation for throwers.
 
@@ -248,13 +249,13 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 2. [!] *Emergency.* Criteria and actions (SAFETY §4).
 3. [!] *Urgent.* Criteria and actions (SAFETY §4).
 4. [!] *Routine.* Criteria and actions (SAFETY §4).
-5. [S] Most shoulder pain improves with time and simple care, and exercise therapy is the usual first step. Candidate evidence: BESS care pathway (2025) and NHS guidance. Used to keep routine referral calm, not to delay urgent ones.
+5. [S] For subacromial shoulder pain, BESS guidance reports that most people improve within about three months with simple care and clinician-led exercise therapy. Candidate evidence: BESS care pathway (2025). The claim stays within that population; it keeps routine referral calm and is never used to delay an urgent or emergency referral.
 6. *Excluded populations.* [!] SAFETY §2, with what to do instead.
 7. *The conversation.* [P] Scripts: what to say, what not to say, and how to keep the client moving with the rest of the session.
 8. *Working with a clinician's plan.* [P] Ask for the plan in writing; do not progress it on your own.
 
 **Graded quiz candidates**
-- What does research and guidance say is the usual first step for most non-traumatic shoulder pain? (Simple care and exercise therapy) [§5]
+- For subacromial shoulder pain, what does BESS guidance say about how most people do over about three months? (Most improve with simple care and clinician-led exercise therapy) [§5]
 
 **Scenario (ungraded), adverse cases:** one per tier plus two "continue" cases, drawn from SAFETY §3 and §4, including arm pain with chest tightness (emergency) and a lump around the shoulder (urgent).
 
@@ -269,6 +270,6 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 ## Open questions for review
 
-1. Lesson 3 §4 and lesson 6 §5 may stay practice-based if no claim is approved; is that acceptable for the base module?
+1. Lesson 3 §4, lesson 5 §2 and lesson 6 §5 are removed if their claims are not approved (no downgrade to practice). Is the module still complete without them?
 2. Should "throwing and rotation" be a base lesson or the first modality example? The plan keeps it in the base.
 3. Channel C3's material is useful as a top-down framing but makes contested causal claims; keep it out of embeds?

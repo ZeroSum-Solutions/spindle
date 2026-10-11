@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Check, CirclePlus, Clipboard, FileText, RefreshCw, TriangleAlert } from "lucide-react";
 import type { CurriculumLayer, Support } from "@spindle/schema";
-import { LAYER_LABEL, type LessonState, type LessonView } from "@/lib/learning/view";
-import { formatDate } from "@/lib/learning/format";
+import { LAYER_LABEL, type LessonState, type LessonView } from "../../lib/learning/view";
+import { formatDate } from "../../lib/learning/format";
 
 const ICON = { "aria-hidden": true, strokeWidth: 1.75, className: "size-4 shrink-0" } as const;
 

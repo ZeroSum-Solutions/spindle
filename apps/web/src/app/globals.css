@@ -82,9 +82,10 @@ body {
   font-family: var(--font-sans);
 }
 
-/* One visible focus treatment everywhere: 3px brand ring, offset from the control. */
+/* One visible focus treatment everywhere: 3px brand ring, offset from the control.
+   Dark surfaces set --focus-ring to a light colour (cobalt is 2.5:1 on ink). */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 3px solid var(--color-brand);
+  outline: 3px solid var(--focus-ring, var(--color-brand));
   outline-offset: 4px;
 }
 
