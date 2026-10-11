@@ -14,6 +14,7 @@ import type { CourseView, LessonView } from "@/lib/learning/view";
 import { ReviewedDiagram } from "@/components/learn/diagrams";
 import { DIAGRAM_SAMPLES } from "./diagram-samples";
 import { CompletionBoard, LogoReveal } from "./motion-board";
+import { BrandPreview } from "./brand-preview";
 import { QuizBoard } from "./quiz-board";
 import { ModuleStatusCard } from "@/components/learn/module-status";
 
@@ -216,6 +217,10 @@ export default function DesignSpecimen() {
           ))}
           <ReviewedDiagram content={{ diagramId: "synthetic-missing", alt: "Synthetic", caption: "Sample text. A reviewed diagram id with no drawing.", legend: [{ key: "a", label: "Synthetic legend item.", text: "" }] }} />
         </div>
+      </Section>
+
+      <Section title="Brand preview">
+        <BrandPreview />
       </Section>
 
       <Section title="Module status and graded quiz">
