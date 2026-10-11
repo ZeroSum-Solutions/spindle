@@ -169,6 +169,65 @@ describe("hardening", () => {
     for (let i = 1; i < sentAt.length; i++) expect(sentAt[i]! - sentAt[i - 1]!).toBeGreaterThanOrEqual(100);
   });
 
+  it("never shrinks the gap when the clock moves between wake-up and send", async () => {
+    let t = 0;
+    const now = () => (t += 40); // every read costs 40 ms: a late continuation
+    const sleep = async (ms: number) => void (t += ms);
+    const sentAt: number[] = [];
+    const fetch = async () => {
+      sentAt.push(t);
+      return Response.json({ ok: true });
+    };
+    const http = createHttp({ fetch, now, sleep, intervalsMs: { "slow.test": 100 } });
+    await Promise.all([1, 2, 3, 4].map(() => http.fetchJson("https://slow.test/x", schema, opts)));
+    for (let i = 1; i < sentAt.length; i++) expect(sentAt[i]! - sentAt[i - 1]!).toBeGreaterThanOrEqual(100);
+  });
+
+  it("rejects queued followers during an over-cap Retry-After and sends nothing meanwhile", async () => {
+    const clock = vclock();
+    const sentAt: number[] = [];
+    const fetch = async () => {
+      sentAt.push(clock.now());
+      return new Response("", { status: 429, headers: { "retry-after": "120" } });
+    };
+    const http = createHttp({ fetch, ...clock, intervalsMs: { "slow.test": 100 } });
+    const results = await Promise.allSettled([1, 2, 3].map((i) => http.fetchJson(`https://slow.test/${i}`, schema, opts)));
+    expect(results.map((r) => r.status)).toEqual(["rejected", "rejected", "rejected"]);
+    for (const r of results) expect((r as PromiseRejectedResult).reason).toBeInstanceOf(EvidenceBudgetError);
+    expect(sentAt).toHaveLength(1);
+  });
+
+  const failures: [string, (n: number) => Promise<Response> | Response, number][] = [
+    ["a throwing job", () => new Response("", { status: 400 }), 0],
+    ["an aborted job", () => Promise.reject(new DOMException("aborted", "AbortError")), 0],
+    [
+      "a body-timeout job",
+      () =>
+        new Response(
+          new ReadableStream({
+            pull() {
+              throw new DOMException("timeout", "TimeoutError");
+            },
+          }),
+        ),
+      0,
+    ],
+    ["a retry-exhausted job", () => new Response("", { status: 503 }), 1],
+  ];
+  it.each(failures)("followers settle in FIFO order with spacing behind %s", async (_n, failing, retries) => {
+    const clock = vclock();
+    const sent: { url: string; at: number }[] = [];
+    const fetch = async (url: string) => {
+      sent.push({ url, at: clock.now() });
+      return url.endsWith("/bad") ? failing(0) : Response.json({ ok: true });
+    };
+    const http = createHttp({ fetch, ...clock, maxRetries: retries, intervalsMs: { "slow.test": 100 } });
+    const settled = await Promise.allSettled(["bad", "f1", "f2"].map((k) => http.fetchJson(`https://slow.test/${k}`, schema, opts)));
+    expect(settled.map((r) => r.status)).toEqual(["rejected", "fulfilled", "fulfilled"]);
+    expect(sent.map((s) => s.url.split("/").pop())).toEqual([...Array(retries + 1).fill("bad"), "f1", "f2"]);
+    for (let i = 1; i < sent.length; i++) expect(sent[i]!.at - sent[i - 1]!.at).toBeGreaterThanOrEqual(100);
+  });
+
   it("retries a body-read timeout instead of reporting a validation error", async () => {
     let n = 0;
     const fetch = async () => {

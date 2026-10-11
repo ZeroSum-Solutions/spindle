@@ -144,16 +144,26 @@ export function createHttp(options: HttpOptions = {}): Http {
     return l;
   }
 
-  /** Wait until both the minimum spacing and any provider pause have passed, then mark the send time. */
-  async function waitForTurn(host: string, override?: number): Promise<void> {
+  /**
+   * Wait until both the minimum spacing and any provider pause have passed. A required wait over the cap
+   * (a long Retry-After still in force) rejects instead of sending. The send time is stamped by the caller
+   * immediately before `fetch`, so a late wake-up can never shrink the gap to the next request.
+   */
+  async function waitForTurn(host: string, safeUrl: string, override?: number): Promise<void> {
     const interval = Math.max(override ?? intervals[host] ?? 0, 0);
     for (;;) {
       const until = Math.max((lastStart.get(host) ?? -Infinity) + interval, cooldownUntil.get(host) ?? 0);
       const left = until - now();
-      if (left <= 0) break;
+      if (left <= 0) return;
+      if (left > MAX_RETRY_AFTER_MS) {
+        throw new EvidenceBudgetError(
+          `${host} is paused for another ${Math.round(left / 1000)} s (limit ${MAX_RETRY_AFTER_MS / 1000} s); not sending ${safeUrl}`,
+          null,
+          safeUrl,
+        );
+      }
       await sleep(left);
     }
-    lastStart.set(host, now());
   }
 
   function pauseHost(host: string, ms: number): void {
@@ -182,10 +192,11 @@ export function createHttp(options: HttpOptions = {}): Http {
   ): Promise<Outcome> {
     const host = new URL(url).host;
     const backoff = 500 * 2 ** attempt;
-    await waitForTurn(host, opts.minIntervalMs);
+    await waitForTurn(host, safeUrl, opts.minIntervalMs);
     countDaily(host, safeUrl);
     let body: unknown;
     try {
+      lastStart.set(host, now()); // stamped in the same synchronous step as the send
       const res = await doFetch(url, {
         headers: { Accept: "application/json", "User-Agent": opts.userAgent, ...opts.headers },
         signal: AbortSignal.timeout(timeoutMs),
@@ -197,6 +208,7 @@ export function createHttp(options: HttpOptions = {}): Http {
         if (res.status !== 429 && res.status < 500) throw error;
         const hinted = parseRetryAfter(res.headers.get("retry-after"), now());
         if (hinted !== null && hinted > MAX_RETRY_AFTER_MS) {
+          pauseHost(host, hinted); // queued followers must not send during the pause
           throw new EvidenceBudgetError(
             `HTTP ${res.status} from ${safeUrl}: provider asked for a ${Math.round(hinted / 1000)} s pause (limit ${MAX_RETRY_AFTER_MS / 1000} s); not retrying`,
             res.status,
