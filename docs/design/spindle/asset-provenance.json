@@ -1,18 +1,17 @@
 {
-  "revision": 2,
+  "revision": 3,
   "selected_asset": {
-    "id": "pressroom-cut",
-    "name": "Spindle / Cut, Pressroom redraw",
+    "id": "lab-cut",
+    "name": "Spindle / Cut, Lab redraw",
     "files": [
       "apps/web/public/brand/spindle-wordmark.svg",
-      "apps/web/public/brand/spindle-wordmark-ink.svg",
-      "apps/web/public/brand/spindle-wordmark-white.svg",
-      "apps/web/public/brand/spindle-wordmark-blue.svg",
+      "apps/web/public/brand/spindle-wordmark-graphite.svg",
+      "apps/web/public/brand/spindle-wordmark-light.svg",
+      "apps/web/src/components/brand-mark/wordmark-path.ts",
       "apps/web/public/brand/spindle-symbol.svg",
       "apps/web/public/brand/spindle-symbol-small.svg",
       "apps/web/public/brand/spindle-symbol-square.svg",
-      "apps/web/public/brand/spindle-symbol-ink.svg",
-      "apps/web/public/brand/spindle-disc.svg",
+      "apps/web/public/brand/spindle-symbol-graphite.svg",
       "apps/web/src/app/icon.svg",
       "apps/web/src/app/favicon.ico",
       "apps/web/src/app/apple-icon.png",
@@ -22,10 +21,10 @@
     "source": "original-vector",
     "createdAt": "2026-10-11",
     "creator": "Spindle (drawn with AI assistance: Claude Opus 5.5, W3)",
-    "method": "Glyph outlines of Archivo Italic (SIL OFL 1.1, google/fonts commit bd8f81ddb5c74d5c8897b36ad88b440266245103) instantiated at wght 900 and wdth 75, shaped with HarfBuzz; the i dot is replaced by a disc; the cuts through the d ascender and the disc rise 1 in 2 and are boolean differences (Skia PathOps). Built by docs/design/spindle/build-wordmark.py. No tracing and no generated image.",
-    "anchor": "Devin's preferred Cut wordmark (concept 03): cut through the d ascender, solid l, cut i dot. The exploration image the redraw follows (direction A, KIE gpt-image-2 image-to-image, task logged privately) was used as a visual reference only; no pixels or traced paths from it are in these files.",
-    "cut_angle": "rises 1 in 2 (26.57 deg from horizontal); measured 25.6 deg on the earlier trace and 26.5 deg on the concept 03 PNG",
-    "status": "Selected 2026-10-11 by the LEAD (Pressroom direction); Devin can override.",
+    "method": "Glyph outlines of Archivo (SIL OFL 1.1, google/fonts commit bd8f81ddb5c74d5c8897b36ad88b440266245103, Archivo[wdth,wght].ttf) instantiated at wght 900 and wdth 125, shaped with HarfBuzz; the i dot is a square as wide as the i stem, ending where Archivo's own dot ends; parallel cuts through the d ascender and the square dot rise 1 in 2 and are boolean differences (Skia PathOps). Built by docs/design/spindle/build-wordmark.py; rasters by build-icons.sh. No tracing and no generated image.",
+    "anchor": "Devin's preferred Cut wordmark (concept 03): cut through the d ascender, solid l, cut i dot. The Lab exploration image (direction C, Cut-2, KIE gpt-image-2, logged privately) was a visual reference only; no pixels or traced paths from it are in these files.",
+    "cut_angle": "rises 1 in 2 (26.57 deg from horizontal), as the shipped Cut wordmark; the Lab exploration's roughly 30 deg cut was not followed",
+    "status": "Selected 2026-10-11: owner decision for direction C (Lab), light and dark themes.",
     "rights": "Spindle's mark. Archivo outlines used under the SIL OFL 1.1 (fonts may be used to make logos); provenance is not trademark clearance."
   },
   "scope": "Corrected user-preferred wordmark only; generated asset provenance is not trademark clearance.",
@@ -36,7 +35,7 @@
     "assets/geist-OFL.txt",
     "assets/geist-mono-OFL.txt",
     "assets/ibm-plex-mono-OFL.txt",
-    "assets/newsreader-OFL.txt"
+    "assets/ibm-plex-sans-OFL.txt"
   ],
   "illustrations": [
     {
@@ -156,5 +155,33 @@
       "prompt": "Create an original premium logo for Spindle, a modern anatomy education app for personal trainers. The brand should feel intelligent, independent, confident and contemporary. Exactly one pure black logo on pure white, centered, hard crisp clean edges, flat vector-like graphic design. No mockup, no scene, no shadow, no gradient, no texture, no watermark, no border, no annotations. Avoid literal anatomy, a muscle, a leaf, an almond, a flame, a medical cross, a dumbbell, DNA, a book, an eye, an AI sparkle, a shield and a swoosh. Prioritize an unexpected ownable silhouette, generous counters and optical balance. Do not copy an existing brand. Wordmark only, no separate symbol. Exact text: \"spindle\" in lowercase. A custom wide neo-grotesk logotype with extremely confident optical kerning, medium-bold weight, subtly squared rounded bowls. Use one single 12-degree slanted stencil cut through the dot of i and top of the l as a unique recognizable signature; the rest of every letter remains complete and very legible. i has a round dot, p and d have open generous counters. Not italic. Horizontal wordmark spans 82 percent of square, center vertically, no other words."
     },
     "original": "Kept privately, not redistributed: the generated PNG carries C2PA metadata from the generator and no redistribution right is recorded."
+  },
+  "previous_selected_asset_pressroom": {
+    "id": "pressroom-cut",
+    "name": "Spindle / Cut, Pressroom redraw",
+    "files": [
+      "apps/web/public/brand/spindle-wordmark.svg",
+      "apps/web/public/brand/spindle-wordmark-ink.svg",
+      "apps/web/public/brand/spindle-wordmark-white.svg",
+      "apps/web/public/brand/spindle-wordmark-blue.svg",
+      "apps/web/public/brand/spindle-symbol.svg",
+      "apps/web/public/brand/spindle-symbol-small.svg",
+      "apps/web/public/brand/spindle-symbol-square.svg",
+      "apps/web/public/brand/spindle-symbol-ink.svg",
+      "apps/web/public/brand/spindle-disc.svg",
+      "apps/web/src/app/icon.svg",
+      "apps/web/src/app/favicon.ico",
+      "apps/web/src/app/apple-icon.png",
+      "apps/web/public/brand/icon-192.png",
+      "apps/web/public/brand/icon-512.png"
+    ],
+    "source": "original-vector",
+    "createdAt": "2026-10-11",
+    "creator": "Spindle (drawn with AI assistance: Claude Opus 5.5, W3)",
+    "method": "Glyph outlines of Archivo Italic (SIL OFL 1.1, google/fonts commit bd8f81ddb5c74d5c8897b36ad88b440266245103) instantiated at wght 900 and wdth 75, shaped with HarfBuzz; the i dot is replaced by a disc; the cuts through the d ascender and the disc rise 1 in 2 and are boolean differences (Skia PathOps). Built by docs/design/spindle/build-wordmark.py. No tracing and no generated image.",
+    "anchor": "Devin's preferred Cut wordmark (concept 03): cut through the d ascender, solid l, cut i dot. The exploration image the redraw follows (direction A, KIE gpt-image-2 image-to-image, task logged privately) was used as a visual reference only; no pixels or traced paths from it are in these files.",
+    "cut_angle": "rises 1 in 2 (26.57 deg from horizontal); measured 25.6 deg on the earlier trace and 26.5 deg on the concept 03 PNG",
+    "status": "Superseded 2026-10-11 by the Lab redraw (owner chose direction C). Files removed from the app.",
+    "rights": "Spindle's mark. Archivo outlines used under the SIL OFL 1.1 (fonts may be used to make logos); provenance is not trademark clearance."
   }
 }
