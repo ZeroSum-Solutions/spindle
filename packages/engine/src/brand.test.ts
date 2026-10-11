@@ -178,3 +178,14 @@ describe("validateOrgBrand (the stored brand)", () => {
     if (!grey.ok) expect(grey.problems[0]).toBe("Brand name on the band (default): 4.05:1, needs 4.5:1");
   });
 });
+
+describe("heroChipCheck", () => {
+  it("is the chip pair brandChecks lists, for any band", async () => {
+    const { heroChipCheck } = await import("./brand");
+    for (const band of [undefined, "#0B3D2E", "#F2E8D5", "#808080"]) {
+      const colors = { accent: "#1F4E8C", onAccent: "#FFFFFF", ...(band ? { band } : {}) };
+      const listed = brandChecks({ colors, mark: { kind: "text" } }).find((c) => c.role === "Chip text on the band tint");
+      expect(heroChipCheck(colors)).toEqual(listed);
+    }
+  });
+});

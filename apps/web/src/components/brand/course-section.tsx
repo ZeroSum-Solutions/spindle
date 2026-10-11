@@ -15,6 +15,7 @@ export function CourseSection({
   fontFamily,
   seal = false,
   level = 3,
+  earlier,
 }: {
   id: string;
   kind: "method" | "base" | "modality";
@@ -24,6 +25,8 @@ export function CourseSection({
   fontFamily: string;
   seal?: boolean;
   level?: 2 | 3;
+  /** Earlier assigned versions of a card's course, by card id: plain links beside the card, never inside it. */
+  earlier?: ReadonlyMap<string, readonly { href: string; label: string }[]>;
 }) {
   if (courses.length === 0) return null;
   const Heading = level === 2 ? "h2" : "h3";
@@ -37,8 +40,18 @@ export function CourseSection({
       </div>
       <ul className="grid gap-5 @[640px]:grid-cols-2 @[1024px]:grid-cols-3">
         {courses.map((c) => (
-          <li key={c.id}>
+          <li key={c.id} className="flex flex-col gap-2">
             <CourseCard course={c} colors={colors} fontFamily={fontFamily} headingLevel={level === 2 ? 3 : 4} />
+            {earlier?.get(c.id)?.length ? (
+              <p className="flex flex-wrap items-center gap-x-3 text-label text-text-muted">
+                <span>Earlier:</span>
+                {earlier.get(c.id)!.map((e) => (
+                  <a key={e.href} href={e.href} className="inline-flex min-h-11 items-center text-brand underline-offset-4 hover:text-brand-hover hover:underline">
+                    {e.label}
+                  </a>
+                ))}
+              </p>
+            ) : null}
           </li>
         ))}
       </ul>

@@ -174,7 +174,9 @@ test("database-published snapshots and accepted links satisfy the runtime schema
   const [claim] = take("@@CLAIM@@");
   expect(claim).toMatch(/^[0-9a-f-]{36}$/);
 
-  const expected = JSON.parse(JSON.stringify([base, method]).replaceAll(CLAIM, claim!)) as Course[];
+  const [titleReceipt] = take("@@TITLERECEIPT@@");
+  expect(titleReceipt, "the admitted title's receipt").toMatch(/^[0-9a-f-]{36}$/);
+  const expected = JSON.parse(JSON.stringify([base, { ...method, titleReceiptId: titleReceipt }]).replaceAll(CLAIM, claim!)) as Course[];
   const snapshots = take("@@SNAPSHOT@@").map((s) => JSON.parse(s) as unknown);
   expect(snapshots).toHaveLength(2);
   for (const [i, snapshot] of snapshots.entries()) {

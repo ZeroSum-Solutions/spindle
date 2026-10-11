@@ -24,6 +24,9 @@ import { ModuleStatusCard } from "@/components/learn/module-status";
 
 export const metadata: Metadata = { title: "Design specimen (development only)", robots: { index: false } };
 
+/** Card facts for the course-row specimen (unused by the row itself; required by AssignmentSummary). */
+const SPECIMEN_CARD = { tags: [], lessonCount: 3, durationMinutes: 30, blurb: null };
+
 const CLAIM = "00000000-0000-4000-8000-0000000000c1";
 const FLAGGED = "00000000-0000-4000-8000-0000000000c2";
 // The integrity report the specimen blocks render against (synthetic).
@@ -199,8 +202,8 @@ export default function DesignSpecimen() {
         <ul className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
           <li>
             <CourseRow
-              item={{ id: "a2", courseId: "c1", versionNumber: 2, available: true, view }}
-              earlier={[{ id: "a1", courseId: "c1", versionNumber: 1, available: true, view: { ...view, versionNumber: 1, done: 3, total: 3 } }]}
+              item={{ id: "a2", courseId: "c1", versionNumber: 2, available: true, view, card: SPECIMEN_CARD }}
+              earlier={[{ id: "a1", courseId: "c1", versionNumber: 1, available: true, view: { ...view, versionNumber: 1, done: 3, total: 3 }, card: SPECIMEN_CARD }]}
               base="/design"
             />
           </li>

@@ -47,4 +47,3 @@ export function CatalogPreviewScene({ scene }: { scene: CatalogScene }) {
     </section>
   );
 }
-

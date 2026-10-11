@@ -1,6 +1,6 @@
 // Thin adapters from the #38/#43 member DTOs to the brand components' view models. Pure, so they
 // are unit-tested; the server loaders (lib/learning/tenant.ts) only fetch and parse.
-import type { CourseCardDto, MemberBrandDto, VersionTenantText } from "@spindle/schema";
+import type { MemberBrandDto, VersionTenantText } from "@spindle/schema";
 import { MODALITY_LABELS, memberColors, TENANT_TEXT_FALLBACKS, type CatalogHeroView, type CoachNoteView, type CourseCardView, type MemberBrandView, type ModalityTag } from "./view";
 
 /** A branded member page's brand and hero, or null when the gym has no brand or its brand is refused. */
@@ -25,21 +25,6 @@ function duration(minutes: number): string {
   return `About ${h} hr${m ? ` ${m} min` : ""}`;
 }
 
-/** A course card for an assigned course: the DTO's admitted texts, linked to the learner's assignment. */
-export function cardFromDto(card: CourseCardDto, href: string): CourseCardView {
-  return {
-    id: card.versionId,
-    href,
-    layer: card.layer,
-    // member_course_cards already shows the fallback for a revoked gym title.
-    title: card.title,
-    blurb: card.summary,
-    tags: card.tags.filter(isTag).slice(0, 2),
-    meta: `${card.lessonCount} ${card.lessonCount === 1 ? "lesson" : "lessons"} · ${duration(card.durationMinutes)}`,
-    ...(card.cover ? { cover: { pattern: card.cover.pattern, background: card.cover.background, foreground: card.cover.foreground } } : {}),
-  };
-}
-
 /** What the player may show of a version's held texts: live texts only; a revoked title reads as the fallback. */
 export function versionTexts(rows: readonly VersionTenantText[]): { titleRevoked: boolean; welcome: CoachNoteView | null; blurb: string | null } {
   const live = (slot: VersionTenantText["slot"]) => rows.find((r) => r.slot === slot && r.state === "live" && r.text);
@@ -54,4 +39,49 @@ export function versionTexts(rows: readonly VersionTenantText[]): { titleRevoked
 /** The course title a member sees: the published title, or "Untitled course" once its admission is revoked. */
 export function shownCourseTitle(title: string, texts: { titleRevoked: boolean }): string {
   return texts.titleRevoked ? TENANT_TEXT_FALLBACKS.courseTitle : title;
+}
+
+/** What the catalog needs of one assignment: the version it opens and that version's card facts. */
+export interface CatalogAssignment {
+  id: string;
+  versionNumber: number;
+  available: boolean;
+  view?: { title: string; layer: CourseCardView["layer"]; done: number; next: { slug: string } | null };
+  card?: { cover?: CourseCardView["cover"]; tags: readonly string[]; lessonCount: number; durationMinutes: number; blurb: string | null };
+}
+
+/**
+ * One card per assigned course, built from the version the card opens (the newest assigned
+ * version), never from a newer published version the member is not assigned. Earlier assigned
+ * versions stay reachable as plain links beside the card.
+ */
+export function catalogCards(
+  courses: readonly { latest: CatalogAssignment; earlier: readonly CatalogAssignment[] }[],
+  base: string,
+): { card: CourseCardView; earlier: { href: string; label: string }[] }[] {
+  return courses.flatMap(({ latest, earlier }) => {
+    if (!latest.available || !latest.view || !latest.card) return [];
+    const facts = latest.card;
+    const card: CourseCardView = {
+      id: latest.id,
+      href: `${base}/${latest.id}`,
+      layer: latest.view.layer,
+      // The view's title already reads "Untitled course" when the gym title was revoked.
+      title: latest.view.title,
+      blurb: facts.blurb,
+      tags: facts.tags.filter(isTag).slice(0, 2),
+      meta: `${facts.lessonCount} ${facts.lessonCount === 1 ? "lesson" : "lessons"} · ${duration(facts.durationMinutes)}`,
+      ...(facts.cover ? { cover: facts.cover } : {}),
+    };
+    const older = [...earlier].sort((x, y) => y.versionNumber - x.versionNumber).map((e) => ({ href: `${base}/${e.id}`, label: `Version ${e.versionNumber}` }));
+    return [{ card, earlier: older }];
+  });
+}
+
+/** The hero's one action: continue where the member left off, start if nothing is started, none when all is done. */
+export function catalogAction(courses: readonly { latest: CatalogAssignment }[], base: string): { label: string; href: string } | undefined {
+  const open = courses.map((c) => c.latest).find((a) => a.available && a.view?.next);
+  if (!open) return undefined;
+  const started = courses.some((c) => (c.latest.view?.done ?? 0) > 0);
+  return { label: started ? "Continue where you left off" : "Start your first course", href: `${base}/${open.id}/${open.view!.next!.slug}` };
 }
