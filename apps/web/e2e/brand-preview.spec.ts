@@ -1,14 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { brandTokens } from "@spindle/engine";
-import { OXBLOOD, SAGE } from "../src/lib/theme/preview-brands";
+import { OXBLOOD, HARBOR } from "../src/lib/theme/preview-brands";
 
 // Tenant brand theming (P4-A) on the test-only preview page: two synthetic brands render the
 // learner shell, a lesson and the module quiz card. No database rows; no sign-in.
 
 const rgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
-const BRANDS = [OXBLOOD, SAGE].map((b) => {
-  const t = brandTokens(b.colors);
+const BRANDS = [OXBLOOD, HARBOR].map((b) => {
+  const t = brandTokens(b.colors, "light");
   return { name: b.name, accent: rgb(t.accent), hover: rgb(t.accentHover), soft: rgb(t.accentSoft), onAccent: rgb(b.colors.onAccent) };
 });
 // Atlas evidence colours, which no brand can change.

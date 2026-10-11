@@ -60,7 +60,7 @@ test.beforeAll(async () => {
   world.join(gymA, actors.owner!, actors.newbie!);
 
   // Gym A: a saved brand and every gym text admitted.
-  world.saveBrand(gymA, actors.owner!, { mark: { kind: "text" }, colors: { accent: "#7a1b26", onAccent: "#ffffff", band: "#17232b" }, font: "barlow-condensed" });
+  world.saveBrand(gymA, actors.owner!, { mark: { kind: "text" }, colors: { accent: "#7a1b26", onAccent: "#ffffff", accentDark: "#f2877e", onAccentDark: "#0b0d12", band: "#17232b" }, font: "barlow-condensed" });
   for (const [slot, text] of [
     ["brand_name", "Example Strength Club"],
     ["catalog_headline", "Lift well. Coach better."],
@@ -90,7 +90,7 @@ test.beforeAll(async () => {
   assignments.a3v2 = world.assign(gymA, actors.owner!, world.publishMethod(gymA, actors.owner!, { ...a3v1, subtitle: "Revised" }), actors.trainer!);
 
   // Gym B: a saved brand and nothing admitted; the course title is revoked after publishing.
-  world.saveBrand(gymB, actors.owner!, { mark: { kind: "text" }, colors: { accent: "#2f6b57", onAccent: "#ffffff", band: "#e8efe6" }, font: "fraunces" });
+  world.saveBrand(gymB, actors.owner!, { mark: { kind: "text" }, colors: { accent: "#5b3a7a", onAccent: "#ffffff", accentDark: "#c3a6ff", onAccentDark: "#0b0d12", band: "#e8efe6" }, font: "fraunces" });
   world.saveText(gymB, actors.owner!, "brand_name", null, "Example Pilates Studio");
   world.saveText(gymB, actors.owner!, "catalog_headline", null, "Move with intention.");
   const b = methodCourse("Reformer cueing", { kind: "pattern", pattern: "waves", background: "#2f6b57", foreground: "#ffffff" });

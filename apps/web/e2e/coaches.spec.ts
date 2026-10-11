@@ -64,7 +64,7 @@ test.describe("coaches page", () => {
       expect(info.style, info.name).toBe("solid");
       expect(info.width, info.name).toBeGreaterThanOrEqual(3);
       // Cobalt on light surfaces; white on the closing ink band (DESIGN.md › Accessibility).
-      expect(info.color, info.name).toBe(info.onInk ? "rgb(255, 255, 255)" : "rgb(29, 43, 230)");
+      expect(info.color, info.name).toBe(info.onInk ? "rgb(255, 255, 255)" : "rgb(200, 25, 95)");
       seen.add(info.id);
     }
     expect(seen.size, "every visible focusable element is reached by Tab").toBe(total);
