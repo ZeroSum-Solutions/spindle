@@ -11,7 +11,8 @@
   "claimSlots": [
     {
       "slot": "claim-slot:l6-progression",
-      "statement": "The 2026 ACSM position stand recommends that healthy adults perform progressive resistance training to improve muscle function, size and physical performance.",
+      "statement": "The American College of Sports Medicine position stand on resistance training prescription recommends that healthy adults perform progressive resistance training to improve muscle function, size and physical performance.",
+      "domain": "applied",
       "evidenceLevel": "Position stand (overview of systematic reviews)",
       "population": "\"healthy adults (≥18 yr)\" (ACSM 2026).",
       "candidateSources": [
@@ -24,37 +25,32 @@
           "rights": "CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/), PMC12965823. Cited and paraphrased only."
         }
       ],
-      "note": "Replaces the 2009 position stand. Healthy adults only."
+      "note": "Healthy adults only. ACSM is expected to become admissible as a position stand through W1's D-12 operator-asserted source kind (pending: no receipt yet); no publication year in the statement until the review packet includes one."
     },
     {
       "slot": "claim-slot:l6-overhead-upward",
-      "statement": "Full humeral elevation involves scapular upward rotation.",
-      "evidenceLevel": "Narrative review; in vivo kinematic study (bone pins)",
-      "population": "\"8 healthy volunteers (5 men, 3 women)\" (McClure 2001); normal scapular kinematics during arm elevation, reviewed by Ludewig 2009.",
+      "statement": "In asymptomatic individuals, the scapula rotates upward during arm elevation.",
+      "domain": "applied",
+      "evidenceLevel": "Systematic review with multilevel meta-regression",
+      "population": "\"asymptomatic individuals\" (Fernández-Matías 2025, which reviewed \"healthy individuals and those with RCRSP\").",
       "candidateSources": [
         {
-          "kind": "paper",
-          "citation": "Ludewig PM, Reynolds JF. The association of scapular kinematics and glenohumeral joint pathologies. J Orthop Sports Phys Ther. 2009;39(2):90-104.",
-          "doi": "10.2519/jospt.2009.2808",
-          "pmid": "19194022",
-          "pmcid": "PMC2730194",
-          "rights": "Author manuscript free to read in PMC (PMC2730194); no open licence stated; treat as all rights reserved. Cited and paraphrased only."
-        },
-        {
-          "kind": "paper",
-          "citation": "McClure PW, Michener LA, Sennett BJ, Karduna AR. Direct 3-dimensional measurement of scapular kinematics during dynamic movements in vivo. J Shoulder Elbow Surg. 2001;10(3):269-277.",
-          "doi": "10.1067/mse.2001.112954",
-          "pmid": "11408911",
-          "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
+          "kind": "meta_analysis",
+          "citation": "Fernández-Matías R, Ballesteros-Frutos J, Gallardo-Zamora P, Requejo-Salinas N, Caballero-Pozo I, Ludewig P, Lluch-Girbés E. Scapular kinematics variability in individuals with and without rotator cuff-related shoulder pain: a systematic review with multilevel meta-regression. Braz J Phys Ther. 2025;29(6):101261.",
+          "doi": "10.1016/j.bjpt.2025.101261",
+          "pmid": "40845626",
+          "pmcid": "PMC12398250",
+          "rights": "Copyright Associação Brasileira de Pesquisa e Pós-Graduação em Fisioterapia, published by Elsevier; the PubMed record says all rights reserved and Europe PMC lists no licence. Free to read in PMC. Abstract read on PubMed. Cited and paraphrased only."
         }
       ],
-      "note": "Same evidence as l2-scapular-motions; may reuse that approved claim."
+      "note": "Same source as l2-scapular-motions."
     },
     {
       "slot": "claim-slot:l6-volume",
-      "statement": "Muscle hypertrophy increases with weekly resistance training volume, with diminishing returns (2026 meta-regression); the 2026 ACSM position stand reports hypertrophy enhanced by higher volumes (about 10 or more sets per week) in healthy adults.",
-      "evidenceLevel": "Meta-regression; position stand (overview of systematic reviews)",
-      "population": "Participants in 35 studies contributing to the hypertrophy volume analysis, n=1,032 (Pelland 2026, section 3.6.1); \"healthy adults (≥18 yr)\" (ACSM 2026).",
+      "statement": "A meta-regression found that muscle hypertrophy increases with weekly resistance training volume, with diminishing returns.",
+      "domain": "applied",
+      "evidenceLevel": "Meta-regression",
+      "population": "Participants in resistance training studies (Pelland 2026).",
       "candidateSources": [
         {
           "kind": "meta_analysis",
@@ -62,23 +58,16 @@
           "doi": "10.1007/s40279-025-02344-w",
           "pmid": "41343037",
           "rights": "(c) The Author(s), under exclusive licence to Springer Nature; all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
-        },
-        {
-          "kind": "position_stand",
-          "citation": "Currier BS, D'Souza AC, Singh MAF, et al. American College of Sports Medicine position stand: resistance training prescription for muscle function, hypertrophy, and physical performance in healthy adults. Med Sci Sports Exerc. 2026;58(4):851-872.",
-          "doi": "10.1249/MSS.0000000000003897",
-          "pmid": "41843416",
-          "pmcid": "PMC12965823",
-          "rights": "CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/), PMC12965823. Cited and paraphrased only."
         }
       ],
-      "note": "Replaces Schoenfeld 2017 with the newer synthesis."
+      "note": "Dry-run fix: the ACSM clause and the years are dropped (Sol round 3)."
     },
     {
       "slot": "claim-slot:l6-failure",
-      "statement": "A 2023 meta-analysis found no hypertrophy advantage for training to momentary muscular failure over non-failure training; this does not establish equivalence, and a 2024 exploratory meta-regression found hypertrophy increased as sets were terminated closer to failure.",
+      "statement": "A meta-analysis found no hypertrophy advantage for training to momentary muscular failure over non-failure training; this does not establish equivalence, and an exploratory meta-regression found hypertrophy increased as sets were terminated closer to failure.",
+      "domain": "applied",
       "evidenceLevel": "Systematic review with meta-analysis; exploratory meta-regression",
-      "population": "\"healthy adults of any age and resistance training experience\" (Refalo 2023); the Robinson 2024 abstract does not state a population.",
+      "population": "Participants in resistance training studies (Refalo 2023; Robinson 2024).",
       "candidateSources": [
         {
           "kind": "meta_analysis",
@@ -96,7 +85,7 @@
           "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
         }
       ],
-      "note": "Dated findings; distinguish reaching failure from proximity to failure."
+      "note": "Dry-run fix: neutral population and no publication years. Distinguish reaching failure from proximity to failure."
     }
   ],
   "scenarios": [
@@ -137,7 +126,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "For healthy adults, the 2026 position stand from the American College of Sports Medicine recommends progressive resistance training to keep improving muscle strength, size and physical performance.",
+        "content": "For healthy adults, the American College of Sports Medicine position stand on resistance training recommends progressive resistance training to keep improving muscle strength, size and physical performance.",
         "support": "science",
         "claimIds": [
           "claim-slot:l6-progression"
@@ -235,7 +224,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Reaching fully overhead involves the shoulder blade rotating upward as the arm rises.",
+        "content": "Reaching overhead involves the shoulder blade rotating upward as the arm rises.",
         "support": "science",
         "claimIds": [
           "claim-slot:l6-overhead-upward"
@@ -271,7 +260,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "A 2026 meta-regression found that muscle growth increases as weekly training volume rises, with diminishing returns: each extra set adds less than the one before. The 2026 ACSM position stand reports that higher volumes, about 10 or more sets per muscle each week, enhanced muscle growth in healthy adults.",
+        "content": "A meta-regression found that muscle growth increases as weekly training volume rises, with diminishing returns: each extra set adds less than the one before.",
         "support": "science",
         "claimIds": [
           "claim-slot:l6-volume"
@@ -279,7 +268,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "A 2023 meta-analysis did not find an extra muscle-growth benefit from taking sets all the way to momentary muscular failure compared with stopping short of it. That does not show the two are equivalent: a 2024 exploratory analysis suggests muscle growth increases as sets end closer to failure.",
+        "content": "A meta-analysis did not find an extra muscle-growth benefit from taking sets all the way to momentary muscular failure compared with stopping short of it. That does not show the two are equivalent: a later exploratory analysis suggests muscle growth increases as sets end closer to failure.",
         "support": "science",
         "claimIds": [
           "claim-slot:l6-failure"
@@ -326,7 +315,7 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "What does the 2026 ACSM position stand recommend to keep improving strength and muscle size in healthy adults?",
+          "prompt": "What does the ACSM position stand recommend to keep improving strength and muscle size in healthy adults?",
           "options": [
             "Repeating the same load indefinitely",
             "Progressive resistance training",
@@ -360,7 +349,7 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "What did a 2026 meta-regression find about weekly training volume and muscle growth?",
+          "prompt": "What did a meta-regression find about weekly training volume and muscle growth?",
           "options": [
             "Growth increases with volume, with diminishing returns",
             "Volume made no difference",
@@ -377,7 +366,7 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "What did a 2023 meta-analysis find about training to momentary failure for muscle growth?",
+          "prompt": "What did a meta-analysis find about training to momentary failure for muscle growth?",
           "options": [
             "No extra benefit from reaching failure, which does not show the two are equivalent",
             "Failure training always gives more growth",

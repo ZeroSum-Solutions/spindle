@@ -16,3 +16,4 @@ export * from "./media";
 export * from "./retraction";
 export * from "./review/index";
 export * from "./guards";
+export * from "./video/index";

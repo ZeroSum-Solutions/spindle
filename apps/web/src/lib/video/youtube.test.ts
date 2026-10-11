@@ -3,7 +3,7 @@ import type { MediaAvailability } from "@spindle/schema";
 import { boundedRecheck, clipLabels, clipState, embedSrc, nextPlayerState, PLAYER_ORIGIN, segmentLabel, watchUrl, type PlayerEvent, type PlayerState } from "./youtube";
 
 const SEGMENT = { videoId: "abcDEF12_-9", startSeconds: 65, endSeconds: 150 };
-const playable: MediaAvailability = { mediaId: "m1", state: "playable", title: "Synthetic clip", channel: "Synthetic channel", available: true };
+const playable: MediaAvailability = { mediaId: "m1", state: "playable", review: "model-described", title: "Synthetic clip", channel: "Synthetic channel", available: true };
 
 describe("embedSrc", () => {
   it("uses the privacy-enhanced host with the frozen segment and the page origin", () => {
