@@ -96,6 +96,36 @@ describe("reviewed diagrams: geometry in code, words from the lesson", () => {
   });
 });
 
+describe("cuff leaders end inside what they name", () => {
+  // A leader that stops in empty space points at nothing (Sol R1 on #35: teres minor ended 13 units outside).
+  const html = renderToStaticMarkup(createElement(Drawing, { spec: DRAWINGS["shoulder-cuff"]!, alt: "Synthetic alt", legend: [] }));
+  const polygon = (muscle: string) => {
+    const d = new RegExp(`<path d="([^"]+)"[^>]*data-muscle="${muscle}"`).exec(html)?.[1];
+    if (!d) throw new Error(`no path for ${muscle}`);
+    return [...d.matchAll(/(-?\d+(?:\.\d+)?)[ ,](-?\d+(?:\.\d+)?)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+  };
+  const inside = (pt: { x: number; y: number }, poly: { x: number; y: number }[]) => {
+    let hit = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const a = poly[i]!, b = poly[j]!;
+      if (a.y > pt.y !== b.y > pt.y && pt.x < ((b.x - a.x) * (pt.y - a.y)) / (b.y - a.y) + a.x) hit = !hit;
+    }
+    return hit;
+  };
+  const anchors = DRAWINGS["shoulder-cuff"]!.anchors as Record<string, { leader?: { to: { x: number; y: number } } }>;
+
+  it.each(["subscapularis", "supraspinatus", "infraspinatus", "teres-minor"])("the %s leader ends inside that muscle", (muscle) => {
+    const to = anchors[muscle]!.leader!.to;
+    expect(inside(to, polygon(muscle)), `${muscle} leader end (${to.x}, ${to.y})`).toBe(true);
+  });
+
+  it("the humeral head leader ends inside the head", () => {
+    const to = anchors["humeral-head"]!.leader!.to;
+    const head = CUFF_GEOMETRY.front.head;
+    expect(Math.hypot(to.x - head.x, to.y - head.y)).toBeLessThan(head.r);
+  });
+});
+
 describe("the shoulder drafts' diagram blocks", () => {
   // Every diagram in the base curriculum drafts names a drawing that exists, and every legend
   // key names one of its anchors, so no marker silently goes missing.
