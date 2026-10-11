@@ -5,32 +5,17 @@
   "lessonNumber": 7,
   "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
+    "The pitching-kinetics section, its objective and its quiz were removed: the only source (Fleisig 1995) is a primary study, which the claim pipeline does not admit, and no qualifying systematic review states those two moments (the 2023 normative meta-analysis by Mine et al. does not).",
     "The rotation record is qualitative (no angles or totals), because a trainer set-up without a defined zero and stabilisation cannot give repeatable numbers.",
     "The stop blocks use SAFETY.md's tiers: persistent night pain with stiffness is routine; persistent pins and needles is urgent; inability to move after trauma is emergency.",
     "Throwing workload is stated as Spindle policy, not science. The cross-sport paragraph makes no claim about shared mechanics."
   ],
   "claimSlots": [
     {
-      "slot": "claim-slot:l7-load-moments",
-      "statement": "In 26 skilled healthy adult pitchers (1995), critical shoulder kinetics occurred shortly before maximum shoulder external rotation (high internal rotation torque) and shortly after ball release (high compressive force).",
-      "evidenceLevel": "Laboratory biomechanical study (high-speed motion analysis)",
-      "population": "\"26 highly skilled, healthy adult pitchers\" (Fleisig 1995).",
-      "candidateSources": [
-        {
-          "kind": "paper",
-          "citation": "Fleisig GS, Andrews JR, Dillman CJ, Escamilla RF. Kinetics of baseball pitching with implications about injury mechanisms. Am J Sports Med. 1995;23(2):233-239.",
-          "doi": "10.1177/036354659502300218",
-          "pmid": "7778711",
-          "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
-        }
-      ],
-      "note": "Distinct quantities and moments from this study; no single ranking of 'largest load'."
-    },
-    {
       "slot": "claim-slot:l7-adaptation",
-      "statement": "In professional baseball pitchers, the throwing shoulder shows on average less internal rotation and more external rotation than the non-throwing shoulder, with a bilateral difference in humeral retroversion contributing.",
+      "statement": "In professional baseball pitchers, the throwing shoulder shows on average less internal rotation and more external rotation than the non-throwing shoulder; across included pitchers, humeral retroversion differed between the arms by about 15 degrees on average.",
       "evidenceLevel": "Systematic review (level of evidence 4)",
-      "population": "\"nonrecreational baseball pitchers\" (Paul 2025).",
+      "population": "Baseball pitchers, mostly professional (Paul 2025).",
       "candidateSources": [
         {
           "kind": "systematic_review",
@@ -40,7 +25,7 @@
           "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
         }
       ],
-      "note": "Population is mostly professional pitchers; keep it."
+      "note": "Wording Sol approved in the claim dry run (round 4). It reports the retroversion difference without saying it causes the range difference."
     },
     {
       "slot": "claim-slot:l7-injury-risk",
@@ -92,7 +77,6 @@
     "durationMinutes": 12,
     "format": "article",
     "objectives": [
-      "Describe the two moments of high shoulder load a classic pitching study identified.",
       "Describe the range differences professional pitchers' throwing shoulders typically show.",
       "Explain why shoulder range is not a reliable injury screen on its own.",
       "Know the warning signs in throwers, and refer young throwers with shoulder pain urgently."
@@ -111,23 +95,11 @@
       },
       {
         "kind": "heading",
-        "content": "Two moments of high load"
-      },
-      {
-        "kind": "paragraph",
-        "content": "In a 1995 study of 26 skilled adult pitchers, two moments stood out at the shoulder: shortly before the arm reached its maximum external rotation, when the shoulder's internal rotation torque was high, and shortly after ball release, when a large compressive force acted across the shoulder joint.",
-        "support": "science",
-        "claimIds": [
-          "claim-slot:l7-load-moments"
-        ]
-      },
-      {
-        "kind": "heading",
         "content": "How pitchers' shoulders adapt"
       },
       {
         "kind": "paragraph",
-        "content": "In professional baseball pitchers, the throwing shoulder typically has less internal rotation and more external rotation than the other shoulder. Part of that difference comes from a twist in the upper arm bone itself (humeral retroversion), not only from the soft tissues.",
+        "content": "In professional baseball pitchers, the throwing shoulder typically has less internal rotation and more external rotation than the other shoulder. Across the pitchers studied, the twist of the upper arm bone (humeral retroversion) also differed between the two arms, by about 15 degrees on average.",
         "support": "science",
         "claimIds": [
           "claim-slot:l7-adaptation"
@@ -224,23 +196,6 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "In a 1995 study of skilled adult pitchers, which two moments stood out at the shoulder?",
-          "options": [
-            "Shortly before maximum external rotation (high internal rotation torque) and shortly after ball release (high compressive force)",
-            "The wind-up and the follow-through",
-            "Only the moment of ball release"
-          ],
-          "answerIndex": 0,
-          "explanation": "The study identified high internal rotation torque shortly before maximum external rotation and a large compressive force shortly after ball release."
-        },
-        "support": "science",
-        "claimIds": [
-          "claim-slot:l7-load-moments"
-        ]
-      },
-      {
-        "kind": "quiz",
-        "content": {
           "prompt": "What range pattern does a professional pitcher's throwing shoulder typically show?",
           "options": [
             "Less internal rotation and more external rotation than the other side",
@@ -248,7 +203,7 @@
             "Identical range on both sides"
           ],
           "answerIndex": 0,
-          "explanation": "The throwing shoulder typically shows less internal and more external rotation, partly from a bony twist in the upper arm bone."
+          "explanation": "The throwing shoulder typically shows less internal and more external rotation; the twist of the upper arm bone also differed between the arms on average."
         },
         "support": "science",
         "claimIds": [
