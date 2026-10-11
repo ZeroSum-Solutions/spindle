@@ -100,7 +100,7 @@ const view: CourseView = {
 export default function DesignSpecimen() {
   if (process.env.NODE_ENV === "production") notFound();
   return (
-    <LearnShell gym="Synthetic gym">
+    <LearnShell gym="Synthetic gym" frame="reading">
       <p role="note" className="rounded-small bg-brand-soft px-3 py-2 text-label font-medium text-brand">
         Design specimen, development only. Synthetic data; nothing here is saved or real curriculum.
       </p>

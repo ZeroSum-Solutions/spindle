@@ -17,7 +17,7 @@ export default function LessonPage(props: PageProps<"/gyms/[slug]/learn/[assignm
   return (
     <Suspense
       fallback={
-        <LearnShell>
+        <LearnShell frame="reading">
           <LoadingNote>Loading the lesson…</LoadingNote>
         </LearnShell>
       }
@@ -52,12 +52,12 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
   const done = state.state === "done" || state.state === "credited";
 
   return (
-    <LearnShell gym={ctx.org.name} back={{ href: courseHref, label: view.title }}>
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
+    <LearnShell gym={ctx.org.name} back={{ href: courseHref, label: view.title }} frame="reading">
+      <div data-layout="reading" className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_minmax(0,46rem)] lg:justify-center">
         <div className="lg:sticky lg:top-6 lg:self-start">
           <LessonOutline view={view} base={courseHref} currentId={lesson.id} />
         </div>
-        <article className="flex max-w-[68ch] flex-col gap-8 text-reading" aria-labelledby="lesson-title">
+        <article className="flex min-w-0 max-w-[68ch] flex-col gap-8 text-reading" aria-labelledby="lesson-title">
           <header className="flex flex-col gap-3">
             <p className="flex flex-wrap items-center gap-2 text-label text-text-muted">
               <LayerLabel layer={view.layer} />
