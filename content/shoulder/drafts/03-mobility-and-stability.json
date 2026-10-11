@@ -11,7 +11,7 @@
   "claimSlots": [
     {
       "slot": "claim-slot:l3-kyphosis-pain",
-      "statement": "A systematic review found moderate evidence of no significant difference in thoracic kyphosis between people with and without shoulder pain; the finding concerns association, not causation.",
+      "statement": "A systematic review found moderate evidence of no significant difference in thoracic kyphosis between people with and without shoulder pain; a non-significant result does not establish equivalence, study quality varied, and the finding concerns association, not causation.",
       "candidateSources": [
         {
           "kind": "systematic_review",
@@ -113,7 +113,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "A systematic review found moderate evidence that the upper back is no more rounded (thoracic kyphosis) in people with shoulder pain than in people without it. That finding is about association; it does not show that posture causes or prevents shoulder pain.",
+        "content": "A systematic review found moderate evidence of no significant difference in how rounded the upper back is (thoracic kyphosis) between people with and without shoulder pain. A result that is not significant does not prove the two groups are the same, and the studies varied in quality. The finding is about association; it does not show that posture causes or prevents shoulder pain.",
         "support": "science",
         "claimIds": [
           "claim-slot:l3-kyphosis-pain"
@@ -201,11 +201,11 @@
           "prompt": "A systematic review compared upper-back rounding (thoracic kyphosis) in people with and without shoulder pain. What did it find?",
           "options": [
             "People with shoulder pain had much more rounded upper backs",
-            "No difference between the groups, with moderate evidence",
+            "No significant difference between the groups, with moderate evidence; that does not prove the groups are the same",
             "Rounding causes shoulder pain"
           ],
           "answerIndex": 1,
-          "explanation": "The review found moderate evidence of no difference in thoracic kyphosis between people with and without shoulder pain. It does not show cause either way."
+          "explanation": "The review found moderate evidence of no significant difference in thoracic kyphosis between people with and without shoulder pain. That does not prove the groups are the same, and it does not show cause either way."
         },
         "support": "science",
         "claimIds": [
