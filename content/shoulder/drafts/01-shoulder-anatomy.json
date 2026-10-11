@@ -5,16 +5,17 @@
   "lessonNumber": 1,
   "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
-    "Claim status (W1 dry run): all six lesson 1 claims are blocked. Their sources are narrative reviews, primary studies or a brief report, which the claim pipeline does not admit, and no systematic review states these basic anatomy facts. They need a textbook source (kind textbook, with edition and page) once the pipeline can take one; until then lesson 1 cannot publish. The text is kept rather than relabelled as practice.",
-    "Anatomy claims rest on open CC BY reviews read in full through Europe PMC (Frank 2013, Cavanaugh 2024, Vijian 2023, Jacinto 2022) plus two abstracts. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
+    "Claim status (W1 dry run 2): lesson 1's claims are foundation claims (D-12), kept purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference; its abstract is too thin, so review needs the open-licence full text in the packet (W1's ingest extension). Functional points were removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabelled as practice.",
+    "Anatomy claims rest on Frank 2013 (CC BY), read in full through Europe PMC; Cavanaugh 2024, Vijian 2023, Jacinto 2022, Howell 1989 and Lippitt 1993 are no longer cited. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
     "The scapulothoracic statement is restored because Frank 2013 states it; 'most of the force' stays removed. The capsule statement was dropped: no open source read states it.",
-    "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. shoulder-cuff-and-movers is a planned slot and says so."
+    "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. shoulder-cuff is a planned slot (the four cuff muscles only) and says so."
   ],
   "claimSlots": [
     {
       "slot": "claim-slot:l1-bones-joints",
       "statement": "The shoulder comprises the humerus, scapula and clavicle, articulating at the glenohumeral, acromioclavicular and sternoclavicular joints; there is no osseous or ligamentous joint between the scapula and the thorax, which are connected by muscles.",
-      "evidenceLevel": "Narrative review (anatomy)",
+      "domain": "foundation",
+      "evidenceLevel": "Anatomy reference (narrative review)",
       "population": "Human shoulder anatomy; not a sampled study population (Frank 2013).",
       "candidateSources": [
         {
@@ -29,8 +30,9 @@
     },
     {
       "slot": "claim-slot:l1-scapulothoracic",
-      "statement": "The scapulothoracic articulation has no articular cartilage, synovium or capsule; the scapula slides on bursal and muscular planes and is held in place by its muscular attachments.",
-      "evidenceLevel": "Narrative review (anatomy)",
+      "statement": "The scapulothoracic articulation has no articular cartilage, synovium or capsule; it consists of bursal and muscular planes between the scapula and the thoracic rib cage.",
+      "domain": "foundation",
+      "evidenceLevel": "Anatomy reference (narrative review)",
       "population": "Human shoulder anatomy; not a sampled study population: \"the scapulothoracic articulation\" (Frank 2013).",
       "candidateSources": [
         {
@@ -41,13 +43,15 @@
           "pmcid": "PMC3863500",
           "rights": "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). Full text read through the Europe PMC API. Cited and paraphrased only."
         }
-      ]
+      ],
+      "note": "Structural only (D-12 foundation): the sliding and positioning functions in Frank's text are not claimed."
     },
     {
       "slot": "claim-slot:l1-shallow-socket",
-      "statement": "The glenohumeral joint is the most mobile joint in the body, owing partly to its lack of osseous constraint; the glenoid articular surface is one third to one quarter the size of the humeral head, and the fibrocartilaginous labrum increases its depth and surface area.",
-      "evidenceLevel": "Narrative review (anatomy); anatomic specimen study",
-      "population": "Human shoulder anatomy; not a sampled study population; \"25 anatomic specimen shoulders\" (Howell 1989).",
+      "statement": "The articular surface of the glenoid is one third to one quarter the size of the humeral head, and the circumferential fibrocartilaginous labrum increases its surface area and depth.",
+      "domain": "foundation",
+      "evidenceLevel": "Anatomy reference (narrative review)",
+      "population": "Human shoulder anatomy; not a sampled study population (Frank 2013).",
       "candidateSources": [
         {
           "kind": "review",
@@ -56,29 +60,17 @@
           "pmid": "24369502",
           "pmcid": "PMC3863500",
           "rights": "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). Full text read through the Europe PMC API. Cited and paraphrased only."
-        },
-        {
-          "kind": "paper",
-          "citation": "Howell SM, Galinat BJ. The glenoid-labral socket. A constrained articular surface. Clin Orthop Relat Res. 1989;(243):122-125.",
-          "pmid": "2721051",
-          "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
         }
-      ]
+      ],
+      "note": "Structural only: the mobility statement ('most mobile joint, owing to lack of osseous constraint') is removed, as no admissible applied source states it. Howell 1989 (no DOI) is dropped."
     },
     {
       "slot": "claim-slot:l1-cuff",
-      "statement": "The rotator cuff comprises supraspinatus, infraspinatus, teres minor and subscapularis, which originate on the scapula and attach to the humerus, forming a cuff around the glenohumeral joint that is crucial for shoulder stability.",
-      "evidenceLevel": "Narrative reviews (anatomy)",
-      "population": "Human shoulder anatomy; not a sampled study population (Cavanaugh 2024; Frank 2013).",
+      "statement": "The rotator cuff comprises supraspinatus, infraspinatus, teres minor and subscapularis; each originates on the scapula and inserts on the humerus, subscapularis on the lesser tubercle and the other three on the greater tubercle.",
+      "domain": "foundation",
+      "evidenceLevel": "Anatomy reference (narrative review)",
+      "population": "Human shoulder anatomy; not a sampled study population (Frank 2013, Table 1).",
       "candidateSources": [
-        {
-          "kind": "review",
-          "citation": "Cavanaugh E, Arcot Santillan A, Hoshikawa K, Giambini H. Subregions of the rotator cuff muscles present distinct anatomy, biomechanics, and function. Sports (Basel). 2024;12(12):349.",
-          "doi": "10.3390/sports12120349",
-          "pmid": "39728889",
-          "pmcid": "PMC11679125",
-          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Full text read through the Europe PMC API. Cited and paraphrased only."
-        },
         {
           "kind": "review",
           "citation": "Frank RM, Ramirez J, Chalmers PN, McCormick FM, Romeo AA. Scapulothoracic anatomy and snapping scapula syndrome. Anat Res Int. 2013;2013:635628.",
@@ -87,44 +79,16 @@
           "pmcid": "PMC3863500",
           "rights": "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). Full text read through the Europe PMC API. Cited and paraphrased only."
         }
-      ]
+      ],
+      "note": "Structural only: 'crucial for stability' is removed. Origins and insertions are in Frank 2013, Table 1. If the grouping name needs its own source, a nomenclature reference can carry it."
     },
     {
-      "slot": "claim-slot:l1-concavity",
-      "statement": "Compressing the humeral head into the glenoid concavity stabilises the glenohumeral joint (concavity compression), and dynamic muscle contraction can provide the compressive load.",
-      "evidenceLevel": "Narrative review of in vitro biomechanical studies",
-      "population": "The glenohumeral joint in \"in vitro studies\" (Lippitt 1993); not a patient population.",
+      "slot": "claim-slot:l1-attachments",
+      "statement": "The scapula's muscular attachments to the axial skeleton include the trapezius, serratus anterior, rhomboid major, rhomboid minor, levator scapulae, subclavius and pectoralis minor; the serratus anterior attaches along the anterior aspect of the medial border of the scapula.",
+      "domain": "foundation",
+      "evidenceLevel": "Anatomy reference (narrative review)",
+      "population": "Human shoulder anatomy; not a sampled study population (Frank 2013).",
       "candidateSources": [
-        {
-          "kind": "paper",
-          "citation": "Lippitt S, Matsen F. Mechanisms of glenohumeral joint stability. Clin Orthop Relat Res. 1993;(291):20-28.",
-          "pmid": "8504601",
-          "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
-        }
-      ]
-    },
-    {
-      "slot": "claim-slot:l1-movers",
-      "statement": "Middle deltoid and supraspinatus abduct the arm; latissimus dorsi, posterior deltoid and teres major extend it; pectoralis major is the major ventral shoulder adductor; serratus anterior protracts and upwardly rotates the scapula; trapezius elevates, retracts and upwardly rotates it.",
-      "evidenceLevel": "Clinical examination guide; expert consensus guide; narrative review (anatomy)",
-      "population": "Human shoulder anatomy; not a sampled study population: muscle actions described for bedside manual muscle testing (Vijian 2023) and in an expert guide to shoulder anatomy (Jacinto 2022).",
-      "candidateSources": [
-        {
-          "kind": "paper",
-          "citation": "Vijian K, Cheng YT, Idris Z, et al. Manual muscle testing of the scapula and the upper limb through bedside examination. Malays J Med Sci. 2023;30(1):198-212. (Brief Communication.)",
-          "doi": "10.21315/mjms2023.30.1.17",
-          "pmid": "36875200",
-          "pmcid": "PMC9984099",
-          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Full text read through the Europe PMC API. Cited and paraphrased only."
-        },
-        {
-          "kind": "review",
-          "citation": "Jacinto J, Camões-Barbosa A, Carda S, Hoad D, Wissel J. A practical guide to botulinum neurotoxin treatment of shoulder spasticity 1: anatomy, physiology, and goal setting. Front Neurol. 2022;13:1004629.",
-          "doi": "10.3389/fneur.2022.1004629",
-          "pmid": "36324373",
-          "pmcid": "PMC9618862",
-          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), confirmed through the article's licence link. Full text read through the Europe PMC API. Cited and paraphrased only."
-        },
         {
           "kind": "review",
           "citation": "Frank RM, Ramirez J, Chalmers PN, McCormick FM, Romeo AA. Scapulothoracic anatomy and snapping scapula syndrome. Anat Res Int. 2013;2013:635628.",
@@ -133,7 +97,8 @@
           "pmcid": "PMC3863500",
           "rights": "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). Full text read through the Europe PMC API. Cited and paraphrased only."
         }
-      ]
+      ],
+      "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2."
     }
   ],
   "scenarios": [
@@ -147,13 +112,13 @@
     "id": "shoulder-01-anatomy",
     "slug": "shoulder-anatomy",
     "title": "Shoulder anatomy a trainer needs",
-    "summary": "A working map of the shoulder: three bones, three joints and a gliding contact on the ribcage, the cuff that steadies the ball and socket, and the big muscles that move the arm and the shoulder blade.",
+    "summary": "A working map of the shoulder: three bones, three joints, the shoulder blade on the ribcage, the small socket, the rotator cuff, and the muscles that attach the shoulder blade.",
     "durationMinutes": 12,
     "format": "article",
     "objectives": [
       "Name the bones and joints of the shoulder in plain words and in standard terms.",
       "Describe the small socket and what deepens it.",
-      "Describe what the rotator cuff muscles do for the joint.",
+      "Name the four rotator cuff muscles and where they attach.",
       "Find the main landmarks on yourself and, with permission, on a client."
     ],
     "anatomyIds": [
@@ -169,13 +134,13 @@
     "blocks": [
       {
         "kind": "paragraph",
-        "content": "This lesson gives you a working map of the shoulder: where the bones meet, what supports the ball and socket, and which muscles do the moving. Every later lesson in this module uses this map.",
+        "content": "This lesson gives you a working map of the shoulder: where the bones meet, what surrounds the ball and socket, and which muscles attach the shoulder blade. Every later lesson in this module uses this map.",
         "support": "practice-based",
         "claimIds": []
       },
       {
         "kind": "heading",
-        "content": "Three bones, three joints and a gliding contact"
+        "content": "Three bones, three joints and the shoulder blade on the ribcage"
       },
       {
         "kind": "paragraph",
@@ -187,7 +152,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "The shoulder blade also slides over the back of the ribcage. That gliding contact is often called the scapulothoracic joint, but it has no cartilage, joint lining or capsule: the shoulder blade slides on layers of muscle and bursae, and muscles hold it in place.",
+        "content": "The shoulder blade also lies against the back of the ribcage. That contact is often called the scapulothoracic joint, but it has no cartilage, joint lining or capsule: between the shoulder blade and the ribs lie layers of muscle and bursae.",
         "support": "science",
         "claimIds": [
           "claim-slot:l1-scapulothoracic"
@@ -206,7 +171,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "The ball-and-socket joint is the most mobile joint in the body, partly because its bones hold it so loosely. Its socket on the shoulder blade (the glenoid) has a joint surface only a third to a quarter of the size of the ball at the top of the humerus. A rim of fibrocartilage around it, the labrum, adds to the socket's depth and surface.",
+        "content": "The socket of the ball-and-socket joint, on the shoulder blade (the glenoid), has a joint surface only a third to a quarter of the size of the ball at the top of the humerus. A rim of fibrocartilage around it, the labrum, adds to the socket's depth and surface.",
         "support": "science",
         "claimIds": [
           "claim-slot:l1-shallow-socket"
@@ -224,18 +189,10 @@
       },
       {
         "kind": "paragraph",
-        "content": "Four muscles form the rotator cuff: supraspinatus, infraspinatus, teres minor and subscapularis. They start on the shoulder blade and attach to the top of the humerus, forming a cuff around the ball-and-socket joint, and they are crucial for the joint's stability as the arm moves.",
+        "content": "Four muscles form the rotator cuff: supraspinatus, infraspinatus, teres minor and subscapularis. Each starts on the shoulder blade and attaches to the top of the humerus: subscapularis to the front (the lesser tubercle), the other three to the outer side (the greater tubercle).",
         "support": "science",
         "claimIds": [
           "claim-slot:l1-cuff"
-        ]
-      },
-      {
-        "kind": "paragraph",
-        "content": "Pressing the ball into the socket makes the joint more stable, and muscle contraction can provide that pressing force. Researchers call this concavity compression.",
-        "support": "science",
-        "claimIds": [
-          "claim-slot:l1-concavity"
         ]
       },
       {
@@ -248,23 +205,23 @@
         "claimIds": []
       },
       {
+        "kind": "diagram",
+        "content": {
+          "diagramId": "shoulder-cuff",
+          "caption": "Planned diagram, not available yet: the four rotator cuff muscles, from the front and from behind."
+        }
+      },
+      {
         "kind": "heading",
-        "content": "The big movers"
+        "content": "Muscles that attach the shoulder blade"
       },
       {
         "kind": "paragraph",
-        "content": "The middle part of the deltoid, with the supraspinatus, lifts the arm out to the side. The pectoralis major is the main muscle that draws the arm in toward the body from the front, and the latissimus dorsi, with the back of the deltoid and the teres major, draws the arm backward. On the shoulder blade, the serratus anterior pulls it forward around the ribs and rotates it upward, and the trapezius raises it, draws it back and rotates it upward.",
+        "content": "Because the shoulder blade has no bony joint with the ribcage, muscles attach it to the trunk. They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae, subclavius and pectoralis minor. The serratus anterior attaches along the inner edge of the shoulder blade, on the side that faces the ribs.",
         "support": "science",
         "claimIds": [
-          "claim-slot:l1-movers"
+          "claim-slot:l1-attachments"
         ]
-      },
-      {
-        "kind": "diagram",
-        "content": {
-          "diagramId": "shoulder-cuff-and-movers",
-          "caption": "Planned diagram, not available yet: the rotator cuff and the larger movers."
-        }
       },
       {
         "kind": "heading",
@@ -358,14 +315,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "What do the rotator cuff muscles do for the shoulder joint?",
+          "prompt": "Where do the four rotator cuff muscles attach?",
           "options": [
-            "They form a cuff around the joint and are crucial for its stability as the arm moves",
-            "They lock the shoulder blade so it cannot move",
-            "Nothing; ligaments alone hold the joint"
+            "From the shoulder blade to the top of the humerus",
+            "From the ribs to the collarbone",
+            "From the spine to the shoulder blade"
           ],
           "answerIndex": 0,
-          "explanation": "The four cuff muscles run from the shoulder blade to the humerus, forming a cuff around the joint that is crucial for its stability."
+          "explanation": "Supraspinatus, infraspinatus, teres minor and subscapularis each start on the shoulder blade and attach to the top of the humerus."
         },
         "support": "science",
         "claimIds": [

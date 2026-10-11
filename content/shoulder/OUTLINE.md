@@ -19,31 +19,32 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 ## 1. Shoulder anatomy a trainer needs
 
-**Claim status (2026-10-11 dry run):** all six science claims are blocked: their sources are narrative reviews, primary studies or a brief report, which the claim pipeline does not admit, and no systematic review states these basic anatomy facts. They wait for a textbook source (edition and page); lesson 1 does not publish until then.
+**Claim status (claim dry run 2):** lesson 1's claims are foundation claims (D-12, `domain: "foundation"`) and stay purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference. Review needs the open-licence full text in the packet, because the abstract is too thin. Functional points are removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabelled as practice.
 
-**One idea:** the shoulder is three bones and three joints working with the shoulder blade on the ribcage, and its big range comes from a shallow ball-and-socket that muscles keep centred.
+**One idea:** the shoulder is three bones and three joints, with the shoulder blade lying on the ribcage, a small socket deepened by the labrum, and muscles that attach the shoulder blade to the trunk.
 
 **Objectives**
 - Name the bones and joints of the shoulder complex in plain words and in standard terms.
-- Explain why the glenohumeral joint trades stability for range.
-- Describe what the rotator cuff does as a group.
+- Describe the small socket and what deepens it.
+- Name the four rotator cuff muscles and where they attach.
 - Point to where each structure is on a client, by surface landmarks.
 
 **Sections**
-1. *What it is: the parts.* [S] Bones: humerus, scapula, clavicle; joints: glenohumeral, acromioclavicular, sternoclavicular (the only bony joint between the shoulder girdle and the axial skeleton: the skull, spine and ribcage). There is no direct bony joint between the shoulder blade and the ribcage; muscles connect them. Candidate evidence: open CC BY articles read in full (Frank 2013, PMC3863500; Cavanaugh 2024; Vijian 2023; Jacinto 2022). OpenStax is not a claim source (its terms forbid ingestion into AI models); it is listed only as optional further reading. The scapulothoracic statement (no cartilage, lining or capsule; the shoulder blade slides on muscle and bursae, and muscles hold it in place) is supported by Frank 2013.
-2. *What it is: a shallow socket.* [S] The glenoid is shallow relative to the humeral head; the labrum deepens the socket, and the capsule and its ligaments help hold the joint stable. Candidate evidence: anatomy reference with an open consensus or review source.
-3. *What it is: the cuff.* [S] Four rotator cuff muscles (supraspinatus, infraspinatus, teres minor, subscapularis) and their role in keeping the humeral head centred during arm movement. Candidate evidence: a review of cuff function (e.g. a JOSPT clinical commentary on shoulder exercise rationale).
-4. *What it is: the big movers.* [S] Deltoid, pectoralis major, latissimus dorsi, trapezius, serratus anterior: what each moves. Candidate evidence: nomenclature plus a review.
+1. *What it is: the parts.* [S, foundation] Bones: humerus, scapula, clavicle; joints: glenohumeral, acromioclavicular, sternoclavicular. There is no osseous or ligamentous joint between the shoulder blade and the ribcage; muscles connect them. The scapulothoracic contact has no cartilage, synovium or capsule; bursal and muscular planes lie between the shoulder blade and the ribs. Source: Frank 2013 (PMC3863500). OpenStax is not a claim source (its terms forbid ingestion into AI models); it is listed only as optional further reading.
+2. *What it is: a small socket.* [S, foundation] The glenoid's articular surface is one third to one quarter the size of the humeral head; the labrum increases its surface area and depth. Source: Frank 2013.
+3. *What it is: the cuff.* [S, foundation] Supraspinatus, infraspinatus, teres minor and subscapularis: each from the scapula to the humerus (subscapularis to the lesser tubercle, the others to the greater tubercle). Source: Frank 2013, Table 1.
+4. *What it is: muscles that attach the shoulder blade.* [S, foundation] Trapezius, serratus anterior, rhomboids, levator scapulae, subclavius and pectoralis minor attach the scapula to the axial skeleton; serratus anterior along the anterior medial border. Source: Frank 2013. Muscle actions are function, not foundation, and are not claimed.
 5. *Why it matters.* [P] Load the range a client can control.
 6. *How to see it.* [P] Palpation tour on yourself: clavicle, acromion, spine of the scapula, inferior angle. Coach note: say what you are touching and ask first.
 7. *What to do.* [P] Use the plain names with clients and the standard names with clinicians; one-line glossary card.
-8. [!] Short note: the lesson teaches location and function, never what is "wrong". A painful spot is described, not named as an injury (SAFETY §1).
+8. [!] Short note: the lesson teaches location, never what is "wrong". A painful spot is described, not named as an injury (SAFETY §1).
 
-**Visuals:** original diagram of the shoulder complex from the front (the subject's left shoulder; drawing on main since PR #17); a planned diagram of the cuff around the humeral head.
+**Visuals:** original diagram of the shoulder complex from the front (the subject's left shoulder; drawing on main since PR #17); a planned diagram of the four rotator cuff muscles from the front and from behind (`shoulder-cuff`).
 
 **Graded quiz candidates**
-- Which joint connects the arm to the scapula? (glenohumeral) [binds §1 claim]
-- As a group, what does the rotator cuff do during arm movement? (helps keep the humeral head centred on the glenoid) [binds §3 claim]
+- Which joint connects the arm to the scapula? (glenohumeral) [§1]
+- What adds depth to the small socket? (the labrum) [§2]
+- Where do the four rotator cuff muscles attach? (from the shoulder blade to the top of the humerus) [§3]
 
 **Scenario (ungraded):** A client points to the front of the shoulder and asks "Is that my rotator cuff?" What do you say? (Describe the area; do not diagnose; if it hurts, follow SAFETY.)
 
@@ -159,7 +160,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - Know when a "corrective" should be a referral instead.
 
 **Sections**
-1. *What research supports.* [S] For subacromial shoulder pain (one specific condition, diagnosed by a clinician), UK specialist guidance reports evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and improving patient-reported function, and states that the most effective physiotherapy or exercise approach remains uncertain. A systematic review with meta-analysis found high-certainty evidence that decompression surgery gives no additional benefit over placebo surgery for pain at 1 year or function at 1 to 2 years. Candidate evidence: BESS care pathway (2025; admission through D-12 pending); Lähdeoja et al. 2020, Br J Sports Med (PMID 30647053), which replaces the CSAW trial as the claim source because the pipeline admits systematic reviews, not single trials. Wording stays within the population studied, and the claim says nothing about who delivers the exercise (BESS also describes initial self-management). Separately, as **Spindle policy** and not as a science claim: a trainer's loading is not treatment for a diagnosed condition, and a client with diagnosed subacromial pain trains within the treating clinician's plan (SAFETY §2).
+1. *What research supports.* [S] For subacromial shoulder pain (one specific condition, diagnosed by a clinician), UK specialist guidance reports evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and improving patient-reported function, and states that the most effective physiotherapy or exercise approach remains uncertain. A systematic review with meta-analysis found high-certainty evidence that decompression surgery gives no additional benefit over placebo surgery for pain at 1 year or function at 1 to 2 years. Candidate evidence: BESS care pathway (2025; admission through D-12 pending; reviewed against a publisher excerpt under D-13); Lähdeoja et al. 2020, Br J Sports Med (PMID 30647053), which replaces the CSAW trial as the claim source because the pipeline admits systematic reviews, not single trials. Wording stays within the population studied, and the claim says nothing about who delivers the exercise (BESS also describes initial self-management). Separately, as **Spindle policy** and not as a science claim: a trainer's loading is not treatment for a diagnosed condition, and a client with diagnosed subacromial pain trains within the treating clinician's plan (SAFETY §2).
 2. *What the trials compared.* [S] For rotator cuff related shoulder pain, a 2020 systematic review compared each approach with placebo or no treatment, not with each other: progressive resisted exercise showed an uncertain clinical benefit, non-progressive exercise no significant benefit, and the certainty of the evidence was low. The block reports those comparisons and that uncertainty and ranks nothing. Candidate evidence: Naunton et al. 2020, Clinical Rehabilitation (PMID 32571081). If no claim is approved, the section is removed (no downgrade).
 3. *Scapular exercise.* Removed 2026-10-11: the accessible evidence did not support the EMG ratios or the inference limit, so the section and its quiz were dropped (no relabelling as practice).
 4. *Activation as practice.* [P] What activation drills are for in a session: rehearsal, attention, warm-up. What they are not: a fix.
