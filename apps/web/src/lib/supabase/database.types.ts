@@ -1428,6 +1428,10 @@ export type Database = {
         Args: { p_actor: string; p_course: string }
         Returns: Json
       }
+      publisher_revoke_tenant_text: {
+        Args: { p_publisher: string; p_revocation: Json; p_text: string }
+        Returns: string
+      }
       publisher_save_course_draft: {
         Args: { p_actor: string; p_course: Json }
         Returns: string
@@ -1484,7 +1488,6 @@ export type Database = {
       tenant_text_status: {
         Args: { p_course: string; p_org: string; p_slot: string }
         Returns: {
-          display_name: string
           reason: string
           saved_at: string
           status: string
@@ -1510,6 +1513,17 @@ export type Database = {
           review: string
           state: string
           title: string
+        }[]
+      }
+      version_tenant_texts: {
+        Args: { p_version: string }
+        Returns: {
+          author_user_id: string
+          display_name: string
+          saved_at: string
+          slot: string
+          state: string
+          text: string
         }[]
       }
     }

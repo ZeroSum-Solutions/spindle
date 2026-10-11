@@ -213,10 +213,17 @@ export const courseWelcomeSchema = z.strictObject({
   author: z.strictObject({
     authorUserId: uuidSchema,
     displayName: requiredText.max(60),
+    /** Where the signature came from; null for the fixed fallback. */
+    signatureSlot: z.enum(["coach_name", "brand_name"]).nullable(),
+    signatureReceiptId: uuidSchema.nullable(),
     orgId: uuidSchema,
     savedAt: savedAtSchema,
   }),
-}) satisfies z.ZodType<CourseWelcome>;
+})
+  .refine((w) => (w.author.signatureSlot === null) === (w.author.signatureReceiptId === null), {
+    message: "a signature names both its slot and its receipt, or neither (the fallback)",
+    path: ["author", "signatureReceiptId"],
+  }) satisfies z.ZodType<CourseWelcome>;
 
 export const courseBlurbSchema = z.strictObject({
   text: requiredText.max(160),

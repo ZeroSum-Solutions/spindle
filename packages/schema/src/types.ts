@@ -144,6 +144,10 @@ export interface CourseWelcome {
     authorUserId: string;
     /** Resolved at publish: the gym's admitted coach name, else its admitted brand name, else "Your gym". */
     displayName: string;
+    /** The held slot the signature came from, or null for the fixed fallback. */
+    signatureSlot: "coach_name" | "brand_name" | null;
+    /** Its admission receipt; members see the fallback once it is revoked. */
+    signatureReceiptId: string | null;
     orgId: string;
     /** ISO 8601, UTC, microseconds. */
     savedAt: string;

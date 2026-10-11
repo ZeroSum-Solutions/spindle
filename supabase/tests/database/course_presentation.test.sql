@@ -4,7 +4,7 @@
 -- every version and every member read, until LEAD records an admission bound to it. Synthetic only.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(96);
+select plan(100);
 
 -- Gym A: Alice owner, Lee lead, Tess trainer. Gym B ("Science Gym"): Bob owner. Pat publishes.
 insert into auth.users (id, email, email_confirmed_at) values
@@ -270,6 +270,7 @@ select pg_temp.reset_role();
 select is(pg_temp.snap(pg_temp.id('v4')) -> 'welcome', jsonb_build_object('text', 'Welcome! We start with drills for the hips.',
   'receiptId', (select id from private.tenant_text_admissions where text_id = pg_temp.id('w1')),
   'author', jsonb_build_object('authorUserId', '00000000-0000-0000-0000-0000000000a2', 'displayName', 'Your gym',
+    'signatureSlot', null, 'signatureReceiptId', null,
     'orgId', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     'savedAt', (select to_char(saved_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') from private.tenant_texts where id = pg_temp.id('w1')))),
   'once admitted, the next version freezes the note with its receipt, author and the signature in force at publish');
@@ -374,6 +375,14 @@ select is(pg_temp.snap(pg_temp.id('v8')) -> 'welcome' -> 'author' ->> 'displayNa
   'once a coach name is admitted, the next version signs with it, though the note was saved before');
 select is(pg_temp.snap(pg_temp.id('v6')) -> 'welcome' -> 'author' ->> 'displayName', 'Your gym', 'earlier versions keep their signature');
 
+select is(pg_temp.snap(pg_temp.id('v8')) -> 'welcome' -> 'author' ->> 'signatureSlot', 'coach_name', 'the version records where the signature came from');
+-- Sol R2 B1: revoking only the coach name takes the signature off published versions at once.
+select pg_temp.as_service();
+select public.publisher_revoke_tenant_text('00000000-0000-0000-0000-0000000000c1', pg_temp.id('cn'), '{"reason": "Coach left."}');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select is((select state || ':' || text || ':' || display_name from public.version_tenant_texts(pg_temp.id('v8')) where slot = 'welcome'),
+  'live:Short and plain: hips first.:Your gym', 'a note whose signature was revoked stays, signed with the fallback');
+
 -- Revocation (Sol R1 B1): LEAD withdraws an admission; it leaves member reads at once and the next version.
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
 select throws_ok($$select public.publisher_revoke_tenant_text('00000000-0000-0000-0000-0000000000a1', pg_temp.id('w3'), '{"reason": "x"}')$$,
@@ -449,6 +458,27 @@ select throws_ok($$select public.check_tenant_text('aaaaaaaa-aaaa-4aaa-8aaa-aaaa
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
 select is(public.check_tenant_text('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'welcome', 'Science!') ->> 'reason', 'denied',
   'an author can check a text before saving');
+
+-- Sol R2 W4: a welcome signed with a brand name that LEAD admitted under an override still publishes.
+select pg_temp.as_service();
+select public.publisher_record_text_override('00000000-0000-0000-0000-0000000000c1', '{"orgId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "slot": "brand_name", "text": "Sports Science Lab", "reason": "Registered business name."}');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000b1');
+select pg_temp.keep('bb', public.save_tenant_text('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'brand_name', null, 'Sports Science Lab'));
+select public.save_course_draft('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', pg_temp.course('b3000000-0000-4000-8000-000000000000', 'method', '{}', 'Lifting lab'));
+select pg_temp.keep('bw', public.save_tenant_text('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'welcome', 'b3000000-0000-4000-8000-000000000000', 'Welcome to the lab.'));
+select pg_temp.reset_role();
+select pg_temp.hash(pg_temp.id('bb'));
+select pg_temp.hash(pg_temp.id('bw'));
+select pg_temp.admit_titles();
+select pg_temp.as_service();
+select pg_temp.decide(pg_temp.id('bb'), 'admitted');
+select pg_temp.decide(pg_temp.id('bw'), 'admitted');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000b1');
+select lives_ok($$select pg_temp.keep('bv', public.publish_course('b3000000-0000-4000-8000-000000000000'))$$,
+  'a welcome signed with an overridden brand name publishes: the signature is re-admitted in its own slot');
+select pg_temp.reset_role();
+select is(pg_temp.snap(pg_temp.id('bv')) -> 'welcome' -> 'author' ->> 'displayName', 'Sports Science Lab', 'and is signed with it');
 
 select * from finish();
 rollback;

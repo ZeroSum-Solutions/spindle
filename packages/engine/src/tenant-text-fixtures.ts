@@ -103,6 +103,14 @@ export const TENANT_TEXT_FIXTURES: readonly TenantTextFixture[] = [
   no("welcome", "Improves your squat by 12.5 %", "claim", "outcome claim"),
   no("welcome", "(2019)", "claim", "citation"),
   no("welcome", "Reduces pain by 30%", "claim", "outcome claim"),
+  // Sol R2 on #38: outcome claims behind leet, homoglyphs and spacing; spaced unmapped homoglyphs.
+  no("course_summary", "R3duces pain by 30%", "claim", "outcome claim"),
+  no("course_summary", "R\u0435duces pain by 30%", "claim", "outcome claim"),
+  no("course_summary", "R e d u c e s pain by 30%", "claim", "outcome claim"),
+  no("catalog_tagline", "30 % s t r o n g e r", "claim", "outcome claim"),
+  no("catalog_headline", "s c i \u1971 n c \u1971", "denied", "mixed script"),
+  ok("welcome", "Rest 3 min, then 5 x 5 at 80% of 1RM."),
+  ok("welcome", "R e s t day: walk 30 min."),
   // Hidden characters (the #34 core's rules) and blanks.
   no("brand_name", "Sci\u200bence", "control"),
   no("brand_name", "Gym\u202e", "control"),

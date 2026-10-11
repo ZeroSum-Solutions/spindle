@@ -45,6 +45,8 @@ const welcome = {
   author: {
     authorUserId: "00000000-0000-0000-0000-0000000000a2",
     displayName: "Gym A",
+    signatureSlot: "brand_name",
+    signatureReceiptId: "c0000000-0000-4000-8000-000000000009",
     orgId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     savedAt: "2026-10-11T14:36:31.328660Z",
   },
@@ -85,6 +87,7 @@ describe("a published method course with presentation and admitted texts", () =>
     ["a bare-string blurb", { blurb: "Hinge patterns." }],
     ["a welcome note without its receipt", { welcome: { text: welcome.text, author: welcome.author } }],
     ["a malformed title receipt", { titleReceiptId: "not-a-uuid" }],
+    ["a signature slot without its receipt", { welcome: { ...welcome, author: { ...welcome.author, signatureReceiptId: null } } }],
     ["an unknown course key", { brand: {} }],
   ])("refuses %s at every hop", (_label, extra) => {
     expect(() => parseCourse(method(extra))).toThrow(ContentParseError);

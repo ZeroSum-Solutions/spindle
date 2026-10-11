@@ -3,7 +3,7 @@
 -- checks the block below is that list), LEAD overrides, and the rule set in force. Synthetic text only.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(112);
+select plan(119);
 
 insert into auth.users (id, email, email_confirmed_at) values
   ('00000000-0000-0000-0000-0000000000a1', 'alice@a.test', now()),
@@ -120,23 +120,30 @@ insert into fx values
   (79, E'welcome', E'Improves your squat by 12.5 %', E'claim', E'outcome claim'),
   (80, E'welcome', E'(2019)', E'claim', E'citation'),
   (81, E'welcome', E'Reduces pain by 30%', E'claim', E'outcome claim'),
-  (82, E'brand_name', E'Sci\u200bence', E'control', null),
-  (83, E'brand_name', E'Gym\u202e', E'control', null),
-  (84, E'brand_name', E'Gym\u2060Yard', E'control', null),
-  (85, E'brand_name', E'Gym\u00adYard', E'control', null),
-  (86, E'welcome', E'Line\u2028break', E'control', null),
-  (87, E'welcome', E'Tab\u0009inside', E'control', null),
-  (88, E'brand_name', E'\ufeffGym', E'ok', E'Gym'),
-  (89, E'brand_name', E'G\ufeffym', E'control', null),
-  (90, E'brand_name', E'\u3164', E'blank', null),
-  (91, E'brand_name', E'\u2800\u2800', E'blank', null),
-  (92, E'brand_name', E'\u0301', E'blank', null),
-  (93, E'brand_name', E'', E'length', null),
-  (94, E'brand_name', E'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', E'length', null),
-  (95, E'brand_name', E'\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb', E'ok', null),
-  (96, E'welcome', E'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', E'length', null),
-  (97, E'welcome', E'a                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                a', E'length', null),
-  (98, E'nope', E'Andrew Fitness', E'unknown-slot', null)
+  (82, E'course_summary', E'R3duces pain by 30%', E'claim', E'outcome claim'),
+  (83, E'course_summary', E'R\u0435duces pain by 30%', E'claim', E'outcome claim'),
+  (84, E'course_summary', E'R e d u c e s pain by 30%', E'claim', E'outcome claim'),
+  (85, E'catalog_tagline', E'30 % s t r o n g e r', E'claim', E'outcome claim'),
+  (86, E'catalog_headline', E's c i \u1971 n c \u1971', E'denied', E'mixed script'),
+  (87, E'welcome', E'Rest 3 min, then 5 x 5 at 80% of 1RM.', E'ok', null),
+  (88, E'welcome', E'R e s t day: walk 30 min.', E'ok', null),
+  (89, E'brand_name', E'Sci\u200bence', E'control', null),
+  (90, E'brand_name', E'Gym\u202e', E'control', null),
+  (91, E'brand_name', E'Gym\u2060Yard', E'control', null),
+  (92, E'brand_name', E'Gym\u00adYard', E'control', null),
+  (93, E'welcome', E'Line\u2028break', E'control', null),
+  (94, E'welcome', E'Tab\u0009inside', E'control', null),
+  (95, E'brand_name', E'\ufeffGym', E'ok', E'Gym'),
+  (96, E'brand_name', E'G\ufeffym', E'control', null),
+  (97, E'brand_name', E'\u3164', E'blank', null),
+  (98, E'brand_name', E'\u2800\u2800', E'blank', null),
+  (99, E'brand_name', E'\u0301', E'blank', null),
+  (100, E'brand_name', E'', E'length', null),
+  (101, E'brand_name', E'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', E'length', null),
+  (102, E'brand_name', E'\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb', E'ok', null),
+  (103, E'welcome', E'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', E'length', null),
+  (104, E'welcome', E'a                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                a', E'length', null),
+  (105, E'nope', E'Andrew Fitness', E'unknown-slot', null)
 -- fixtures:end
 ;
 select is(pg_temp.admit(slot, txt),

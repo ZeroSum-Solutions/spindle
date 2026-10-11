@@ -149,6 +149,81 @@ begin
 end;
 $$;
 
+/**
+ * The readings the citation and outcome rules also check (Sol R2 B2): the folded copy with its
+ * separators, digits and "%" kept, plain and per leet reading of "1", spaced single letters joined.
+ * Mirrors claimReadings in @spindle/engine.
+ */
+create function private.tt_claim_readings(p_folded text, p_rules jsonb)
+returns setof text
+language plpgsql immutable set search_path = ''
+as $$
+declare
+  prefix text := substring(p_folded from '^[^a-z0-9$!|]*');
+  leet_from text := (select coalesce(string_agg(key, '' order by key), '') from jsonb_each_text(p_rules -> 'leet'));
+  leet_to text := (select coalesce(string_agg(value, '' order by key), '') from jsonb_each_text(p_rules -> 'leet'));
+  one text;
+  m text[];
+  mapped text;
+  out_text text;
+  prev_single boolean;
+  sep text;
+begin
+  foreach one in array array[null::text] || array(select jsonb_array_elements_text(p_rules -> 'leetOne')) loop
+    out_text := prefix;
+    prev_single := false;
+    sep := '';
+    for m in select x from regexp_matches(substr(p_folded, char_length(prefix) + 1), '([a-z0-9$!|]+)([^a-z0-9$!|]*)', 'g') as x loop
+      if one is null then
+        mapped := translate(m[1], '$!|', '   ');
+      elsif m[1] !~ '[a-z]' and char_length(m[1]) > 1 then
+        mapped := m[1];
+      else
+        mapped := translate(m[1], '1' || leet_from, one || leet_to);
+      end if;
+      if mapped ~ '^[a-z]$' and prev_single and sep ~ '^[ .-]+$' then
+        out_text := out_text || mapped;
+      else
+        out_text := out_text || sep || mapped;
+      end if;
+      prev_single := mapped ~ '^[a-z]$';
+      sep := m[2];
+    end loop;
+    return next out_text || sep;
+  end loop;
+end;
+$$;
+
+/**
+ * True when a word of the folded copy, after joining runs of spaced single letters, mixes ASCII
+ * letters with letters of another script that no confusable maps. Mirrors mixedScript.
+ */
+create function private.tt_mixed_script(p_folded text, p_rules jsonb)
+returns boolean
+language plpgsql immutable set search_path = ''
+as $$
+declare
+  other text := private.tt_nonascii_class(p_rules -> 'chars' -> 'letters');
+  words text[];
+  joined text[] := '{}';
+  run text := '';
+  n integer;
+begin
+  words := array(select x[1] from regexp_matches(p_folded, '([a-z0-9' || substr(other, 2, char_length(other) - 2) || ']+)', 'g') as x);
+  n := coalesce(cardinality(words), 0);
+  for i in 1 .. n loop
+    if char_length(words[i]) = 1 and ((i > 1 and char_length(words[i - 1]) = 1) or (i < n and char_length(words[i + 1]) = 1)) then
+      run := run || words[i];
+    else
+      if run <> '' then joined := joined || run; run := ''; end if;
+      joined := joined || words[i];
+    end if;
+  end loop;
+  if run <> '' then joined := joined || run; end if;
+  return exists (select 1 from unnest(joined) w where w ~ '[a-z]' and w ~ other);
+end;
+$$;
+
 /** A bracket of the non-ASCII part of a list of code point ranges. */
 create function private.tt_nonascii_class(p_ranges jsonb)
 returns text
@@ -177,7 +252,6 @@ declare
   phrase text[];
   k integer;
   w text;
-  other text := private.tt_nonascii_class(p_rules -> 'chars' -> 'letters');
 begin
   for marked in select private.tt_readings(folded, p_rules) loop
     tokens := array(select ltrim(x, '~') from unnest(marked) with ordinality as u (x, o) order by o);
@@ -197,7 +271,7 @@ begin
       end if;
     end loop;
   end loop;
-  if folded ~ ('[a-z]' || other || '|' || other || '[a-z]') then return 'mixed script'; end if;
+  if private.tt_mixed_script(folded, p_rules) then return 'mixed script'; end if;
   return null;
 end;
 $$;
@@ -254,7 +328,7 @@ begin
     end if;
   end loop;
   for claim in select c from jsonb_array_elements(r -> 'claims') c loop
-    if lc ~ (claim ->> 're') then
+    if lc ~ (claim ->> 're') or exists (select 1 from private.tt_claim_readings(private.tt_fold(t, r), r) x where x ~ (claim ->> 're')) then
       return jsonb_build_object('ok', false, 'reason', 'claim', 'detail', claim ->> 'name', 'version', v);
     end if;
   end loop;
@@ -564,14 +638,22 @@ as $$
   where t.id is not null and private.tenant_text_status(t.id) = 'admitted'
 $$;
 
-/** The name a welcome note is signed with when a version is published (rev4a): coach, brand, fallback. */
+/**
+ * The name a welcome note is signed with when a version is published (rev4a): admitted coach name,
+ * then admitted brand name, then the fixed fallback; with the slot and receipt it came from, so
+ * member reads can check it is still live (Sol R2 B1).
+ */
 create function private.welcome_signature(p_org uuid)
-returns text
+returns table (text text, slot text, receipt_id uuid)
 language sql stable security definer set search_path = ''
 as $$
-  select coalesce((select a.text from private.admitted_tenant_text(p_org, 'coach_name', null) a),
-    (select a.text from private.admitted_tenant_text(p_org, 'brand_name', null) a),
-    private.tt_rules() -> 'fallbacks' ->> 'brand_name')
+  select x.text, x.slot, x.receipt_id from (
+    select a.text, 'coach_name'::text as slot, a.receipt_id, 1 as o from private.admitted_tenant_text(p_org, 'coach_name', null) a
+    union all
+    select a.text, 'brand_name'::text, a.receipt_id, 2 from private.admitted_tenant_text(p_org, 'brand_name', null) a
+    union all
+    select private.tt_rules() -> 'fallbacks' ->> 'brand_name', null::text, null::uuid, 3) x
+  order by x.o limit 1
 $$;
 
 /**
@@ -583,6 +665,8 @@ returns void
 language plpgsql security definer set search_path = ''
 as $$
 begin
+  -- The newest-row checks after this lock rely on read committed (Sol R2 W5).
+  perform private.require_read_committed();
   if p_course is not null then
     perform 1 from public.courses where id = p_course for update;
   else
@@ -695,7 +779,11 @@ begin
   return query
     select x.slot, case when private.receipt_live((x.doc ->> 'receiptId')::uuid) then 'live' else 'revoked' end,
       case when private.receipt_live((x.doc ->> 'receiptId')::uuid) then x.doc ->> 'text' end,
-      case when private.receipt_live((x.doc ->> 'receiptId')::uuid) then x.doc -> 'author' ->> 'displayName' end,
+      -- A signature whose coach or brand name was revoked after publishing reads as the fallback.
+      case when not private.receipt_live((x.doc ->> 'receiptId')::uuid) then null
+           when x.doc -> 'author' ->> 'signatureReceiptId' is null or private.receipt_live((x.doc -> 'author' ->> 'signatureReceiptId')::uuid)
+             then x.doc -> 'author' ->> 'displayName'
+           else private.tt_rules() -> 'fallbacks' ->> 'brand_name' end,
       case when private.receipt_live((x.doc ->> 'receiptId')::uuid) then (x.doc -> 'author' ->> 'authorUserId')::uuid end,
       case when private.receipt_live((x.doc ->> 'receiptId')::uuid) then (x.doc -> 'author' ->> 'savedAt')::timestamptz end
     from (values ('welcome'::text, s -> 'welcome'), ('course_blurb'::text, s -> 'blurb')) as x (slot, doc)
@@ -806,9 +894,11 @@ as $$
     || case when cardinality(c.tags) = 0 then '{}'::jsonb else jsonb_build_object('tags', to_jsonb(c.tags)) end
     -- Held course texts freeze their receipt and provenance; the welcome signature is resolved now, at publish.
     || coalesce((select jsonb_build_object('welcome', jsonb_build_object('text', w.text, 'receiptId', w.receipt_id,
-          'author', jsonb_build_object('authorUserId', w.author_user_id, 'displayName', private.welcome_signature(c.org_id),
+          'author', jsonb_build_object('authorUserId', w.author_user_id, 'displayName', sig.text,
+            'signatureSlot', sig.slot, 'signatureReceiptId', sig.receipt_id,
             'orgId', w.org_id, 'savedAt', to_char(w.saved_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'))))
-        from private.admitted_tenant_text(c.org_id, 'welcome', c.id) w where c.org_id is not null), '{}'::jsonb)
+        from private.admitted_tenant_text(c.org_id, 'welcome', c.id) w, private.welcome_signature(c.org_id) sig
+        where c.org_id is not null), '{}'::jsonb)
     || coalesce((select jsonb_build_object('blurb', jsonb_build_object('text', b.text, 'receiptId', b.receipt_id,
           'author', jsonb_build_object('authorUserId', b.author_user_id,
             'savedAt', to_char(b.saved_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'))))
@@ -990,15 +1080,18 @@ begin
       raise exception 'publish gate: course % summary fails text admission: % (%)', p_course, a ->> 'detail', a ->> 'reason'
         using errcode = 'P0001';
     end if;
-    for w in select x.slot, adm.text, case when x.slot = 'welcome' then private.welcome_signature(c.org_id) end as display_name
-             from unnest(array['welcome', 'course_blurb']) as x (slot), lateral private.admitted_tenant_text(c.org_id, x.slot, p_course) adm loop
+    for w in select x.slot, adm.text, case when x.slot = 'welcome' then sig.text end as display_name,
+               case when x.slot = 'welcome' then sig.slot end as display_slot
+             from unnest(array['welcome', 'course_blurb']) as x (slot), lateral private.admitted_tenant_text(c.org_id, x.slot, p_course) adm,
+                  private.welcome_signature(c.org_id) sig loop
       a := private.admit_tenant_text(c.org_id, w.slot, w.text);
       if not (a ->> 'ok')::boolean then
         raise exception 'publish gate: course % % fails text admission: % (%)', p_course, w.slot, a ->> 'detail', a ->> 'reason'
           using errcode = 'P0001';
       end if;
-      if w.display_name is not null then
-        a := private.admit_tenant_text(c.org_id, 'coach_name', w.display_name);
+      -- The signature is re-admitted in the slot it came from, so that slot's overrides apply (Sol R2 W4).
+      if w.display_slot is not null then
+        a := private.admit_tenant_text(c.org_id, w.display_slot, w.display_name);
         if not (a ->> 'ok')::boolean then
           raise exception 'publish gate: course % % display name fails text admission: % (%)', p_course, w.slot, a ->> 'detail', a ->> 'reason'
             using errcode = 'P0001';
@@ -1182,6 +1275,7 @@ revoke all on function private.tt_rules(), private.tt_class(jsonb), private.tt_a
   private.guard_tenant_text_admission(), private.guard_tenant_text_revocation(), private.latest_tenant_text(uuid, text, uuid),
   private.tenant_text_status(uuid), private.receipt_live(uuid), private.admitted_tenant_text(uuid, text, uuid),
   private.welcome_signature(uuid), private.lock_held_slot(uuid, uuid), private.tt_nonascii_class(jsonb),
+  private.tt_claim_readings(text, jsonb), private.tt_mixed_script(text, jsonb),
   private.normalize_gym_text(jsonb, uuid)
   from public, anon, authenticated, service_role;
 revoke all on function public.save_tenant_text(uuid, text, uuid, text), public.tenant_text_status(uuid, text, uuid),

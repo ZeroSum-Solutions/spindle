@@ -13,9 +13,9 @@ Gyms write a few texts that members see next to Spindle's own labels. Most of th
 
 Versions freeze each held course text with its receipt id. Members read welcome notes and blurbs only through `version_tenant_texts`, which checks that the receipt is still live; the learner projection leaves them out.
 
-A gym saves a course title with the course draft: a new or changed title becomes a pending `course_title` row by itself. Course subtitles and lesson bodies are not held. Text admission checks them at save and again at publish.
+A gym saves a course title with the course draft: a new or changed title becomes a pending `course_title` row by itself. Course subtitles are not held: text admission checks them at save and again at publish. Lesson bodies are neither held nor text-admitted. They keep the existing method-course rules (practice-based only, no claims, structural validation).
 
-A welcome note is signed with a name resolved when the course is published: the gym's admitted coach name, else its admitted brand name, else "Your gym". Each version keeps the name it was published with.
+A welcome note is signed with a name resolved when the course is published: the gym's admitted coach name, else its admitted brand name, else "Your gym". Each version keeps the name it was published with, and the receipt of the coach or brand name it came from. If you later revoke that name, published versions show "Your gym" in its place.
 
 Every save is a new row, so an edit always sends a slot back to pending. An edited welcome note or blurb is left out of the next published version until its new text is admitted. Versions published earlier keep their text.
 
@@ -47,7 +47,7 @@ For a welcome note, also check the gym's admitted coach name or brand name: the 
 Run read-only as the database owner, from a trusted machine, against loopback or the production procedure's connection:
 
 ```sql
-select t.id as text_id, o.slug as gym, t.slot, t.course_id, t.text, t.text_hash, t.display_name, t.saved_at
+select t.id as text_id, o.slug as gym, t.slot, t.course_id, t.text, t.text_hash, t.saved_at
 from private.tenant_texts t
 join public.orgs o on o.id = t.org_id
 where t.seq = (select max(seq) from private.tenant_texts x

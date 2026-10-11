@@ -95,8 +95,9 @@ function compile(rules: TenantTextRules) {
     links: rules.links.map((l) => new RegExp(l)),
     claims: rules.claims.map((c) => ({ name: c.name, re: new RegExp(c.re) })),
     deny: new Set(rules.deny),
-    // An ASCII letter next to a letter of another script in the folded copy: an unresolved disguise.
-    mixed: new RegExp(`[a-z][${nonAscii(rules.chars.letters)}]|[${nonAscii(rules.chars.letters)}][a-z]`, "u"),
+    // Words of the folded copy, letters of any script kept, for the mixed-script check.
+    words: new RegExp(`[a-z0-9${nonAscii(rules.chars.letters)}]+`, "gu"),
+    other: new RegExp(`[${nonAscii(rules.chars.letters)}]`, "u"),
   };
 }
 
@@ -122,6 +123,59 @@ export function foldedCopy(text: string, rules: TenantTextRules = TENANT_TEXT_RU
   const c = compiledFor(rules);
   const split = text.normalize("NFKC").replace(c.blank, "").replace(/([a-z])([A-Z])/g, "$1 $2");
   return [...asciiLower(split).normalize("NFKD").replace(c.marks, "")].map((ch) => rules.confusables[ch] ?? ch).join("");
+}
+
+const PIECE = /([a-z0-9$!|]+)([^a-z0-9$!|]*)/g;
+
+/**
+ * The readings the citation and outcome rules also check (Sol R2 B2): the folded copy with its
+ * separators, digits and "%" kept, once plain and once per leet reading of "1", with runs of
+ * spaced single letters joined ("R e d u c e s" reads "reduces"). Same chunk rule as tokenReadings.
+ */
+export function claimReadings(folded: string, rules: TenantTextRules = TENANT_TEXT_RULES): string[] {
+  const prefix = /^[^a-z0-9$!|]*/.exec(folded)![0];
+  const pieces = [...folded.slice(prefix.length).matchAll(PIECE)].map((m) => [m[1]!, m[2]!] as const);
+  return [null, ...rules.leetOne].map((one) => {
+    let out = prefix;
+    let prevSingle = false;
+    let sep = "";
+    for (const [chunk, after] of pieces) {
+      const mapped =
+        one === null
+          ? chunk.replace(/[$!|]/g, " ")
+          : !/[a-z]/.test(chunk) && chunk.length > 1
+            ? chunk
+            : [...chunk].map((x) => (x === "1" ? one : (rules.leet[x] ?? x))).join("");
+      const single = /^[a-z]$/.test(mapped);
+      out += single && prevSingle && /^[ .-]+$/.test(sep) ? mapped : sep + mapped;
+      prevSingle = single;
+      sep = after;
+    }
+    return out + sep;
+  });
+}
+
+/**
+ * True when a word of the folded copy, after joining runs of spaced single letters, mixes ASCII
+ * letters with letters of another script that no confusable maps (Sol R1 W5, R2 W3).
+ */
+export function mixedScript(folded: string, rules: TenantTextRules = TENANT_TEXT_RULES): boolean {
+  const c = compiledFor(rules);
+  const words = folded.match(c.words) ?? [];
+  const joined: string[] = [];
+  let run = "";
+  words.forEach((w, i) => {
+    const single = [...w].length === 1;
+    const near = (k: number) => k >= 0 && k < words.length && [...words[k]!].length === 1;
+    if (single && (near(i - 1) || near(i + 1))) run += w;
+    else {
+      if (run) joined.push(run);
+      run = "";
+      joined.push(w);
+    }
+  });
+  if (run) joined.push(run);
+  return joined.some((w) => /[a-z]/.test(w) && c.other.test(w));
 }
 
 /**
@@ -191,7 +245,7 @@ export function reservedTerm(text: string, rules: TenantTextRules = TENANT_TEXT_
       }
     }
   }
-  if (c.mixed.test(folded)) return "mixed script";
+  if (mixedScript(folded, rules)) return "mixed script";
   return null;
 }
 
@@ -218,7 +272,8 @@ export function admitTenantText(
   if (!c.visible.test(text.replace(c.blank, ""))) return no("blank", "must contain visible text");
   const lc = linkCopy(text, rules);
   if (c.links.some((re) => re.test(lc))) return no("link", "must be plain text, without links, addresses or markup");
-  const claim = c.claims.find((x) => x.re.test(lc));
+  const readings = [lc, ...claimReadings(foldedCopy(text, rules), rules)];
+  const claim = c.claims.find((x) => readings.some((r) => x.re.test(r)));
   if (claim) return no("claim", claim.name);
   const overridden = overrides.some((o) => o.orgId === input.orgId && o.slot === input.slot && o.text === text);
   if (!overridden) {
