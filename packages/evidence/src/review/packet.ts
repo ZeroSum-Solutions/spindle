@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { lessonBlockSchema, lessonSchema } from "@spindle/schema";
 import { z } from "zod";
 import type { RetractionState } from "../retraction";
+import { descriptionTimesError } from "../video/timestamps";
 
 export const PACKET_VERSION = 1;
 export const MAX_PACKET_BYTES = 400_000;
@@ -116,6 +117,14 @@ const CONTENT_SCHEMAS: Partial<Record<ItemKind, z.ZodType>> = {
       costUsd: z.number().min(0),
     }),
     lessons: z.array(lessonSchema).min(1),
+    /** The lesson hashes the database computed for exactly these lessons (Sol PR20-10). */
+    context: z.array(z.strictObject({ lessonId: uuid, hash: z.string().regex(HASH) })).min(1),
+  }).superRefine((c, ctx) => {
+    const times = descriptionTimesError(c.description, c.registry);
+    if (times) ctx.addIssue({ code: "custom", message: times });
+    if (c.context.length !== c.lessons.length || c.context.some((x, i) => x.lessonId !== c.lessons[i]!.id)) {
+      ctx.addIssue({ code: "custom", message: "the lesson context must name the packet's lessons in order" });
+    }
   }),
 };
 
@@ -349,14 +358,15 @@ export interface SegmentDescriber {
 
 /**
  * One packet for a registry clip: its frozen segment, the model description of
- * it (untrusted data, never instructions), the lessons that embed it and the
- * safety rules. The expected hash seals the frozen registry fields.
+ * it (untrusted data, never instructions), the lessons that embed it with their
+ * database hashes, and the safety rules. The expected hash seals the frozen registry fields.
  */
 export function buildSegmentPacket(
   segment: { mediaId: string; videoId: string; startSeconds: number; endSeconds: number; rationale: string },
   description: { spoken: unknown[]; visual: unknown[]; uncertain: unknown[] },
   describer: SegmentDescriber,
   lessons: readonly unknown[],
+  context: readonly { lessonId: string; hash: string }[],
   safetyRules: string,
   createdAt: string,
 ): ReviewPacket {
@@ -372,7 +382,7 @@ export function buildSegmentPacket(
       kind: "segment",
       target: segment.mediaId,
       expectedHash: createHash("sha256").update(canonicalJson(registry)).digest("hex"),
-      content: { registry, description: { spoken: description.spoken, visual: description.visual }, describer, lessons },
+      content: { registry, description: { spoken: description.spoken, visual: description.visual }, describer, lessons, context },
     }],
     evidence: [],
     safetyRules,
