@@ -6,7 +6,7 @@
   "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
     "Claim status (W1 dry run 2): lesson 1's claims are foundation claims (D-12), kept purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference; its abstract is too thin, so review needs the open-licence full text in the packet (W1's ingest extension). Functional points were removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabelled as practice.",
-    "Anatomy claims rest on Frank 2013 (CC BY), read in full through Europe PMC; Cavanaugh 2024, Vijian 2023, Jacinto 2022, Howell 1989 and Lippitt 1993 are no longer cited. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
+    "Anatomy claims rest on Frank 2013 (CC BY), read in full through Europe PMC; Cavanaugh 2024 (CC BY 4.0) is cited only for the rotator cuff grouping; Vijian 2023, Jacinto 2022, Howell 1989 and Lippitt 1993 are no longer cited. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
     "The scapulothoracic statement is restored because Frank 2013 states it; 'most of the force' stays removed. The capsule statement was dropped: no open source read states it.",
     "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. shoulder-cuff is a planned slot (the four cuff muscles only) and says so."
   ],
@@ -68,8 +68,8 @@
       "slot": "claim-slot:l1-cuff",
       "statement": "The rotator cuff comprises supraspinatus, infraspinatus, teres minor and subscapularis; each originates on the scapula and inserts on the humerus, subscapularis on the lesser tubercle and the other three on the greater tubercle.",
       "domain": "foundation",
-      "evidenceLevel": "Anatomy reference (narrative review)",
-      "population": "Human shoulder anatomy; not a sampled study population (Frank 2013, Table 1).",
+      "evidenceLevel": "Anatomy references (narrative reviews)",
+      "population": "Human shoulder anatomy; not a sampled study population (Frank 2013, Table 1; Cavanaugh 2024).",
       "candidateSources": [
         {
           "kind": "review",
@@ -78,13 +78,21 @@
           "pmid": "24369502",
           "pmcid": "PMC3863500",
           "rights": "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). Full text read through the Europe PMC API. Cited and paraphrased only."
+        },
+        {
+          "kind": "review",
+          "citation": "Cavanaugh E, Arcot Santillan A, Hoshikawa K, Giambini H. Subregions of the rotator cuff muscles present distinct anatomy, biomechanics, and function. Sports (Basel). 2024;12(12):349.",
+          "doi": "10.3390/sports12120349",
+          "pmid": "39728889",
+          "pmcid": "PMC11679125",
+          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Full text read through the Europe PMC API. Cited and paraphrased only."
         }
       ],
-      "note": "Structural only: 'crucial for stability' is removed. Origins and insertions are in Frank 2013, Table 1. If the grouping name needs its own source, a nomenclature reference can carry it."
+      "note": "Structural only: 'crucial for stability' is removed. Origins and insertions are in Frank 2013, Table 1; Cavanaugh 2024 (CC BY 4.0) names these four as the rotator cuff in its abstract. Both need admission as foundation anatomy references (D-12); the claim cites only the grouping and the attachments, not Cavanaugh's functional content."
     },
     {
       "slot": "claim-slot:l1-attachments",
-      "statement": "The scapula's muscular attachments to the axial skeleton include the trapezius, serratus anterior, rhomboid major, rhomboid minor, levator scapulae, subclavius and pectoralis minor; the serratus anterior attaches along the anterior aspect of the medial border of the scapula.",
+      "statement": "The scapula's muscular attachments to the axial skeleton include the trapezius, serratus anterior, rhomboid major, rhomboid minor, levator scapulae and pectoralis minor; the serratus anterior attaches along the anterior aspect of the medial border of the scapula.",
       "domain": "foundation",
       "evidenceLevel": "Anatomy reference (narrative review)",
       "population": "Human shoulder anatomy; not a sampled study population (Frank 2013).",
@@ -98,7 +106,7 @@
           "rights": "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). Full text read through the Europe PMC API. Cited and paraphrased only."
         }
       ],
-      "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2."
+      "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2. Subclavius is left out: Frank's introductory list names it, but it runs from the first rib to the clavicle, not to the scapula."
     }
   ],
   "scenarios": [
@@ -217,7 +225,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Because the shoulder blade has no bony joint with the ribcage, muscles attach it to the trunk. They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae, subclavius and pectoralis minor. The serratus anterior attaches along the inner edge of the shoulder blade, on the side that faces the ribs.",
+        "content": "Because the shoulder blade has no bony joint with the ribcage, muscles attach it to the trunk. They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae and pectoralis minor. The serratus anterior attaches along the inner edge of the shoulder blade, on the side that faces the ribs.",
         "support": "science",
         "claimIds": [
           "claim-slot:l1-attachments"

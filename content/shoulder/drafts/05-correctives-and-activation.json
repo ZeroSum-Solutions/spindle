@@ -13,7 +13,7 @@
   "claimSlots": [
     {
       "slot": "claim-slot:l5-subacromial-exercise",
-      "statement": "For subacromial pain, the British Elbow & Shoulder Society patient care pathway (PICO 6) states that there is evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and improving patient-reported function at both short- and long-term follow-up (6 months), grades this 'Conditional Positive (low evidence)', and states that the most effective physiotherapy or exercise therapy or manual therapy approach remains uncertain.",
+      "statement": "For subacromial pain, the British Elbow & Shoulder Society patient care pathway (PICO 6) reports evidence that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function at follow-up of up to 6 months, grades the recommendation 'Conditional Positive (low evidence)', and says the best physiotherapy, exercise or manual therapy approach is still uncertain.",
       "domain": "applied",
       "evidenceLevel": "Clinical guideline (GRADE), British Elbow & Shoulder Society",
       "population": "\"Subacromial Shoulder Pain\" (BESS 2025 patient care pathway).",
@@ -25,10 +25,11 @@
           "pmid": "41245988",
           "pmcid": "PMC12611748",
           "url": "https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf",
-          "rights": "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. Cited and paraphrased only."
+          "rights": "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. Cited and paraphrased only.",
+          "locator": "p. 719, PICO 6"
         }
       ],
-      "note": "D-13 publisher excerpt: PICO 6, narrative review and grade (Shoulder Elbow 2025;17(6), page 717 of the BESS PDF). Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."
+      "note": "Paraphrased; the attributed source excerpt stays in the private evidence packet (D-13), at p. 719, PICO 6. Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."
     },
     {
       "slot": "claim-slot:l5-decompression",
@@ -102,7 +103,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance from the British Elbow & Shoulder Society states that there is evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and at improving the function patients report, at short- and long-term follow-up. It grades that recommendation as conditional and positive, on low evidence, and says the most effective physiotherapy, exercise or manual therapy approach remains uncertain.",
+        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance from the British Elbow & Shoulder Society reports evidence that exercise reduces pain over 8 weeks to 6 months and improves the function patients report, at follow-up of up to six months. It grades that recommendation as conditional and positive, on low evidence, and says the best physiotherapy, exercise or manual therapy approach is still uncertain.",
         "support": "science",
         "claimIds": [
           "claim-slot:l5-subacromial-exercise"
@@ -221,12 +222,12 @@
         "content": {
           "prompt": "What does UK specialist guidance report about exercise for subacromial shoulder pain?",
           "options": [
-            "It reduces pain in the short term and improves patient-reported function; the recommendation is conditional, on low evidence, and the best approach is uncertain",
+            "It reduces pain over 8 weeks to 6 months and improves patient-reported function; the recommendation is conditional, on low evidence, and the best approach is uncertain",
             "One exercise programme is proven best",
             "Exercise does not help"
           ],
           "answerIndex": 0,
-          "explanation": "The guidance states that exercise is effective at reducing short-term pain and improving patient-reported function, grades this conditional positive on low evidence, and says the most effective approach remains uncertain."
+          "explanation": "The guidance reports that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function, grades this conditional positive on low evidence, and says the best approach is still uncertain."
         },
         "support": "science",
         "claimIds": [

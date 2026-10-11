@@ -48,6 +48,8 @@ def src(kind, citation, rights, **ids):
     return {"kind": kind, "citation": citation, **ids, "rights": rights}
 
 CC_BY_FULL = "Full text read through the Europe PMC API. " + OPEN_ACCESS_NOTE
+CAVANAUGH = src("review", "Cavanaugh E, Arcot Santillan A, Hoshikawa K, Giambini H. Subregions of the rotator cuff muscles present distinct anatomy, biomechanics, and function. Sports (Basel). 2024;12(12):349.",
+                "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). " + CC_BY_FULL, doi="10.3390/sports12120349", pmid="39728889", pmcid="PMC11679125")
 FRANK = src("review", "Frank RM, Ramirez J, Chalmers PN, McCormick FM, Romeo AA. Scapulothoracic anatomy and snapping scapula syndrome. Anat Res Int. 2013;2013:635628.",
             "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). " + CC_BY_FULL, doi="10.1155/2013/635628", pmid="24369502", pmcid="PMC3863500")
 # OpenStax is not a claim source: its terms forbid ingestion into AI models. It appears only as an
@@ -200,7 +202,7 @@ l1 = {
     C("Coach note", "You will hear people blame one cuff muscle for every shoulder complaint. Describe what you see instead, and leave the cause to a clinician."),
     PLANNED("shoulder-cuff", "the four rotator cuff muscles, from the front and from behind"),
     H("Muscles that attach the shoulder blade"),
-    S("Because the shoulder blade has no bony joint with the ribcage, muscles attach it to the trunk. They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae, subclavius and pectoralis minor. The serratus anterior attaches along the inner edge of the shoulder blade, on the side that faces the ribs.", "claim-slot:l1-attachments"),
+    S("Because the shoulder blade has no bony joint with the ribcage, muscles attach it to the trunk. They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae and pectoralis minor. The serratus anterior attaches along the inner edge of the shoulder blade, on the side that faces the ribs.", "claim-slot:l1-attachments"),
     H("Why it matters"),
     P("On the gym floor, load the range a client can control, and train the muscles that move the shoulder blade as well as the ones that move the arm."),
     H("How to see it"),
@@ -229,14 +231,14 @@ l1_slots = [
    "note": "Structural only (D-12 foundation): the sliding and positioning functions in Frank's text are not claimed."},
   {"slot": "claim-slot:l1-shallow-socket", "statement": "The articular surface of the glenoid is one third to one quarter the size of the humeral head, and the circumferential fibrocartilaginous labrum increases its surface area and depth.", "candidateSources": [FRANK],
    "note": "Structural only: the mobility statement ('most mobile joint, owing to lack of osseous constraint') is removed, as no admissible applied source states it. Howell 1989 (no DOI) is dropped."},
-  {"slot": "claim-slot:l1-cuff", "statement": "The rotator cuff comprises supraspinatus, infraspinatus, teres minor and subscapularis; each originates on the scapula and inserts on the humerus, subscapularis on the lesser tubercle and the other three on the greater tubercle.", "candidateSources": [FRANK],
-   "note": "Structural only: 'crucial for stability' is removed. Origins and insertions are in Frank 2013, Table 1. If the grouping name needs its own source, a nomenclature reference can carry it."},
-  {"slot": "claim-slot:l1-attachments", "statement": "The scapula's muscular attachments to the axial skeleton include the trapezius, serratus anterior, rhomboid major, rhomboid minor, levator scapulae, subclavius and pectoralis minor; the serratus anterior attaches along the anterior aspect of the medial border of the scapula.", "candidateSources": [FRANK],
-   "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2."},
+  {"slot": "claim-slot:l1-cuff", "statement": "The rotator cuff comprises supraspinatus, infraspinatus, teres minor and subscapularis; each originates on the scapula and inserts on the humerus, subscapularis on the lesser tubercle and the other three on the greater tubercle.", "candidateSources": [FRANK, CAVANAUGH],
+   "note": "Structural only: 'crucial for stability' is removed. Origins and insertions are in Frank 2013, Table 1; Cavanaugh 2024 (CC BY 4.0) names these four as the rotator cuff in its abstract. Both need admission as foundation anatomy references (D-12); the claim cites only the grouping and the attachments, not Cavanaugh's functional content."},
+  {"slot": "claim-slot:l1-attachments", "statement": "The scapula's muscular attachments to the axial skeleton include the trapezius, serratus anterior, rhomboid major, rhomboid minor, levator scapulae and pectoralis minor; the serratus anterior attaches along the anterior aspect of the medial border of the scapula.", "candidateSources": [FRANK],
+   "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2. Subclavius is left out: Frank's introductory list names it, but it runs from the first rib to the clavicle, not to the scapula."},
 ]
 l1_scen = [{"prompt": "A client points to the front of the shoulder and asks: \"Is that my rotator cuff?\"", "goodAnswer": "Describe the area; say you do not diagnose; ask how it behaves. If it hurts during training: stop shoulder loading for the session and apply the referral tiers.", "safety": "SAFETY.md sections 1 and 3"}]
 notes1 = ["Claim status (W1 dry run 2): lesson 1's claims are foundation claims (D-12), kept purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference; its abstract is too thin, so review needs the open-licence full text in the packet (W1's ingest extension). Functional points were removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabelled as practice.",
-          "Anatomy claims rest on Frank 2013 (CC BY), read in full through Europe PMC; Cavanaugh 2024, Vijian 2023, Jacinto 2022, Howell 1989 and Lippitt 1993 are no longer cited. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
+          "Anatomy claims rest on Frank 2013 (CC BY), read in full through Europe PMC; Cavanaugh 2024 (CC BY 4.0) is cited only for the rotator cuff grouping; Vijian 2023, Jacinto 2022, Howell 1989 and Lippitt 1993 are no longer cited. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
           "The scapulothoracic statement is restored because Frank 2013 states it; 'most of the force' stays removed. The capsule statement was dropped: no open source read states it.",
           "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. shoulder-cuff is a planned slot (the four cuff muscles only) and says so."]
 
@@ -456,7 +458,7 @@ l5 = {
   "blocks": [
     P("\"Correctives\" and \"activation\" are some of the most used words in shoulder training. This lesson separates what research tested from what is coaching practice, so you can use both honestly."),
     H("What research reports, and for whom"),
-    S("For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance from the British Elbow & Shoulder Society states that there is evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and at improving the function patients report, at short- and long-term follow-up. It grades that recommendation as conditional and positive, on low evidence, and says the most effective physiotherapy, exercise or manual therapy approach remains uncertain.", "claim-slot:l5-subacromial-exercise"),
+    S("For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance from the British Elbow & Shoulder Society reports evidence that exercise reduces pain over 8 weeks to 6 months and improves the function patients report, at follow-up of up to six months. It grades that recommendation as conditional and positive, on low evidence, and says the best physiotherapy, exercise or manual therapy approach is still uncertain.", "claim-slot:l5-subacromial-exercise"),
     S("For adults whose subacromial pain had lasted more than three months, a systematic review with meta-analysis found high-certainty evidence that surgery to decompress the space gave no additional benefit over placebo surgery, for pain at one year or for physical function at one to two years.", "claim-slot:l5-decompression"),
     S("For rotator cuff related shoulder pain, a 2020 systematic review compared each kind of exercise with placebo or no treatment, not with each other, over more than six weeks and up to six months. Progressive and resisted exercise showed an uncertain clinical benefit; non-progressive or non-resisted exercise showed no significant benefit. The certainty of the evidence was low.", "claim-slot:l5-progressive-comparisons"),
     C(POLICY, BOUNDARY),
@@ -476,8 +478,8 @@ l5 = {
     P("Give one to three cues per drill, as a direction or a target: \"reach long through your hands\", \"push the band away\". Watch the next rep, and keep a cue only if the movement changes the way you want."),
     C(REFER, f"Correctives never replace referral. Any stop rule means: {STOP_SESSION} {WORSENING} {TWO_WEEKS} Anything in the urgent or emergency tiers: refer at that tier (see \"When to refer out\")."),
     H("Check your understanding"),
-    Q("What does UK specialist guidance report about exercise for subacromial shoulder pain?", ["It reduces pain in the short term and improves patient-reported function; the recommendation is conditional, on low evidence, and the best approach is uncertain", "One exercise programme is proven best", "Exercise does not help"], 0,
-      "The guidance states that exercise is effective at reducing short-term pain and improving patient-reported function, grades this conditional positive on low evidence, and says the most effective approach remains uncertain.", "claim-slot:l5-subacromial-exercise"),
+    Q("What does UK specialist guidance report about exercise for subacromial shoulder pain?", ["It reduces pain over 8 weeks to 6 months and improves patient-reported function; the recommendation is conditional, on low evidence, and the best approach is uncertain", "One exercise programme is proven best", "Exercise does not help"], 0,
+      "The guidance reports that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function, grades this conditional positive on low evidence, and says the best approach is still uncertain.", "claim-slot:l5-subacromial-exercise"),
     Q("How did the 2020 review compare progressive and non-progressive exercise for rotator cuff related shoulder pain?", ["It found progressive exercise clearly better than non-progressive", "It compared each with placebo or no treatment, not with each other, and the evidence was low certainty", "It found no difference between them in a head-to-head comparison"], 1,
       "Each approach was compared with placebo or no treatment over more than six weeks to six months; the review did not compare them head to head, and certainty was low.", "claim-slot:l5-progressive-comparisons"),
     C("Talk it through", "A client wants to spend 20 minutes on activation before every session. What do you keep as a short warm-up, and what moves into the main session as real training?"),
@@ -485,8 +487,8 @@ l5 = {
   "media": [], "resources": [],
 }
 l5_slots = [
-  {"slot": "claim-slot:l5-subacromial-exercise", "statement": "For subacromial pain, the British Elbow & Shoulder Society patient care pathway (PICO 6) states that there is evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and improving patient-reported function at both short- and long-term follow-up (6 months), grades this 'Conditional Positive (low evidence)', and states that the most effective physiotherapy or exercise therapy or manual therapy approach remains uncertain.", "candidateSources": [BESS25],
-   "note": "D-13 publisher excerpt: PICO 6, narrative review and grade (Shoulder Elbow 2025;17(6), page 717 of the BESS PDF). Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."},
+  {"slot": "claim-slot:l5-subacromial-exercise", "statement": "For subacromial pain, the British Elbow & Shoulder Society patient care pathway (PICO 6) reports evidence that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function at follow-up of up to 6 months, grades the recommendation 'Conditional Positive (low evidence)', and says the best physiotherapy, exercise or manual therapy approach is still uncertain.", "candidateSources": [{**BESS25, "locator": "p. 719, PICO 6"}],
+   "note": "Paraphrased; the attributed source excerpt stays in the private evidence packet (D-13), at p. 719, PICO 6. Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."},
   {"slot": "claim-slot:l5-decompression", "statement": "In adult patients with subacromial pain syndrome lasting more than 3 months, a systematic review with meta-analysis found high-certainty evidence of no additional benefit of subacromial decompression surgery over placebo surgery for pain at 1 year or physical function at 1 to 2 years.", "candidateSources": [LAHDEOJA],
    "note": "Replaces the CSAW trial (Beard 2018), an RCT the claim pipeline does not admit; the meta-analysis pools the placebo-controlled trials, CSAW among them."},
   {"slot": "claim-slot:l5-progressive-comparisons", "statement": "A 2020 systematic review found uncertain clinical benefit for progressive and resisted exercise and no significant benefit for non-progressive or non-resisted exercise, each versus placebo or no treatment at more than 6 weeks to 6 months, in rotator cuff related shoulder pain; evidence was low certainty and the categories were not compared directly.", "candidateSources": [NAUNTON]},
@@ -666,8 +668,8 @@ l8 = {
   "media": [], "resources": [],
 }
 l8_slots = [
-  {"slot": "claim-slot:l8-subacromial-course", "statement": "Among interventions suitable for primary care, the British Elbow & Shoulder Society subacromial pain care pathway lists reassurance: this is usually a self-limiting condition, and most symptoms respond within three months.", "candidateSources": [BESS25],
-   "note": "D-13 publisher excerpt: 'Treatment in primary care and community triage services', page 716 of the BESS PDF."},
+  {"slot": "claim-slot:l8-subacromial-course", "statement": "Among interventions suitable for primary care, the British Elbow & Shoulder Society subacromial pain care pathway lists reassurance: this is usually a self-limiting condition, and most symptoms respond within three months.", "candidateSources": [{**BESS25, "locator": "p. 716, Treatment in primary care and community triage services"}],
+   "note": "The attributed source excerpt stays in the private evidence packet (D-13)."},
 ]
 l8_scen = [
   {"prompt": "Arm pain with chest tightness during a session.", "goodAnswer": "Stop all exercise; emergency: call emergency services (999 in the UK) now and stay with the client.", "safety": "SAFETY.md section 4"},
@@ -707,7 +709,7 @@ CLAIM_META = {
     "claim-slot:l1-bones-joints": ("Anatomy reference (narrative review)", ANATOMY + " (Frank 2013)."),
     "claim-slot:l1-scapulothoracic": ("Anatomy reference (narrative review)", ANATOMY + ": \"the scapulothoracic articulation\" (Frank 2013)."),
     "claim-slot:l1-shallow-socket": ("Anatomy reference (narrative review)", ANATOMY + " (Frank 2013)."),
-    "claim-slot:l1-cuff": ("Anatomy reference (narrative review)", ANATOMY + " (Frank 2013, Table 1)."),
+    "claim-slot:l1-cuff": ("Anatomy references (narrative reviews)", ANATOMY + " (Frank 2013, Table 1; Cavanaugh 2024)."),
     "claim-slot:l1-attachments": ("Anatomy reference (narrative review)", ANATOMY + " (Frank 2013)."),
     "claim-slot:l2-scapular-motions": ("Systematic review with multilevel meta-regression", FERNANDEZ_POP + "."),
     "claim-slot:l2-shared-ratio": ("Systematic review with multilevel meta-regression", FERNANDEZ_POP + "."),
