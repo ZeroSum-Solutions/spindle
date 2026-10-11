@@ -29,14 +29,19 @@ Use the pinned toolchain: `mise exec -- <cmd>` (Node 24, pnpm 10).
 - `pnpm dev` — web app on :3000
 - `supabase start -x studio,imgproxy,logflare,vector,edge-runtime,realtime,storage-api,postgres-meta,supavisor` — lean local stack (needs Docker); Mailpit on :54324 receives sign-in codes
 - `supabase test db` — pgTAP policy tests in `supabase/tests/database/`
-- `pnpm --filter web e2e` — Playwright end-to-end tests (needs the local stack; copy `apps/web/.env.example` to `.env.local` with the key from `supabase status`)
+- `pnpm --filter web e2e` — Playwright end-to-end tests (needs the local stack; copy `apps/web/.env.example` to `apps/web/.env.local` with the key from `supabase status`)
 - `supabase gen types typescript --local > apps/web/src/lib/supabase/database.types.ts` — after every migration
+
+See [docs/TESTING.md](docs/TESTING.md) for test scope, local runtime ownership, synthetic fixtures and evidence. `pnpm check` does not run database or browser tests.
 
 ## Team workflow
 - **One lead, at most two writers.** The lead sets priorities, keeps `docs/DECISIONS.md` and is the only one who lands PRs. Writers each own one claimed unit.
+- **Effort:** Opus 5.5 Medium is the default. Choose higher-effort/Ultracode work only when the task warrants it; return to Medium after a temporary escalation.
+- **Dynamic delegation:** Opus may adapt its workflow and delegate read-only exploration or review. Every helper that edits files counts toward the two-writer limit and needs its own lead-approved claim and worktree. A writer must not launch extra writers inside its unit. Helpers inherit the unit's scope and cannot mutate shared runtimes or land PRs.
 - **Claim before code:** every writer works in its own worktree, `~/projects/spindle-worktrees/<slug>` on branch `<type>/<slug>`, prepared with `scripts/worktree-setup.sh`. Never edit another writer's files without the lead's OK, and never run two git commands at once in one worktree.
+- **Shared guidance:** the lead announces landed instruction changes to active writers. Each writer acknowledges and follows the new guidance immediately, then merges current `origin/main` at a safe checkpoint before final validation and review. Do not copy or cherry-pick the guidance into multiple branches. Report any overlap to the lead before resolving it.
 - **Red test first** for bugs: a test that fails on `main` and passes on the branch.
-- **PRs:** open as drafts and fill in `.github/pull_request_template.md`. Mark a PR ready once, after a cross-family review: GPT-6.1 Sol reviews Claude-written code, Claude reviews GPT-written code. Verify each finding against the code before acting on it.
+- **PRs:** writers open drafts and fill in `.github/pull_request_template.md`. The lead marks a PR ready once, after a cross-family review: GPT-6.1 Sol reviews Claude-written code, Claude reviews GPT-written code. Verify each finding against the code before acting on it. The lead records the exact reviewed head SHA, reviewer model, finding dispositions and test receipts. Merge the current base before review. Any subsequent code change, including code brought in by a base merge, requires review of the resulting head; the lead records a docs-only exemption explicitly.
 - **No direct pushes to `main`.** The ruleset requires the `ci` check and a squash merge.
 
 ## Working conventions
