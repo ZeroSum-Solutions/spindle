@@ -143,7 +143,7 @@ function Hero({ brand }: { brand: Brand }) {
         </div>
         <figure className="flex min-w-0 flex-col gap-3" aria-label="Three layers of courses">
           <LayerStack brandName={brand.name} />
-          <figcaption className="text-label text-text-muted">Base, modality and method are separate courses. Each keeps its own label.</figcaption>
+          <figcaption className="text-label text-text-muted">Base, modality and method are separate courses. Each keeps its own label. Schematic, not to scale.</figcaption>
         </figure>
       </div>
     </section>

@@ -27,7 +27,7 @@
     {
       "id": "shoulder-complex-front",
       "file": "apps/web/src/components/illustrations/shoulder.tsx (ShoulderComplex)",
-      "subject": "Right shoulder complex from the front: four numbered joints, ball and socket highlighted",
+      "subject": "Left shoulder complex from the front (the subject's left): three joints numbered, the shoulder blade behind the ribs, ball and socket highlighted",
       "source": "original-svg",
       "createdAt": "2026-10-11",
       "creator": "Spindle (drafted with AI assistance: Claude Opus 5.5; reviewed in the rendered app)",
@@ -55,7 +55,7 @@
       "creator": "Spindle (drafted with AI assistance: Claude Opus 5.5; reviewed in the rendered app)",
       "rights": "CC BY-SA 4.0 for the drawing; the surrounding code is AGPL-3.0-only",
       "method": "Hand-written SVG geometry (paths, circles, polygons) in code. Not traced from, or generated from, any image, atlas, textbook figure or third-party illustration; no reference image was opened while drawing.",
-      "accuracy": "Schematic and not to scale; labelled so in the app."
+      "accuracy": "Schematic and not to scale; the landing caption says so."
     }
   ]
 }

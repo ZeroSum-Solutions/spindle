@@ -22,7 +22,7 @@ export function VersionNotice({ delta, versionNumber, credited = false }: { delt
               {r.icon}
               <dt className="sr-only">{r.label}</dt>
               <dd>
-                <span className="font-medium">{r.label}:</span> {r.items.join(", ")}
+                <span aria-hidden className="font-medium">{r.label}:</span> {r.items.join(", ")}
               </dd>
             </div>
           ))}

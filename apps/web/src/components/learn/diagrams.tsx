@@ -20,7 +20,7 @@ export const DIAGRAMS: Readonly<Record<string, DiagramEntry>> = {
         "Sternoclavicular joint: the collarbone meets the breastbone.",
         "Acromioclavicular joint: the collarbone meets the top of the shoulder blade.",
         "Glenohumeral joint: the ball and socket (highlighted).",
-        "Scapulothoracic: the shoulder blade glides over the ribs (dashed: behind the ribs).",
+        "The shoulder blade, which lies behind the ribs (dashed).",
       ],
     },
   },
