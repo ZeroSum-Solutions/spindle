@@ -13,6 +13,10 @@
 #      review waits for the save and is refused as stale.
 #   6. record a lesson review, then save a new draft: the review stays bound to
 #      the old hash, so the new draft cannot publish on it.
+#   7. retire a registry clip, then refresh its metadata: the refresh waits and
+#      is refused, and no metadata survives the retirement.
+#   8. retire a clip, then reactivate it: the activation waits and is refused,
+#      and the clip stays retired.
 # It commits synthetic rows, so it refuses the shared local stack: point
 # RACE_DB_URL at an isolated database, or run it in CI's ephemeral stack.
 # Every connection, statement and wait is bounded. On exit or interruption it
@@ -90,6 +94,12 @@ alter table public.curriculum_versions disable trigger user; alter table public.
 alter table public.version_claims disable trigger user; alter table public.version_flags disable trigger user;
 alter table public.review_runs disable trigger user; alter table public.lesson_reviews disable trigger user;
 alter table public.course_reviews disable trigger user;
+alter table public.practice_media disable trigger user; alter table public.practice_media_checks disable trigger user;
+alter table public.practice_media_status disable trigger user;
+delete from public.practice_media_metadata where recorded_by = '$P';
+delete from public.practice_media_status where recorded_by = '$P';
+delete from public.practice_media_checks where recorded_by = '$P';
+delete from public.practice_media where admitted_by = '$P';
 delete from public.orgs where id = '$ORG';
 delete from public.courses where id in ('$C1', '$C2', '$C4');
 delete from public.binding_reviews where reviewer = '$P';
@@ -110,6 +120,8 @@ alter table public.curriculum_versions enable trigger user; alter table public.v
 alter table public.version_claims enable trigger user; alter table public.version_flags enable trigger user;
 alter table public.review_runs enable trigger user; alter table public.lesson_reviews enable trigger user;
 alter table public.course_reviews enable trigger user;
+alter table public.practice_media enable trigger user; alter table public.practice_media_checks enable trigger user;
+alter table public.practice_media_status enable trigger user;
 commit;
 SQL
   [ "$(q "select count(*) from auth.users where id in ('$P', '$O', '$T1', '$T2')")" = 0 ]
@@ -291,6 +303,26 @@ out=$(PGAPPNAME="$RUN-probe" psql -At -c "$(as_service) select public.publisher_
 bound=$(q "select count(*) from public.lesson_reviews where lesson_id = '$L4' and lesson_hash = '$HASH_B'")
 check "record a review then save: overlap proven, the review stays on the old hash and the new draft cannot publish" \
   $(( OVERLAP == 0 && FIRST_EXIT == 0 && SECOND_EXIT == 0 && gate == 0 && bound == 1 ? 0 : 1 ))
+
+# Cases 7-8: two registry clips, each with fresh provider metadata.
+media() { q "begin; $(as_service) select public.publisher_admit_media('$P', jsonb_build_object('provider', 'youtube', 'videoId', '$1',
+  'startSeconds', 0, 'endSeconds', 30, 'rationale', 'Race clip.', 'embedCheckedAt', to_char(now(), 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'))); commit;" | tail -1; }
+meta() { echo "$(as_service) select public.publisher_refresh_media_metadata('$P', '$1', jsonb_build_object('title', 'Race clip', 'channel', 'Race', 'available', true, 'fetchedAt', to_char(now(), 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"')));"; }
+status() { echo "$(as_service) select public.publisher_set_media_status('$P', '$1', '{\"status\": \"$2\", \"reason\": \"race\"}');"; }
+M7=$(media RaceClip007); M8=$(media RaceClip008)
+q "begin; $(meta "$M7") commit;" >/dev/null
+race retire-refresh "$(status "$M7" retired)" "$(meta "$M7")" row
+refused=1; grep -q "is retired" "$TMP/retire-refresh.second" && refused=0
+left=$(q "select count(*) from public.practice_media_metadata where media_id = '$M7'")
+check "retire then refresh metadata: overlap proven, the refresh is refused and no metadata survives" \
+  $(( OVERLAP == 0 && FIRST_EXIT == 0 && SECOND_EXIT != 0 && refused == 0 && left == 0 ? 0 : 1 ))
+
+race retire-activate "$(status "$M8" retired)" "$(status "$M8" active)" row
+refused=1; grep -q "is retired" "$TMP/retire-activate.second" && refused=0
+final=$(q "select status from public.practice_media_status where media_id = '$M8' order by seq desc limit 1")
+check "retire then reactivate: overlap proven, the activation is refused and the clip stays retired" \
+  $(( OVERLAP == 0 && FIRST_EXIT == 0 && SECOND_EXIT != 0 && refused == 0 ? 0 : 1 ))
+[ "$final" = retired ] || { echo "not ok - the clip's final status is $final" >&2; fails=$((fails + 1)); }
 
 if [ "$fails" -ne 0 ]; then
   for f in "$TMP"/*.first "$TMP"/*.second; do echo "== $(basename "$f")" >&2; cat "$f" >&2; done

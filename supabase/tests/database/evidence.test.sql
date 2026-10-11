@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(155);
+select plan(170);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -617,6 +617,25 @@ select public.publisher_refresh_media_metadata(pg_temp.pat(), pg_temp.id('mv'), 
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
 select results_eq(format('select state, title from public.version_media(%L)', pg_temp.id('v_v1')),
   $$values ('playable'::text, null::text)$$, 'metadata older than 30 days is not served');
+-- Playback follows the latest checks, not only the status (Sol S01).
+select pg_temp.as_service();
+select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'),
+  jsonb_build_object('kind', 'segment', 'outcome', 'fail', 'checkedAt', pg_temp.iso(now()), 'notes', 'Unsafe cue in the segment.'));
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format('select state from public.version_media(%L)', pg_temp.id('v_v1')), $$values ('disabled'::text)$$,
+  'a failed segment review stops playback in a published version at once');
+select pg_temp.as_service();
+select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'),
+  jsonb_build_object('kind', 'segment', 'outcome', 'pass', 'checkedAt', pg_temp.iso(now() - interval '91 days'), 'run', pg_temp.run('segment-old-pass')));
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format('select state from public.version_media(%L)', pg_temp.id('v_v1')), $$values ('disabled'::text)$$,
+  'a segment review older than 90 days stops playback');
+select pg_temp.as_service();
+select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'),
+  jsonb_build_object('kind', 'segment', 'outcome', 'pass', 'checkedAt', pg_temp.iso(now()), 'run', pg_temp.run('segment-recheck')));
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format('select state from public.version_media(%L)', pg_temp.id('v_v1')), $$values ('playable'::text)$$,
+  'a fresh passing segment review restores playback');
 select pg_temp.as_service();
 select public.publisher_set_media_status(pg_temp.pat(), pg_temp.id('mv'), '{"status": "disabled", "reason": "Synthetic takedown."}');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
@@ -815,6 +834,93 @@ select pg_temp.reset_role();
 set local role anon;
 select throws_ok(format('select * from public.module_status(%L)', pg_temp.id('tess_q1')), '42501', null, 'anon cannot read module status');
 reset role;
+
+-- 9b. Sol R1: question limit, practice quizzes, old runs, tenant idempotence ----------------------------
+select pg_temp.as_service();
+-- A graded set the learner can always submit: 1000 publishes and is submittable; 1001 is refused at publish.
+create function pg_temp.big_tree(n_lessons integer, extra boolean) returns jsonb language sql as $$
+  select pg_temp.course('7a000000-0000-4000-8000-000000000000', 'base',
+    (select jsonb_agg(pg_temp.lesson(format('7a000000-0000-4000-8000-%s', lpad(i::text, 12, '0')), 'big-' || i,
+       (select jsonb_agg(pg_temp.quiz('Same synthetic question?', 'science', array[pg_temp.id('c_ok')])) from generate_series(1, 200)))
+       order by i) from generate_series(1, n_lessons) i)
+    || case when extra then jsonb_build_array(pg_temp.lesson('7a000000-0000-4000-8000-000000000999', 'big-extra',
+         jsonb_build_array(pg_temp.quiz('One more?', 'science', array[pg_temp.id('c_ok')])))) else '[]'::jsonb end)
+$$;
+select pg_temp.save(pg_temp.big_tree(5, true));
+select throws_ok($$select pg_temp.publish('7a000000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: course 7a000000-0000-4000-8000-000000000000 has 1001 graded questions; the limit is 1000',
+  'a course with 1001 graded questions cannot publish (a learner could never submit it)');
+select pg_temp.save(pg_temp.big_tree(5, false));
+select pg_temp.review_all('7a000000-0000-4000-8000-000000000000', 'big');
+select lives_ok($$select pg_temp.keep('big_v1', pg_temp.publish('7a000000-0000-4000-8000-000000000000'))$$,
+  'a course with exactly 1000 graded questions publishes');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.keep('tom_big', public.assign_version('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.id('big_v1'), '00000000-0000-0000-0000-0000000000a4'));
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
+select results_eq($$select correct, total, passed from public.submit_quiz_attempt(pg_temp.id('tom_big'), gen_random_uuid(),
+  (select jsonb_agg(jsonb_build_object('questionId', format('7a000000-0000-4000-8000-%s:q%s', lpad(l::text, 12, '0'), q), 'answerIndex', 1))
+   from generate_series(1, 5) l, generate_series(1, 200) q))$$, $$values (1000, 1000, true)$$,
+  'all 1000 answers can be submitted and scored');
+-- Base lessons may carry ungraded practice quizzes (Sol R03).
+select pg_temp.as_service();
+select lives_ok($$select pg_temp.save(pg_temp.course('7b000000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('7b000000-0000-4000-8000-000000000011', 'mixed', jsonb_build_array(
+    pg_temp.quiz('Graded?', 'science', array[pg_temp.id('c_ok')]), pg_temp.quiz('Discuss: how would you cue this client?', 'practice-based', '{}'))))))$$,
+  'a base lesson saves with a claim-free practice quiz');
+select pg_temp.review_all('7b000000-0000-4000-8000-000000000000', 'mixed');
+select lives_ok($$select pg_temp.keep('mixed_v1', pg_temp.publish('7b000000-0000-4000-8000-000000000000'))$$,
+  'a base lesson with a practice quiz publishes');
+select pg_temp.reset_role();
+select is((select jsonb_agg(q ->> 'questionId') from jsonb_array_elements(private.graded_questions(
+  (select snapshot from public.curriculum_versions where id = pg_temp.id('mixed_v1')))) q),
+  '["7b000000-0000-4000-8000-000000000011:q1"]'::jsonb, 'only the science quiz is graded');
+select pg_temp.as_service();
+select throws_ok($$select pg_temp.save(pg_temp.course('7b000000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('7b000000-0000-4000-8000-000000000011', 'mixed', jsonb_build_array(
+    pg_temp.quiz('Discuss?', 'practice-based', array[pg_temp.id('c_ok')]))))))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0]: a practice-based block cannot carry claims',
+  'a practice quiz still cannot carry claims');
+-- An old model run cannot renew a claim (Sol S06).
+select pg_temp.keep('c_run', pg_temp.claim('Synthetic claim reviewed long ago.', pg_temp.id('s1')));
+select throws_ok(format($$select public.publisher_review_claim(pg_temp.pat(), %L, jsonb_build_object('decision', 'approved',
+  'expiresAt', %L, 'expectedHash', pg_temp.claim_hash(%L), 'receipt', pg_temp.claim_receipt(),
+  'run', jsonb_set(pg_temp.run('ancient'), '{reviewedAt}', to_jsonb(%L::text))))$$,
+  pg_temp.id('c_run'), pg_temp.iso(now() + interval '1 year'), pg_temp.id('c_run'), pg_temp.iso(now() - interval '23 months')),
+  '22023', 'invalid review.expiresAt: must be at most 24 months after the model review',
+  'an approval cannot outlast its model review by more than 24 months');
+select lives_ok(format($$select public.publisher_review_claim(pg_temp.pat(), %L, jsonb_build_object('decision', 'approved',
+  'expiresAt', %L, 'expectedHash', pg_temp.claim_hash(%L), 'receipt', pg_temp.claim_receipt(),
+  'run', jsonb_set(pg_temp.run('ancient'), '{reviewedAt}', to_jsonb(%L::text))))$$,
+  pg_temp.id('c_run'), pg_temp.iso(now() + interval '20 days'), pg_temp.id('c_run'), pg_temp.iso(now() - interval '23 months')),
+  'an approval within 24 months of its model review is accepted');
+select pg_temp.reset_role();
+insert into public.claim_reviews (claim_id, decision, expires_at, receipt, reviewer, run_id, claim_hash)
+select pg_temp.id('c_run'), 'approved', now() + interval '1 year', pg_temp.claim_receipt(), '00000000-0000-0000-0000-0000000000c1',
+  r.id, private.claim_hash(pg_temp.id('c_run'))
+from public.review_runs r where r.session_id = 'ci-ancient';
+select pg_temp.as_service();
+select is(public.publisher_claim_target(pg_temp.pat(), pg_temp.id('c_run')) ->> 'status', 'approved',
+  'an approval row inside the run window is current');
+select pg_temp.reset_role();
+insert into public.review_runs (model, session_id, packet_digest, reviewed_at, recorded_by)
+values ('synthetic-fixture', 'ci-older', repeat('9', 64), now() - interval '25 months', '00000000-0000-0000-0000-0000000000c1');
+insert into public.claim_reviews (claim_id, decision, expires_at, receipt, reviewer, run_id, claim_hash)
+select pg_temp.id('c_run'), 'approved', now() + interval '1 year', pg_temp.claim_receipt(), '00000000-0000-0000-0000-0000000000c1',
+  r.id, private.claim_hash(pg_temp.id('c_run'))
+from public.review_runs r where r.session_id = 'ci-older';
+select pg_temp.as_service();
+select is(public.publisher_claim_target(pg_temp.pat(), pg_temp.id('c_run')) ->> 'status', 'expired',
+  'an approval written around the RPC on a 25-month-old run is expired');
+-- Unchanged gym courses stay idempotent across the migration (Sol R05).
+select pg_temp.reset_role();
+insert into public.curriculum_versions (course_id, org_id, layer, version_number, snapshot, content_hash, published_by, rules)
+select course_id, org_id, layer, version_number + 1, snapshot, content_hash, published_by, 'phase2'
+from public.curriculum_versions where id = pg_temp.id('m_v1');
+select pg_temp.keep('m_v2_legacy', (select id from public.curriculum_versions where course_id = '73000000-0000-4000-8000-000000000000' and rules = 'phase2'));
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select is(public.publish_course('73000000-0000-4000-8000-000000000000'), pg_temp.id('m_v2_legacy'),
+  'republishing an unchanged gym course returns its latest version, whatever rules it was published under');
+select pg_temp.reset_role();
 
 -- 10. Privileges and hygiene -------------------------------------------------------------------
 create temp table p3_tables (name text);

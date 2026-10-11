@@ -3,6 +3,7 @@
 // out module completion. The app uses these to explain results, never to
 // decide them.
 import { PASS_PERCENT, type ClaimIntegrityState, type Course, type QuizAnswer } from "@spindle/schema";
+import { instantMicros } from "./version";
 
 export interface GradedQuestion {
   /** '<lesson id>:q<n>': the n-th science quiz block in that lesson, counted from 1. */
@@ -65,17 +66,22 @@ export interface AttemptSummary {
   submittedAt: string;
 }
 
-/** The best attempt counts: most correct, then the earliest. */
+/** The best attempt counts: most correct, then the earliest instant (microseconds, any offset), then the id, as SQL orders them. */
 export function bestAttempt<T extends AttemptSummary>(attempts: readonly T[]): T | null {
+  const at = (a: AttemptSummary): bigint => {
+    const micros = instantMicros(a.submittedAt);
+    if (micros === null) throw new Error(`Invalid quiz attempt: ${a.id} has a submittedAt the engine cannot order exactly`);
+    return micros;
+  };
   let best: T | null = null;
   for (const a of attempts) {
-    if (
-      !best ||
-      a.correct > best.correct ||
-      (a.correct === best.correct && (Date.parse(a.submittedAt) < Date.parse(best.submittedAt) || (a.submittedAt === best.submittedAt && a.id < best.id)))
-    ) {
+    if (!best || a.correct > best.correct) {
       best = a;
+      continue;
     }
+    if (a.correct < best.correct) continue;
+    const [x, y] = [at(a), at(best)];
+    if (x < y || (x === y && a.id < best.id)) best = a;
   }
   return best;
 }

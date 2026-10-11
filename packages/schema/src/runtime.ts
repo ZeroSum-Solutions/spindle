@@ -62,7 +62,9 @@ export function isVideoHostUrl(value: string): boolean {
 
 export const mediaAssetSchema = z.strictObject({
   kind: z.enum(["image", "video", "diagram"]),
-  src: safeUrl.refine((src) => !isVideoHostUrl(src), "YouTube media must use a video block from the practice-media registry"),
+  // Lenient on purpose: phase-2 snapshots may hold video-host URLs and must stay readable. New content is
+  // refused by validateCatalog and the database; the player renders such media as unavailable.
+  src: safeUrl,
   alt: requiredText,
   caption: text,
   provenanceId: idSchema,

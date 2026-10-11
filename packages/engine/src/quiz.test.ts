@@ -73,6 +73,15 @@ describe("module completion", () => {
     expect(moduleCompletion({ ...base, lessonIds: [], completedLessonIds: [], questionSetHash: null, attempts: [] }).complete).toBe(false);
   });
 
+  it("compares submission instants, not their spelling", () => {
+    const a = { id: "a", correct: 4, total: 5, submittedAt: "2026-10-11T00:00:00Z" };
+    const b = { id: "b", correct: 4, total: 5, submittedAt: "2026-10-11T01:00:00+01:00" };
+    expect(bestAttempt([b, a])?.id).toBe("a");
+    const early = { id: "z", correct: 4, total: 5, submittedAt: "2026-10-11T00:00:00.000001Z" };
+    const earlier = { id: "y", correct: 4, total: 5, submittedAt: "2026-10-11T00:00:00.000002Z" };
+    expect(bestAttempt([earlier, early])?.id).toBe("z");
+  });
+
   it("picks the best attempt, earliest on a tie", () => {
     expect(bestAttempt([attempt("b", 4, "2026-10-11T00:01:00Z"), attempt("a", 4, "2026-10-11T00:00:00Z"), attempt("c", 2, "2026-10-10T00:00:00Z")])?.id).toBe("a");
     expect(bestAttempt([])).toBeNull();
@@ -104,6 +113,14 @@ describe("registry videos in a catalog", () => {
     const c = course();
     return { ...c, layer, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, blocks: [video] }] }] };
   };
+
+  it("refuse YouTube-family URLs as plain media in new content", () => {
+    const c = course();
+    const legacy: Course = { ...c, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, blocks: [{ kind: "image", content: { kind: "image", src: "https://i.ytimg.com/vi/x/0.jpg", alt: "x", caption: "", provenanceId: "p1" } }] }] }] };
+    expect(() => validateCatalog({ version: "t", courses: [legacy] }, ...lookups)).toThrow(/video host/);
+    const lessonMedia: Course = { ...c, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, media: [{ kind: "video", src: "https://youtu.be/x", alt: "x", caption: "", provenanceId: "p1" }] }] }] };
+    expect(() => validateCatalog({ version: "t", courses: [lessonMedia] }, ...lookups)).toThrow(/video host/);
+  });
 
   it("are allowed in global content and refused in gym method content", () => {
     expect(() => validateCatalog({ version: "t", courses: [withVideo("base")] }, ...lookups)).not.toThrow();

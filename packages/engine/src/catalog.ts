@@ -1,6 +1,6 @@
 // Pure catalog functions. Ported from the trainer-academy prototype and changed
 // to take the catalog as an argument instead of importing compiled content.
-import type { Catalog, Course, Lesson } from "@spindle/schema";
+import { isVideoHostUrl, type Catalog, type Course, type Lesson } from "@spindle/schema";
 
 export interface LessonLocation {
   course: Course;
@@ -34,7 +34,10 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
         invariant(!lessonSlugs.has(lesson.slug), `Duplicate lesson slug ${course.slug}/${lesson.slug}`);
         lessonSlugs.add(lesson.slug);
         for (const block of lesson.blocks) {
-          if (block.kind === "image") requireProvenance(provenance, block.content.provenanceId);
+          if (block.kind === "image") {
+            requireProvenance(provenance, block.content.provenanceId);
+            requireNoVideoHost(lesson.id, block.content.src);
+          }
           if (block.kind === "video") {
             invariant(course.layer !== "method", `${lesson.id} is gym method content and cannot embed registry videos`);
             invariant(block.content.endSeconds > block.content.startSeconds, `${lesson.id} has a video segment that ends before it starts`);
@@ -58,7 +61,10 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
             invariant(block.claimIds.length === 0, `${lesson.id} has a practice-based block posing as science`);
           }
         }
-        for (const media of lesson.media) requireProvenance(provenance, media.provenanceId);
+        for (const media of lesson.media) {
+          requireProvenance(provenance, media.provenanceId);
+          requireNoVideoHost(lesson.id, media.src);
+        }
       }
     });
   }
@@ -67,6 +73,11 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
 function claimUnique(ids: Set<string>, id: string): void {
   invariant(!ids.has(id), `Duplicate id ${id}`);
   ids.add(id);
+}
+
+/** New content embeds video only through registry video blocks (ADR 0007). */
+function requireNoVideoHost(lessonId: string, src: string): void {
+  invariant(!isVideoHostUrl(src), `${lessonId} has media on a video host; use a registry video block`);
 }
 
 function requireProvenance(provenance: ProvenanceLookup, id: string): void {

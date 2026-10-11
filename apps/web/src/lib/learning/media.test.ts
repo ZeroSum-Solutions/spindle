@@ -50,6 +50,15 @@ describe("resolveContentUrl", () => {
   );
 });
 
+describe("legacy video-host media (ADR 0007)", () => {
+  it.each(["https://i.ytimg.com/vi/AbCdEfGhIj0/0.jpg", "https://www.youtube.com/watch?v=AbCdEfGhIj0", "https://youtu.be/AbCdEfGhIj0", "https://www.youtube-nocookie.com/embed/x"])(
+    "renders %s as unavailable, so nothing loads from YouTube",
+    (src) => {
+      expect(resolveContentUrl(src, { orgId: null })).toEqual({ kind: "unavailable" });
+    },
+  );
+});
+
 describe("SERVABLE_MEDIA", () => {
   it.each(["image/png", "image/webp", "application/pdf"])("serves %s", (type) => expect(SERVABLE_MEDIA.test(type)).toBe(true));
   it.each(["video/mp4", "image/svg+xml", "text/html", "application/octet-stream", "image/png; charset=x", ""])("refuses %s", (type) =>

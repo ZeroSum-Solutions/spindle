@@ -132,16 +132,23 @@ interface Ranked {
 
 const TIMESTAMP = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?(?:Z|([+-])(\d{2}):(\d{2}))$/;
 
-/** Date.parse keeps only milliseconds; PostgreSQL timestamptz keeps microseconds. */
-function epochMicros(completion: LessonCompletion): bigint {
-  const m = TIMESTAMP.exec(completion.completedAt);
-  invariant(m, `completion ${completion.id} has a completedAt the engine cannot order exactly`);
+/** Microseconds since the epoch for an ISO 8601 instant with an offset, or null. Date.parse keeps only milliseconds. */
+export function instantMicros(iso: string): bigint | null {
+  const m = TIMESTAMP.exec(iso);
+  if (!m) return null;
   const [, y, mo, d, h, mi, s, frac = "", sign, oh = "0", om = "0"] = m;
   // setUTCFullYear, unlike Date.UTC, does not map years 0-99 to 1900-1999.
   const midnight = new Date(0).setUTCFullYear(Number(y), Number(mo) - 1, Number(d));
   const utcMs = midnight + ((Number(h) * 60 + Number(mi)) * 60 + Number(s)) * 1000;
   const offsetMinutes = (sign === "-" ? -1 : 1) * (Number(oh) * 60 + Number(om));
   return BigInt(utcMs - offsetMinutes * 60_000) * 1000n + BigInt(frac.padEnd(6, "0"));
+}
+
+/** PostgreSQL timestamptz keeps microseconds; order completions exactly. */
+function epochMicros(completion: LessonCompletion): bigint {
+  const at = instantMicros(completion.completedAt);
+  invariant(at !== null, `completion ${completion.id} has a completedAt the engine cannot order exactly`);
+  return at;
 }
 
 function hashesById(manifest: VersionManifest): Map<string, string> {

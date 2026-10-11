@@ -1,3 +1,5 @@
+import { isVideoHostUrl } from "@spindle/schema";
+
 // Where lesson media and resource links may point. Ingress (parseCourse) already
 // limits them to root-relative paths or https URLs; this narrows site paths to the
 // authenticated media handler and to the storage area the content may use.
@@ -40,6 +42,8 @@ export type ResolvedLink = { kind: "external"; url: string } | { kind: "media"; 
  * authorizes every request again on its own.
  */
 export function resolveContentUrl(src: string, owner: { orgId: string | null }): ResolvedLink {
+  // Video hosts load only through the click-to-load registry player (ADR 0007), never as plain media or links.
+  if (isVideoHostUrl(src)) return { kind: "unavailable" };
   if (src.startsWith("https://")) return { kind: "external", url: src };
   if (!src.startsWith("/media/")) return { kind: "unavailable" };
   const object = storageObjectFor(src.slice("/media/".length).split("/"));
