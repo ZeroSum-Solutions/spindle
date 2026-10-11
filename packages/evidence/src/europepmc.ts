@@ -17,6 +17,7 @@ const resultSchema = z.object({
   citedByCount: z.coerce.number().optional(),
   journalInfo: z.object({ journal: z.object({ title: z.string().optional() }).optional() }).optional(),
   pubTypeList: z.object({ pubType: z.array(z.string()) }).optional(),
+  source: z.string().optional(),
 });
 
 const responseSchema = z.object({
@@ -29,6 +30,8 @@ export interface EuropePmcWork extends WorkSummary {
   /** True when `abstract` was cut to maxAbstractChars. A review packet needs the full text. */
   abstractTruncated?: boolean;
   pubTypes?: string[];
+  /** True for Europe PMC's copy of the PubMed record (source MED): its year and journal are PubMed's. */
+  medRecord?: boolean;
 }
 
 export async function searchEuropePmc(
@@ -58,6 +61,7 @@ export async function searchEuropePmc(
       title: stripTags(r.title).replace(/\.$/, ""),
       year: r.pubYear ? Number(r.pubYear) : undefined,
       journal: r.journalInfo?.journal?.title,
+      medRecord: r.source === "MED",
       isReview: types.some((t) => /review|meta-analysis/i.test(t) && !/retract/i.test(t)),
       ...retractionFromPubTypes(types),
       citedByCount: r.citedByCount,

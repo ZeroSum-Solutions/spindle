@@ -13,6 +13,7 @@
     {
       "slot": "claim-slot:l4-exam-tests",
       "statement": "A 2024 systematic review and meta-analysis found mostly low-quality evidence for physical examination tests for rotator cuff tears and subacromial impingement, with some tests (for example the external rotation lag sign at 90 degrees) showing useful rule-in accuracy for cuff tears; a 2012 review concluded that no single test could be unequivocally recommended for a definitive diagnosis.",
+      "domain": "applied",
       "evidenceLevel": "Systematic reviews with meta-analysis (diagnostic accuracy)",
       "population": "\"3,438 patients\" examined for \"rotator cuff tears (RCTs) and subacromial impingement syndrome (SIS)\" (Zhao 2024); shoulder physical examination studies (Hegedus 2012).",
       "candidateSources": [

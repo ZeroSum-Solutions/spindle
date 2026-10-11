@@ -39,7 +39,7 @@
   - The cost comes from the response's `totalTokenCount`: the prompt at the input price, and the rest at the output price, rounded up. Without a total, the cost is unknown. A call is settled once; an identical retry is accepted, while a conflicting or orphan settlement is refused (R2 PR20-02, PR20-12).
   - `version_media` reports a playable clip as `review: 'model-described'`. No human has checked it until the D-08 launch review, and the player must not claim otherwise.
 
-- **Storage-only lesson media (P18-06).** An image block's `src`, and every lesson media `src`, must be a stored file: `/media/content/...` for any course, or `/media/org/<the course's own gym id>/...` for gym content. Video comes only from registry video blocks; resource links are unaffected.
+- **Storage-only lesson media (P18-06).** An image block's `src`, and every lesson media `src`, must be a stored file: `/media/content/...` for any course, or `/media/org/<the course's own gym id>/...` for gym content. Video comes only from registry video blocks: a plain video asset (in lesson media or an image block) is refused at authoring, on every database write (moving a row to another gym included) and at publish; resource links are unaffected.
   - Triggers on `lesson_blocks` and `lessons` refuse anything else for every writer (`private.media_src_ok`).
   - The publish gate refuses rows saved before the rule.
   - `validateCatalog` applies the same rule to authored content (`storedMediaOwner`).

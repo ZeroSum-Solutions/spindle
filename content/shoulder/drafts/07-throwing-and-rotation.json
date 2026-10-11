@@ -14,6 +14,7 @@
     {
       "slot": "claim-slot:l7-adaptation",
       "statement": "In professional baseball pitchers, the throwing shoulder shows on average less internal rotation and more external rotation than the non-throwing shoulder; across included pitchers, humeral retroversion differed between the arms by about 15 degrees on average.",
+      "domain": "applied",
       "evidenceLevel": "Systematic review (level of evidence 4)",
       "population": "Professional baseball pitchers: the rotation result pools 13 studies of 1,101 professional pitchers (Paul 2025, whose overall eligibility was \"nonrecreational baseball pitchers\").",
       "candidateSources": [
@@ -30,6 +31,7 @@
     {
       "slot": "claim-slot:l7-injury-risk",
       "statement": "Evidence linking shoulder range of motion to injury in overhead athletes is uncertain and sport-specific: no statistically significant pooled association for the measures examined (2018 meta-analysis); external rotation insufficiency associated with injury in professional pitchers from three pooled studies, interpreted with caution (2020 meta-analysis of prospective cohorts); range among several risk factors, with inconsistent injury definitions (2025 systematic review).",
+      "domain": "applied",
       "evidenceLevel": "Systematic reviews with meta-analysis; systematic review of prospective studies",
       "population": "\"overhead athletes\" (Keller 2018); \"overhead athletes from Olympic or college sports\", with pooled data from \"professional baseball pitchers\" (Pozzi 2020); \"the athletic population\" (Salamh 2025).",
       "candidateSources": [

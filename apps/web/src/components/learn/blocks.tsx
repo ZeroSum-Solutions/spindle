@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ExternalLink, TriangleAlert } from "lucide-react";
-import type { ClaimIntegrityState, LessonBlock, LessonResource, MediaAsset, MediaAvailability } from "@spindle/schema";
+import type { ClaimIntegrityState, LessonResource, LessonViewBlock, MediaAsset, MediaAvailability } from "@spindle/schema";
 import { evidenceView, type EvidenceView } from "../../lib/learning/evidence";
 import type { ClaimView } from "../../lib/learning/load";
 import { renderableMediaUrl, resolveContentUrl } from "../../lib/learning/media";
@@ -29,7 +29,7 @@ export interface BlockContext {
   gradedQuiz?: boolean;
 }
 
-type SupportedBlock = Extract<LessonBlock, { support: unknown }>;
+type SupportedBlock = Extract<LessonViewBlock, { support: unknown }>;
 
 /** Integrity applies to science blocks only; practice blocks carry no claims. */
 function blockEvidenceView(block: SupportedBlock, ctx: BlockContext): EvidenceView | null {
@@ -45,7 +45,7 @@ function isUnknown(evidence: EvidenceView | null): boolean {
   return evidence !== null && evidence.statusUnknown;
 }
 
-export function LessonBlocks({ blocks, ctx }: { blocks: LessonBlock[]; ctx: BlockContext }) {
+export function LessonBlocks({ blocks, ctx }: { blocks: LessonViewBlock[]; ctx: BlockContext }) {
   // A withdrawn science block no longer presents as science, so it never shares a Science label.
   const labelled = supportLabelPlan(blocks, (block) => {
     const evidence = blockEvidenceView(block, ctx);
@@ -60,7 +60,7 @@ export function LessonBlocks({ blocks, ctx }: { blocks: LessonBlock[]; ctx: Bloc
   );
 }
 
-function Block({ block, index, ctx, showLabel }: { block: LessonBlock; index: number; ctx: BlockContext; showLabel: boolean }) {
+function Block({ block, index, ctx, showLabel }: { block: LessonViewBlock; index: number; ctx: BlockContext; showLabel: boolean }) {
   switch (block.kind) {
     case "heading":
       return <h2 className="pt-2 text-xl font-medium tracking-tight text-text">{block.content}</h2>;
@@ -159,14 +159,15 @@ function BlockBody({ block, index, quizHref, graded }: { block: SupportedBlock; 
     case "diagram":
       return <ReviewedDiagram content={block.content} nested />;
     case "quiz":
-      // A science quiz block is a graded question of the module quiz: the lesson shows the
-      // question but never its answer. Practice quizzes stay ungraded self-checks.
-      return block.support === "science" && graded ? (
+      // A graded question arrives prompt-only (lessonViewCourse): no options, key or explanation.
+      // The lesson shows the prompt and points to the module quiz. Practice quizzes stay whole,
+      // ungraded self-checks.
+      return !("answerIndex" in block.content) ? (
         <div data-graded-question className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4">
           <p className="font-medium">{block.content.prompt}</p>
           <p className="text-label text-text-muted">
-            Graded question. Answer it in the module quiz, where your answers are saved and scored.{" "}
-            {quizHref ? (
+            {graded ? "Graded question. Answer it in the module quiz, where your answers are saved and scored. " : "Graded question. This version has no module quiz to answer it in."}
+            {graded && quizHref ? (
               <Link href={quizHref} className="text-brand underline underline-offset-2 hover:text-brand-hover">
                 Go to the module quiz
               </Link>

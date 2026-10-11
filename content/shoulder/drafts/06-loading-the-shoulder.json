@@ -12,6 +12,7 @@
     {
       "slot": "claim-slot:l6-progression",
       "statement": "The American College of Sports Medicine position stand on resistance training prescription recommends that healthy adults perform progressive resistance training to improve muscle function, size and physical performance.",
+      "domain": "applied",
       "evidenceLevel": "Position stand (overview of systematic reviews)",
       "population": "\"healthy adults (≥18 yr)\" (ACSM 2026).",
       "candidateSources": [
@@ -29,6 +30,7 @@
     {
       "slot": "claim-slot:l6-overhead-upward",
       "statement": "In asymptomatic individuals, the scapula rotates upward during arm elevation.",
+      "domain": "applied",
       "evidenceLevel": "Systematic review with multilevel meta-regression",
       "population": "\"asymptomatic individuals\" (Fernández-Matías 2025, which reviewed \"healthy individuals and those with RCRSP\").",
       "candidateSources": [
@@ -46,8 +48,9 @@
     {
       "slot": "claim-slot:l6-volume",
       "statement": "A meta-regression found that muscle hypertrophy increases with weekly resistance training volume, with diminishing returns.",
+      "domain": "applied",
       "evidenceLevel": "Meta-regression",
-      "population": "Participants in 35 studies contributing to the hypertrophy volume analysis, n=1,032 (Pelland 2026, section 3.6.1).",
+      "population": "Participants in resistance training studies (Pelland 2026).",
       "candidateSources": [
         {
           "kind": "meta_analysis",
@@ -62,6 +65,7 @@
     {
       "slot": "claim-slot:l6-failure",
       "statement": "A meta-analysis found no hypertrophy advantage for training to momentary muscular failure over non-failure training; this does not establish equivalence, and an exploratory meta-regression found hypertrophy increased as sets were terminated closer to failure.",
+      "domain": "applied",
       "evidenceLevel": "Systematic review with meta-analysis; exploratory meta-regression",
       "population": "Participants in resistance training studies (Refalo 2023; Robinson 2024).",
       "candidateSources": [

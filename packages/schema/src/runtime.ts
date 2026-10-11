@@ -2,7 +2,7 @@
 // API bodies). They check shape only: whether a cited claim is approved and
 // relevant is the publish gate's job (validateCatalog and the database receipt).
 import { z } from "zod";
-import type { Catalog, Course, LearnerCourse, LearnerLessonBlock, Lesson, LessonBlock, MediaAsset, RedactedGradedQuiz, VideoSegment } from "./types";
+import type { Catalog, Course, LearnerCourse, LearnerLessonBlock, Lesson, LessonBlock, LessonViewBlock, LessonViewCourse, MediaAsset, RedactedGradedQuiz, VideoSegment } from "./types";
 
 export class ContentParseError extends Error {
   constructor(
@@ -230,18 +230,20 @@ export const parseCourse = (value: unknown): Course => parseWith(courseSchema, "
 export const parseLearnerCourse = (value: unknown): LearnerCourse => parseWith(learnerCourseSchema, "learner course", value);
 
 /**
- * The course as the lesson pages render it: graded (science) quizzes are removed, because they belong to
- * the module quiz page and arrive without an answer key. Practice self-checks stay. The result is a plain
- * Course, so lesson rendering needs no knowledge of redaction.
+ * The course as the lesson pages render it. A graded (science) quiz becomes a prompt-only block: no
+ * options, answer key or explanation; it is answered on the module quiz page. Practice self-checks
+ * stay whole.
  */
-export function lessonViewCourse(course: LearnerCourse): Course {
+export function lessonViewCourse(course: LearnerCourse): LessonViewCourse {
   return {
     ...course,
     parts: course.parts.map((part) => ({
       ...part,
       lessons: part.lessons.map((lesson) => ({
         ...lesson,
-        blocks: lesson.blocks.filter((b): b is LessonBlock => !(b.kind === "quiz" && b.support === "science")),
+        blocks: lesson.blocks.map((b): LessonViewBlock =>
+          b.kind === "quiz" && b.support === "science" ? { kind: "quiz", support: "science", claimIds: [...b.claimIds], content: { prompt: b.content.prompt } } : (b as LessonBlock),
+        ),
       })),
     })),
   };

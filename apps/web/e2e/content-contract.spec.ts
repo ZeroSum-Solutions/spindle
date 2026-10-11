@@ -81,7 +81,7 @@ const base: Course = {
             },
           ],
           media: [
-            { kind: "video", src: "/media/content/v-1/clip_2.mp4", alt: "Clip", caption: "Synthetic clip", provenanceId: "c2-clip" },
+            { kind: "image", src: "/media/content/v-1/clip_2.png", alt: "Clip still", caption: "Synthetic still", provenanceId: "c2-clip" },
             { kind: "diagram", src: "/media/content/C2/diagram.x", alt: "Diagram", caption: "", provenanceId: "C2.Diagram:1" },
           ],
         },

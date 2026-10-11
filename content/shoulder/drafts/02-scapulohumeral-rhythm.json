@@ -12,6 +12,7 @@
     {
       "slot": "claim-slot:l2-scapular-motions",
       "statement": "In asymptomatic individuals, the scapula moves from the very beginning of arm elevation toward upward rotation and posterior tilt, with a trend toward external rotation.",
+      "domain": "applied",
       "evidenceLevel": "Systematic review with multilevel meta-regression",
       "population": "\"asymptomatic individuals\" (Fernández-Matías 2025, which reviewed \"healthy individuals and those with RCRSP\").",
       "candidateSources": [
@@ -29,6 +30,7 @@
     {
       "slot": "claim-slot:l2-shared-ratio",
       "statement": "In asymptomatic individuals, a systematic review with multilevel meta-regression estimated the ratio of humerothoracic elevation to scapular upward rotation at about 2.9:1 to 3.1:1, found great variability in scapular kinematics, and did not support a constant 3:1 scapulohumeral rhythm.",
+      "domain": "applied",
       "evidenceLevel": "Systematic review with multilevel meta-regression",
       "population": "\"asymptomatic individuals\" (Fernández-Matías 2025, which reviewed \"healthy individuals and those with RCRSP\").",
       "candidateSources": [
@@ -46,6 +48,7 @@
     {
       "slot": "claim-slot:l2-dyskinesis",
       "statement": "Scapular dyskinesis is present in a high percentage of shoulder injuries, but its exact role in causing or worsening shoulder dysfunction is not clearly defined.",
+      "domain": "applied",
       "evidenceLevel": "Consensus statement",
       "population": "People with shoulder injuries (Kibler 2013, Scapular Summit consensus).",
       "candidateSources": [
@@ -113,8 +116,8 @@
         "kind": "diagram",
         "content": {
           "diagramId": "scapula-upward-rotation",
-          "alt": "Three schematic drawings of a right shoulder blade seen from behind, with the arm by the side, level with the shoulder and overhead. The shoulder blade is rotated upward more at each position.",
-          "caption": "The shoulder blade at three arm positions, right shoulder blade seen from behind. Schematic; angles are illustrative.",
+          "alt": "Three schematic drawings of a right shoulder blade seen from behind, in a person without shoulder pain, with the arm by the side, level with the shoulder and overhead. The shoulder blade is rotated upward more at each position.",
+          "caption": "The shoulder blade at three arm positions in a person without shoulder pain, right shoulder blade seen from behind. Schematic; angles are illustrative.",
           "legend": [
             {
               "key": "arm-by-side",

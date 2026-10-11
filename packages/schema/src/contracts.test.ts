@@ -130,9 +130,12 @@ describe("learner projection (ADR 0007, T21)", () => {
     expect(parsed.parts[0]!.lessons[0]!.blocks).toHaveLength(2);
   });
 
-  it("keeps practice self-checks and drops graded quizzes for the lesson view", () => {
+  it("keeps practice self-checks and turns graded quizzes into prompt-only blocks for the lesson view (no options, key or explanation)", () => {
     const view = lessonViewCourse(parseLearnerCourse(course([quiz("science", true), quiz("practice-based", false), { kind: "heading", content: "H" }])));
-    expect(view.parts[0]!.lessons[0]!.blocks.map((b) => [b.kind, "support" in b ? b.support : null])).toEqual([["quiz", "practice-based"], ["heading", null]]);
+    const blocks = view.parts[0]!.lessons[0]!.blocks;
+    expect(blocks.map((b) => [b.kind, "support" in b ? b.support : null])).toEqual([["quiz", "science"], ["quiz", "practice-based"], ["heading", null]]);
+    expect(blocks[0]!.content).toEqual({ prompt: expect.any(String) });
+    expect(JSON.stringify(blocks[0])).not.toMatch(/answerIndex|explanation|options/);
   });
 
   it("refuses a graded quiz that still carries its answer key, and the authoring parser refuses a redacted one", () => {

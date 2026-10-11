@@ -9,6 +9,7 @@ const KIND: Record<string, string> = {
   nomenclature: "Nomenclature",
   systematic_review: "Systematic review",
   meta_analysis: "Meta-analysis",
+  foundation_reference: "Open anatomy reference",
 };
 
 /**
