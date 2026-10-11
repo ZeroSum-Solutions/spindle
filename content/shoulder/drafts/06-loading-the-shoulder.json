@@ -106,7 +106,7 @@
       "Choose pressing, pulling and overhead variations by range, control and goal.",
       "Progress load, range or difficulty one at a time.",
       "Use and define cues for the press, the row and the overhead press.",
-      "Recognise the signs that mean do not progress, at every step."
+      "Recognize the signs that mean do not progress, at every step."
     ],
     "anatomyIds": [
       "UBERON:0001467",
@@ -216,7 +216,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Rows and pulldowns are the pulling options. Coach the shoulder blades to move with the arm rather than holding them locked, and keep pulling work in the programme alongside pressing.",
+        "content": "Rows and pulldowns are the pulling options. Coach the shoulder blades to move with the arm rather than holding them locked, and keep pulling work in the program alongside pressing.",
         "support": "practice-based",
         "claimIds": []
       },

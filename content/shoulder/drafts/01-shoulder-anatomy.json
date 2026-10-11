@@ -5,7 +5,7 @@
   "lessonNumber": 1,
   "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
-    "Claim status (W1 dry run 2): lesson 1's claims are foundation claims (D-12), kept purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference; its abstract is too thin, so review needs the open-licence full text in the packet (W1's ingest extension). Functional points were removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabelled as practice.",
+    "Claim status (W1 dry run 2): lesson 1's claims are foundation claims (D-12), kept purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference; its abstract is too thin, so review needs the open-licence full text in the packet (W1's ingest extension). Functional points were removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabeled as practice.",
     "Anatomy claims rest on Frank 2013 (CC BY), read in full through Europe PMC; Cavanaugh 2024 (CC BY 4.0) is cited only for the rotator cuff grouping; Vijian 2023, Jacinto 2022, Howell 1989 and Lippitt 1993 are no longer cited. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
     "The scapulothoracic statement is restored because Frank 2013 states it; 'most of the force' stays removed. The capsule statement was dropped: no open source read states it.",
     "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. Every diagram is a reviewed diagram block (Sol R16): alt, caption and legend live here; the drawings in apps/web carry geometry and anchors only. shoulder-cuff (cuff only) replaces the planned shoulder-cuff-and-movers slot."
@@ -349,7 +349,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Use plain names with clients and standard names with clinicians: say \"the shoulder joint\" and \"the glenohumeral joint\" together. Saying both helps when a client brings you notes from a physiotherapist or doctor.",
+        "content": "Use plain names with clients and standard names with clinicians: say \"the shoulder joint\" and \"the glenohumeral joint\" together. Saying both helps when a client brings you notes from a physical therapist or doctor.",
         "support": "practice-based",
         "claimIds": []
       },

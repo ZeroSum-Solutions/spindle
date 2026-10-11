@@ -1,6 +1,6 @@
 # Shoulder module: outline
 
-Status: draft outline for review, 2026-10-11. Base layer. Eight lessons, written for working personal trainers. Text is ours (CC BY-SA 4.0); style follows [STYLE.md](../../docs/curriculum/STYLE.md) and every lesson follows [SAFETY.md](../../docs/curriculum/SAFETY.md).
+Status: draft outline for review, 2026-10-11; converted to US care pathways, spelling and units under D-18 the same day. Base layer. Eight lessons, written for working personal trainers. Text is ours (CC BY-SA 4.0); style follows [STYLE.md](../../docs/curriculum/STYLE.md) and every lesson follows [SAFETY.md](../../docs/curriculum/SAFETY.md).
 
 Nothing here is a lesson yet. Full drafting waits for the outline review and the claim and quiz contracts.
 
@@ -19,7 +19,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 ## 1. Shoulder anatomy a trainer needs
 
-**Claim status (claim dry run 2):** lesson 1's claims are foundation claims (D-12, `domain: "foundation"`) and stay purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference. Review needs the open-licence full text in the packet, because the abstract is too thin. Functional points are removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabelled as practice.
+**Claim status (claim dry run 2):** lesson 1's claims are foundation claims (D-12, `domain: "foundation"`) and stay purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference. Review needs the open-license full text in the packet, because the abstract is too thin. Functional points are removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabeled as practice.
 
 **One idea:** the shoulder is three bones and three joints, with the shoulder blade lying on the ribcage, a small socket deepened by the labrum, and muscles that attach the shoulder blade to the trunk.
 
@@ -59,13 +59,13 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 **Objectives**
 - Describe how the scapula moves when the arm is raised: upward rotation and posterior tilt, with internal or external rotation that depends on the plane and range.
 - Explain that the humerus and scapula share elevation, and that the ratio varies.
-- Recognise the muscle pairs that rotate the scapula upward.
+- Recognize the muscle pairs that rotate the scapula upward.
 - Watch a client's arm raise and describe what you see in plain words.
 
 **Sections**
 1. *What it is.* [S] In people without shoulder pain, the scapula moves from the very start of arm elevation toward upward rotation and posterior tilt, with a trend toward external rotation. Candidate evidence: systematic review with multilevel meta-regression of 3D scapular kinematics (Fernández-Matías et al. 2025, PMID 40845626). The earlier narrative review and bone-pin study are not admissible claim sources (claim dry run, 2026-10-11).
 2. *What it is: the shared ratio.* [S] The same review estimated the ratio of arm elevation to scapular upward rotation at about 3:1 on average, with great variability between people, and did not support a constant ratio. The block must say the ratio varies.
-3. *What it is: the force couple.* Removed 2026-10-11: no accessible source stated the named-muscle formulation, so the section and its quiz were dropped (no relabelling as practice).
+3. *What it is: the force couple.* Removed 2026-10-11: no accessible source stated the named-muscle formulation, so the section and its quiz were dropped (no relabeling as practice).
 4. *Why it matters.* [S] Scapular dyskinesis is present in a high percentage of shoulder injuries, but its exact role in causing or worsening shoulder problems is not clearly defined (wording approved in the claim dry run). Candidate evidence: scapular dyskinesis consensus statement (2013). [P] So a visible difference is something to watch and re-check, not a diagnosis.
 5. *How to see it.* [P] Watch from behind: raise and lower the arms slowly, 3 to 5 reps; look at symmetry, timing and the inferior angle on the way down. Light load can make it clearer.
 6. *What to do.* [P] Cues for overhead work: "reach long through the hands", "let the shoulder blades travel". Define "shoulder blades back and down" and when it does not fit overhead (STYLE › Cues).
@@ -90,7 +90,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 **Objectives**
 - Distinguish active from passive range, and range from control.
-- Recognise common restrictions trainers see: overhead reach, internal rotation, horizontal reach across the body.
+- Recognize common restrictions trainers see: overhead reach, internal rotation, horizontal reach across the body.
 - Explain what research says about posture and shoulder pain.
 - Decide when a restriction is a training question and when it needs referral.
 
@@ -160,16 +160,16 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - Know when a "corrective" should be a referral instead.
 
 **Sections**
-1. *What research supports.* [S] For subacromial shoulder pain (one specific condition, diagnosed by a clinician), UK specialist guidance reports evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and improving patient-reported function, and states that the most effective physiotherapy or exercise approach remains uncertain. A systematic review with meta-analysis found high-certainty evidence that decompression surgery gives no additional benefit over placebo surgery for pain at 1 year or function at 1 to 2 years. Candidate evidence: BESS care pathway (2025; admission through D-12 pending; reviewed against a private publisher excerpt under D-13, p. 719, PICO 6); Lähdeoja et al. 2020, Br J Sports Med (PMID 30647053), which replaces the CSAW trial as the claim source because the pipeline admits systematic reviews, not single trials. Wording stays within the population studied, and the claim says nothing about who delivers the exercise (BESS also describes initial self-management). Separately, as **Spindle policy** and not as a science claim: a trainer's loading is not treatment for a diagnosed condition, and a client with diagnosed subacromial pain trains within the treating clinician's plan (SAFETY §2).
+1. *What research supports.* [S] For subacromial shoulder pain (one specific condition, diagnosed by a clinician), specialist shoulder guidance from the British Elbow & Shoulder Society reports evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and improving patient-reported function, and states that the most effective physical therapy or exercise approach remains uncertain. A systematic review with meta-analysis found high-certainty evidence that decompression surgery gives no additional benefit over placebo surgery for pain at 1 year or function at 1 to 2 years. Candidate evidence: BESS care pathway (2025; admission through D-12 pending; reviewed against a private publisher excerpt under D-13, p. 719, PICO 6); Lähdeoja et al. 2020, Br J Sports Med (PMID 30647053), which replaces the CSAW trial as the claim source because the pipeline admits systematic reviews, not single trials. Wording stays within the population studied, and the claim says nothing about who delivers the exercise (BESS also describes initial self-management). Separately, as **Spindle policy** and not as a science claim: a trainer's loading is not treatment for a diagnosed condition, and a client with diagnosed subacromial pain trains within the treating clinician's plan (SAFETY §2).
 2. *What the trials compared.* [S] For rotator cuff related shoulder pain, a 2020 systematic review compared each approach with placebo or no treatment, not with each other: progressive resisted exercise showed an uncertain clinical benefit, non-progressive exercise no significant benefit, and the certainty of the evidence was low. The block reports those comparisons and that uncertainty and ranks nothing. Candidate evidence: Naunton et al. 2020, Clinical Rehabilitation (PMID 32571081). If no claim is approved, the section is removed (no downgrade).
-3. *Scapular exercise.* Removed 2026-10-11: the accessible evidence did not support the EMG ratios or the inference limit, so the section and its quiz were dropped (no relabelling as practice).
+3. *Scapular exercise.* Removed 2026-10-11: the accessible evidence did not support the EMG ratios or the inference limit, so the section and its quiz were dropped (no relabeling as practice).
 4. *Activation as practice.* [P] What activation drills are for in a session: rehearsal, attention, warm-up. What they are not: a fix.
 5. *How to see it.* [P] Does the client own the position under a light load? Re-check the screen from lesson 4.
 6. *What to do.* [P] Ordered warm-up: position, then light rotation work, then scapular control, then the session's first pattern with a light load. One to three cues each. Easier version for each drill.
 7. [!] "Correctives" never replace referral: anything on SAFETY §3 means stop; persistent or worsening pain means routine referral.
 
 **Graded quiz candidates**
-- For subacromial shoulder pain diagnosed by a clinician, what does UK specialist guidance report about exercise? (It reduces pain in the short term and improves function; the most effective approach remains uncertain) [§1]
+- For subacromial shoulder pain diagnosed by a clinician, what does specialist shoulder guidance report about exercise? (It reduces pain in the short term and improves function; the most effective approach remains uncertain) [§1]
 
 **Scenario (ungraded):** A client wants to "activate" for 20 minutes before every session. What do you keep, and what do you move into the main session?
 
@@ -185,7 +185,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - Choose pressing, pulling and overhead variations by range, control and goal.
 - Progress load, range and complexity one at a time.
 - Use cues for the press, the row and the overhead press, and say what each means.
-- Recognise the signs that mean "do not progress".
+- Recognize the signs that mean "do not progress".
 
 **Sections**
 1. *What it is.* [S] Resistance training increases muscle strength and size across the shoulder muscles when load is progressive. Candidate evidence: position stand or review on resistance training progression.
@@ -216,18 +216,18 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - Know the warning signs in throwers and when to refer.
 
 **Sections**
-1. *What it is.* Removed 2026-10-11: the pitching-kinetics claim rested on one primary study (1995), which the claim pipeline does not admit, and no qualifying systematic review states it, so the section and its quiz were dropped (no relabelling as practice).
+1. *What it is.* Removed 2026-10-11: the pitching-kinetics claim rested on one primary study (1995), which the claim pipeline does not admit, and no qualifying systematic review states it, so the section and its quiz were dropped (no relabeling as practice).
 2. *Adaptations and injury risk.* [S] In professional pitchers the throwing arm shows on average more external and less internal rotation, and humeral retroversion differs between the arms by about 15 degrees on average (no causal link stated). Whether range predicts injury is uncertain and depends on the sport. A 2018 meta-analysis of overhead athletes found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury, though results leaned toward more injury with internal rotation loss. A 2020 meta-analysis of prospective cohorts found that too little extra external rotation in the throwing arm was associated with injury in professional baseball pitchers (pooled from three studies), and asked for caution because studies were few and varied (the lesson does not repeat the review's suggestion about other sports, which the approved claim does not state). A 2025 systematic review across overhead sports listed range of motion among several risk factors and noted that studies define injury inconsistently (the lesson does not name the other factors, which the approved claim does not state). The block presents this as current uncertainty, not as a screening rule. Candidate evidence: Pozzi et al. 2020, Br J Sports Med (systematic review and meta-analysis of prospective cohorts, PMID 31937577, doi:10.1136/bjsports-2019-100698, CC BY); Salamh et al. 2025, Int J Sports Phys Ther 20(3) (systematic review, doi:10.26603/001c.129462, CC BY-NC 4.0); Keller et al. 2018, Sports Health (PMID 29381423); Wilk et al. 2011 (a case series in professional pitchers, level of evidence 4, PMID 21131681) only as a bounded historical example.
 3. *Why it matters.* [P] Do not "correct" a normal thrower's adaptation; compare total rotation between sides and over time.
 4. *How to see it.* [P] Measure rotation the same way each time; note change across a season.
 5. *What to do.* [P] Strength for the cuff and scapular muscles, trunk and hip rotation work, deceleration work; workload is the coach's and clinician's decision.
 6. [P] Rotational sports beyond throwing (racquet, swimming, combat) as practice context.
-7. [!] Pain while throwing, loss of velocity with pain, a "dead arm", or numbness: stop throwing and refer (SAFETY §3, §4). Young throwers with shoulder pain: urgent tier, an urgent GP appointment or NHS 111 the same day for referral to trauma and orthopaedics, with a parent or carer told (SAFETY §2, §4).
+7. [!] Pain while throwing, loss of velocity with pain, a "dead arm", or numbness: stop throwing and refer (SAFETY §3, §4). Young throwers with shoulder pain: urgent tier, a same-day medical assessment at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation, with a parent or guardian told (SAFETY §2, §4).
 
 **Graded quiz candidates**
 - What range pattern is common in a thrower's throwing arm? (More external, less internal rotation) [§2]
 
-**Scenario (ungraded):** A 15-year-old pitcher says the shoulder hurts after games. What do you do? (Stop throwing and shoulder loading in your session; urgent tier: tell the athlete and a parent or carer to get an urgent GP appointment or NHS 111 the same day, for referral to trauma and orthopaedics; emergency if any emergency sign is present. SAFETY §2, §4.)
+**Scenario (ungraded):** A 15-year-old pitcher says the shoulder hurts after games. What do you do? (Stop throwing and shoulder loading in your session; urgent tier: tell the athlete and a parent or guardian to get a same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation; emergency if any emergency sign is present. SAFETY §2, §4.)
 
 **Video slots:** C1: when to train internal rotation for throwers.
 
@@ -250,12 +250,12 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 4. [!] *Routine.* Criteria and actions (SAFETY §4).
 5. [S] For subacromial shoulder pain, BESS guidance reports that most symptoms settle within about three months with initial care, which includes self-management and exercise. Candidate evidence: BESS care pathway (2025). The claim stays within that population; it keeps routine referral calm and is never used to delay an urgent or emergency referral.
 6. *Excluded populations.* [!] SAFETY §2, with what to do instead.
-7. *The conversation.* [P] Scripts by tier: emergency (call emergency services, stay with the client), urgent (stop, get checked today, no further training offered), and routine with no other warning sign (book a GP or physiotherapist; the rest of the session can go ahead with the shoulder left out).
+7. *The conversation.* [P] Scripts by tier: emergency (call 911, stay with the client), urgent (stop, get checked today at urgent care or with the primary care provider, no further training offered), and routine with no other warning sign (make an appointment with a primary care provider or a licensed physical therapist; the rest of the session can go ahead with the shoulder left out).
 8. *Working with a clinician's plan.* [P] Ask for the plan in writing; do not progress it on your own.
 
 **Graded quiz candidates**
 - For subacromial shoulder pain, what does BESS guidance say about how most people do over about three months? (Most symptoms settle within about three months with initial care) [§5]
-- Graded adverse-case questions (SAFETY §6), bound to the BESS red-flag claim (`l8-red-flags`): a 15-year-old with shoulder pain, a new lump, and new pain with swelling in several joints. Each graded question tests only the pathway's finding (urgent referral to secondary care). Spindle's stop-first, same-day and parent-or-carer steps sit beside them in a practice-based "What you do first" callout, ungraded.
+- Graded adverse-case questions (SAFETY §6), bound to the BESS red-flag claim (`l8-red-flags`): a 15-year-old with shoulder pain, a new lump, and new pain with swelling in several joints. Each graded question tests only the guidance's finding (a red flag that needs urgent specialist assessment); under D-18 the claim no longer states a UK care pathway. Spindle's stop-first step, the US same-day pathway (urgent care or the primary care provider) and telling a parent or guardian sit beside them in a practice-based "What you do first" callout, ungraded.
 
 **Scenario (ungraded), adverse cases:** the remaining tiers (emergency, routine and continue) stay ungraded until their claims are approved: one per tier plus two "continue" cases, drawn from SAFETY §3 and §4, including arm pain with chest tightness (emergency) and a lump around the shoulder (urgent).
 

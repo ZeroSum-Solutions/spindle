@@ -138,16 +138,20 @@ const LESSON_PINS: Record<string, { shows: string[]; never: string[] }> = {
     never: ["The serratus anterior attaches"],
   },
   "when-to-refer-out": {
-    shows: ["For the three urgent red flags below, Spindle's stop rule comes first"],
+    shows: ["For the three urgent red flags below, Spindle's stop rule comes first", "Emergency: call 911 now"],
     never: [],
   },
 };
 
+/** D-18: UK care-pathway names that no published lesson may show. */
+// Word-bounded, so "1999" or "1110" never match, while "see a GP" and "call 111" do (Sol R1 on #52).
+const UK_SERVICES = [/\bNHS\b/, /A&E/, /\b999\b/, /\b111\b/, /\bGPs?\b/, /physiotherapist/i, /parent or carer/i];
+
 /** SAFETY.md rule 6 in lesson 8: the practice-based "What you do first" box, then the three graded adverse-case questions. */
 const ADVERSE_CASE_PROMPTS = [
-  "Under the UK specialist pathway, what does shoulder pain in a child or adolescent need?",
-  "Under the UK specialist pathway, what does a lump or swelling found when someone is assessed for shoulder pain need?",
-  "Under the UK specialist pathway, what does shoulder pain with inflammation in several joints need?",
+  "In specialist shoulder guidance, what is shoulder pain in a child or adolescent?",
+  "In specialist shoulder guidance, what is a lump or swelling found when someone is assessed for shoulder pain?",
+  "In specialist shoulder guidance, what is shoulder pain with inflammation in several joints?",
 ];
 
 async function answerAll(page: Page, pick: (q: (typeof questions)[number]) => number) {
@@ -336,6 +340,8 @@ test.describe.serial("shoulder module acceptance", () => {
       const pins = LESSON_PINS[d.lesson.slug];
       for (const text of pins?.shows ?? []) await expect(article, d.lesson.slug).toContainText(text);
       for (const text of pins?.never ?? []) await expect(article, d.lesson.slug).not.toContainText(text);
+      // D-18: US care pathways only; no lesson names a UK service.
+      for (const text of UK_SERVICES) await expect(article, `${d.lesson.slug}: D-18`).not.toContainText(text);
 
       if (d.lesson.slug === "when-to-refer-out") {
         // In document order: the "What you do first" box, then exactly the three adverse-case questions.

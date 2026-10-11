@@ -159,11 +159,58 @@ if len(notes_on_infection) != 1:
     raise SystemExit("SAFETY.md: expected one 'Note on infection' line")
 INFECTION_NOTE = clean(notes_on_infection[0][len("Note on infection: "):])
 TIER_LEAD = {
-    "emergency": "Emergency: call emergency services now (999 in the UK).",
-    "urgent": "Urgent: an urgent GP appointment or NHS 111 today (or the local equivalent).",
-    "routine": "Routine: a GP or physiotherapist (many areas allow self-referral to physiotherapy).",
+    "emergency": "Emergency: call 911 now. Do not drive the client or let anyone drive them.",
+    "urgent": "Urgent: urgent care or the client's primary care provider (PCP), the same day.",
+    "routine": "Routine: a primary care provider or a licensed physical therapist (direct access to physical therapy varies by state).",
 }
 HIGHEST = "Use the highest tier that any sign matches."
+
+# Tier floors (Sol R1 on #52): every referral criterion and stop rule keeps at least the tier it had
+# on 2026-10-11 (main 88335f9, before the D-18 conversion). A tier may rise, never fall. Each key
+# phrase must sit in exactly one tier table, at or above its floor; the build stops otherwise.
+RANK = {"routine": 0, "urgent": 1, "emergency": 2}
+TIER_FLOOR = [
+    ("Chest pain that feels tight", "emergency"), ("the client cannot move the arm, or the shoulder looks out of place", "emergency"),
+    ("Signs of a joint infection", "emergency"),
+    ("Sudden or very bad shoulder pain", "urgent"), ("New loss of active movement", "urgent"), ("After an injury, pain and weakness", "urgent"),
+    ("Any other new shoulder pain that started after an injury", "urgent"), ("has changed shape or is badly swollen, with no injury", "urgent"),
+    ("Pins and needles that do not go away", "urgent"), ("feels hot or cold to the touch", "urgent"), ("Severe pain in both shoulders", "urgent"),
+    ("A new lump, mass or swelling", "urgent"), ("several joints at once", "urgent"), ("A child or adolescent with shoulder pain", "urgent"),
+    ("is getting worse. Refer now", "routine"), ("has not improved after 2 weeks", "routine"), ("is very difficult", "routine"),
+    ("worse at night", "routine"), ("persists after the trainer", "routine"),
+]
+STOP_FLOOR = [  # (key phrase in "Stop when", tier word the action must name, or a higher one)
+    ("cannot move the arm, or the shoulder looks out of place", "emergency"), ("Signs of a joint infection", "emergency"),
+    ("Arm pain together with chest pain", "emergency"), ("New loss of active movement", "urgent"),
+    ("pain and weakness, but the arm still moves", "urgent"), ("Numbness, pins and needles", "urgent"),
+]
+def check_tier_floors():
+    errors = []
+    for phrase, floor in TIER_FLOOR:
+        found = [tier for tier, rows in TIER.items() if any(phrase in r for r in rows)]
+        if len(found) != 1:
+            errors.append(f"{phrase!r} is in {len(found)} tier tables")
+        elif RANK[found[0]] < RANK[floor]:
+            errors.append(f"{phrase!r} fell from {floor} to {found[0]}")
+    for phrase, floor in STOP_FLOOR:
+        rows = [r for r in STOP_ROWS if phrase in r.split(" - ")[0]]
+        if len(rows) != 1:
+            errors.append(f"stop rule {phrase!r} found {len(rows)} times")
+            continue
+        action = rows[0].split(" - ", 1)[1].lower()
+        if not any(tier in action for tier, rank in RANK.items() if rank >= RANK[floor]):
+            errors.append(f"stop rule {phrase!r} no longer names {floor} or higher")
+    # Emergencies always mean calling 911, never private transport (Sol R1 on #52, BLOCK 2).
+    if "call 911" not in TIER_LEAD["emergency"] or "emergency department" in TIER_LEAD["emergency"]:
+        errors.append("the emergency lead must say call 911 and must not offer the emergency department")
+    if not any("call 911" in r and "do not drive" in r for r in TIER["emergency"]):
+        errors.append("the cardiac emergency criterion must say call 911 and do not drive")
+    # A child's specialist referral is unconditional (Sol R1 on #52, BLOCK 3).
+    child = [r for r in TIER["urgent"] if "A child or adolescent" in r]
+    if not child or "urgent orthopedic evaluation" not in child[0] or "if needed" in child[0]:
+        errors.append("the child row must require an urgent orthopedic evaluation, unconditionally")
+    if errors:
+        raise SystemExit("SAFETY.md tier floors: " + "; ".join(errors))
 
 # Canonical stop-rule wording, reused beside screens and progressions (SAFETY.md sections 3 and 4).
 STOP_SESSION = "Stop shoulder loading for the rest of the session."
@@ -174,7 +221,7 @@ TINGLE = "Pins and needles that do not go away, or no feeling in the arm or shou
 ACTIVE_LOSS = "A new inability to lift or move the arm themselves, without an injury: urgent, today."
 TRAUMA = "After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back."
 INJURY_WEAK = "Pain and weakness after an injury, while the arm still moves and looks normal: urgent, today."
-UNDER_18 = "Anyone under 18 with shoulder pain: urgent, today; tell a parent or carer."
+UNDER_18 = "Anyone under 18 with shoulder pain: urgent, today; tell a parent or guardian."
 
 FULL_RULES = 'The full stop rules and referral tiers are in "When to refer out" (lesson 8).'
 FULL_RULES_L4 = 'The referral tiers are listed above in this lesson; the full stop rules and tiers are in "When to refer out" (lesson 8).'
@@ -237,7 +284,7 @@ l1 = {
        "Find the front of the shoulder, just below the outer end of the collarbone."]),
     stop(TRAUMA, ACTIVE_LOSS, TINGLE, WORSENING, "If a client points to a painful spot, describe where it is and how it behaves; never name an injury."),
     H("What to do"),
-    P("Use plain names with clients and standard names with clinicians: say \"the shoulder joint\" and \"the glenohumeral joint\" together. Saying both helps when a client brings you notes from a physiotherapist or doctor."),
+    P("Use plain names with clients and standard names with clinicians: say \"the shoulder joint\" and \"the glenohumeral joint\" together. Saying both helps when a client brings you notes from a physical therapist or doctor."),
     H("Check your understanding"),
     Q("Which joint joins the upper arm bone to the shoulder blade?", ["Acromioclavicular joint", "Glenohumeral joint", "Sternoclavicular joint"], 1,
       "The glenohumeral joint joins the upper arm bone (humerus) to the shoulder blade.", "claim-slot:l1-bones-joints"),
@@ -261,7 +308,7 @@ l1_slots = [
    "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2. Subclavius is left out: Frank's introductory list names it, but it runs from the first rib to the clavicle, not to the scapula. Where on the scapula serratus anterior attaches is not claimed: Frank's section 2 and Table 1 disagree on it (rehearsal 3)."},
 ]
 l1_scen = [{"prompt": "A client points to the front of the shoulder and asks: \"Is that my rotator cuff?\"", "goodAnswer": "Describe the area; say you do not diagnose; ask how it behaves. If it hurts during training: stop shoulder loading for the session and apply the referral tiers.", "safety": "SAFETY.md sections 1 and 3"}]
-notes1 = ["Claim status (W1 dry run 2): lesson 1's claims are foundation claims (D-12), kept purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference; its abstract is too thin, so review needs the open-licence full text in the packet (W1's ingest extension). Functional points were removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabelled as practice.",
+notes1 = ["Claim status (W1 dry run 2): lesson 1's claims are foundation claims (D-12), kept purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference; its abstract is too thin, so review needs the open-licence full text in the packet (W1's ingest extension). Functional points were removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabeled as practice.",
           "Anatomy claims rest on Frank 2013 (CC BY), read in full through Europe PMC; Cavanaugh 2024 (CC BY 4.0) is cited only for the rotator cuff grouping; Vijian 2023, Jacinto 2022, Howell 1989 and Lippitt 1993 are no longer cited. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
           "The scapulothoracic statement is restored because Frank 2013 states it; 'most of the force' stays removed. The capsule statement was dropped: no open source read states it.",
           "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. Every diagram is a reviewed diagram block (Sol R16): alt, caption and legend live here; the drawings in apps/web carry geometry and anchors only. shoulder-cuff (cuff only) replaces the planned shoulder-cuff-and-movers slot."]
@@ -327,7 +374,7 @@ l2_slots = [
 ]
 l2_scen = [
   {"prompt": "One shoulder blade lifts a little from the ribs as a client lowers from overhead; no pain, no warning signs.", "goodAnswer": "Continue with a load and range they control; note it; no referral without warning signs.", "safety": "SAFETY.md sections 1 and 3"},
-  {"prompt": "Same client, but the shoulder aches more with each rep.", "goodAnswer": "Stop shoulder loading for this session. If the pain is getting worse: routine referral now (GP or physiotherapist). If it has not improved after 2 weeks: routine referral. Urgent or emergency if those signs appear.", "safety": "SAFETY.md sections 3 and 4"},
+  {"prompt": "Same client, but the shoulder aches more with each rep.", "goodAnswer": "Stop shoulder loading for this session. If the pain is getting worse: routine referral now (primary care provider or physical therapist). If it has not improved after 2 weeks: routine referral. Urgent or emergency if those signs appear.", "safety": "SAFETY.md sections 3 and 4"},
 ]
 notes2 = ["The force-couple section and its quiz were removed: no accessible source stated the named-muscle formulation (Ludewig's full text could not be retrieved; OpenStax's table contradicts it).",
           "Diagram scapula-upward-rotation is the original drawing in apps/web, on main since PR #17 (08747d7), so the caption describes an existing figure."]
@@ -340,7 +387,7 @@ l3 = {
   "durationMinutes": 12, "format": "article",
   "objectives": [
     "Tell active range from passive range, and range from control.",
-    "Recognise the restrictions trainers often see: overhead reach, reaching behind the back, reaching across the body.",
+    "Recognize the restrictions trainers often see: overhead reach, reaching behind the back, reaching across the body.",
     "State what reviews found about upper-back posture and shoulder pain, and what they did not show.",
     "Decide when a restriction is a training question and when it needs referral."],
   "anatomyIds": ["UBERON:0001467", "UBERON:0001470", "UBERON:0006849"],
@@ -350,7 +397,7 @@ l3 = {
     P("In coaching terms, mobility is the range a client can reach, and stability is how well they control that range, especially under load. Ask both questions; the answer to one changes what you do about the other."),
     H("Active and passive range"),
     P("Active range is how far the client moves the arm on their own. Passive range is how far it goes when someone else moves it, with the client relaxed. A difference between them is a reason to look closer. It is not a prescription, and this lesson draws no training rule from it."),
-    C(REFER, f"{STOP_SESSION} A client who can no longer lift or move the arm themselves, even though you could move it for them, with no injury: urgent, an urgent GP appointment or NHS 111 today. It is never something to train. {TRAUMA} {FULL_RULES}"),
+    C(REFER, f"{STOP_SESSION} A client who can no longer lift or move the arm themselves, even though you could move it for them, with no injury: urgent, at urgent care or with their primary care provider today. It is never something to train. {TRAUMA} {FULL_RULES}"),
     H("What research says about posture"),
     S("A 2016 systematic review found moderate evidence of no significant difference in how rounded the upper back is (thoracic kyphosis) between people with and without shoulder pain. A result that is not significant does not prove the two groups are the same, and the studies varied in quality. A 2024 review of cross-sectional studies found conflicting results for thoracic posture. These findings are about association; they do not show that posture causes or prevents shoulder pain.", "claim-slot:l3-kyphosis-pain"),
     S("In the single-session studies a 2016 review gathered, people reached more maximum shoulder range when sitting or standing upright than when slouched, with or without shoulder pain. Whether that matters over weeks of training is not known.", "claim-slot:l3-upright-range"),
@@ -394,11 +441,11 @@ l3_slots = [
 ]
 l3_scen = [
   {"prompt": "Both arms stop short overhead; passive range is higher and painless; long-standing; no warning sign.", "goodAnswer": "Ask whether it is new or painful. If long-standing and painless with no warning sign: train in the controlled range, change one thing, re-check in a later session.", "safety": "SAFETY.md sections 1 and 3"},
-  {"prompt": "Since last week, with no injury, the client cannot lift the right arm themselves at all, though you can lift it for them.", "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.", "safety": "SAFETY.md sections 3 and 4"},
-  {"prompt": "Over several weeks, lifting the arm has become very difficult, but the client can still lift it themselves; no other warning sign.", "goodAnswer": "Stop shoulder loading for the session; routine referral to a GP or physiotherapist.", "safety": "SAFETY.md section 4"},
+  {"prompt": "Since last week, with no injury, the client cannot lift the right arm themselves at all, though you can lift it for them.", "goodAnswer": "Stop shoulder loading; urgent: urgent care or their primary care provider today.", "safety": "SAFETY.md sections 3 and 4"},
+  {"prompt": "Over several weeks, lifting the arm has become very difficult, but the client can still lift it themselves; no other warning sign.", "goodAnswer": "Stop shoulder loading for the session; routine referral to a primary care provider or a physical therapist.", "safety": "SAFETY.md section 4"},
   {"prompt": "Stiffness for months with pain at night, slowly getting worse.", "goodAnswer": "Stop shoulder loading for the session; routine referral now because it is getting worse.", "safety": "SAFETY.md sections 3 and 4"},
 ]
-notes3 = ["Science sections are removed, never relabelled, if their claims are not approved.", "Fascial and rib-position models carry the limited-evidence note STYLE.md requires."]
+notes3 = ["Science sections are removed, never relabeled, if their claims are not approved.", "Fascial and rib-position models carry the limited-evidence note STYLE.md requires."]
 
 # ---------------------------------------------------------------- lesson 4
 
@@ -426,7 +473,7 @@ l4 = {
        "Is there anything you cannot do with the arm that you could do recently, like lifting it yourself?",
        "Does it hurt at night, or is it getting worse?",
        "Do you have a fever or feel unwell? Any chest pain or breathlessness?",
-       "Is a doctor or physiotherapist treating this shoulder or your neck, or have you had surgery on it?",
+       "Is a doctor or physical therapist treating this shoulder or your neck, or have you had surgery on it?",
        "For younger clients: are you under 18?"]),
     tier_callout("emergency"),
     tier_callout("urgent"),
@@ -461,9 +508,9 @@ l4 = {
     H("What to do with what you saw"),
     P("Write down what you saw in plain words, without a diagnosis. Then choose: train as planned, adjust the plan for a later session, or refer, and say which tier. Re-check the same screen the same way in a later session."),
     H("Saying it"),
-    L(["Urgent: \"You can't lift your arm yourself today, and that's new. We'll stop the shoulder work now. Please get it checked today: call your GP for an urgent appointment, or NHS 111.\"",
-       "Routine, with no other warning sign: \"Your shoulder hasn't improved in two weeks. Book in with your GP or a physiotherapist. Today we'll leave the shoulder out of training.\"",
-       "Emergency: call emergency services yourself, stay with the client, and follow the emergency list above.",
+    L(["Urgent: \"You can't lift your arm yourself today, and that's new. We'll stop the shoulder work now. Please get it checked today, at urgent care or with your primary care provider.\"",
+       "Routine, with no other warning sign: \"Your shoulder hasn't improved in two weeks. Please make an appointment with your primary care provider or a physical therapist. Today we'll leave the shoulder out of training.\"",
+       "Emergency: call 911 yourself, stay with the client, and follow the emergency list above.",
        "Never name a condition, and never say it is nothing."]),
     H("Check your understanding"),
     Q("What did a 2024 review find about clinicians' physical examination tests for rotator cuff tears and subacromial pain?", ["The evidence was mostly low in quality, and some tests helped rule a rotator cuff tear in", "Every test is accurate on its own", "No test gave any useful information"], 0,
@@ -477,15 +524,15 @@ l4_slots = [
    "note": "Condition-specific: rotator cuff tears and subacromial pain only. Zhao is the primary, open source; Hegedus is historical context."},
 ]
 l4_scen = [
-  {"prompt": "After a fall in class, the shoulder looks out of place.", "goodAnswer": "Stop; emergency: call emergency services now; do not move the arm or try to put it back; do not let them drive.", "safety": "SAFETY.md section 4"},
-  {"prompt": "After catching a heavy bar: pain and weakness lifting the arm; it still moves and looks normal.", "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.", "safety": "SAFETY.md sections 3 and 4"},
-  {"prompt": "Pins and needles in the arm that have not gone away.", "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.", "safety": "SAFETY.md section 4"},
+  {"prompt": "After a fall in class, the shoulder looks out of place.", "goodAnswer": "Stop; emergency: call 911 now; do not move the arm or try to put it back; do not let them drive.", "safety": "SAFETY.md section 4"},
+  {"prompt": "After catching a heavy bar: pain and weakness lifting the arm; it still moves and looks normal.", "goodAnswer": "Stop shoulder loading; urgent: urgent care or their primary care provider today.", "safety": "SAFETY.md sections 3 and 4"},
+  {"prompt": "Pins and needles in the arm that have not gone away.", "goodAnswer": "Stop shoulder loading; urgent: urgent care or their primary care provider today.", "safety": "SAFETY.md section 4"},
   {"prompt": "A mild ache after last week's pressing that settled within a day; no pain during sets; no warning signs.", "goodAnswer": "Continue; consider load or range for this session; stop shoulder loading if pain comes on during a set.", "safety": "SAFETY.md section 3"},
-  {"prompt": "Pain that has not improved after 2 weeks of leaving out the provoking movements.", "goodAnswer": "Stop shoulder loading for this session; routine referral: a GP or physiotherapist.", "safety": "SAFETY.md section 4"},
-  {"prompt": "A 16-year-old says the shoulder hurts after training.", "goodAnswer": "Stop shoulder loading; urgent: tell a parent or carer; an urgent GP appointment or NHS 111 the same day for referral to trauma and orthopaedics.", "safety": "SAFETY.md sections 2 and 4"},
+  {"prompt": "Pain that has not improved after 2 weeks of leaving out the provoking movements.", "goodAnswer": "Stop shoulder loading for this session; routine referral: a primary care provider or a physical therapist.", "safety": "SAFETY.md section 4"},
+  {"prompt": "A 16-year-old says the shoulder hurts after training.", "goodAnswer": "Stop shoulder loading; urgent: tell a parent or guardian; a same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation.", "safety": "SAFETY.md sections 2 and 4"},
   {"prompt": "Could a careful screen ever clear a client for training?", "goodAnswer": "No. A trainer's screen shows how a movement looks today; it never diagnoses or clears anyone (Spindle policy, SAFETY.md section 1).", "safety": "SAFETY.md section 1"},
 ]
-notes4 = ["The tier callouts are generated from SAFETY.md, so they match it exactly.", "The scope question ('can a screen clear a client?') is an ungraded discussion item, not a graded science question.", "Every screen has its own stop-and-refer block beside it."]
+notes4 = ["D-18 (2026-10-11): converted to US care pathways (911 for every emergency sign, never private transport; urgent care or the primary care provider the same day; a primary care provider or a licensed physical therapist) and US spelling. Needs Sol re-review before the v2 publish.", "The tier callouts are generated from SAFETY.md, so they match it exactly.", "The scope question ('can a screen clear a client?') is an ungraded discussion item, not a graded science question.", "Every screen has its own stop-and-refer block beside it."]
 
 # ---------------------------------------------------------------- lesson 5
 
@@ -502,7 +549,7 @@ l5 = {
   "blocks": [
     P("\"Correctives\" and \"activation\" are some of the most used words in shoulder training. This lesson separates what research tested from what is coaching practice, so you can use both honestly."),
     H("What research reports, and for whom"),
-    S("For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance from the British Elbow & Shoulder Society reports evidence that exercise reduces pain over 8 weeks to 6 months and improves the function patients report, at follow-up of up to six months. It grades that recommendation as conditional and positive, on low evidence, and says the best physiotherapy, exercise or manual therapy approach is still uncertain.", "claim-slot:l5-subacromial-exercise"),
+    S("For subacromial shoulder pain, a specific condition that a clinician diagnoses, specialist shoulder guidance from the British Elbow & Shoulder Society reports evidence that exercise reduces pain over 8 weeks to 6 months and improves the function patients report, at follow-up of up to six months. It grades that recommendation as conditional and positive, on low evidence, and says the best physical therapy, exercise or manual therapy approach is still uncertain.", "claim-slot:l5-subacromial-exercise"),
     S("For adults whose subacromial pain had lasted more than three months, a systematic review with meta-analysis found high-certainty evidence that surgery to decompress the space gave no additional benefit over placebo surgery, for pain at one year or for physical function at one to two years.", "claim-slot:l5-decompression"),
     S("For rotator cuff related shoulder pain, a 2020 systematic review compared each kind of exercise with placebo or no treatment, not with each other, over more than six weeks and up to six months. Progressive and resisted exercise showed an uncertain clinical benefit; non-progressive or non-resisted exercise showed no significant benefit. The certainty of the evidence was low.", "claim-slot:l5-progressive-comparisons"),
     C(POLICY, BOUNDARY),
@@ -529,7 +576,7 @@ l5 = {
     P("Give one to three cues per drill, as a direction or a target: \"reach long through your hands\", \"push the band away\". Watch the next rep, and keep a cue only if the movement changes the way you want."),
     C(REFER, f"Correctives never replace referral. Any stop rule means: {STOP_SESSION} {WORSENING} {TWO_WEEKS} Anything in the urgent or emergency tiers: refer at that tier. {FULL_RULES}"),
     H("Check your understanding"),
-    Q("What does UK specialist guidance report about exercise for subacromial shoulder pain?", ["It reduces pain over 8 weeks to 6 months and improves patient-reported function; the recommendation is conditional, on low evidence, and the best approach is uncertain", "One exercise programme is proven best", "Exercise does not help"], 0,
+    Q("What does specialist shoulder guidance report about exercise for subacromial shoulder pain?", ["It reduces pain over 8 weeks to 6 months and improves patient-reported function; the recommendation is conditional, on low evidence, and the best approach is uncertain", "One exercise program is proven best", "Exercise does not help"], 0,
       "The guidance reports that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function, grades this conditional positive on low evidence, and says the best approach is still uncertain.", "claim-slot:l5-subacromial-exercise"),
     Q("How did the 2020 review compare progressive and non-progressive exercise for rotator cuff related shoulder pain?", ["It found progressive exercise clearly better than non-progressive", "It compared each with placebo or no treatment, not with each other, and the evidence was low certainty", "It found no difference between them in a head-to-head comparison"], 1,
       "Each approach was compared with placebo or no treatment over more than six weeks to six months; the review did not compare them head to head, and certainty was low.", "claim-slot:l5-progressive-comparisons"),
@@ -539,14 +586,14 @@ l5 = {
 }
 l5_slots = [
   {"slot": "claim-slot:l5-subacromial-exercise", "statement": "For subacromial pain, the British Elbow & Shoulder Society patient care pathway (PICO 6) reports evidence that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function at follow-up of up to 6 months, grades the recommendation 'Conditional Positive (low evidence)', and says the best physiotherapy, exercise or manual therapy approach is still uncertain.", "candidateSources": [{**BESS25, "locator": "p. 719, PICO 6"}],
-   "note": "Paraphrased; the attributed source excerpt stays in the private evidence packet (D-13), at p. 719, PICO 6. Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."},
+   "note": "Paraphrased; the attributed source excerpt stays in the private evidence packet (D-13), at p. 719, PICO 6. Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalize that narrower clinical recommendation."},
   {"slot": "claim-slot:l5-decompression", "statement": "In adult patients with subacromial pain syndrome lasting more than 3 months, a systematic review with meta-analysis found high-certainty evidence of no additional benefit of subacromial decompression surgery over placebo surgery for pain at 1 year or physical function at 1 to 2 years.", "candidateSources": [LAHDEOJA],
    "note": "Replaces the CSAW trial (Beard 2018), an RCT the claim pipeline does not admit; the meta-analysis pools the placebo-controlled trials, CSAW among them."},
   {"slot": "claim-slot:l5-progressive-comparisons", "statement": "A 2020 systematic review found uncertain clinical benefit for progressive and resisted exercise and no significant benefit for non-progressive or non-resisted exercise, each versus placebo or no treatment at more than 6 weeks to 6 months, in rotator cuff related shoulder pain; evidence was low certainty and the categories were not compared directly.", "candidateSources": [NAUNTON]},
 ]
 l5_scen = [{"prompt": "A client wants 20 minutes of activation before every session.", "goodAnswer": "Keep a short warm-up; move strengthening into the main session with progressive load; make no claim that activation fixes anything.", "safety": "SAFETY.md section 1"}]
 notes5 = ["The EMG section and its quiz were removed: the accessible abstract did not support the ratios or the inference limit.",
-          "The outline no longer says 'first-line'. The lesson does not generalise BESS PICO 18's narrower recommendation (physiotherapy as a possible first-line treatment for chronic subacromial pain).",
+          "The outline no longer says 'first-line'. The lesson does not generalize BESS PICO 18's narrower recommendation (physiotherapy as a possible first-line treatment for chronic subacromial pain).",
           "The warm-up is practice-based and ranks nothing.",
           "BESS 2025 is expected to become admissible as guidance through W1's D-12 operator-asserted source kind (pending: no receipt yet); its claim statements carry no publication year until the review packet includes one."]
 
@@ -560,7 +607,7 @@ l6 = {
     "Choose pressing, pulling and overhead variations by range, control and goal.",
     "Progress load, range or difficulty one at a time.",
     "Use and define cues for the press, the row and the overhead press.",
-    "Recognise the signs that mean do not progress, at every step."],
+    "Recognize the signs that mean do not progress, at every step."],
   "anatomyIds": ["UBERON:0001467", "UBERON:0001470", "UBERON:0006849"],
   "blocks": [
     P("This lesson is for healthy adults whose shoulders tolerate training. Every progression below has its own stop rule beside it; read it before you use the progression."),
@@ -582,7 +629,7 @@ l6 = {
        "Progression: add load only after the current range is controlled for all reps."]),
     stop("Pain at the bottom of a press means stop for the session, not push through. In a later session, only if no warning sign remains, try a shorter range or another variation.", WORSENING, TWO_WEEKS),
     H("Pulling"),
-    P("Rows and pulldowns are the pulling options. Coach the shoulder blades to move with the arm rather than holding them locked, and keep pulling work in the programme alongside pressing."),
+    P("Rows and pulldowns are the pulling options. Coach the shoulder blades to move with the arm rather than holding them locked, and keep pulling work in the program alongside pressing."),
     L(["Progression: supported row (chest on a bench), then an unsupported row, then heavier load.",
        "Progression: band pulldown, then a cable or machine pulldown, then a pull-up with assistance."]),
     stop(TINGLE, WORSENING, TWO_WEEKS),
@@ -659,7 +706,7 @@ l7 = {
     stop(TINGLE, ACTIVE_LOSS, TRAUMA, NIGHT, WORSENING, UNDER_18),
     H("What to do"),
     P("Build strength for the rotator cuff and the shoulder blade muscles, rotation strength through the trunk and hips, and controlled deceleration work. Progress one thing at a time, with the same stop rules as lesson 6."),
-    stop("Pain while throwing, a loss of velocity with pain, or a \"dead arm\": stop throwing as well as shoulder loading, and refer at the tier that matches.", TINGLE, WORSENING, UNDER_18 + " An urgent GP appointment or NHS 111 the same day, for referral to trauma and orthopaedics."),
+    stop("Pain while throwing, a loss of velocity with pain, or a \"dead arm\": stop throwing as well as shoulder loading, and refer at the tier that matches.", TINGLE, WORSENING, UNDER_18 + " A same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation."),
     C(POLICY, "Throwing workload, pitch counts and return-to-throwing decisions are for the athlete's sport coach and treating clinician. Your strength work supports that plan; it does not replace it. " + BOUNDARY),
     P("Coaches in other rotational sports, such as racquet sports, swimming and combat sports, can use the same approach: record range the same way over time, build strength, follow the stop rules, and agree workload with the sport coach."),
     H("Check your understanding"),
@@ -676,9 +723,9 @@ l7_slots = [
    "note": "Wording Sol approved in the claim dry run (round 4). It reports the retroversion difference without saying it causes the range difference."},
   {"slot": "claim-slot:l7-injury-risk", "statement": "Evidence linking shoulder range of motion to injury in overhead athletes is uncertain and sport-specific: no statistically significant pooled association for the measures examined (2018 meta-analysis); external rotation insufficiency associated with injury in professional pitchers from three pooled studies, interpreted with caution (2020 meta-analysis of prospective cohorts); range among several risk factors, with inconsistent injury definitions (2025 systematic review).", "candidateSources": [KELLER, POZZI, SALAMH], "note": "Association, not individual prediction."},
 ]
-l7_scen = [{"prompt": "A 15-year-old pitcher says the shoulder hurts after games.", "goodAnswer": "Stop throwing and shoulder loading in the session; urgent: tell the athlete and a parent or carer to get an urgent GP appointment or NHS 111 the same day for referral to trauma and orthopaedics; emergency if any emergency sign.", "safety": "SAFETY.md sections 2 and 4"}]
+l7_scen = [{"prompt": "A 15-year-old pitcher says the shoulder hurts after games.", "goodAnswer": "Stop throwing and shoulder loading in the session; urgent: tell the athlete and a parent or guardian to get a same-day medical assessment, at urgent care or with their primary care provider, to arrange an urgent orthopedic evaluation; emergency (call 911) if any emergency sign.", "safety": "SAFETY.md sections 2 and 4"}]
 notes7 = ["The pitching-kinetics section, its objective and its quiz were removed: the only source (Fleisig 1995) is a primary study, which the claim pipeline does not admit, and no qualifying systematic review states those two moments (the 2023 normative meta-analysis by Mine et al. does not).",
-          "The rotation record is qualitative (no angles or totals), because a trainer set-up without a defined zero and stabilisation cannot give repeatable numbers.", "The stop blocks use SAFETY.md's tiers: persistent night pain with stiffness is routine; persistent pins and needles is urgent; inability to move after trauma is emergency.",
+          "The rotation record is qualitative (no angles or totals), because a trainer set-up without a defined zero and stabilization cannot give repeatable numbers.", "The stop blocks use SAFETY.md's tiers: persistent night pain with stiffness is routine; persistent pins and needles is urgent; inability to move after trauma is emergency.",
           "Throwing workload is stated as Spindle policy, not science. The cross-sport paragraph makes no claim about shared mechanics."]
 
 # ---------------------------------------------------------------- lesson 8
@@ -700,12 +747,12 @@ l8 = {
     C(POLICY, BOUNDARY),
     H("Which tier: the highest one that matches"),
     P(f"{HIGHEST} An emergency sign overrides every urgent or routine sign, and an urgent sign overrides every routine sign."),
-    H("Emergency: call emergency services now (999 in the UK)"),
+    H("Emergency: call 911 now"),
     L(TIER["emergency"]),
     C("Note on infection", INFECTION_NOTE),
-    H("Urgent: an urgent GP appointment or NHS 111 today (or the local equivalent)"),
+    H("Urgent: urgent care or the client's primary care provider, the same day"),
     L(TIER["urgent"]),
-    H("Routine: a GP or physiotherapist"),
+    H("Routine: a primary care provider or a licensed physical therapist"),
     L(TIER["routine"]),
     H("Stop rules"),
     P("Stop always means no further loading of that shoulder in this session. Changes to range, load or variation belong to a later session, and only if no warning sign remains."),
@@ -713,48 +760,48 @@ l8 = {
     H("Outside the base module"),
     L(EXCL_ROWS),
     H("Keeping routine referrals calm"),
-    S("For subacromial shoulder pain, UK specialist guidance from the British Elbow & Shoulder Society lists reassurance among the treatments suitable for primary care: this is usually a self-limiting condition, and most symptoms respond within three months.", "claim-slot:l8-subacromial-course"),
+    S("For subacromial shoulder pain, specialist shoulder guidance from the British Elbow & Shoulder Society lists reassurance among the treatments suitable for primary care: this is usually a self-limiting condition, and most symptoms respond within three months.", "claim-slot:l8-subacromial-course"),
     P("That keeps a routine referral calm. It is about one diagnosed condition, and it never delays an urgent or emergency referral."),
     H("Saying it, tier by tier"),
-    L(["Emergency: call emergency services yourself, stay with the client, and do not let them drive. After a fall or impact, do not move the arm or try to put it back. Nothing else happens in the session.",
-       "Urgent: \"You can't lift your arm yourself today, and that's new. We'll stop the shoulder work now. Please get it checked today: call your GP for an urgent appointment, or NHS 111.\" Do not offer more training in place of getting help.",
-       "Routine, with no other warning sign: \"Your shoulder pain is getting worse. Please book in with your GP or a physiotherapist now; you don't need to wait.\" With the shoulder left out, the rest of the session can go ahead if the client feels well.",
+    L(["Emergency: call 911 yourself, stay with the client, and do not let them drive. After a fall or impact, do not move the arm or try to put it back. Nothing else happens in the session.",
+       "Urgent: \"You can't lift your arm yourself today, and that's new. We'll stop the shoulder work now. Please get it checked today, at urgent care or with your primary care provider.\" Do not offer more training in place of getting help.",
+       "Routine, with no other warning sign: \"Your shoulder pain is getting worse. Please make an appointment with your primary care provider or a physical therapist now; you don't need to wait.\" With the shoulder left out, the rest of the session can go ahead if the client feels well.",
        "Every tier: do not name a condition, and do not say it is nothing."]),
     H("Working with a clinician's plan"),
     P("Ask the client to share the plan, ideally in writing. Train within it, ask the clinician before changing it, and do not progress it on your own."),
     H("Check your understanding"),
-    Q("For subacromial shoulder pain, what does UK specialist guidance say about how symptoms usually go?", ["It is usually self-limiting, and most symptoms respond within three months", "Symptoms never improve without surgery", "Most need emergency care"], 0,
+    Q("For subacromial shoulder pain, what does specialist shoulder guidance say about how symptoms usually go?", ["It is usually self-limiting, and most symptoms respond within three months", "Symptoms never improve without surgery", "Most need emergency care"], 0,
       "Among the treatments suitable for primary care, the guidance lists reassurance that this is usually a self-limiting condition, and that most symptoms respond within three months.", "claim-slot:l8-subacromial-course"),
-    C("What you do first", "For the three urgent red flags below, Spindle's stop rule comes first: leave the shoulder out of today's session and arrange the referral the same day. For anyone under 18, tell a parent or carer. This is Spindle's rule for trainers; the questions below test what the UK specialist pathway says about each sign."),
-    Q("Under the UK specialist pathway, what does shoulder pain in a child or adolescent need?",
-      ["Urgent referral to secondary care", "Routine referral if it has not improved after 2 weeks", "No referral"], 0,
-      "The pathway lists a child or adolescent with shoulder pain among the red flags that need urgent referral to secondary care.", "claim-slot:l8-red-flags"),
-    Q("Under the UK specialist pathway, what does a lump or swelling found when someone is assessed for shoulder pain need?",
-      ["Routine referral if it is still there in 2 weeks", "Urgent referral to secondary care", "No referral"], 1,
-      "The pathway lists swelling or lumps among the shoulder red flags that need urgent referral to secondary care.", "claim-slot:l8-red-flags"),
-    Q("Under the UK specialist pathway, what does shoulder pain with inflammation in several joints need?",
-      ["No referral", "Routine referral if it is not better in 2 weeks", "Urgent referral to secondary care"], 2,
-      "The pathway lists inflammation involving several joints among the shoulder red flags that need urgent referral to secondary care.", "claim-slot:l8-red-flags"),
-    C("Talk it through", "Pick the tier and say what you do first, who to contact and how soon: (1) arm pain with chest tightness during a session; (2) a new lump above the collarbone; (3) shoulder pain that has got worse every day this week, with no other sign; (4) after a fall, the client cannot move the arm; (5) fever and shoulder pain; (6) an ache after training that settled within a day, with no other sign."),
+    C("What you do first", "For the three urgent red flags below, Spindle's stop rule comes first: leave the shoulder out of today's session and send the client to urgent care or their primary care provider the same day. For anyone under 18, tell a parent or guardian. This is Spindle's rule for trainers; the questions below test only what specialist shoulder guidance says about each sign."),
+    Q("In specialist shoulder guidance, what is shoulder pain in a child or adolescent?",
+      ["A red flag that needs urgent specialist assessment", "A routine problem to review if it has not improved after 2 weeks", "Not a reason for referral"], 0,
+      "The guidance lists a child or adolescent with shoulder pain among the red flags that need urgent specialist assessment.", "claim-slot:l8-red-flags"),
+    Q("In specialist shoulder guidance, what is a lump or swelling found when someone is assessed for shoulder pain?",
+      ["A routine problem to review if it is still there in 2 weeks", "A red flag that needs urgent specialist assessment", "Not a reason for referral"], 1,
+      "The guidance lists swelling or lumps among the shoulder red flags that need urgent specialist assessment.", "claim-slot:l8-red-flags"),
+    Q("In specialist shoulder guidance, what is shoulder pain with inflammation in several joints?",
+      ["Not a reason for referral", "A routine problem to review if it is not better in 2 weeks", "A red flag that needs urgent specialist assessment"], 2,
+      "The guidance lists inflammation involving several joints among the shoulder red flags that need urgent specialist assessment.", "claim-slot:l8-red-flags"),
+    C("Talk it through", "Pick the tier and say what you do first, who to contact and how soon: (1) arm pain with chest tightness during a session; (2) a new lump above the collarbone; (3) shoulder pain that has gotten worse every day this week, with no other sign; (4) after a fall, the client cannot move the arm; (5) fever and shoulder pain; (6) an ache after training that settled within a day, with no other sign."),
   ],
   "media": [], "resources": [],
 }
 l8_slots = [
-  {"slot": "claim-slot:l8-red-flags", "statement": "The British Elbow & Shoulder Society subacromial pain care pathway states that shoulder pain red flags found at primary-care assessment need urgent secondary-care referral, and lists among them a child or adolescent patient, swelling or lumps, and inflammation involving multiple joints.", "candidateSources": [{**BESS25, "locator": "pp. 715-716, Red flags for the Shoulder"}],
-   "note": "Supports the graded adverse-case questions (SAFETY.md section 6), which test only the pathway's finding (urgent referral to secondary care). Spindle's stop-first, same-day and parent-or-carer steps sit in the practice-based 'What you do first' callout beside them. The excerpt stays in the private evidence packet (D-13)."},
+  {"slot": "claim-slot:l8-red-flags", "statement": "The British Elbow & Shoulder Society subacromial pain care pathway lists red flags for shoulder pain that need urgent specialist assessment (in the pathway, urgent referral from primary to secondary care), and includes among them a child or adolescent patient, swelling or lumps, and inflammation involving multiple joints.", "candidateSources": [{**BESS25, "locator": "pp. 715-716, Red flags for the Shoulder"}],
+   "note": "Supports the graded adverse-case questions (SAFETY.md section 6), which test only the guidance's finding (a red flag that needs urgent specialist assessment). Reworded under D-18 so that the claim states the clinical finding and no UK care pathway; the US same-day pathway (urgent care or the primary care provider), the stop-first step and telling a parent or guardian are Spindle policy in the practice-based 'What you do first' callout beside them. Needs Sol re-review. The excerpt stays in the private evidence packet (D-13)."},
   {"slot": "claim-slot:l8-subacromial-course", "statement": "Among interventions suitable for primary care, the British Elbow & Shoulder Society subacromial pain care pathway lists reassurance: this is usually a self-limiting condition, and most symptoms respond within three months.", "candidateSources": [{**BESS25, "locator": "p. 716, Treatment in primary care and community triage services"}],
    "note": "The attributed source excerpt stays in the private evidence packet (D-13)."},
 ]
 l8_scen = [
-  {"prompt": "Arm pain with chest tightness during a session.", "goodAnswer": "Stop all exercise; emergency: call emergency services (999 in the UK) now and stay with the client.", "safety": "SAFETY.md section 4"},
-  {"prompt": "A new lump above the collarbone.", "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.", "safety": "SAFETY.md section 4"},
-  {"prompt": "Shoulder pain that has got worse every day this week; no other sign.", "goodAnswer": "Stop shoulder loading for this session; routine referral now: a GP or physiotherapist, without waiting for 2 weeks.", "safety": "SAFETY.md sections 3 and 4"},
-  {"prompt": "After a fall, the client cannot move the arm.", "goodAnswer": "Stop; emergency: call emergency services now; do not move the arm or try to put it back; do not let them drive.", "safety": "SAFETY.md sections 3 and 4"},
-  {"prompt": "Fever and shoulder pain.", "goodAnswer": "Stop all exercise; emergency: call emergency services (999 in the UK) or go to the emergency department now. This is Spindle policy, stricter than the NHS page.", "safety": "SAFETY.md section 4 and its note on infection"},
+  {"prompt": "Arm pain with chest tightness during a session.", "goodAnswer": "Stop all exercise; emergency: call 911 now and stay with the client.", "safety": "SAFETY.md section 4"},
+  {"prompt": "A new lump above the collarbone.", "goodAnswer": "Stop shoulder loading; urgent: urgent care or their primary care provider today.", "safety": "SAFETY.md section 4"},
+  {"prompt": "Shoulder pain that has gotten worse every day this week; no other sign.", "goodAnswer": "Stop shoulder loading for this session; routine referral now: a primary care provider or a physical therapist, without waiting for 2 weeks.", "safety": "SAFETY.md sections 3 and 4"},
+  {"prompt": "After a fall, the client cannot move the arm.", "goodAnswer": "Stop; emergency: call 911 now; do not move the arm or try to put it back; do not let them drive.", "safety": "SAFETY.md sections 3 and 4"},
+  {"prompt": "Fever and shoulder pain.", "goodAnswer": "Stop all exercise; emergency: call 911 now; do not drive the client. This strict mapping is Spindle policy (SAFETY.md, note on infection).", "safety": "SAFETY.md section 4 and its note on infection"},
   {"prompt": "An ache after training that settled within a day; no other sign.", "goodAnswer": "Continue; stop shoulder loading if pain comes on during a set.", "safety": "SAFETY.md section 3"},
 ]
 notes8 = ["The tier, stop-rule and exclusion checklists are parsed from docs/curriculum/SAFETY.md (bounded at the next heading; malformed tables stop the build); regenerate whenever SAFETY.md changes.",
-          "Scenario answers give the first action, the tier, who to contact and how soon. Scenarios stay ungraded."]
+          "Scenario answers give the first action, the tier, who to contact and how soon. Scenarios stay ungraded.", "D-18 (2026-10-11): converted to US care pathways (911 for every emergency sign, never private transport; urgent care or the primary care provider the same day; a primary care provider or a licensed physical therapist) and US spelling. Needs Sol re-review before the v2 publish."]
 
 # ---------------------------------------------------------------- render, check, write
 
@@ -934,6 +981,7 @@ def restore(replaced, backups):
     return failed
 
 if __name__ == "__main__":
+    check_tier_floors()
     files = render()
     write_atomically(files)
     print(f"wrote {len(files)} drafts")
