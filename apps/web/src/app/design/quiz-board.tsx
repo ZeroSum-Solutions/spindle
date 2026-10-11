@@ -14,21 +14,23 @@ const STATES: [string, QuizState][] = [
   ["Submit refused", { status: "error", kind: "rejected", message: "Your answers did not match this quiz. Nothing was saved. Reload the page and try again." }],
   ["Submit unconfirmed", { status: "error", kind: "unconfirmed", message: "We could not confirm whether your answers were saved. Submit the same answers again: if they were saved, they will not count twice." }],
   ["Attempt key conflict", { status: "error", kind: "key-conflict", message: "These answers differ from an attempt you already submitted. Start a new attempt to submit them." }],
+  ["Scored: not passed (answers stay locked)", { status: "result", attemptId: "a1", correct: 1, total: 2, passed: false, feedback: null, reviewLocked: true }],
   [
-    "Scored: not passed, with feedback",
+    "Scored: passed, with the server's review",
     {
       status: "result",
-      attemptId: "a1",
-      correct: 1,
+      attemptId: "a2",
+      correct: 2,
       total: 2,
-      passed: false,
+      passed: true,
       feedback: [
         { questionId: "l1:q1", correct: true, explanation: "Synthetic explanation one." },
-        { questionId: "l2:q1", correct: false, explanation: "Synthetic explanation two." },
+        { questionId: "l2:q1", correct: true, explanation: "Synthetic explanation two." },
       ],
+      reviewLocked: false,
     },
   ],
-  ["Scored: passed, feedback withheld", { status: "result", attemptId: "a2", correct: 2, total: 2, passed: true, feedback: null }],
+  ["Scored: passed, review unavailable", { status: "result", attemptId: "a3", correct: 2, total: 2, passed: true, feedback: null, reviewLocked: false }],
 ];
 
 export function QuizBoard() {

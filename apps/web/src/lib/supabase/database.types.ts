@@ -238,6 +238,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          domain: string
           evidence_level: string
           id: string
           population: string
@@ -246,6 +247,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          domain?: string
           evidence_level: string
           id?: string
           population: string
@@ -254,6 +256,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          domain?: string
           evidence_level?: string
           id?: string
           population?: string
@@ -421,6 +424,7 @@ export type Database = {
           course_id: string
           id: string
           layer: string
+          learner_snapshot: Json | null
           org_id: string | null
           published_at: string
           published_by: string
@@ -435,6 +439,7 @@ export type Database = {
           course_id: string
           id?: string
           layer: string
+          learner_snapshot?: Json | null
           org_id?: string | null
           published_at?: string
           published_by: string
@@ -449,6 +454,7 @@ export type Database = {
           course_id?: string
           id?: string
           layer?: string
+          learner_snapshot?: Json | null
           org_id?: string | null
           published_at?: string
           published_by?: string
@@ -1068,6 +1074,44 @@ export type Database = {
         }
         Relationships: []
       }
+      source_kind_overrides: {
+        Row: {
+          document_type: string
+          justification: string
+          kind: string
+          publication_types: string[]
+          recorded_at: string
+          recorded_by: string
+          source_id: string
+        }
+        Insert: {
+          document_type: string
+          justification: string
+          kind: string
+          publication_types: string[]
+          recorded_at?: string
+          recorded_by: string
+          source_id: string
+        }
+        Update: {
+          document_type?: string
+          justification?: string
+          kind?: string
+          publication_types?: string[]
+          recorded_at?: string
+          recorded_by?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_kind_overrides_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: true
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       source_retractions: {
         Row: {
           notice: Json
@@ -1365,6 +1409,16 @@ export type Database = {
       publisher_set_media_status: {
         Args: { p_actor: string; p_media: string; p_status: Json }
         Returns: string
+      }
+      quiz_attempt_review: {
+        Args: { p_attempt: string }
+        Returns: {
+          answer_index: number
+          chosen: number
+          correct: boolean
+          explanation: string
+          question_id: string
+        }[]
       }
       remove_member: {
         Args: { member: string; target_org: string }
