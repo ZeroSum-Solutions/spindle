@@ -224,7 +224,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Reaching overhead involves the shoulder blade rotating upward as the arm rises.",
+        "content": "In people without shoulder pain, the shoulder blade rotates upward as the arm rises overhead.",
         "support": "science",
         "claimIds": [
           "claim-slot:l6-overhead-upward"
@@ -332,14 +332,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "Which shoulder blade movement is part of reaching fully overhead?",
+          "prompt": "In people without shoulder pain, which shoulder blade movement happens as the arm rises overhead?",
           "options": [
             "Upward rotation",
             "Downward rotation",
             "None: the shoulder blade stays still"
           ],
           "answerIndex": 0,
-          "explanation": "Reaching fully overhead involves upward rotation of the shoulder blade."
+          "explanation": "In people without shoulder pain, the shoulder blade rotates upward as the arm rises."
         },
         "support": "science",
         "claimIds": [

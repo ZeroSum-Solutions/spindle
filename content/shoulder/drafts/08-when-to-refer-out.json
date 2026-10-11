@@ -10,6 +10,26 @@
   ],
   "claimSlots": [
     {
+      "slot": "claim-slot:l8-red-flags",
+      "statement": "The British Elbow & Shoulder Society subacromial pain care pathway states that shoulder pain red flags found at primary-care assessment need urgent secondary-care referral, and lists among them a child or adolescent patient, swelling or lumps, and inflammation involving multiple joints.",
+      "domain": "applied",
+      "evidenceLevel": "Clinical care pathway, British Elbow & Shoulder Society",
+      "population": "Patients with shoulder pain assessed in primary care (BESS 2025 patient care pathway).",
+      "candidateSources": [
+        {
+          "kind": "consensus",
+          "citation": "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724.",
+          "doi": "10.1177/17585732251374282",
+          "pmid": "41245988",
+          "pmcid": "PMC12611748",
+          "url": "https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf",
+          "rights": "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. Cited and paraphrased only.",
+          "locator": "pp. 716-717, Red flags for the Shoulder"
+        }
+      ],
+      "note": "Supports the graded adverse-case questions (SAFETY.md section 6). The excerpt stays in the private evidence packet (D-13). The tier each question picks matches SAFETY.md section 4 (urgent); the questions' stop-first step is Spindle's stop rule, attributed as such in each explanation."
+    },
+    {
       "slot": "claim-slot:l8-subacromial-course",
       "statement": "Among interventions suitable for primary care, the British Elbow & Shoulder Society subacromial pain care pathway lists reassurance: this is usually a self-limiting condition, and most symptoms respond within three months.",
       "domain": "applied",
@@ -279,6 +299,57 @@
         "support": "science",
         "claimIds": [
           "claim-slot:l8-subacromial-course"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "Before a session, a 15-year-old client tells you the shoulder has hurt after every game this week. What do you do?",
+          "options": [
+            "Leave the shoulder out of today's session and arrange an urgent referral today; tell a parent or carer",
+            "Train around it and refer if it has not improved after 2 weeks",
+            "Carry on as planned; young athletes recover quickly"
+          ],
+          "answerIndex": 0,
+          "explanation": "The UK specialist pathway lists a child or adolescent with shoulder pain among the red flags that need urgent referral. Spindle's stop rule leaves the shoulder out of the session first."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l8-red-flags"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "A client mentions a new lump around the shoulder. What do you do?",
+          "options": [
+            "Refer routinely if it is still there in 2 weeks",
+            "Leave the shoulder out of today's session and arrange an urgent referral today",
+            "Massage the area and recheck next week"
+          ],
+          "answerIndex": 1,
+          "explanation": "The UK specialist pathway lists swelling or a lump among the shoulder red flags that need urgent referral. Spindle's stop rule leaves the shoulder out of the session first."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l8-red-flags"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "A client reports new pain, swelling and stiffness in several joints at once, the shoulder among them. What do you do?",
+          "options": [
+            "Carry on with the session as planned",
+            "Refer routinely if it is not better in 2 weeks",
+            "Leave the shoulder out of today's session and arrange an urgent referral today"
+          ],
+          "answerIndex": 2,
+          "explanation": "The UK specialist pathway lists inflammation involving several joints among the shoulder red flags that need urgent referral. Spindle's stop rule leaves the shoulder out of the session first."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l8-red-flags"
         ]
       },
       {

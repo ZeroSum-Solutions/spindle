@@ -80,7 +80,7 @@
     "format": "article",
     "objectives": [
       "Describe the range differences professional pitchers' throwing shoulders typically show.",
-      "Explain why shoulder range is not a reliable injury screen on its own.",
+      "Explain why the evidence does not establish reliable injury prediction from shoulder range alone.",
       "Know the warning signs in throwers, and refer young throwers with shoulder pain urgently."
     ],
     "anatomyIds": [
@@ -113,7 +113,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Whether shoulder range is linked to injury is uncertain and differs by sport. A 2018 meta-analysis found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury in overhead athletes. A 2020 meta-analysis of prospective studies linked too little extra external rotation in the throwing arm to injury in professional pitchers, from three pooled studies, with a caution about the small number of studies, and suggested range screening may not identify risk in some other overhead sports. A 2025 review listed range among several risk factors, alongside reduced strength, previous pain or injury and training load, and noted that studies define injury differently.",
+        "content": "Whether shoulder range is linked to injury is uncertain and differs by sport. A 2018 meta-analysis found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury in overhead athletes. A 2020 meta-analysis of prospective studies linked too little extra external rotation in the throwing arm to injury in professional pitchers, from three pooled studies, with a caution about the small number of studies, and suggested range screening may not identify risk in some other overhead sports. A 2025 review listed range among several risk factors and noted that studies define injury differently.",
         "support": "science",
         "claimIds": [
           "claim-slot:l7-injury-risk"
@@ -218,11 +218,11 @@
           "prompt": "Can shoulder range alone tell you which overhead athletes will be injured?",
           "options": [
             "Yes, reliably in every sport",
-            "No: pooled associations were not significant or were limited to some sports, and studies define injury differently",
+            "No: the evidence does not establish reliable prediction from range alone; pooled associations were not significant or were limited to some sports",
             "Only in swimmers"
           ],
           "answerIndex": 1,
-          "explanation": "Syntheses disagree and differ by sport, and injury definitions vary; range is one possible factor among several, not a reliable screen on its own."
+          "explanation": "Syntheses disagree and differ by sport, and injury definitions vary. These findings do not establish reliable prediction of injury from range alone."
         },
         "support": "science",
         "claimIds": [

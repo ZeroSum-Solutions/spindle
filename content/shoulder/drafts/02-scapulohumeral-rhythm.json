@@ -106,7 +106,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "When the arm is raised, the shoulder blade does not stay still. From the very start of the raise it rotates upward, so the socket turns to face more toward the ceiling, and it tilts backward. It also tends to turn outward around the ribcage.",
+        "content": "When the arm is raised, the shoulder blade does not stay still. In people without shoulder pain, from the very start of the raise it rotates upward, so the socket turns to face more toward the ceiling, and it tilts backward. It also tends to turn outward around the ribcage.",
         "support": "science",
         "claimIds": [
           "claim-slot:l2-scapular-motions"
@@ -204,14 +204,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "Which two shoulder blade movements happen consistently as the arm is raised overhead?",
+          "prompt": "In people without shoulder pain, which two shoulder blade movements happen as the arm is raised overhead?",
           "options": [
             "Upward rotation and backward tilt",
             "Downward rotation and forward tilt",
             "None: the shoulder blade stays still"
           ],
           "answerIndex": 0,
-          "explanation": "From the start of the raise, the shoulder blade rotates upward and tilts backward, and it tends to turn outward around the ribcage."
+          "explanation": "In people without shoulder pain, from the start of the raise the shoulder blade rotates upward and tilts backward, and it tends to turn outward around the ribcage."
         },
         "support": "science",
         "claimIds": [
@@ -228,7 +228,7 @@
             "The shoulder blade does most of the work"
           ],
           "answerIndex": 1,
-          "explanation": "Pooled studies of people without shoulder pain estimated about 3:1 on average, but shoulder blade movement varied a lot between people, so no fixed ratio holds."
+          "explanation": "Pooled studies of people without shoulder pain estimated about 3:1 on average; shoulder blade movement varied a lot between people, and the review did not support a fixed ratio."
         },
         "support": "science",
         "claimIds": [
