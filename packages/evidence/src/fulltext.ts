@@ -64,10 +64,10 @@ const spans = (attrs: string | undefined) =>
 
 const NOT_A_GRID = "it is not a plain grid (merged cells, no header row, uneven rows or unreadable markup); quote it as a publisher excerpt instead";
 
-/** A plain grid: one header row width, every body row the same width, no spans or stray markup. */
+/** A plain grid: exactly one header row, every body row its width, no spans or stray markup (Sol R3 PR31-R3-01). */
 function plainGrid(t: TableState): boolean {
   const width = t.head[t.head.length - 1]?.length ?? 0;
-  return !t.merged && width > 0 && t.head.every((r) => r.length === width) && t.rows.length > 0 && t.rows.every((r) => r.length === width);
+  return !t.merged && width > 0 && t.head.length === 1 && t.rows.length > 0 && t.rows.every((r) => r.length === width);
 }
 
 function tableText(t: TableState): string {
