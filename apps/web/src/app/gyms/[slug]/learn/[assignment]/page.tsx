@@ -6,6 +6,9 @@ import { LearnShell, LoadingNote, VersionUnavailable } from "@/components/learn/
 import { learnerGym, myAssignment } from "@/lib/learning/load";
 import { groupByPart } from "@/lib/learning/view";
 import { VersionNotice } from "@/components/learn/version-notice";
+import { ModuleStatusCard } from "@/components/learn/module-status";
+import { gradedQuestions } from "@spindle/engine";
+import { loadModuleStatus } from "@/lib/learning/quiz-server";
 
 export default function CoursePage(props: PageProps<"/gyms/[slug]/learn/[assignment]">) {
   return (
@@ -36,6 +39,8 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
   const { view } = detail;
   const base = `/gyms/${ctx.org.slug}/learn/${detail.assignmentId}`;
   const parts = groupByPart(view.lessons);
+  const hasQuiz = gradedQuestions(detail.version.course).length > 0;
+  const status = await loadModuleStatus(ctx, detail.assignmentId);
 
   return (
     <LearnShell gym={ctx.org.name} back={back}>
@@ -58,6 +63,8 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
             The affected blocks are marked. Read them with that in mind. Your completion and credit stay as they are.
           </IntegrityAlert>
         ) : null}
+
+        <ModuleStatusCard status={status} quizHref={hasQuiz ? `${base}/quiz` : null} />
 
         {view.delta ? <VersionNotice delta={view.delta} versionNumber={view.versionNumber} credited={view.lessons.some((l) => l.state === "credited")} /> : null}
 

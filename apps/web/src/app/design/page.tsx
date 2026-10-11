@@ -11,6 +11,8 @@ import { ErrorNote } from "@/components/ui";
 import type { ClaimView } from "@/lib/learning/load";
 import type { CourseView, LessonView } from "@/lib/learning/view";
 import { CompletionBoard, LogoReveal } from "./motion-board";
+import { QuizBoard } from "./quiz-board";
+import { ModuleStatusCard } from "@/components/learn/module-status";
 
 // Design specimen for development only. It mounts the real learner components with
 // synthetic props: no database, no real curriculum, nothing saved. Production
@@ -188,6 +190,21 @@ export default function DesignSpecimen() {
               orgId={null}
             />
           </article>
+        </div>
+      </Section>
+
+      <Section title="Module status and graded quiz">
+        <div className="flex max-w-3xl flex-col gap-4">
+          <ModuleStatusCard status={null} quizHref={null} />
+          <ModuleStatusCard
+            status={{ assignmentId: "as1", versionId: "v1", lessonsTotal: 8, lessonsCompleted: 6, quizRequired: true, questionsTotal: 20, bestAttemptId: "a1", bestCorrect: 15, bestTotal: 20, quizPassed: false, quizCreditAttemptId: null, quizCarried: false, complete: false }}
+            quizHref="/design"
+          />
+          <ModuleStatusCard
+            status={{ assignmentId: "as1", versionId: "v1", lessonsTotal: 8, lessonsCompleted: 8, quizRequired: true, questionsTotal: 20, bestAttemptId: "a2", bestCorrect: 18, bestTotal: 20, quizPassed: true, quizCreditAttemptId: "a2", quizCarried: false, complete: true }}
+            quizHref="/design"
+          />
+          <QuizBoard />
         </div>
       </Section>
 
