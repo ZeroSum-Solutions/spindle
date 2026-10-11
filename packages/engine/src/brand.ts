@@ -1,4 +1,4 @@
-import { tenantBrandSchema, type TenantBrand } from "@spindle/schema";
+import { orgBrandInputSchema, tenantBrandSchema, type OrgBrandInput, type TenantBrand } from "@spindle/schema";
 import { contrast, isHex, mix } from "./contrast";
 
 // Tenant brand validation (phase 4, P4-A). Every foreground and background pair the brand
@@ -52,13 +52,26 @@ export type BrandResult = { ok: true; brand: ValidatedBrand; checks: ContrastChe
 
 const VALIDATED = new WeakSet<object>();
 
-/** The colours a brand's two inputs become. The tenant cannot set these directly. */
+/** White, the other candidate for text on the band. */
+export const BAND_WHITE = "#ffffff";
+
+/**
+ * The colours a brand's inputs become. The tenant cannot set these directly. P4-A2 band tokens:
+ * `onBand` is ink or white, whichever has the higher ratio on the band (ink on a tie);
+ * `bandTint` mixes onBand 12% into the band (chips); `bandEdge` mixes it 20% in (the hairline).
+ */
 export function brandTokens(colors: TenantBrand["colors"]) {
+  const band = (colors.band ?? ATLAS.surface).toLowerCase();
+  const onBand = contrast(ATLAS.ink, band) >= contrast(BAND_WHITE, band) ? ATLAS.ink : BAND_WHITE;
   return {
     accent: colors.accent.toLowerCase(),
     accentHover: mix(colors.accent, "#000000", 0.15),
     accentSoft: mix(colors.accent, "#FFFFFF", 0.9),
     onAccent: colors.onAccent.toLowerCase(),
+    band,
+    onBand,
+    bandTint: mix(band, onBand, 0.12),
+    bandEdge: mix(band, onBand, 0.2),
   };
 }
 
@@ -91,6 +104,13 @@ export function brandChecks(brand: Pick<TenantBrand, "colors" | "mark">): Contra
     { role: "Error text on its panel", state: "error", foreground: ATLAS.danger, background: ATLAS.dangerSoft, minimum: 4.5 },
     { role: "Error text on surface", state: "error", foreground: ATLAS.danger, background: ATLAS.surface, minimum: 4.5 },
   ];
+  // P4-A2 header band and catalog hero: name, nav links and chips are onBand; the focus ring there is onBand too.
+  pairs.push(
+    { role: "Brand name on the band", state: "default", foreground: t.onBand, background: t.band, minimum: 4.5 },
+    { role: "Nav link on the band", state: "default", foreground: t.onBand, background: t.band, minimum: 4.5 },
+    { role: "Chip text on the band tint", state: "default", foreground: t.onBand, background: t.bandTint, minimum: 4.5 },
+    { role: "Focus ring on the band", state: "focus", foreground: t.onBand, background: t.band, minimum: 3 },
+  );
   // The text mark is large (at least 20px semibold), so 3:1 applies.
   if (brand.mark.kind === "text") pairs.push({ role: "Text mark in the header", state: "default", foreground: t.accent, background: ATLAS.surface, minimum: 3 });
   return pairs.map((p) => {
@@ -137,4 +157,17 @@ export function brandToCssVars(brand: ValidatedBrand): Record<string, string> {
   };
   if (!Object.values(vars).every(isHex)) throw new Error("brand colours must be literal #RRGGBB values");
   return vars;
+}
+
+/**
+ * Checks a gym's stored brand as save_org_brand will (P4-A2): the shape, then every AA pair. The
+ * database repeats both; this is the editor's answer, and brand-fixtures.ts keeps the two equal.
+ */
+export function validateOrgBrand(input: unknown): { ok: true; brand: OrgBrandInput; checks: ContrastCheck[] } | { ok: false; problems: string[]; checks: ContrastCheck[] } {
+  const parsed = orgBrandInputSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, problems: parsed.error.issues.map((i) => `${i.path.join(".") || "brand"}: ${i.message}`), checks: [] };
+  const checks = brandChecks(parsed.data);
+  const failing = checks.filter((c) => !c.pass);
+  if (failing.length > 0) return { ok: false, problems: failing.map((c) => `${c.role} (${c.state}): ${c.shown}:1, needs ${c.minimum}:1`), checks };
+  return { ok: true, brand: parsed.data, checks };
 }
