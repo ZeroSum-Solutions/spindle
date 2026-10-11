@@ -236,17 +236,17 @@ export default function DesignSpecimen() {
           <YouTubeSegment
             recheck={specimenRecheck}
             segment={{ mediaId: "m-demo", provider: "youtube", videoId: "M7lc1UVf-VE", startSeconds: 0, endSeconds: 30, rationale: "Synthetic rationale: shows how a coaching segment sits beside lesson text.", caption: "" }}
-            availability={{ mediaId: "m-demo", state: "playable", title: "Specimen clip: YouTube IFrame API demo", channel: "YouTube API demo", available: true }}
+            availability={{ mediaId: "m-demo", state: "playable", review: "model-described", title: "Specimen clip: YouTube IFrame API demo", channel: "YouTube API demo", available: true }}
           />
           <YouTubeSegment
             recheck={specimenRecheck}
             segment={{ mediaId: "m-gone", provider: "youtube", videoId: "000000000aa", startSeconds: 5, endSeconds: 20, rationale: "Synthetic rationale: the provider reports this clip as unavailable.", caption: "" }}
-            availability={{ mediaId: "m-gone", state: "playable", title: null, channel: null, available: false }}
+            availability={{ mediaId: "m-gone", state: "playable", review: "model-described", title: null, channel: null, available: false }}
           />
           <YouTubeSegment
             recheck={specimenRecheck}
             segment={{ mediaId: "m-off", provider: "youtube", videoId: "000000000bb", startSeconds: 5, endSeconds: 20, rationale: "Synthetic rationale: the registry has switched this clip off.", caption: "" }}
-            availability={{ mediaId: "m-off", state: "disabled", title: null, channel: null, available: null }}
+            availability={{ mediaId: "m-off", state: "disabled", review: null, title: null, channel: null, available: null }}
           />
         </div>
       </Section>
