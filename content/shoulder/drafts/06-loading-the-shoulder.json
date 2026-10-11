@@ -47,7 +47,7 @@
       "slot": "claim-slot:l6-volume",
       "statement": "A meta-regression of 67 studies found that muscle hypertrophy increases with weekly resistance training volume, with diminishing returns.",
       "evidenceLevel": "Meta-regression",
-      "population": "Participants in resistance training studies (Pelland 2026).",
+      "population": "Participants in 35 studies contributing to the hypertrophy volume analysis, n=1,032 (Pelland 2026, section 3.6.1).",
       "candidateSources": [
         {
           "kind": "meta_analysis",

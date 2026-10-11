@@ -726,9 +726,9 @@ CLAIM_META = {
     "claim-slot:l5-progressive-comparisons": ("Systematic review with meta-analysis of randomised controlled trials", '"people with rotator cuff related pain" (Naunton 2020).'),
     "claim-slot:l6-progression": ("Position stand (overview of systematic reviews)", ACSM_POP + "."),
     "claim-slot:l6-overhead-upward": ("Systematic review with multilevel meta-regression", FERNANDEZ_POP + "."),
-    "claim-slot:l6-volume": ("Meta-regression", "Participants in resistance training studies (Pelland 2026)."),
+    "claim-slot:l6-volume": ("Meta-regression", "Participants in 35 studies contributing to the hypertrophy volume analysis, n=1,032 (Pelland 2026, section 3.6.1)."),
     "claim-slot:l6-failure": ("Systematic review with meta-analysis; exploratory meta-regression", "Participants in resistance training studies (Refalo 2023; Robinson 2024)."),
-    "claim-slot:l7-adaptation": ("Systematic review (level of evidence 4)", "Baseball pitchers, mostly professional (Paul 2025)."),
+    "claim-slot:l7-adaptation": ("Systematic review (level of evidence 4)", 'Professional baseball pitchers: the rotation result pools 13 studies of 1,101 professional pitchers (Paul 2025, whose overall eligibility was "nonrecreational baseball pitchers").'),
     "claim-slot:l7-injury-risk": ("Systematic reviews with meta-analysis; systematic review of prospective studies", '"overhead athletes" (Keller 2018); "overhead athletes from Olympic or college sports", with pooled data from "professional baseball pitchers" (Pozzi 2020); "the athletic population" (Salamh 2025).'),
     "claim-slot:l8-subacromial-course": ("Clinical guideline (GRADE), British Elbow & Shoulder Society", BESS_POP + "."),
 }

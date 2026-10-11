@@ -15,7 +15,7 @@
       "slot": "claim-slot:l7-adaptation",
       "statement": "In professional baseball pitchers, the throwing shoulder shows on average less internal rotation and more external rotation than the non-throwing shoulder; across included pitchers, humeral retroversion differed between the arms by about 15 degrees on average.",
       "evidenceLevel": "Systematic review (level of evidence 4)",
-      "population": "Baseball pitchers, mostly professional (Paul 2025).",
+      "population": "Professional baseball pitchers: the rotation result pools 13 studies of 1,101 professional pitchers (Paul 2025, whose overall eligibility was \"nonrecreational baseball pitchers\").",
       "candidateSources": [
         {
           "kind": "systematic_review",
