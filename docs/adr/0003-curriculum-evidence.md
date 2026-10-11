@@ -7,5 +7,5 @@
 - **Applied claims** come from recent systematic reviews and meta-analyses.
 - **Claim records** carry a verification receipt, a reviewer, an expiry and retraction status.
 - **Binding:** science blocks must bind approved claims; practice-based blocks must not.
-- **Drafting with AI** happens only on the founder's machine. It writes into Spindle's own block schema, and a human reviews every draft. OpenMAIC's generation package is optional and is compared against direct drafting before it is adopted.
+- **Drafting with AI** happens only on the founder's machine. It writes into Spindle's own block schema. ~~A human reviews every draft.~~ Superseded by D-08 (2026-10-11): until launch an independent model reviews every claim and lesson with receipts, and a licensed PT reviews the base curriculum once before launch. OpenMAIC's generation package is optional and is compared against direct drafting before it is adopted.
 - **The pre-existing evidence-atom library is not the backbone.** Its atoms are intervention-outcome findings for client plans. Individual atoms may be imported as candidate claims and go through the same review.
