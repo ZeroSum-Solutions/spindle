@@ -10,7 +10,7 @@ export const PALETTE = [
   { token: "surface-muted", light: "#ebedf1", dark: "#20242f", role: "Read-only panels, hover, selected rows." },
   { token: "sheet", light: "#ffffff", dark: "#161a22", role: "The reading sheet under lesson prose." },
   { token: "text", light: "#12151c", dark: "#f2f4f8", role: "Text. Graphite in light, light ink in dark." },
-  { token: "text-muted", light: "#4a5160", dark: "#b4bac6", role: "Secondary text. AAA on every surface." },
+  { token: "text-muted", light: "#4a5160", dark: "#b4bac6", role: "Secondary text. AAA on canvas and surface; AA (6.7:1) on the light muted panel." },
   { token: "ink", light: "#12151c", dark: "#f2f4f8", role: "Ink fills: the primary action. Inverts with the theme." },
   { token: "border", light: "#d7dbe2", dark: "#2a2f3a", role: "Hairlines only, never a control's only edge." },
   { token: "control", light: "#737a89", dark: "#6b7385", role: "Control outlines, 3:1 or more." },

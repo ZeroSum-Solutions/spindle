@@ -183,15 +183,19 @@ export function TokensBoard() {
 
 /** The measurement layer: ticks, a mono readout, numeric progress and segments (done ink, current signal, rest hairline). */
 export function MeasurementSpecimen({ done = 2, total = 8 }: { done?: number; total?: number }) {
-  const pct = Math.round((done / total) * 100);
+  // Complete is its own state: every segment done and the readout at total / total (never "9 of 8").
+  const complete = done >= total;
+  const pct = Math.round((Math.min(done, total) / total) * 100);
+  const shown = complete ? total : done + 1;
+  const label = complete ? `All ${total} lessons done` : `Lesson ${done + 1} of ${total}; ${done} done`;
   return (
-    <div data-measure className="flex flex-col gap-attach">
+    <div data-measure data-complete={complete || undefined} className="flex flex-col gap-attach">
       <div aria-hidden className="measure-ticks h-5 w-full max-w-md text-control" />
       <div className="flex items-center gap-attach">
         <span className="tabular text-code text-text">
-          {String(done + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+          {String(shown).padStart(2, "0")} / {String(total).padStart(2, "0")}
         </span>
-        <span role="img" aria-label={`Lesson ${done + 1} of ${total}; ${done} done`} className="grid flex-1 gap-1" style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}>
+        <span role="img" aria-label={label} className="grid flex-1 gap-1" style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}>
           {Array.from({ length: total }, (_, i) => (
             <span key={i} className={`h-1.5 rounded-[1px] ${i < done ? "measure-done" : i === done ? "measure-current" : "measure-rest"}`} />
           ))}

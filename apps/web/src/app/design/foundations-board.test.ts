@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { CHECKED_PAIRS, PALETTE, TYPE_SCALE } from "../../lib/theme/foundations";
-import { ColourBoard, LogoBoard, StopReferSpecimen, TypeBoard } from "./foundations-board";
+import { ColourBoard, LogoBoard, MeasurementSpecimen, StopReferSpecimen, TypeBoard } from "./foundations-board";
 import { KIT_PARTS, ThemePair } from "./kit";
 
 const html = (el: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(el);
@@ -49,5 +49,16 @@ describe("the /design living kit", () => {
     expect(stop).toContain("bg-stop-panel");
     expect(stop).toContain("bg-stop");
     expect(stop).not.toMatch(/animate|transition|logo-reveal|confirm-appear/);
+  });
+
+  it("shows a completed track as total / total, never one past the end (Sol R2 on #51)", () => {
+    const done = html(createElement(MeasurementSpecimen, { done: 8, total: 8 }));
+    expect(done).toContain("08 / 08");
+    expect(done).toContain('aria-label="All 8 lessons done"');
+    expect(done).toContain("100%");
+    expect(done).not.toContain("measure-current");
+    const mid = html(createElement(MeasurementSpecimen, { done: 2, total: 8 }));
+    expect(mid).toContain("03 / 08");
+    expect(mid).toContain('aria-label="Lesson 3 of 8; 2 done"');
   });
 });
