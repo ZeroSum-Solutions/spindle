@@ -51,7 +51,7 @@ These rows are research leads. Europe PMC confirmed that each record exists. The
    - an open nomenclature reference (TA2 via Wikidata or Uberon, D-12 `nomenclature_reference`);
    - another CC BY anatomy review.
 4. *What it is: the muscle groups.* **GAP** for anatomy outside gluteus medius: gluteus maximus, iliopsoas, the adductors and the deep rotators. The candidates we found are CC BY-NC, carry no stated licence, or are animal studies. Without an admissible source, the section is removed. The lesson must not describe muscle actions in any case, because actions are function, not foundation.
-5. *Why it matters.* [P] Load the range a client can control. Most hip training works the muscle groups that cross the joint in several directions.
+5. *Why it matters.* [P] Load the range a client can control.
 6. *How to see it.* [P] A landmark tour, done on yourself first: the front of the pelvis at the hip bone, the top of the pelvis, and the bony point at the outside of the hip. Ask before you touch a client and say what you are touching. Offer to let the client find each landmark themselves. Never palpate the groin or the sit bones on a client; describe those landmarks instead (Spindle policy).
 7. *What to do.* [P] Use plain names with clients and standard names with clinicians.
 8. [!] The lesson teaches location, never what is "wrong". A painful spot is described, not named as an injury (SAFETY §1).
@@ -84,7 +84,7 @@ These rows are research leads. Europe PMC confirmed that each record exists. The
 
 **Sections**
 1. *What it is: the movements.* [P] The six movements, shown standing and lying down. This is teaching vocabulary, not a claim.
-2. *Pelvis and hip together.* [S] In people with femoroacetabular impingement (FAI) or hip dysplasia, tilting the pelvis backward is associated with more hip motion before impingement. The block must state the population and must not generalise to healthy clients.
+2. *Pelvis and hip together.* [S] In people with femoroacetabular impingement (FAI), tilting the pelvis backward is associated with more hip motion before impingement. (The same review's dysplasia studies reported something different, increased joint stress with posterior tilt, so the claim is limited to FAI.) The block must state the population and must not generalise to healthy clients.
 3. *Range varies.* [S] On average, women show more passive hip flexion (about 6°) and internal rotation (about 8°) than men. These are averages, with large overlap between people.
 4. *Hip range and low back pain.* [S] Of the hip movements measured, only internal rotation was lower in people with non-specific low back pain, and the evidence is very low quality. The claim is cross-sectional: it shows an association, not a cause.
 5. *How to see it.* [P] Watch a squat and a hip hinge from the side and from the front. Describe where the pelvis and lower back move, in plain words.
@@ -94,7 +94,7 @@ These rows are research leads. Europe PMC confirmed that each record exists. The
 **Claim slots**
 | Slot | Domain | Evidence level | Population | Candidate source |
 |---|---|---|---|---|
-| `hip-l2-pelvic-tilt` | applied | Systematic review (14 studies) | Patients with FAI or hip dysplasia | Kuhns BD, et al. Posterior pelvic tilt allows for increased hip motion, while anterior pelvic tilt decreases joint stress: a systematic review. *Arthroscopy* 2025;41(10):4303-4315. PMID 40021069, doi:10.1016/j.arthro.2025.02.021. Licence: none stated. |
+| `hip-l2-pelvic-tilt` | applied | Systematic review (14 studies) | Patients with FAI (the claim excludes the review's dysplasia findings) | Kuhns BD, et al. Posterior pelvic tilt allows for increased hip motion, while anterior pelvic tilt decreases joint stress: a systematic review. *Arthroscopy* 2025;41(10):4303-4315. PMID 40021069, doi:10.1016/j.arthro.2025.02.021. Licence: none stated. |
 | `hip-l2-sex-range` | applied | Systematic review with meta-analysis (38 studies, 3,234 people) | Healthy adults, mean age about 25 | Freiberger C, et al. Hip range of motion during passive and 1-leg exercises is greater in women: a meta-analysis and systematic review. *Arthroscopy* 2024;40(2):495-512. PMID 37116553, doi:10.1016/j.arthro.2023.04.006. Licence: CC BY. |
 | `hip-l2-range-lbp` | applied | Systematic review (24 cross-sectional studies; very low quality) | Adults with and without non-specific low back pain | Avman MA, et al. Is there an association between hip range of motion and nonspecific low back pain? A systematic review. *Musculoskelet Sci Pract* 2019;42:38-51. PMID 31030110, doi:10.1016/j.msksp.2019.03.002. Licence: none stated. |
 
@@ -125,7 +125,7 @@ These rows are research leads. Europe PMC confirmed that each record exists. The
 5. *Squat depth and stance.* **GAP.** We found no systematic review linking hip shape to squat depth or stance width. Coaching language about individual stance stays practice-based ([P] "find the stance and depth this client controls"). It makes no claim that bone shape is the reason.
 6. *How to see it.* [P] Hip rotation lying on the back and lying face down, and a supported deep squat. Compare sides, and compare the client's active range with the range you can move them through (assisted, with permission).
 7. *What to do.* [P] For a long-standing, familiar, painless restriction with no warning sign: train in the range the client controls, change one thing at a time, and re-check. Anything new, unexplained or painful goes to hip §3 and §4 first.
-8. [!] Pain in the groin or hip during deep flexion or rotation means stop that movement for the session (hip §3). Stiffness lasting more than 30 minutes after waking, or pain that disturbs sleep, is a routine referral (hip §4).
+8. [!] Pain in the groin or hip during deep flexion or rotation means no further hip loading this session (hip §3, Spindle policy as SAFETY §3). Stiffness lasting more than 30 minutes after waking, or pain that disturbs sleep, is a routine referral (hip §4).
 
 **Claim slots**
 | Slot | Domain | Evidence level | Population | Candidate source |
@@ -156,7 +156,7 @@ These rows are research leads. Europe PMC confirmed that each record exists. The
 - Choose the right referral tier.
 
 **Sections**
-1. *Why screens are not tests.* [S] Clinical tests for FAI and labral tears have limited diagnostic accuracy, and few of the studies were high quality. An expert consensus on hip-related pain adds two points. A negative flexion-adduction-internal rotation test helps clinicians rule hip-related pain out. Examination and imaging have limited diagnostic use on their own. The block says these are clinicians' tests. Trainers do not use them to diagnose.
+1. *Why screens are not tests.* [S] Clinical tests for FAI and labral tears have limited diagnostic accuracy, and few of the studies were high quality. An expert consensus on hip-related pain in young and middle-aged active adults adds two points. Within a comprehensive clinical assessment, a negative flexion-adduction-internal rotation test may help clinicians rule hip-related pain out. Examination and imaging have limited diagnostic use on their own. The block says these are clinicians' tests. Trainers do not use them to diagnose.
 2. *Range screening does not predict.* [S] In athletes, lower total hip rotation at pre-season screening was associated with groin pain, but the authors say screening is unlikely to identify who will develop it.
 3. *Before you screen: questions.* [P] Recent fall or injury? Pins and needles or numbness? Night pain? Fever or feeling unwell? Any diagnosed hip, back or pelvic condition, or recent surgery? Pregnant or recently given birth? Each question maps to hip §2 to §4.
 4. [!] Red flags in trainer words, with tiers (hip §4 in full). The consensus names serious conditions that clinicians must exclude, which supports the referral rule. The trainer's job is to recognise warning signs, never to name a condition.
@@ -174,7 +174,7 @@ These rows are research leads. Europe PMC confirmed that each record exists. The
 
 **Graded quiz candidates**
 - What does a systematic review conclude about clinical tests for FAI and labral tears? (Limited accuracy, and few high-quality studies) [§1]
-- Can a pre-season hip range screen identify which athletes will develop groin pain? (No, according to the review's authors) [§2]
+- Is a pre-season hip range screen a reliable way to predict which athlete will develop groin pain? (The review does not support using it that way: its authors say screening is unlikely to identify them) [§2]
 
 **Scenario (ungraded), adverse cases:** these stay ungraded until claims are approved.
 - Severe hip pain after a fall in class; the client cannot put weight on the leg (emergency).
@@ -197,7 +197,7 @@ These rows are research leads. Europe PMC confirmed that each record exists. The
 - Build a short, ordered warm-up for the hips.
 
 **Sections**
-1. *Exercises emphasise different muscles.* [S] A systematic review of muscle-activity (EMG) studies in healthy, active people found that lower-limb exercises activate individual muscles differently. Exercise choice therefore changes which muscle is emphasised. The block makes no claim that activation predicts strength, size or injury.
+1. *Exercises emphasise different muscles.* [S] A systematic review of muscle-activity studies (predominantly using EMG) in healthy, active people found that lower-limb exercises activate individual muscles differently. Exercise choice therefore changes which muscle is emphasised. The block makes no claim that activation predicts strength, size or injury.
 2. *Hip thrust before sprinting.* [S] A meta-analysis found that a hip thrust done as a warm-up conditioning activity gave a moderate, protocol-dependent short-term sprint benefit. The certainty is low to very low. The same review found that long-term hip-thrust training did not carry over to squat strength or jumping. This section is removed if no claim is approved.
 3. *Glute "activation" drills.* **GAP.** We found no systematic review of glute activation drills for performance or injury prevention. The lesson says nothing about their effect. [P] What activation drills are for in a session: rehearsal, attention, warm-up. They are not a fix, and research does not rank them. (This is coaching practice, not a finding that they do not work.)
 4. *How to see it.* [P] Does the client own the position under a light load? Re-check a lesson 4 screen.
@@ -211,7 +211,7 @@ These rows are research leads. Europe PMC confirmed that each record exists. The
 | `hip-l5-hip-thrust-acute` | applied | Systematic review with meta-analysis (20 randomised trials; low to very low certainty) | Athletes and trained participants in the included trials | Lin S, et al. Acute and long-term effects of hip thrust training on athletic performance: a systematic review and meta-analysis. *PeerJ* 2026;14:e20785. PMID 41777686, PMC12951884, doi:10.7717/peerj.20785. Licence: CC BY. |
 
 **Graded quiz candidates**
-- What did a systematic review of muscle-activity studies find about lower-limb exercises? (Different exercises emphasise different muscles) [§1]
+- What did a systematic review of muscle-activity studies (mostly EMG) find about lower-limb exercises? (Different exercises emphasise different muscles) [§1]
 
 **Scenario (ungraded):** A client wants 20 minutes of band work "to switch the glutes on" before every session. What do you keep, and what do you move into the main session?
 
@@ -250,7 +250,7 @@ These rows are research leads. Europe PMC confirmed that each record exists. The
 - What drives strength gains over time? (Progressive resistance training) [§1]
 - Compared with partial range, what did a meta-analysis find for full-range training? (Greater strength and lower-limb hypertrophy) [§3]
 
-**Scenario (ungraded):** A client feels a pinch at the front of the hip at the bottom of a deep goblet squat, during the set. What do you do now, and what might change next time? Now: stop loading that movement for this session (hip §3). Next session, only if no warning sign remains: discuss a shorter range or another variation, and stop again if pain comes on. Refer routinely if the pain is getting worse or has not improved after 2 weeks.
+**Scenario (ungraded):** A client feels a pinch at the front of the hip at the bottom of a deep goblet squat, during the set. What do you do now, and what might change next time? Now: no further hip loading this session (hip §3). Next session, only if no warning sign remains: discuss a shorter range or another variation, and stop again if pain comes on. Refer routinely if the pain is getting worse, keeps coming back, or has not improved after 2 weeks.
 
 **Video slots:** hinge technique; hip thrust set-up; split-squat progressions.
 
@@ -272,7 +272,7 @@ These rows are research leads. Europe PMC confirmed that each record exists. The
 3. *Findings without pain.* [S] In the same review of people without hip pain, labral injury appeared on MRI in about two-thirds of hips, in the studies that reported it.
 4. *Adductor strength and groin pain.* [S] In healthy athletes, those who stayed uninjured had stronger hip adduction than those who later developed groin pain. Abduction strength differed trivially. This is an association from prospective cohorts, not proof that strengthening prevents groin pain.
 5. *Prevention programmes.* [S] Groin-injury prevention programmes in sport showed a reduction in groin injuries that was not statistically significant. The trials were mainly in football and handball. The block reports the uncertainty.
-6. *Hip osteoarthritis.* [S] Compared with no treatment, land-based exercise probably reduces hip osteoarthritis pain slightly (moderate certainty). Against placebo or attention control, the effect was little or none. **Spindle policy, not a science claim:** a trainer's loading is not treatment for a diagnosed condition. A client with diagnosed hip osteoarthritis trains within the treating clinician's plan (hip §2).
+6. *Hip osteoarthritis.* [S] Compared with no treatment, land-based exercise probably reduces hip osteoarthritis pain slightly (moderate certainty), and the difference may not be clinically meaningful. Compared with placebo or attention control, exercise may have little or no effect on pain (low certainty). **Spindle policy, not a science claim:** a trainer's loading is not treatment for a diagnosed condition. A client with diagnosed hip osteoarthritis trains within the treating clinician's plan (hip §2).
 7. *What to do.* [P] Adjust range, load or variation in a later session, only if no warning sign remains. Keep training other areas while the hip is assessed, for a routine referral only.
 8. [!] Pain while running or cutting that changes how the client moves, groin pain with a lump, or pain with fever or feeling unwell: stop and refer (hip §3, §4).
 
@@ -331,48 +331,49 @@ Every NHS page below returned HTTP 200 on 2026-10-11, and we read its wording th
 **Hip §2. Excluded populations**
 | Population | Rule | Source |
 |---|---|---|
-| Recent fall or injury with new hip or groin pain that has not been assessed | Do not train the hip. Use hip §4. | NHS hip pain: severe hip pain after a fall or injury is a 999 or A&E reason. https://www.nhs.uk/symptoms/hip-pain/ |
+| Recent fall or injury with new hip or groin pain that has not been assessed | Do not load the hip. If any emergency or urgent sign in hip §4 applies, use that tier. Otherwise (mild new pain after a fall or injury, no other sign): ask the client to get it assessed by a GP or physiotherapist before hip training resumes. | NHS hip pain gives 999 or A&E for **severe** hip pain after a fall or injury: https://www.nhs.uk/symptoms/hip-pain/ The exclusion and the assessment step for milder pain are **Spindle policy**, matching SAFETY §2's row for a recent injury. |
 | After hip surgery (including a replacement), or a recent fracture or dislocation, still in rehabilitation | Outside the base module. Follow the clinician's plan. | Spindle policy; nearest support as SAFETY §2. |
 | Diagnosed hip condition under current care (for example osteoarthritis, FAI syndrome, a labral tear) | Work only within the clinician's plan. | Spindle policy; `hip-l7-oa-exercise` shows exercise is a clinical treatment, not a trainer's plan. |
-| Pregnancy, or within the first months after giving birth, with pelvic girdle or groin pain | Outside the base module; refer. | Spindle policy. **GAP:** no source read yet; the modality outline lists a postpartum review that does not cover this. |
-| Children and adolescents with hip, thigh or knee pain, or a limp | Outside the base module. Stop leg loading and tell the young person and a parent or carer. Sudden hip, thigh or knee pain, not bearing weight, a leg that has changed shape, or feeling unwell with a high temperature: **emergency**. Any other hip, thigh or knee pain or limp: **urgent**, the same day. | NHS limp in children: 999 or A&E for the emergency signs, a GP for a limp of unknown cause. https://www.nhs.uk/symptoms/limp-in-children/ NHS irritable hip: urgent GP or NHS 111 for sudden pain or a limp. https://www.nhs.uk/symptoms/hip-pain-children-irritable-hip/ The pages differ, so we take the stricter tier for each sign. Treating every other limp as urgent rather than routine is **Spindle policy**, because hip problems in children can show as knee pain. |
+| Pregnancy, or within the first year after giving birth, with pelvic girdle or groin pain | Outside the base module; refer. Pregnancy and postpartum training without these symptoms is also outside the base module until a reviewed pregnancy and postpartum safety section exists (see the modality outline). | Spindle policy. **GAP:** no source read yet. |
+| Children and adolescents with hip, thigh or knee pain, or a limp | Outside the base module. Stop leg loading, and tell the young person and a parent or carer. **Emergency** (999 or A&E) for any of: sudden pain in the hip, knee or thigh; cannot put any weight on the leg; the leg has changed shape or points at an odd angle; feeling generally unwell with a high temperature, or feeling hot, cold or shivery; severe pain in the lower part of the tummy; symptoms getting worse. **Urgent** (the same day) for any other hip, thigh or knee pain or limp. | NHS limping in children (999 or A&E list as above; a GP for a limp of unknown cause): https://www.nhs.uk/symptoms/limp-in-children/ NHS irritable hip (urgent GP or 111 for sudden pain, a limp or not bearing weight): https://www.nhs.uk/symptoms/hip-pain-children-irritable-hip/ The pages differ, so each sign takes the stricter tier. Treating every other limp as urgent rather than routine is **Spindle policy**, because hip problems in children can show as thigh or knee pain. |
 
-**Hip §3. Stop rules**
+**Hip §3. Stop rules.** "Stop" always means no further loading of that hip in this session, matching SAFETY §3. Changes to range, load or variation belong to a later session, and only if no warning sign remains (Spindle policy).
 | Stop when | What the trainer does | Source |
 |---|---|---|
-| Pain comes on or rises with load, or a movement seems to make the hip worse | Stop loading that movement for this session. Routine referral if the pain is getting worse, or has not improved after 2 weeks. | NHS hip pain: see a GP if it is getting worse or has not improved after 2 weeks. |
-| Tingling or loss of feeling in the hip or leg after an injury | Stop. **Emergency.** | NHS hip pain. |
-| Back pain with numbness around the genitals or anus, new bladder or bowel changes, or pain, weakness or numbness in both legs | Stop all exercise. **Emergency.** | NHS back pain (cauda equina warning signs): https://www.nhs.uk/conditions/back-pain/ |
-| After a fall or injury, the client cannot walk or put weight on the leg, or the leg looks shorter or at an odd angle | Stop. Do not move the leg. **Emergency.** | NHS broken hip: https://www.nhs.uk/conditions/broken-hip/ ; NHS hip pain. |
-| One leg suddenly painful and swollen (usually the calf or thigh), with red or darker skin | Stop. **Urgent**; **emergency** with breathlessness or chest pain. | NHS DVT: https://www.nhs.uk/conditions/deep-vein-thrombosis-dvt/ |
-| Signs of a joint infection: a sudden, very painful hip that is hot, swollen or discoloured, or hip pain with a high temperature or feeling unwell | Stop. **Emergency** (Spindle policy, stricter than NHS, matching SAFETY §4's infection note). | NHS hip pain and NHS septic arthritis list these as urgent: https://www.nhs.uk/conditions/septic-arthritis/ |
+| Pain comes on or rises with load, or a movement seems to make the hip worse | Stop hip loading for this session. Routine referral if the pain is getting worse, keeps coming back, or has not improved after 2 weeks. | NHS hip pain (GP if getting worse or keeps coming back, or not improved after 2 weeks of home treatment). The whole-session stop is Spindle policy, as in SAFETY §3. |
+| The client cannot walk or put weight on the leg (with or without a fall or injury) | Stop. Do not move the leg. **Emergency.** | NHS hip pain and NHS broken hip: 999 or A&E if you're unable to walk or put weight on your leg (no injury qualifier): https://www.nhs.uk/conditions/broken-hip/ |
+| After a fall or injury: severe hip pain, the leg looks shorter or at an odd angle, or tingling or loss of feeling in the hip or leg | Stop. Do not move the leg. **Emergency.** | NHS hip pain and NHS broken hip. |
+| Back pain with any of: pain, tingling, weakness or numbness in both legs; loss of feeling around the genitals or anus; changes in the bladder or bowels; new changes in sexual sensation or function (the client may report these) | Stop all exercise. **Emergency.** | NHS back pain, 999 or A&E list: https://www.nhs.uk/conditions/back-pain/ |
+| Signs of possible DVT in one leg: throbbing pain (usually the calf or thigh), swelling, warm skin, or red or darker skin. Colour change is not required. | Stop. **Urgent**; **emergency** with breathlessness or chest pain. | NHS DVT (urgent if you think you have DVT; 999 with shortness of breath or chest pain): https://www.nhs.uk/conditions/deep-vein-thrombosis-dvt/ |
+| Suspected joint infection: the hip is suddenly very painful **and** hot, swollen or discoloured, **or** hip pain with a high temperature or feeling hot, cold, shivery or unwell | Stop. **Emergency** (Spindle policy, stricter than NHS, matching SAFETY §4's infection note). | NHS hip pain and NHS septic arthritis list these as urgent: https://www.nhs.uk/conditions/septic-arthritis/ |
+| A hip that is swollen and feels hot, or skin around the hip that has changed colour, without the infection signs above | Stop. **Urgent.** | NHS hip pain, urgent list. |
 
-**Hip §4. Referral tiers.** These use the same structure as SAFETY §4 (use the highest tier any sign matches).
-- **Emergency:**
-  - severe hip pain after a fall or injury;
-  - cannot walk or bear weight after an injury;
-  - tingling or loss of feeling after an injury;
-  - cauda equina warning signs;
-  - suspected joint infection (Spindle policy);
-  - leg swelling with breathlessness or chest pain;
-  - chest pain or tightness of any kind (as SAFETY §4);
+**Hip §4. Referral tiers.** These use the same structure as SAFETY §4: use the highest tier any sign matches.
+- **Emergency (999 or A&E):**
+  - cannot walk or put weight on the leg;
+  - after a fall or injury: severe hip pain, a leg that looks shorter or at an odd angle, or tingling or loss of feeling in the hip or leg;
+  - back pain with the signs in hip §3 (both legs; around the genitals or anus; bladder or bowel; sexual sensation or function);
+  - suspected joint infection (Spindle policy, hip §3);
+  - possible DVT with breathlessness or chest pain;
+  - the SAFETY §4 cardiac criterion, unchanged: chest pain that feels tight, crushing or squeezing, or that spreads to the arm, neck or jaw; severe difficulty breathing; collapse or not responding normally;
   - a child's emergency signs (hip §2).
-- **Urgent:**
-  - severe hip pain that started suddenly without a fall;
-  - one swollen, painful leg (possible DVT);
+- **Urgent (an urgent GP appointment or NHS 111 today):**
+  - severe hip pain that started suddenly, without a fall or injury;
+  - a hip that is swollen and hot, or skin around it that has changed colour (hip §3);
+  - possible DVT in one leg;
   - any other child or adolescent with hip, thigh or knee pain or a limp;
-  - a groin lump that is painful, or comes with nausea, vomiting or fever (NHS hernia: https://www.nhs.uk/conditions/hernia/ ).
-- **Routine:**
-  - hip pain that is getting worse, has not improved after 2 weeks, stops normal activity, or affects sleep;
+  - a groin lump or hernia with any of: pain in or around it, a bloated tummy, feeling or being sick, vomiting blood, constipation, a high temperature or feeling hot, cold or shivery, or sudden confusion (NHS hernia, 111 list: https://www.nhs.uk/conditions/hernia/ ).
+- **Routine (a GP or physiotherapist):**
+  - hip pain that is getting worse, keeps coming back, has not improved after 2 weeks, stops normal activities, or affects sleep (NHS hip pain);
   - stiffness lasting more than 30 minutes after waking (NHS hip pain);
-  - a groin lump or swelling without those signs (NHS hernia; a swelling that does not go down within 2 weeks: https://www.nhs.uk/symptoms/lumps/ );
-  - bone pain that is worse at night (NHS bone cancer symptoms: https://www.nhs.uk/conditions/bone-cancer/symptoms/ ). This is a routine GP visit, never framed as cancer to the client.
+  - a groin lump or suspected hernia with none of the urgent signs above (NHS hernia: see a GP; NHS lumps: a groin swelling that does not go down within 2 weeks: https://www.nhs.uk/symptoms/lumps/ );
+  - bone pain or tenderness that is worse at night (NHS bone cancer symptoms: https://www.nhs.uk/conditions/bone-cancer/symptoms/ ). This is a routine GP visit, never framed as cancer to the client.
 
 **Known gaps for the hip safety document**
 - No dedicated NHS pages for Perthes' disease or slipped upper femoral epiphysis. The limp page names both.
 - No NHS page for stress fractures. The hip-related pain consensus lists stress fracture among the serious conditions clinicians must exclude, but gives no tier.
 - No specialist hip care pathway read yet: the hip has no counterpart to BESS.
-- Night pain is supported only through the bone cancer and back pain pages.
+- Night pain: hip pain that affects sleep is a routine referral on the NHS hip pain page. Bone pain that is worse at night is a separate, more specific routine criterion from the bone cancer page. Neither is a red flag on its own.
 
 ---
 
