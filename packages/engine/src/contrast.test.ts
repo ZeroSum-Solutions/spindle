@@ -1,0 +1,54 @@
+import { describe, expect, it } from "vitest";
+import { contrast, isHex, luminance, mix } from "./contrast";
+
+// A small deterministic generator, so the property tests are repeatable.
+function* colours(seed: number, n: number): Generator<string> {
+  let x = seed;
+  for (let i = 0; i < n; i++) {
+    x = (x * 1103515245 + 12345) % 2 ** 31;
+    yield `#${(x % 0x1000000).toString(16).padStart(6, "0")}`;
+  }
+}
+
+describe("WCAG 2.2 contrast", () => {
+  it("matches the specification's reference points", () => {
+    expect(contrast("#000000", "#FFFFFF")).toBeCloseTo(21, 10);
+    expect(contrast("#FFFFFF", "#FFFFFF")).toBe(1);
+    expect(luminance("#FFFFFF")).toBeCloseTo(1, 12);
+    expect(luminance("#000000")).toBe(0);
+    // #767676 is the lightest grey that meets 4.5:1 on white; #777777 just fails.
+    expect(contrast("#767676", "#FFFFFF")).toBeGreaterThanOrEqual(4.5);
+    expect(contrast("#777777", "#FFFFFF")).toBeLessThan(4.5);
+    // The sRGB linearisation threshold is 0.04045 (WCAG 2.2 corrigendum), not 0.03928.
+    expect(luminance("#0A0A0A")).toBeCloseTo(10 / 255 / 12.92 * 1, 12);
+  });
+
+  it("is symmetric, bounded to 1..21, and equal to 1 only for equal luminance (property)", () => {
+    const list = [...colours(7, 400)];
+    for (let i = 0; i < list.length - 1; i++) {
+      const [a, b] = [list[i]!, list[i + 1]!];
+      const r = contrast(a, b);
+      expect(r).toBeCloseTo(contrast(b, a), 12);
+      expect(r).toBeGreaterThanOrEqual(1);
+      expect(r).toBeLessThanOrEqual(21);
+      expect(contrast(a, a)).toBe(1);
+    }
+  });
+
+  it("grows as one colour moves away from the other's luminance (property)", () => {
+    for (const c of colours(11, 100)) {
+      const towardWhite = [0, 0.25, 0.5, 0.75, 1].map((t) => contrast("#000000", mix(c, "#FFFFFF", t)));
+      for (let i = 1; i < towardWhite.length; i++) expect(towardWhite[i]!).toBeGreaterThanOrEqual(towardWhite[i - 1]!);
+    }
+  });
+
+  it("mixes in sRGB toward the second colour and accepts only #RRGGBB", () => {
+    expect(mix("#000000", "#FFFFFF", 0.5)).toBe("#808080");
+    expect(mix("#7A1F2B", "#FFFFFF", 0)).toBe("#7a1f2b");
+    expect(mix("#7A1F2B", "#FFFFFF", 1)).toBe("#ffffff");
+    for (const bad of ["red", "#FFF", "#GGGGGG", "#FFFFFF ", "var(--x)", "rgb(0,0,0)"]) {
+      expect(isHex(bad)).toBe(false);
+      expect(() => contrast(bad, "#FFFFFF")).toThrow();
+    }
+  });
+});

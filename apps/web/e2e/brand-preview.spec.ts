@@ -1,0 +1,134 @@
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Locator, type Page } from "@playwright/test";
+
+// Tenant brand theming (P4-A) on the test-only preview page: two synthetic brands render the
+// learner shell, a lesson and the module quiz card. No database rows; no sign-in.
+
+const BRANDS = [
+  { name: "Example Barbell Club", accent: "rgb(122, 31, 43)" },
+  { name: "Example Pilates Studio", accent: "rgb(80, 110, 75)" },
+] as const;
+// Atlas evidence colours, which no brand can change.
+const SCIENCE = "rgb(11, 107, 80)";
+const PRACTICE = "rgb(138, 75, 16)";
+
+const VIEWS = [
+  { label: "320", width: 320, height: 720, scale: 1 },
+  { label: "390", width: 390, height: 844, scale: 1 },
+  { label: "1440", width: 1440, height: 900, scale: 1 },
+  // 200% browser zoom on a 1440px window: 720 CSS pixels at twice the density.
+  { label: "1440 at 200%", width: 720, height: 450, scale: 2 },
+] as const;
+
+const section = (page: Page, name: string) => page.locator(`[data-brand-preview="${name}"]`);
+
+/** WCAG contrast of two rgb() strings, computed in the page's terms. */
+function ratio(a: string, b: string): number {
+  const lum = (rgb: string) => {
+    const [r, g, bl] = rgb.match(/\d+(\.\d+)?/g)!.slice(0, 3).map((v) => {
+      const s = Number(v) / 255;
+      return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r! + 0.7152 * g! + 0.0722 * bl!;
+  };
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+}
+
+/** The element's own colour and the first opaque background behind it. */
+async function colours(el: Locator, prop: "color" | "outlineColor" = "color") {
+  return el.evaluate((node, p) => {
+    let bg = "";
+    for (let n: Element | null = node; n; n = n.parentElement) {
+      const c = getComputedStyle(n).backgroundColor;
+      if (c && c !== "transparent" && !/rgba\(.*,\s*0\)$/.test(c)) {
+        bg = c;
+        break;
+      }
+    }
+    return { fg: getComputedStyle(node)[p], bg: bg || "rgb(255, 255, 255)" };
+  }, prop);
+}
+
+test.describe("tenant brand preview", () => {
+  for (const view of VIEWS) {
+    test(`both brands pass axe AA, reflow without sideways scroll and keep evidence colours at ${view.label}`, async ({ browser }) => {
+      const context = await browser.newContext({ viewport: { width: view.width, height: view.height }, deviceScaleFactor: view.scale });
+      const page = await context.newPage();
+      const res = await page.goto("/brand-preview");
+      expect(res?.status()).toBe(200);
+      await page.waitForLoadState("networkidle");
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), "sideways scroll").toBe(0);
+      for (const brand of BRANDS) {
+        const s = section(page, brand.name);
+        await expect(s).toBeVisible();
+        const axe = await new AxeBuilder({ page }).include(`[data-brand-preview="${brand.name}"]`).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+        expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`), `${brand.name} at ${view.label}`).toEqual([]);
+        // The brand drives the mark, links and the current lesson; evidence labels stay Spindle's.
+        await expect(s.locator("[data-brand-mark]")).toHaveCSS("color", brand.accent);
+        await expect(s.getByText("Science", { exact: true }).first()).toHaveCSS("color", SCIENCE);
+        await expect(s.getByText("Practice-based", { exact: true }).first()).toHaveCSS("color", PRACTICE);
+        await expect(s.getByText("Base curriculum by Spindle, cited")).toBeVisible();
+      }
+      await context.close();
+    });
+  }
+
+  test("every themed control shows a visible brand focus ring on keyboard focus, with contrast", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/brand-preview");
+    for (const brand of BRANDS) {
+      const s = section(page, brand.name);
+      const total = await s.evaluate((root) => {
+        const els = [...root.querySelectorAll<HTMLElement>("a[href], button, summary, input, [tabindex]:not([tabindex='-1'])")].filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0;
+        });
+        els.forEach((el, i) => el.setAttribute("data-tab-id", String(i)));
+        return els.length;
+      });
+      expect(total, brand.name).toBeGreaterThan(4);
+      // Start just before the section and walk forward with Tab.
+      await s.locator("[data-tab-id='0']").focus();
+      await page.keyboard.press("Shift+Tab");
+      const seen = new Set<string>();
+      for (let i = 0; i < total * 3 && seen.size < total; i++) {
+        await page.keyboard.press("Tab");
+        const focused = s.locator(":focus");
+        if ((await focused.count()) === 0) continue;
+        const id = await focused.getAttribute("data-tab-id");
+        if (id === null || seen.has(id)) continue;
+        const style = await focused.evaluate((el) => ({ style: getComputedStyle(el).outlineStyle, width: parseFloat(getComputedStyle(el).outlineWidth), name: (el.textContent ?? el.getAttribute("aria-label") ?? "").trim().slice(0, 40) }));
+        expect(style.style, `${brand.name}: ${style.name}`).toBe("solid");
+        expect(style.width, `${brand.name}: ${style.name}`).toBeGreaterThanOrEqual(3);
+        const { fg, bg } = await colours(focused, "outlineColor");
+        expect(fg, `${brand.name}: ring colour on ${style.name}`).toBe(brand.accent);
+        expect(ratio(fg, bg), `${brand.name}: ring contrast on ${style.name}`).toBeGreaterThanOrEqual(3);
+        seen.add(id);
+      }
+      expect(seen.size, `${brand.name}: every control reached by Tab`).toBe(total);
+    }
+  });
+
+  test("hovered links and the selected control keep AA contrast in the rendered page", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/brand-preview");
+    for (const brand of BRANDS) {
+      const s = section(page, brand.name);
+      const link = s.locator("[data-themed='link']").first();
+      await link.hover();
+      const hovered = await colours(link);
+      expect(ratio(hovered.fg, hovered.bg), `${brand.name}: hovered link`).toBeGreaterThanOrEqual(4.5);
+      expect(hovered.fg).not.toBe(brand.accent);
+      const selected = s.locator("[aria-pressed='true']").first();
+      const sel = await colours(selected);
+      expect(ratio(sel.fg, sel.bg), `${brand.name}: selected control`).toBeGreaterThanOrEqual(4.5);
+      await selected.hover();
+      const selHover = await colours(selected);
+      expect(ratio(selHover.fg, selHover.bg), `${brand.name}: selected control, hover`).toBeGreaterThanOrEqual(4.5);
+      const current = s.locator("[aria-current='page']").first();
+      const cur = await colours(current);
+      expect(ratio(cur.fg, cur.bg), `${brand.name}: current lesson`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
