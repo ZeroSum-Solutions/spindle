@@ -7,7 +7,8 @@ import { learnPath, signIn } from "./helpers/sign-in";
 // 1. The claim's approval runs out (24 months): the block keeps its Science presentation and
 //    shows "Evidence due for recheck".
 // 2. The claim is then rejected: the block loses the Science presentation and shows "Claim
-//    withdrawn"; the text and the review history stay.
+//    withdrawn"; the text, its sources and the review history stay.
+// The steps share one test, so the withdrawal step cannot run without the expiry before it.
 
 const world = new PlayerWorld();
 const actors: Record<string, Actor> = {};
@@ -46,30 +47,40 @@ test.describe.serial("claim lifecycle after publication", () => {
 
   const science = (page: import("@playwright/test").Page) => page.locator('[data-block="paragraph"]').filter({ hasText: "Synthetic lifecycle science." });
 
-  test("a current claim presents as science", async ({ browser }) => {
-    const page = await signIn(browser, actors.llearner!, learnPath(gym, assignment, LESSON));
-    await expect(science(page)).toHaveAttribute("data-support", "science");
-    await expect(science(page)).not.toHaveAttribute("data-evidence", /./);
-    await expect(science(page).getByText("Science", { exact: true })).toBeVisible();
-  });
+  // One test with three steps: each step depends on the state the previous one left.
+  test("a published claim goes from current to recheck-due to withdrawn; text, sources and history stay", async ({ browser }) => {
+    test.setTimeout(120_000); // three real sign-ins
+    await test.step("a current claim presents as science", async () => {
+      const page = await signIn(browser, actors.llearner!, learnPath(gym, assignment, LESSON));
+      await expect(science(page)).toHaveAttribute("data-support", "science");
+      await expect(science(page)).not.toHaveAttribute("data-evidence", /./);
+      await expect(science(page).getByText("Science", { exact: true })).toBeVisible();
+      await page.context().close();
+    });
 
-  test("an expired approval keeps the Science presentation and flags the evidence for recheck", async ({ browser }) => {
-    world.expire(claimId);
-    const page = await signIn(browser, actors.llearner!, learnPath(gym, assignment, LESSON));
-    await expect(science(page)).toHaveAttribute("data-evidence", "recheck-due");
-    await expect(science(page).getByText("Evidence due for recheck")).toBeVisible();
-    await expect(science(page).getByText("Science", { exact: true })).toBeVisible();
-  });
+    await test.step("an expired approval keeps the Science presentation and flags the evidence for recheck", async () => {
+      world.expire(claimId);
+      const page = await signIn(browser, actors.llearner!, learnPath(gym, assignment, LESSON));
+      await expect(science(page)).toHaveAttribute("data-evidence", "recheck-due");
+      await expect(science(page).getByText("Evidence due for recheck")).toBeVisible();
+      await expect(science(page).getByText("Science", { exact: true })).toBeVisible();
+      await page.context().close();
+    });
 
-  test("a claim rejected after publication loses the Science presentation and says so; history is kept", async ({ browser }) => {
-    world.withdraw(claimId);
-    const page = await signIn(browser, actors.llearner!, learnPath(gym, assignment, LESSON));
-    await expect(science(page)).toHaveAttribute("data-evidence", "withdrawn");
-    await expect(science(page).getByText("Claim withdrawn")).toBeVisible();
-    await expect(science(page).getByText("Science", { exact: true })).toHaveCount(0);
-    await expect(science(page)).toContainText("no longer presented as science");
-    // The text stays, and so does every review.
-    await expect(science(page)).toContainText("Synthetic lifecycle science.");
-    expect(sql(`select string_agg(decision, ',' order by seq) from public.claim_reviews where claim_id = '${claimId}'`)).toBe("approved,approved,rejected");
+    await test.step("a claim rejected after publication loses the Science presentation and says so", async () => {
+      world.withdraw(claimId);
+      const page = await signIn(browser, actors.llearner!, learnPath(gym, assignment, LESSON));
+      await expect(science(page)).toHaveAttribute("data-evidence", "withdrawn");
+      await expect(science(page).getByText("Claim withdrawn")).toBeVisible();
+      await expect(science(page).getByText("Science", { exact: true })).toHaveCount(0);
+      await expect(science(page)).toContainText("no longer presented as science");
+      // The text stays, its sources stay readable, and so does every review.
+      await expect(science(page)).toContainText("Synthetic lifecycle science.");
+      await science(page).getByText("Show sources").click();
+      await expect(science(page).getByText(/^Synthetic claim .+\.$/)).toBeVisible();
+      await expect(science(page).getByText(/^Synthetic review /)).toBeVisible();
+      expect(sql(`select string_agg(decision, ',' order by seq) from public.claim_reviews where claim_id = '${claimId}'`)).toBe("approved,approved,rejected");
+      await page.context().close();
+    });
   });
 });
