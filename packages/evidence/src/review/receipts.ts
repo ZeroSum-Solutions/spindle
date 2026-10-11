@@ -2,11 +2,16 @@
 // runs them in one transaction as the named publisher; the database compares
 // every expected hash again and refuses a stale one.
 import { MODEL, SESSION, type ReviewOutcome } from "./harness";
-import { assertPacket, canonicalJson, MAX_EVIDENCE_AGE_DAYS, packetDigest, type ReviewPacket } from "./packet";
+import { assertPacket, canonicalJson, MAX_EVIDENCE_AGE_DAYS, packetDigest, type ReviewPacket, type SegmentDescriber } from "./packet";
 import { parseReviewResult } from "./result";
+import { DESCRIBER_MODEL } from "../video/describe";
+import { DESCRIBE_INTERVAL_DAYS } from "../video/ledger";
+
+/** The only model whose run may record a segment review (D-11). */
+export const SEGMENT_REVIEWER_MODEL = "gpt-6.1-sol";
 
 export interface ReceiptCall {
-  fn: "publisher_review_claim" | "publisher_review_block" | "publisher_review_lesson" | "publisher_review_course";
+  fn: "publisher_review_claim" | "publisher_review_block" | "publisher_review_lesson" | "publisher_review_course" | "publisher_record_media_check";
   target: string;
   body: Record<string, unknown>;
 }
@@ -81,6 +86,33 @@ export function receiptCalls(packet: ReviewPacket, outcome: ReviewOutcome, now: 
           target: item.target,
           body: { verdict: answer.verdict, expectedHash: item.expectedHash, claimIds: item.claimIds ?? [], notes: canonicalJson(findings).slice(0, 2000), run },
         };
+      case "segment": {
+        const describer = (item.content as { describer?: SegmentDescriber }).describer;
+        if (!describer?.run || typeof describer.costUsd !== "number") throw new Error(`${item.id} has no describer run`);
+        // Only Sol reviews a segment, and only a Gemini run describes it (Sol PR20-04).
+        if (run.model !== SEGMENT_REVIEWER_MODEL) throw new Error(`${item.id}: a segment is reviewed only by ${SEGMENT_REVIEWER_MODEL}, not ${run.model}; the describer cannot be the reviewer`);
+        if (describer.run.model !== DESCRIBER_MODEL) throw new Error(`${item.id}: the describer run is not ${DESCRIBER_MODEL}`);
+        // A fresh review never renews an old description (Sol R2 PR20-11).
+        const described = Date.parse(describer.run.reviewedAt);
+        if (!(now.getTime() - described < DESCRIBE_INTERVAL_DAYS * 86_400_000 && described <= now.getTime() + 5 * 60_000)) {
+          throw new Error(`${item.id}: the description is over ${DESCRIBE_INTERVAL_DAYS} days old or not dated; describe the clip again`);
+        }
+        const context = (item.content as { context?: unknown }).context;
+        if (!Array.isArray(context) || context.length === 0) throw new Error(`${item.id} has no lesson context`);
+        return {
+          fn: "publisher_record_media_check",
+          target: item.target,
+          body: {
+            kind: "segment",
+            outcome: answer.verdict,
+            checkedAt: run.reviewedAt,
+            run,
+            describer: { run: describer.run, costUsd: describer.costUsd },
+            context,
+            notes: canonicalJson(findings).slice(0, 2000),
+          },
+        };
+      }
       case "lesson":
       case "course":
         return {

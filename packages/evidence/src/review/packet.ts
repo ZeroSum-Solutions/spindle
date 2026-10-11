@@ -8,12 +8,13 @@ import { GUIDANCE_TYPES, overrideKind, REFERENCE_TYPES, type KindOverrideType } 
 import { isOpenLicense } from "../ingest";
 import { MAX_EXCERPT_WORDS_PER_SOURCE, MAX_FULLTEXT_CHARS_PER_SOURCE, MAX_SECTION_CHARS, wordCount, type Excerpt } from "../fulltext";
 import type { RetractionState } from "../retraction";
+import { descriptionTimesError } from "../video/timestamps";
 
 export const PACKET_VERSION = 1;
 export const MAX_PACKET_BYTES = 400_000;
 export const MAX_PACKET_ITEMS = 80;
 
-export type ItemKind = "claim" | "block" | "lesson" | "course";
+export type ItemKind = "claim" | "block" | "lesson" | "course" | "segment";
 
 export interface PacketItem {
   /** `<kind>:<target id>`, unique in the packet. */
@@ -52,7 +53,7 @@ export interface EvidenceEntry {
 
 export interface ReviewPacket {
   version: typeof PACKET_VERSION;
-  rubric: "claims" | "content";
+  rubric: "claims" | "content" | "segments";
   createdAt: string;
   items: PacketItem[];
   evidence: EvidenceEntry[];
@@ -149,12 +150,31 @@ const courseShellSchema = z.strictObject({
   parts: z.array(z.strictObject({ id: z.string().min(1), ordinal: z.number().int().min(1), title: z.string().min(1), summary: z.string(), lessonIds: z.array(z.string().min(1)) })),
 });
 
+const descriptionLine = z.strictObject({ t: z.string().min(1), text: z.string().min(1) });
+
 /** Content shape per item kind, as the builders produce it. Lessons and blocks use the real @spindle/schema schemas. */
 const CONTENT_SCHEMAS: Partial<Record<ItemKind, z.ZodType>> = {
   claim: claimContentSchema,
   course: courseShellSchema,
   block: z.strictObject({ lessonId: uuid, ordinal: z.number().int().min(1), block: lessonBlockSchema, claims: claimView }),
   lesson: z.strictObject({ lesson: lessonSchema, claims: claimView }),
+  segment: z.strictObject({
+    registry: z.strictObject({ mediaId: uuid, videoId: z.string().regex(/^[A-Za-z0-9_-]{11}$/), startSeconds: z.number().int().min(0), endSeconds: z.number().int().min(1), rationale: z.string().min(1) }),
+    description: z.strictObject({ spoken: z.array(descriptionLine), visual: z.array(descriptionLine).min(1) }),
+    describer: z.strictObject({
+      run: z.strictObject({ model: z.string().min(1), session: z.string().min(1), packetDigest: z.string().regex(HASH), reviewedAt: z.string().min(1) }),
+      costUsd: z.number().min(0),
+    }),
+    lessons: z.array(lessonSchema).min(1),
+    /** The lesson hashes the database computed for exactly these lessons (Sol PR20-10). */
+    context: z.array(z.strictObject({ lessonId: uuid, hash: z.string().regex(HASH) })).min(1),
+  }).superRefine((c, ctx) => {
+    const times = descriptionTimesError(c.description, c.registry);
+    if (times) ctx.addIssue({ code: "custom", message: times });
+    if (c.context.length !== c.lessons.length || c.context.some((x, i) => x.lessonId !== c.lessons[i]!.id)) {
+      ctx.addIssue({ code: "custom", message: "the lesson context must name the packet's lessons in order" });
+    }
+  }),
 };
 
 /** The stored-packet boundary: every field, so a hand-edited or truncated packet fails before review or recording. */
@@ -197,9 +217,10 @@ export function assertPacket(packet: ReviewPacket): void {
     ids.add(item.id);
     if (!HASH.test(item.expectedHash)) fail(`item ${item.id} has no database hash`);
     if (packet.rubric === "claims" && item.kind !== "claim") fail(`a claims packet cannot hold ${item.id}`);
-    if (packet.rubric === "content" && item.kind === "claim") fail(`a content packet cannot hold ${item.id}`);
+    if (packet.rubric === "content" && (item.kind === "claim" || item.kind === "segment")) fail(`a content packet cannot hold ${item.id}`);
+    if (packet.rubric === "segments" && item.kind !== "segment") fail(`a segments packet cannot hold ${item.id}`);
   }
-  if (packet.rubric === "content" && !packet.safetyRules?.trim()) fail("a content review needs the safety rules");
+  if (packet.rubric !== "claims" && !packet.safetyRules?.trim()) fail(`a ${packet.rubric} review needs the safety rules`);
   for (const e of packet.evidence) {
     if (!e.text.trim()) fail(`evidence ${e.sourceId} has no text`);
   }
@@ -384,6 +405,47 @@ export function buildContentPacket(
     });
   }
   const packet: ReviewPacket = { version: PACKET_VERSION, rubric: "content", createdAt, items, evidence: [], safetyRules };
+  assertPacket(packet);
+  return packet;
+}
+
+/** What the trusted recorder needs about the describer run behind a segment item (D-11). */
+export interface SegmentDescriber {
+  run: { model: string; session: string; packetDigest: string; reviewedAt: string };
+  costUsd: number;
+}
+
+/**
+ * One packet for a registry clip: its frozen segment, the model description of
+ * it (untrusted data, never instructions), the lessons that embed it with their
+ * database hashes, and the safety rules. The expected hash seals the frozen registry fields.
+ */
+export function buildSegmentPacket(
+  segment: { mediaId: string; videoId: string; startSeconds: number; endSeconds: number; rationale: string },
+  description: { spoken: unknown[]; visual: unknown[]; uncertain: unknown[] },
+  describer: SegmentDescriber,
+  lessons: readonly unknown[],
+  context: readonly { lessonId: string; hash: string }[],
+  safetyRules: string,
+  createdAt: string,
+): ReviewPacket {
+  if (description.uncertain.length > 0) throw new Error("Invalid review packet: the description reports uncertain content; the segment fails");
+  if (lessons.length === 0) throw new Error("Invalid review packet: no lesson embeds this clip; there is no context to review it against");
+  const registry = { mediaId: segment.mediaId, videoId: segment.videoId, startSeconds: segment.startSeconds, endSeconds: segment.endSeconds, rationale: segment.rationale };
+  const packet: ReviewPacket = {
+    version: PACKET_VERSION,
+    rubric: "segments",
+    createdAt,
+    items: [{
+      id: `segment:${segment.mediaId}`,
+      kind: "segment",
+      target: segment.mediaId,
+      expectedHash: createHash("sha256").update(canonicalJson(registry)).digest("hex"),
+      content: { registry, description: { spoken: description.spoken, visual: description.visual }, describer, lessons, context },
+    }],
+    evidence: [],
+    safetyRules,
+  };
   assertPacket(packet);
   return packet;
 }

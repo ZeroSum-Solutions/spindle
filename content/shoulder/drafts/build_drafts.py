@@ -48,28 +48,18 @@ def src(kind, citation, rights, **ids):
     return {"kind": kind, "citation": citation, **ids, "rights": rights}
 
 CC_BY_FULL = "Full text read through the Europe PMC API. " + OPEN_ACCESS_NOTE
-FRANK = src("review", "Frank RM, Ramirez J, Chalmers PN, McCormick FM, Romeo AA. Scapulothoracic anatomy and snapping scapula syndrome. Anat Res Int. 2013;2013:635628.",
-            "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). " + CC_BY_FULL, doi="10.1155/2013/635628", pmid="24369502", pmcid="PMC3863500")
 CAVANAUGH = src("review", "Cavanaugh E, Arcot Santillan A, Hoshikawa K, Giambini H. Subregions of the rotator cuff muscles present distinct anatomy, biomechanics, and function. Sports (Basel). 2024;12(12):349.",
                 "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). " + CC_BY_FULL, doi="10.3390/sports12120349", pmid="39728889", pmcid="PMC11679125")
-VIJIAN = src("paper", "Vijian K, Cheng YT, Idris Z, et al. Manual muscle testing of the scapula and the upper limb through bedside examination. Malays J Med Sci. 2023;30(1):198-212. (Brief Communication.)",
-             "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). " + CC_BY_FULL, doi="10.21315/mjms2023.30.1.17", pmid="36875200", pmcid="PMC9984099")
-JACINTO = src("review", "Jacinto J, Camões-Barbosa A, Carda S, Hoad D, Wissel J. A practical guide to botulinum neurotoxin treatment of shoulder spasticity 1: anatomy, physiology, and goal setting. Front Neurol. 2022;13:1004629.",
-              "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), confirmed through the article's licence link. " + CC_BY_FULL, doi="10.3389/fneur.2022.1004629", pmid="36324373", pmcid="PMC9618862")
+FRANK = src("review", "Frank RM, Ramirez J, Chalmers PN, McCormick FM, Romeo AA. Scapulothoracic anatomy and snapping scapula syndrome. Anat Res Int. 2013;2013:635628.",
+            "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). " + CC_BY_FULL, doi="10.1155/2013/635628", pmid="24369502", pmcid="PMC3863500")
 # OpenStax is not a claim source: its terms forbid ingestion into AI models. It appears only as an
 # optional further-reading link, with its licence shown.
 OPENSTAX_READING = {"label": "Further reading (not a claim source): OpenStax Anatomy and Physiology 2e, section 9.6, the shoulder joint. CC BY-NC-SA 4.0.",
                     "href": "https://openstax.org/books/anatomy-and-physiology-2e/pages/9-6-anatomy-of-selected-synovial-joints", "type": "reference"}
-HOWELL = src("paper", "Howell SM, Galinat BJ. The glenoid-labral socket. A constrained articular surface. Clin Orthop Relat Res. 1989;(243):122-125.", RESERVED, pmid="2721051")
-LIPPITT = src("paper", "Lippitt S, Matsen F. Mechanisms of glenohumeral joint stability. Clin Orthop Relat Res. 1993;(291):20-28.", RESERVED, pmid="8504601")
-LUDEWIG = src("paper", "Ludewig PM, Reynolds JF. The association of scapular kinematics and glenohumeral joint pathologies. J Orthop Sports Phys Ther. 2009;39(2):90-104.",
-              "Author manuscript free to read in PMC (PMC2730194); no open licence stated; treat as all rights reserved. " + OPEN_ACCESS_NOTE, doi="10.2519/jospt.2009.2808", pmid="19194022", pmcid="PMC2730194")
-MCCLURE = src("paper", "McClure PW, Michener LA, Sennett BJ, Karduna AR. Direct 3-dimensional measurement of scapular kinematics during dynamic movements in vivo. J Shoulder Elbow Surg. 2001;10(3):269-277.", RESERVED, doi="10.1067/mse.2001.112954", pmid="11408911")
-INMAN = src("paper", "Inman VT, Saunders JB, Abbott LC. Observations of the function of the shoulder joint. 1944. Reprinted in Clin Orthop Relat Res. 1996;(330):3-12.",
-            "No open licence found; treat as all rights reserved. No abstract available; metadata only. " + OPEN_ACCESS_NOTE, doi="10.1097/00003086-199609000-00002", pmid="8804269")
-MCQUADE = src("paper", "McQuade KJ, Smidt GL. Dynamic scapulohumeral rhythm: the effects of external resistance during elevation of the arm in the scapular plane. J Orthop Sports Phys Ther. 1998;27(2):125-133.", RESERVED, doi="10.2519/jospt.1998.27.2.125", pmid="9475136")
+FERNANDEZ = src("meta_analysis", "Fernández-Matías R, Ballesteros-Frutos J, Gallardo-Zamora P, Requejo-Salinas N, Caballero-Pozo I, Ludewig P, Lluch-Girbés E. Scapular kinematics variability in individuals with and without rotator cuff-related shoulder pain: a systematic review with multilevel meta-regression. Braz J Phys Ther. 2025;29(6):101261.",
+                "Copyright Associação Brasileira de Pesquisa e Pós-Graduação em Fisioterapia, published by Elsevier; the PubMed record says all rights reserved and Europe PMC lists no licence. Free to read in PMC. Abstract read on PubMed. " + OPEN_ACCESS_NOTE,
+                doi="10.1016/j.bjpt.2025.101261", pmid="40845626", pmcid="PMC12398250")
 KIBLER = src("consensus", "Kibler WB, Ludewig PM, McClure PW, et al. Clinical implications of scapular dyskinesis in shoulder injury: the 2013 consensus statement from the 'Scapular Summit'. Br J Sports Med. 2013;47(14):877-885.", RESERVED, doi="10.1136/bjsports-2013-092425", pmid="23580420")
-PLUMMER = src("paper", "Plummer HA, Sum JC, Pozzi F, Varghese R, Michener LA. Observational scapular dyskinesis: known-groups validity in patients with and without shoulder pain. J Orthop Sports Phys Ther. 2017;47(8):530-537.", RESERVED, doi="10.2519/jospt.2017.7268", pmid="28683230")
 BARRETT = src("systematic_review", "Barrett E, O'Keeffe M, O'Sullivan K, Lewis J, McCreesh K. Is thoracic spine posture associated with shoulder pain, range of motion and function? A systematic review. Man Ther. 2016;26:38-46.",
               "Crown copyright 2016, published by Elsevier; all rights reserved. Abstract read on PubMed. " + OPEN_ACCESS_NOTE, doi="10.1016/j.math.2016.07.008", pmid="27475532")
 FIALHO = src("systematic_review", "Fonseca Fialho HR, Gava V, Fonseca RNS, Kamonseki DH, Barbosa GM. Thinking outside the shoulder: a systematic review and metanalysis of kinetic chain characteristics in non-athletes with shoulder pain. PLoS One. 2024;19(12):e0314909.",
@@ -81,8 +71,9 @@ HEGEDUS = src("meta_analysis", "Hegedus EJ, Goode AP, Cook CE, et al. Which phys
 BESS25 = src("consensus", "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724.",
              "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. " + OPEN_ACCESS_NOTE,
              doi="10.1177/17585732251374282", pmid="41245988", pmcid="PMC12611748", url="https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf")
-CSAW = src("paper", "Beard DJ, Rees JL, Cook JA, et al. Arthroscopic subacromial decompression for subacromial shoulder pain (CSAW): a multicentre, pragmatic, parallel group, placebo-controlled, three-group, randomised surgical trial. Lancet. 2018;391(10118):329-338.",
-           "CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/), PMC5803129. " + OPEN_ACCESS_NOTE, doi="10.1016/S0140-6736(17)32457-1", pmid="29169668", pmcid="PMC5803129")
+LAHDEOJA = src("meta_analysis", "Lähdeoja T, Karjalainen T, Jokihaara J, Salamh P, Kavaja L, Agarwal A, et al. Subacromial decompression surgery for adults with shoulder pain: a systematic review with meta-analysis. Br J Sports Med. 2020;54(11):665-673.",
+               "(c) Author(s) (or their employer(s)) 2020, no commercial re-use (BMJ); Europe PMC lists no licence. Abstract read on PubMed. " + OPEN_ACCESS_NOTE,
+               doi="10.1136/bjsports-2018-100486", pmid="30647053")
 NAUNTON = src("meta_analysis", "Naunton J, Street G, Littlewood C, Haines T, Malliaras P. Effectiveness of progressive and resisted and non-progressive or non-resisted exercise in rotator cuff related shoulder pain: a systematic review and meta-analysis of randomized controlled trials. Clin Rehabil. 2020;34(9):1198-1216.", RESERVED, doi="10.1177/0269215520934147", pmid="32571081")
 TENA = src("meta_analysis", "Tena-Portilla A, Martín-San Agustín R, Gacto-Sánchez M, Escriche-Escuder A, et al. Effectiveness of exercise in rotator cuff-related shoulder pain: a systematic review with meta-analysis. Physiother Theory Pract. 2026.", RESERVED, doi="10.1080/09593985.2026.2717392", pmid="42609059")
 ACSM26 = src("position_stand", "Currier BS, D'Souza AC, Singh MAF, et al. American College of Sports Medicine position stand: resistance training prescription for muscle function, hypertrophy, and physical performance in healthy adults. Med Sci Sports Exerc. 2026;58(4):851-872.",
@@ -92,7 +83,6 @@ PELLAND = src("meta_analysis", "Pelland JC, Remmert JF, Robinson ZP, Hinson SR, 
 REFALO = src("meta_analysis", "Refalo MC, Helms ER, Trexler ET, Hamilton DL, Fyfe JJ. Influence of resistance training proximity-to-failure on skeletal muscle hypertrophy: a systematic review with meta-analysis. Sports Med. 2023;53(3):649-665.",
              "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), PMC9935748. " + OPEN_ACCESS_NOTE, doi="10.1007/s40279-022-01784-y", pmid="36334240", pmcid="PMC9935748")
 ROBINSON = src("meta_analysis", "Robinson ZP, Pelland JC, Remmert JF, Refalo MC, et al. Exploring the dose-response relationship between estimated resistance training proximity to failure, strength gain, and muscle hypertrophy: a series of meta-regressions. Sports Med. 2024;54(9):2209-2231.", RESERVED, doi="10.1007/s40279-024-02069-2", pmid="38970765")
-FLEISIG = src("paper", "Fleisig GS, Andrews JR, Dillman CJ, Escamilla RF. Kinetics of baseball pitching with implications about injury mechanisms. Am J Sports Med. 1995;23(2):233-239.", RESERVED, doi="10.1177/036354659502300218", pmid="7778711")
 PAUL = src("systematic_review", "Paul RW, Sirch FR, Vata A, Zhu E, Alberta FG, et al. Chronic adaptations of the shoulder in baseball pitchers: a systematic review. Am J Sports Med. 2025;53(12):2984-2994.", RESERVED, doi="10.1177/03635465251317202", pmid="40029165")
 POZZI = src("meta_analysis", "Pozzi F, Plummer HA, Shanley E, et al. Preseason shoulder range of motion screening and in-season risk of shoulder and elbow injuries in overhead athletes: systematic review and meta-analysis. Br J Sports Med. 2020;54(17):1019-1027.",
             "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), PMC7456673. " + OPEN_ACCESS_NOTE, doi="10.1136/bjsports-2019-100698", pmid="31937577", pmcid="PMC7456673")
@@ -190,30 +180,29 @@ def stop(*rules):
 
 l1 = {
   "id": "shoulder-01-anatomy", "slug": "shoulder-anatomy", "title": "Shoulder anatomy a trainer needs",
-  "summary": "A working map of the shoulder: three bones, three joints and a gliding contact on the ribcage, the cuff that steadies the ball and socket, and the big muscles that move the arm and the shoulder blade.",
+  "summary": "A working map of the shoulder: three bones, three joints, the shoulder blade on the ribcage, the small socket, the rotator cuff, and the muscles that attach the shoulder blade.",
   "durationMinutes": 12, "format": "article",
   "objectives": [
     "Name the bones and joints of the shoulder in plain words and in standard terms.",
     "Describe the small socket and what deepens it.",
-    "Describe what the rotator cuff muscles do for the joint.",
+    "Name the four rotator cuff muscles and where they attach.",
     "Find the main landmarks on yourself and, with permission, on a client."],
   "anatomyIds": ["UBERON:0001467", "UBERON:0001470", "UBERON:0003692", "UBERON:0001469", "UBERON:0006849", "UBERON:0000976", "UBERON:0011959", "UBERON:0003683"],
   "blocks": [
-    P("This lesson gives you a working map of the shoulder: where the bones meet, what supports the ball and socket, and which muscles do the moving. Every later lesson in this module uses this map."),
-    H("Three bones, three joints and a gliding contact"),
+    P("This lesson gives you a working map of the shoulder: where the bones meet, what surrounds the ball and socket, and which muscles attach the shoulder blade. Every later lesson in this module uses this map."),
+    H("Three bones, three joints and the shoulder blade on the ribcage"),
     S("Three bones make the shoulder: the upper arm bone (humerus), the shoulder blade (scapula) and the collarbone (clavicle). The ball-and-socket joint (glenohumeral joint) joins the arm to the shoulder blade. The acromioclavicular joint joins the collarbone to the bony tip at the top of the shoulder blade (the acromion), and the sternoclavicular joint joins the collarbone to the breastbone. There is no direct bony joint between the shoulder blade and the ribcage; muscles connect them.", "claim-slot:l1-bones-joints"),
-    S("The shoulder blade also slides over the back of the ribcage. That gliding contact is often called the scapulothoracic joint, but it has no cartilage, joint lining or capsule: the shoulder blade slides on layers of muscle and bursae, and muscles hold it in place.", "claim-slot:l1-scapulothoracic"),
+    S("The shoulder blade also lies against the back of the ribcage. That contact is often called the scapulothoracic joint, but it has no cartilage, joint lining or capsule: between the shoulder blade and the ribs lie layers of muscle and bursae.", "claim-slot:l1-scapulothoracic"),
     D("shoulder-complex-front", "The shoulder complex, left shoulder seen from the front: the three joints, with the shoulder blade lying behind the ribs. Schematic, not to scale."),
     H("A small, shallow socket"),
-    S("The ball-and-socket joint is the most mobile joint in the body, partly because its bones hold it so loosely. Its socket on the shoulder blade (the glenoid) has a joint surface only a third to a quarter of the size of the ball at the top of the humerus. A rim of fibrocartilage around it, the labrum, adds to the socket's depth and surface.", "claim-slot:l1-shallow-socket"),
+    S("The socket of the ball-and-socket joint, on the shoulder blade (the glenoid), has a joint surface only a third to a quarter of the size of the ball at the top of the humerus. A rim of fibrocartilage around it, the labrum, adds to the socket's depth and surface.", "claim-slot:l1-shallow-socket"),
     P("A picture some coaches use with clients: a ball resting on a saucer rather than sitting in a cup. Use it if it helps; it is a teaching image, not a description of the anatomy."),
     H("The rotator cuff"),
-    S("Four muscles form the rotator cuff: supraspinatus, infraspinatus, teres minor and subscapularis. They start on the shoulder blade and attach to the top of the humerus, forming a cuff around the ball-and-socket joint, and they are crucial for the joint's stability as the arm moves.", "claim-slot:l1-cuff"),
-    S("Pressing the ball into the socket makes the joint more stable, and muscle contraction can provide that pressing force. Researchers call this concavity compression.", "claim-slot:l1-concavity"),
+    S("Four muscles form the rotator cuff: supraspinatus, infraspinatus, teres minor and subscapularis. Each starts on the shoulder blade and attaches to the top of the humerus: subscapularis to the front (the lesser tubercle), the other three to the outer side (the greater tubercle).", "claim-slot:l1-cuff"),
     C("Coach note", "You will hear people blame one cuff muscle for every shoulder complaint. Describe what you see instead, and leave the cause to a clinician."),
-    H("The big movers"),
-    S("The middle part of the deltoid, with the supraspinatus, lifts the arm out to the side. The pectoralis major is the main muscle that draws the arm in toward the body from the front, and the latissimus dorsi, with the back of the deltoid and the teres major, draws the arm backward. On the shoulder blade, the serratus anterior pulls it forward around the ribs and rotates it upward, and the trapezius raises it, draws it back and rotates it upward.", "claim-slot:l1-movers"),
-    PLANNED("shoulder-cuff-and-movers", "the rotator cuff and the larger movers"),
+    PLANNED("shoulder-cuff", "the four rotator cuff muscles, from the front and from behind"),
+    H("Muscles that attach the shoulder blade"),
+    S("Because the shoulder blade has no bony joint with the ribcage, muscles attach it to the trunk. They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae and pectoralis minor. The serratus anterior attaches along the inner edge of the shoulder blade, on the side that faces the ribs.", "claim-slot:l1-attachments"),
     H("Why it matters"),
     P("On the gym floor, load the range a client can control, and train the muscles that move the shoulder blade as well as the ones that move the arm."),
     H("How to see it"),
@@ -230,24 +219,28 @@ l1 = {
       "The glenohumeral joint is the ball-and-socket joint between the humerus and the glenoid of the shoulder blade.", "claim-slot:l1-bones-joints"),
     Q("What adds depth to the small socket of the shoulder?", ["The labrum", "The acromion", "The collarbone", "The deltoid"], 0,
       "The labrum is a rim of fibrocartilage around the glenoid that adds to the socket's depth and surface.", "claim-slot:l1-shallow-socket"),
-    Q("What do the rotator cuff muscles do for the shoulder joint?", ["They form a cuff around the joint and are crucial for its stability as the arm moves", "They lock the shoulder blade so it cannot move", "Nothing; ligaments alone hold the joint"], 0,
-      "The four cuff muscles run from the shoulder blade to the humerus, forming a cuff around the joint that is crucial for its stability.", "claim-slot:l1-cuff"),
+    Q("Where do the four rotator cuff muscles attach?", ["From the shoulder blade to the top of the humerus", "From the ribs to the collarbone", "From the spine to the shoulder blade"], 0,
+      "Supraspinatus, infraspinatus, teres minor and subscapularis each start on the shoulder blade and attach to the top of the humerus.", "claim-slot:l1-cuff"),
     C("Talk it through", "A client points to the front of the shoulder and asks: \"Is that my rotator cuff?\" What do you say? A good answer describes the area in plain words, says that you do not diagnose, and asks how it behaves in training. If it hurts during training, stop shoulder loading for the session and use the stop-and-refer rules."),
   ],
   "media": [], "resources": [OPENSTAX_READING],
 }
 l1_slots = [
   {"slot": "claim-slot:l1-bones-joints", "statement": "The shoulder comprises the humerus, scapula and clavicle, articulating at the glenohumeral, acromioclavicular and sternoclavicular joints; there is no osseous or ligamentous joint between the scapula and the thorax, which are connected by muscles.", "candidateSources": [FRANK]},
-  {"slot": "claim-slot:l1-scapulothoracic", "statement": "The scapulothoracic articulation has no articular cartilage, synovium or capsule; the scapula slides on bursal and muscular planes and is held in place by its muscular attachments.", "candidateSources": [FRANK]},
-  {"slot": "claim-slot:l1-shallow-socket", "statement": "The glenohumeral joint is the most mobile joint in the body, owing partly to its lack of osseous constraint; the glenoid articular surface is one third to one quarter the size of the humeral head, and the fibrocartilaginous labrum increases its depth and surface area.", "candidateSources": [FRANK, HOWELL]},
-  {"slot": "claim-slot:l1-cuff", "statement": "The rotator cuff comprises supraspinatus, infraspinatus, teres minor and subscapularis, which originate on the scapula and attach to the humerus, forming a cuff around the glenohumeral joint that is crucial for shoulder stability.", "candidateSources": [CAVANAUGH, FRANK]},
-  {"slot": "claim-slot:l1-concavity", "statement": "Compressing the humeral head into the glenoid concavity stabilises the glenohumeral joint (concavity compression), and dynamic muscle contraction can provide the compressive load.", "candidateSources": [LIPPITT]},
-  {"slot": "claim-slot:l1-movers", "statement": "Middle deltoid and supraspinatus abduct the arm; latissimus dorsi, posterior deltoid and teres major extend it; pectoralis major is the major ventral shoulder adductor; serratus anterior protracts and upwardly rotates the scapula; trapezius elevates, retracts and upwardly rotates it.", "candidateSources": [VIJIAN, JACINTO, FRANK]},
+  {"slot": "claim-slot:l1-scapulothoracic", "statement": "The scapulothoracic articulation has no articular cartilage, synovium or capsule; it consists of bursal and muscular planes between the scapula and the thoracic rib cage.", "candidateSources": [FRANK],
+   "note": "Structural only (D-12 foundation): the sliding and positioning functions in Frank's text are not claimed."},
+  {"slot": "claim-slot:l1-shallow-socket", "statement": "The articular surface of the glenoid is one third to one quarter the size of the humeral head, and the circumferential fibrocartilaginous labrum increases its surface area and depth.", "candidateSources": [FRANK],
+   "note": "Structural only: the mobility statement ('most mobile joint, owing to lack of osseous constraint') is removed, as no admissible applied source states it. Howell 1989 (no DOI) is dropped."},
+  {"slot": "claim-slot:l1-cuff", "statement": "The rotator cuff comprises supraspinatus, infraspinatus, teres minor and subscapularis; each originates on the scapula and inserts on the humerus, subscapularis on the lesser tubercle and the other three on the greater tubercle.", "candidateSources": [FRANK, CAVANAUGH],
+   "note": "Structural only: 'crucial for stability' is removed. Origins and insertions are in Frank 2013, Table 1; Cavanaugh 2024 (CC BY 4.0) names these four as the rotator cuff in its abstract. Both need admission as foundation anatomy references (D-12); the claim cites only the grouping and the attachments, not Cavanaugh's functional content."},
+  {"slot": "claim-slot:l1-attachments", "statement": "The scapula's muscular attachments to the axial skeleton include the trapezius, serratus anterior, rhomboid major, rhomboid minor, levator scapulae and pectoralis minor; the serratus anterior attaches along the anterior aspect of the medial border of the scapula.", "candidateSources": [FRANK],
+   "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2. Subclavius is left out: Frank's introductory list names it, but it runs from the first rib to the clavicle, not to the scapula."},
 ]
 l1_scen = [{"prompt": "A client points to the front of the shoulder and asks: \"Is that my rotator cuff?\"", "goodAnswer": "Describe the area; say you do not diagnose; ask how it behaves. If it hurts during training: stop shoulder loading for the session and apply the referral tiers.", "safety": "SAFETY.md sections 1 and 3"}]
-notes1 = ["Anatomy claims rest on open CC BY reviews read in full through Europe PMC (Frank 2013, Cavanaugh 2024, Vijian 2023, Jacinto 2022) plus two abstracts. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
+notes1 = ["Claim status (W1 dry run 2): lesson 1's claims are foundation claims (D-12), kept purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference; its abstract is too thin, so review needs the open-licence full text in the packet (W1's ingest extension). Functional points were removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabelled as practice.",
+          "Anatomy claims rest on Frank 2013 (CC BY), read in full through Europe PMC; Cavanaugh 2024 (CC BY 4.0) is cited only for the rotator cuff grouping; Vijian 2023, Jacinto 2022, Howell 1989 and Lippitt 1993 are no longer cited. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
           "The scapulothoracic statement is restored because Frank 2013 states it; 'most of the force' stays removed. The capsule statement was dropped: no open source read states it.",
-          "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. shoulder-cuff-and-movers is a planned slot and says so."]
+          "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. shoulder-cuff is a planned slot (the four cuff muscles only) and says so."]
 
 # ---------------------------------------------------------------- lesson 2
 
@@ -256,21 +249,22 @@ l2 = {
   "summary": "When the arm goes up, the shoulder blade moves with it. Learn what that shared movement looks like and how to watch it.",
   "durationMinutes": 12, "format": "article",
   "objectives": [
-    "Describe the shoulder blade movements that happen consistently when the arm is raised, and the one that varies.",
-    "Explain that raising the arm is shared between the ball-and-socket joint and the shoulder blade, and that the share varies.",
+    "Describe the shoulder blade movements that happen as the arm is raised.",
+    "Explain that raising the arm is shared with the shoulder blade, and that the share varies between people.",
     "Watch a client raise their arms and describe what you see in plain words.",
-    "Explain why a visible difference in shoulder blade movement is not, on its own, a sign of injury."],
+    "Explain why a visible difference in shoulder blade movement is something to watch and re-check, not a diagnosis."],
   "anatomyIds": ["UBERON:0001467", "UBERON:0001470", "UBERON:0006849"],
   "blocks": [
     P("Raise your arm overhead and the shoulder blade comes along. Watching that shared movement is a useful coaching skill, as long as you remember what it can and cannot tell you."),
     H("The shoulder blade moves too"),
-    S("When the arm is raised, the shoulder blade does not stay still. It rotates upward, so the socket turns to face more toward the ceiling, and it tilts backward at the top. How much it also turns around the ribcage, inward or outward, depends on the direction the arm is raised and how high it goes.", "claim-slot:l2-scapular-motions"),
+    S("When the arm is raised, the shoulder blade does not stay still. From the very start of the raise it rotates upward, so the socket turns to face more toward the ceiling, and it tilts backward. It also tends to turn outward around the ribcage.", "claim-slot:l2-scapular-motions"),
     D("scapula-upward-rotation", "The shoulder blade at three arm positions: by the side, level with the shoulder, and overhead. Schematic; angles are illustrative."),
     H("A shared movement"),
-    S("Raising the arm is shared between the ball-and-socket joint and the shoulder blade. Over the whole movement the ball-and-socket joint often contributes about twice as much as the shoulder blade, but that ratio is not fixed: it differs between people, changes through the range, and changes with load.", "claim-slot:l2-shared-ratio"),
+    S("Raising the arm is shared with the shoulder blade. A review that pooled studies of people without shoulder pain estimated that the arm rises about three degrees for every degree the shoulder blade rotates upward. Shoulder blade movement varied a lot between people, and the review did not support a fixed ratio.", "claim-slot:l2-shared-ratio"),
     P("Do not count degrees on the gym floor. Watch whether the arm and the shoulder blade move together."),
     H("Different does not mean injured"),
-    S("Visible differences in how the shoulder blade moves, often called scapular dyskinesis, are common in people who have no shoulder pain. On their own they do not show that someone is injured.", "claim-slot:l2-dyskinesis"),
+    S("Changes in how the shoulder blade moves, often called scapular dyskinesis, are present in a high percentage of shoulder injuries. An international consensus statement concluded that their exact role in causing or worsening shoulder problems is not clearly defined.", "claim-slot:l2-dyskinesis"),
+    P("So treat a visible difference as something to watch and re-check, not as a diagnosis. It never tells you on its own what is wrong, or that nothing is."),
     H("How to see it"),
     L(["Stand behind the client. Ask first; a fitted top lets you see the shoulder blades without asking anyone to undress.",
        "Ask them to raise both arms slowly forward and up, then lower them, 3 to 5 times.",
@@ -284,19 +278,22 @@ l2 = {
     P("Give one cue, watch the next rep, and keep the cue only if the movement changes the way you want. If it does not, drop it and try a different position or a lighter load."),
     H("Check your understanding"),
     Q("Which two shoulder blade movements happen consistently as the arm is raised overhead?", ["Upward rotation and backward tilt", "Downward rotation and forward tilt", "None: the shoulder blade stays still"], 0,
-      "As the arm rises, the shoulder blade rotates upward and tilts backward. Its turning around the ribcage varies with the direction and height of the raise.", "claim-slot:l2-scapular-motions"),
-    Q("How is raising the arm shared between the ball-and-socket joint and the shoulder blade?", ["A fixed 2:1 in everyone", "The share varies between people, through the range and with load", "The shoulder blade does most of the work"], 1,
-      "About 2:1 is a common average over the whole movement, but the ratio varies between people, through the range and with load.", "claim-slot:l2-shared-ratio"),
-    Q("A client with no shoulder pain shows a shoulder blade that lifts away from the ribs when lowering the arms. What does that tell you on its own?", ["They have a shoulder injury", "Nothing certain: this is common in people without pain", "They must stop all overhead training"], 1,
-      "Visible changes in shoulder blade movement are common in people without pain, so on their own they do not show an injury.", "claim-slot:l2-dyskinesis"),
+      "From the start of the raise, the shoulder blade rotates upward and tilts backward, and it tends to turn outward around the ribcage.", "claim-slot:l2-scapular-motions"),
+    Q("How is raising the arm shared with the shoulder blade?", ["A fixed ratio in everyone", "On average about three degrees of arm rise per degree of shoulder blade rotation, with large differences between people", "The shoulder blade does most of the work"], 1,
+      "Pooled studies of people without shoulder pain estimated about 3:1 on average, but shoulder blade movement varied a lot between people, so no fixed ratio holds.", "claim-slot:l2-shared-ratio"),
+    Q("What did an international consensus statement conclude about scapular dyskinesis?", ["It is present in a high percentage of shoulder injuries, but its exact role in causing or worsening them is not clearly defined", "It always causes shoulder injury", "It is never seen with shoulder injuries"], 0,
+      "It is common in shoulder injuries, but its exact role in causing or worsening shoulder problems is not clearly defined.", "claim-slot:l2-dyskinesis"),
     C("Talk it through", "One shoulder blade lifts a little from the ribs as a client lowers from overhead. They have no pain and no other warning signs. Do you continue, adjust or refer? Now change one thing: the shoulder aches more with each rep. What do you do first, and what happens next?"),
   ],
   "media": [], "resources": [],
 }
 l2_slots = [
-  {"slot": "claim-slot:l2-scapular-motions", "statement": "During humeral elevation the scapula upwardly rotates and tilts posteriorly; its internal or external rotation on the thorax varies with the plane of elevation and through the range.", "candidateSources": [LUDEWIG, MCCLURE]},
-  {"slot": "claim-slot:l2-shared-ratio", "statement": "Humeral elevation is shared between glenohumeral and scapulothoracic motion; an overall ratio of about 2:1 is commonly reported, but the ratio varies between individuals, across the range of elevation and with external load.", "candidateSources": [INMAN, MCQUADE], "note": "Inman is the 1944 study reprinted in 1996 (metadata only); McQuade and Smidt show the load effect. Keep the variation clause."},
-  {"slot": "claim-slot:l2-dyskinesis", "statement": "Observable scapular dyskinesis is common in people without shoulder pain and, on its own, does not identify a shoulder injury.", "candidateSources": [KIBLER, PLUMMER], "note": "Present-pain and diagnostic interpretation only. No claim about future injury: a prospective meta-analysis (Hogan 2021, PMID 33211975) would need its own reviewed claim."},
+  {"slot": "claim-slot:l2-scapular-motions", "statement": "In asymptomatic individuals, the scapula moves from the very beginning of arm elevation toward upward rotation and posterior tilt, with a trend toward external rotation.", "candidateSources": [FERNANDEZ],
+   "note": "Replaces Ludewig 2009 (narrative review) and McClure 2001 (primary study), which the claim pipeline does not admit."},
+  {"slot": "claim-slot:l2-shared-ratio", "statement": "In asymptomatic individuals, a systematic review with multilevel meta-regression estimated the ratio of humerothoracic elevation to scapular upward rotation at about 2.9:1 to 3.1:1, found great variability in scapular kinematics, and did not support a constant 3:1 scapulohumeral rhythm.", "candidateSources": [FERNANDEZ],
+   "note": "Replaces Inman 1944 (no abstract) and McQuade 1998 (primary study). The ratio is humerothoracic elevation to scapular upward rotation, not the classic glenohumeral-to-scapulothoracic 2:1."},
+  {"slot": "claim-slot:l2-dyskinesis", "statement": "Scapular dyskinesis is present in a high percentage of shoulder injuries, but its exact role in causing or worsening shoulder dysfunction is not clearly defined.", "candidateSources": [KIBLER],
+   "note": "Wording Sol approved on Kibler alone in the claim dry run (round 3). Plummer 2017 (primary study) is dropped; no claim about people without pain or about identifying injury."},
 ]
 l2_scen = [
   {"prompt": "One shoulder blade lifts a little from the ribs as a client lowers from overhead; no pain, no warning signs.", "goodAnswer": "Continue with a load and range they control; note it; no referral without warning signs.", "safety": "SAFETY.md sections 1 and 3"},
@@ -461,8 +458,8 @@ l5 = {
   "blocks": [
     P("\"Correctives\" and \"activation\" are some of the most used words in shoulder training. This lesson separates what research tested from what is coaching practice, so you can use both honestly."),
     H("What research reports, and for whom"),
-    S("For subacromial shoulder pain, a specific condition that a clinician diagnoses, 2025 UK specialist guidance reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves function. It rates that recommendation as conditional, based on low-certainty evidence, and says the most effective exercise approach remains uncertain.", "claim-slot:l5-subacromial-exercise"),
-    S("A UK trial enrolled people who had had subacromial pain for at least three months, had intact rotator cuff tendons, and had not improved with exercise therapy and a steroid injection. At six months, surgery to decompress the space gave no extra benefit on a shoulder pain and function score over an arthroscopy that left out the decompression, and neither surgery gave a clinically important benefit over no treatment.", "claim-slot:l5-csaw"),
+    S("For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance from the British Elbow & Shoulder Society reports evidence that exercise reduces pain over 8 weeks to 6 months and improves the function patients report, at follow-up of up to six months. It grades that recommendation as conditional and positive, on low evidence, and says the best physiotherapy, exercise or manual therapy approach is still uncertain.", "claim-slot:l5-subacromial-exercise"),
+    S("For adults whose subacromial pain had lasted more than three months, a systematic review with meta-analysis found high-certainty evidence that surgery to decompress the space gave no additional benefit over placebo surgery, for pain at one year or for physical function at one to two years.", "claim-slot:l5-decompression"),
     S("For rotator cuff related shoulder pain, a 2020 systematic review compared each kind of exercise with placebo or no treatment, not with each other, over more than six weeks and up to six months. Progressive and resisted exercise showed an uncertain clinical benefit; non-progressive or non-resisted exercise showed no significant benefit. The certainty of the evidence was low.", "claim-slot:l5-progressive-comparisons"),
     C(POLICY, BOUNDARY),
     H("What activation is for"),
@@ -481,8 +478,8 @@ l5 = {
     P("Give one to three cues per drill, as a direction or a target: \"reach long through your hands\", \"push the band away\". Watch the next rep, and keep a cue only if the movement changes the way you want."),
     C(REFER, f"Correctives never replace referral. Any stop rule means: {STOP_SESSION} {WORSENING} {TWO_WEEKS} Anything in the urgent or emergency tiers: refer at that tier (see \"When to refer out\")."),
     H("Check your understanding"),
-    Q("What does 2025 UK specialist guidance report about exercise for subacromial shoulder pain?", ["It reduces pain in the short term and improves function; the recommendation is conditional, on low-certainty evidence, and the best approach is uncertain", "One exercise programme is proven best", "Exercise does not help"], 0,
-      "The guidance reports that exercise reduces short-term pain and improves function, rates this as a conditional recommendation on low-certainty evidence, and says the most effective approach remains uncertain.", "claim-slot:l5-subacromial-exercise"),
+    Q("What does UK specialist guidance report about exercise for subacromial shoulder pain?", ["It reduces pain over 8 weeks to 6 months and improves patient-reported function; the recommendation is conditional, on low evidence, and the best approach is uncertain", "One exercise programme is proven best", "Exercise does not help"], 0,
+      "The guidance reports that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function, grades this conditional positive on low evidence, and says the best approach is still uncertain.", "claim-slot:l5-subacromial-exercise"),
     Q("How did the 2020 review compare progressive and non-progressive exercise for rotator cuff related shoulder pain?", ["It found progressive exercise clearly better than non-progressive", "It compared each with placebo or no treatment, not with each other, and the evidence was low certainty", "It found no difference between them in a head-to-head comparison"], 1,
       "Each approach was compared with placebo or no treatment over more than six weeks to six months; the review did not compare them head to head, and certainty was low.", "claim-slot:l5-progressive-comparisons"),
     C("Talk it through", "A client wants to spend 20 minutes on activation before every session. What do you keep as a short warm-up, and what moves into the main session as real training?"),
@@ -490,15 +487,17 @@ l5 = {
   "media": [], "resources": [],
 }
 l5_slots = [
-  {"slot": "claim-slot:l5-subacromial-exercise", "statement": "For subacromial pain, BESS 2025 (PICO 6) reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves patient-reported function, grades this 'Conditional Positive (low evidence)', and states that the most effective physiotherapy or exercise approach remains uncertain.", "candidateSources": [BESS25],
-   "note": "Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."},
-  {"slot": "claim-slot:l5-csaw", "statement": "In the CSAW trial (subacromial pain for at least 3 months, intact rotator cuff tendons, eligible for surgery, after non-operative management including exercise therapy and at least one steroid injection), arthroscopic decompression gave no benefit over arthroscopy only on the Oxford Shoulder Score at 6 months, and the surgical groups' advantage over no treatment was not clinically important.", "candidateSources": [CSAW]},
+  {"slot": "claim-slot:l5-subacromial-exercise", "statement": "For subacromial pain, the British Elbow & Shoulder Society patient care pathway (PICO 6) reports evidence that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function at follow-up of up to 6 months, grades the recommendation 'Conditional Positive (low evidence)', and says the best physiotherapy, exercise or manual therapy approach is still uncertain.", "candidateSources": [{**BESS25, "locator": "p. 719, PICO 6"}],
+   "note": "Paraphrased; the attributed source excerpt stays in the private evidence packet (D-13), at p. 719, PICO 6. Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."},
+  {"slot": "claim-slot:l5-decompression", "statement": "In adult patients with subacromial pain syndrome lasting more than 3 months, a systematic review with meta-analysis found high-certainty evidence of no additional benefit of subacromial decompression surgery over placebo surgery for pain at 1 year or physical function at 1 to 2 years.", "candidateSources": [LAHDEOJA],
+   "note": "Replaces the CSAW trial (Beard 2018), an RCT the claim pipeline does not admit; the meta-analysis pools the placebo-controlled trials, CSAW among them."},
   {"slot": "claim-slot:l5-progressive-comparisons", "statement": "A 2020 systematic review found uncertain clinical benefit for progressive and resisted exercise and no significant benefit for non-progressive or non-resisted exercise, each versus placebo or no treatment at more than 6 weeks to 6 months, in rotator cuff related shoulder pain; evidence was low certainty and the categories were not compared directly.", "candidateSources": [NAUNTON]},
 ]
 l5_scen = [{"prompt": "A client wants 20 minutes of activation before every session.", "goodAnswer": "Keep a short warm-up; move strengthening into the main session with progressive load; make no claim that activation fixes anything.", "safety": "SAFETY.md section 1"}]
 notes5 = ["The EMG section and its quiz were removed: the accessible abstract did not support the ratios or the inference limit.",
           "The outline no longer says 'first-line'. The lesson does not generalise BESS PICO 18's narrower recommendation (physiotherapy as a possible first-line treatment for chronic subacromial pain).",
-          "The warm-up is practice-based and ranks nothing."]
+          "The warm-up is practice-based and ranks nothing.",
+          "BESS 2025 is expected to become admissible as guidance through W1's D-12 operator-asserted source kind (pending: no receipt yet); its claim statements carry no publication year until the review packet includes one."]
 
 # ---------------------------------------------------------------- lesson 6
 
@@ -515,7 +514,7 @@ l6 = {
   "blocks": [
     P("This lesson is for healthy adults whose shoulders tolerate training. Every progression below has its own stop rule beside it; read it before you use the progression."),
     H("Why progression matters"),
-    S("For healthy adults, the 2026 position stand from the American College of Sports Medicine recommends progressive resistance training to keep improving muscle strength, size and physical performance.", "claim-slot:l6-progression"),
+    S("For healthy adults, the American College of Sports Medicine position stand on resistance training recommends progressive resistance training to keep improving muscle strength, size and physical performance.", "claim-slot:l6-progression"),
     C(POLICY, BOUNDARY),
     H("Before any progression"),
     C(REFER, f"Check first: no pain at the current level, full control of the range, and no warning sign since the last session. If pain comes on or rises with load: {STOP_SESSION} {WORSENING} {TWO_WEEKS} Anything in the urgent or emergency tiers: refer at that tier."),
@@ -532,37 +531,40 @@ l6 = {
        "Progression: band pulldown, then a cable or machine pulldown, then a pull-up with assistance."]),
     stop(TINGLE, WORSENING, TWO_WEEKS),
     H("Overhead"),
-    S("Reaching fully overhead involves the shoulder blade rotating upward as the arm rises.", "claim-slot:l6-overhead-upward"),
+    S("Reaching overhead involves the shoulder blade rotating upward as the arm rises.", "claim-slot:l6-overhead-upward"),
     P("Pick an overhead variation the client can reach and control without pain. One coach-selected order is landmine press, then half-kneeling single-arm press, then standing press. Treat it as an example, not a rule."),
     L(["Progression: landmine press, then half-kneeling single-arm press, then standing press.",
        "Do not progress to a vertical press until the client reaches overhead without pain and without arching the lower back to get there."]),
     stop(ACTIVE_LOSS, TRAUMA, WORSENING),
     H("Building muscle"),
-    S("A 2026 meta-regression found that muscle growth increases as weekly training volume rises, with diminishing returns: each extra set adds less than the one before. The 2026 ACSM position stand reports that higher volumes, about 10 or more sets per muscle each week, enhanced muscle growth in healthy adults.", "claim-slot:l6-volume"),
-    S("A 2023 meta-analysis did not find an extra muscle-growth benefit from taking sets all the way to momentary muscular failure compared with stopping short of it. That does not show the two are equivalent: a 2024 exploratory analysis suggests muscle growth increases as sets end closer to failure.", "claim-slot:l6-failure"),
+    S("A meta-regression found that muscle growth increases as weekly training volume rises, with diminishing returns: each extra set adds less than the one before.", "claim-slot:l6-volume"),
+    S("A meta-analysis did not find an extra muscle-growth benefit from taking sets all the way to momentary muscular failure compared with stopping short of it. That does not show the two are equivalent: a later exploratory analysis suggests muscle growth increases as sets end closer to failure.", "claim-slot:l6-failure"),
     P("For shoulders, add weekly sets gradually, keep a few reps in reserve on most sets, and increase volume only when the client recovers well between sessions and shows no warning sign."),
     stop("If pain comes on as volume rises, stop shoulder loading for the session and apply the referral rules first.", WORSENING, TWO_WEEKS, "Only in a later session, with no warning sign remaining, return to a lower volume."),
     H("Progress one thing at a time"),
     P("Change range, then load, then difficulty, one at a time, and re-check the client's control at each step in a later session. If two things change and pain appears, you will not know which caused it."),
     stop("Severe pain in both shoulders, or new pain, swelling or stiffness in several joints at once: urgent, today.", WORSENING),
     H("Check your understanding"),
-    Q("What does the 2026 ACSM position stand recommend to keep improving strength and muscle size in healthy adults?", ["Repeating the same load indefinitely", "Progressive resistance training", "Training to failure on every set"], 1,
+    Q("What does the ACSM position stand recommend to keep improving strength and muscle size in healthy adults?", ["Repeating the same load indefinitely", "Progressive resistance training", "Training to failure on every set"], 1,
       "The position stand recommends progressive resistance training for healthy adults.", "claim-slot:l6-progression"),
     Q("Which shoulder blade movement is part of reaching fully overhead?", ["Upward rotation", "Downward rotation", "None: the shoulder blade stays still"], 0,
       "Reaching fully overhead involves upward rotation of the shoulder blade.", "claim-slot:l6-overhead-upward"),
-    Q("What did a 2026 meta-regression find about weekly training volume and muscle growth?", ["Growth increases with volume, with diminishing returns", "Volume made no difference", "Growth rises by the same amount with every extra set"], 0,
+    Q("What did a meta-regression find about weekly training volume and muscle growth?", ["Growth increases with volume, with diminishing returns", "Volume made no difference", "Growth rises by the same amount with every extra set"], 0,
       "Growth increases as volume rises, but each extra set adds less: diminishing returns.", "claim-slot:l6-volume"),
-    Q("What did a 2023 meta-analysis find about training to momentary failure for muscle growth?", ["No extra benefit from reaching failure, which does not show the two are equivalent", "Failure training always gives more growth", "Failure training prevents growth"], 0,
+    Q("What did a meta-analysis find about training to momentary failure for muscle growth?", ["No extra benefit from reaching failure, which does not show the two are equivalent", "Failure training always gives more growth", "Failure training prevents growth"], 0,
       "The review found no extra hypertrophy benefit from reaching failure; that does not show equivalence, and later work suggests growth increases closer to failure.", "claim-slot:l6-failure"),
     C("Talk it through", "During a deep dumbbell bench press, a client's shoulder starts to ache at the bottom of the set; push-ups earlier felt fine. What do you do now, and what might change in a later session?"),
   ],
   "media": [], "resources": [],
 }
 l6_slots = [
-  {"slot": "claim-slot:l6-progression", "statement": "The 2026 ACSM position stand recommends that healthy adults perform progressive resistance training to improve muscle function, size and physical performance.", "candidateSources": [ACSM26], "note": "Replaces the 2009 position stand. Healthy adults only."},
-  {"slot": "claim-slot:l6-overhead-upward", "statement": "Full humeral elevation involves scapular upward rotation.", "candidateSources": [LUDEWIG, MCCLURE], "note": "Same evidence as l2-scapular-motions; may reuse that approved claim."},
-  {"slot": "claim-slot:l6-volume", "statement": "Muscle hypertrophy increases with weekly resistance training volume, with diminishing returns (2026 meta-regression); the 2026 ACSM position stand reports hypertrophy enhanced by higher volumes (about 10 or more sets per week) in healthy adults.", "candidateSources": [PELLAND, ACSM26], "note": "Replaces Schoenfeld 2017 with the newer synthesis."},
-  {"slot": "claim-slot:l6-failure", "statement": "A 2023 meta-analysis found no hypertrophy advantage for training to momentary muscular failure over non-failure training; this does not establish equivalence, and a 2024 exploratory meta-regression found hypertrophy increased as sets were terminated closer to failure.", "candidateSources": [REFALO, ROBINSON], "note": "Dated findings; distinguish reaching failure from proximity to failure."},
+  {"slot": "claim-slot:l6-progression", "statement": "The American College of Sports Medicine position stand on resistance training prescription recommends that healthy adults perform progressive resistance training to improve muscle function, size and physical performance.", "candidateSources": [ACSM26],
+   "note": "Healthy adults only. ACSM is expected to become admissible as a position stand through W1's D-12 operator-asserted source kind (pending: no receipt yet); no publication year in the statement until the review packet includes one."},
+  {"slot": "claim-slot:l6-overhead-upward", "statement": "In asymptomatic individuals, the scapula rotates upward during arm elevation.", "candidateSources": [FERNANDEZ], "note": "Same source as l2-scapular-motions."},
+  {"slot": "claim-slot:l6-volume", "statement": "A meta-regression found that muscle hypertrophy increases with weekly resistance training volume, with diminishing returns.", "candidateSources": [PELLAND],
+   "note": "Dry-run fix: the ACSM clause and the years are dropped (Sol round 3)."},
+  {"slot": "claim-slot:l6-failure", "statement": "A meta-analysis found no hypertrophy advantage for training to momentary muscular failure over non-failure training; this does not establish equivalence, and an exploratory meta-regression found hypertrophy increased as sets were terminated closer to failure.", "candidateSources": [REFALO, ROBINSON],
+   "note": "Dry-run fix: neutral population and no publication years. Distinguish reaching failure from proximity to failure."},
 ]
 l6_scen = [{"prompt": "Ache at the bottom of a deep dumbbell bench press during the set; push-ups fine.", "goodAnswer": "Now: stop shoulder loading for the session. In a later session, only if no warning sign remains: a shorter range or another variation, and stop again if pain comes on. Pain getting worse: routine referral now; not improved after 2 weeks: routine referral.", "safety": "SAFETY.md sections 3 and 4"}]
 notes6 = ["Every progression has a stop block beside it.", "Progression orders and cue definitions are coach-selected examples; no biomechanical comparison is asserted."]
@@ -574,17 +576,14 @@ l7 = {
   "summary": "Throwing puts the shoulder through fast, large rotations. Support throwers with strength and sensible workload, record range the same way over time, and know the warning signs.",
   "durationMinutes": 12, "format": "article",
   "objectives": [
-    "Describe the two moments of high shoulder load a classic pitching study identified.",
     "Describe the range differences professional pitchers' throwing shoulders typically show.",
     "Explain why shoulder range is not a reliable injury screen on its own.",
     "Know the warning signs in throwers, and refer young throwers with shoulder pain urgently."],
   "anatomyIds": ["UBERON:0001467", "UBERON:0001470", "UBERON:0000976"],
   "blocks": [
     P("This lesson gives a strength coach's view of the throwing shoulder. Throwing workload and return-to-throwing decisions belong to the athlete's sport coach and clinician."),
-    H("Two moments of high load"),
-    S("In a 1995 study of 26 skilled adult pitchers, two moments stood out at the shoulder: shortly before the arm reached its maximum external rotation, when the shoulder's internal rotation torque was high, and shortly after ball release, when a large compressive force acted across the shoulder joint.", "claim-slot:l7-load-moments"),
     H("How pitchers' shoulders adapt"),
-    S("In professional baseball pitchers, the throwing shoulder typically has less internal rotation and more external rotation than the other shoulder. Part of that difference comes from a twist in the upper arm bone itself (humeral retroversion), not only from the soft tissues.", "claim-slot:l7-adaptation"),
+    S("In professional baseball pitchers, the throwing shoulder typically has less internal rotation and more external rotation than the other shoulder. Across the pitchers studied, the twist of the upper arm bone (humeral retroversion) also differed between the two arms, by about 15 degrees on average.", "claim-slot:l7-adaptation"),
     H("Range and injury risk: still uncertain"),
     S("Whether shoulder range is linked to injury is uncertain and differs by sport. A 2018 meta-analysis found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury in overhead athletes. A 2020 meta-analysis of prospective studies linked too little extra external rotation in the throwing arm to injury in professional pitchers, from three pooled studies, with a caution about the small number of studies, and suggested range screening may not identify risk in some other overhead sports. A 2025 review listed range among several risk factors, alongside reduced strength, previous pain or injury and training load, and noted that studies define injury differently.", "claim-slot:l7-injury-risk"),
     P("So do not set out to make a thrower's two shoulders match, and do not treat one range record as a verdict. Record rotation on both sides the same way over time."),
@@ -602,10 +601,8 @@ l7 = {
     C(POLICY, "Throwing workload, pitch counts and return-to-throwing decisions are for the athlete's sport coach and treating clinician. Your strength work supports that plan; it does not replace it. " + BOUNDARY),
     P("Coaches in other rotational sports, such as racquet sports, swimming and combat sports, can use the same approach: record range the same way over time, build strength, follow the stop rules, and agree workload with the sport coach."),
     H("Check your understanding"),
-    Q("In a 1995 study of skilled adult pitchers, which two moments stood out at the shoulder?", ["Shortly before maximum external rotation (high internal rotation torque) and shortly after ball release (high compressive force)", "The wind-up and the follow-through", "Only the moment of ball release"], 0,
-      "The study identified high internal rotation torque shortly before maximum external rotation and a large compressive force shortly after ball release.", "claim-slot:l7-load-moments"),
     Q("What range pattern does a professional pitcher's throwing shoulder typically show?", ["Less internal rotation and more external rotation than the other side", "More internal rotation and less external rotation", "Identical range on both sides"], 0,
-      "The throwing shoulder typically shows less internal and more external rotation, partly from a bony twist in the upper arm bone.", "claim-slot:l7-adaptation"),
+      "The throwing shoulder typically shows less internal and more external rotation; the twist of the upper arm bone also differed between the arms on average.", "claim-slot:l7-adaptation"),
     Q("Can shoulder range alone tell you which overhead athletes will be injured?", ["Yes, reliably in every sport", "No: pooled associations were not significant or were limited to some sports, and studies define injury differently", "Only in swimmers"], 1,
       "Syntheses disagree and differ by sport, and injury definitions vary; range is one possible factor among several, not a reliable screen on its own.", "claim-slot:l7-injury-risk"),
     C("Talk it through", "A 15-year-old pitcher says the shoulder hurts after games. What do you do in your session, and who do you tell?"),
@@ -613,12 +610,13 @@ l7 = {
   "media": [], "resources": [],
 }
 l7_slots = [
-  {"slot": "claim-slot:l7-load-moments", "statement": "In 26 skilled healthy adult pitchers (1995), critical shoulder kinetics occurred shortly before maximum shoulder external rotation (high internal rotation torque) and shortly after ball release (high compressive force).", "candidateSources": [FLEISIG], "note": "Distinct quantities and moments from this study; no single ranking of 'largest load'."},
-  {"slot": "claim-slot:l7-adaptation", "statement": "In professional baseball pitchers, the throwing shoulder shows on average less internal rotation and more external rotation than the non-throwing shoulder, with a bilateral difference in humeral retroversion contributing.", "candidateSources": [PAUL], "note": "Population is mostly professional pitchers; keep it."},
+  {"slot": "claim-slot:l7-adaptation", "statement": "In professional baseball pitchers, the throwing shoulder shows on average less internal rotation and more external rotation than the non-throwing shoulder; across included pitchers, humeral retroversion differed between the arms by about 15 degrees on average.", "candidateSources": [PAUL],
+   "note": "Wording Sol approved in the claim dry run (round 4). It reports the retroversion difference without saying it causes the range difference."},
   {"slot": "claim-slot:l7-injury-risk", "statement": "Evidence linking shoulder range of motion to injury in overhead athletes is uncertain and sport-specific: no statistically significant pooled association for the measures examined (2018 meta-analysis); external rotation insufficiency associated with injury in professional pitchers from three pooled studies, interpreted with caution (2020 meta-analysis of prospective cohorts); range among several risk factors, with inconsistent injury definitions (2025 systematic review).", "candidateSources": [KELLER, POZZI, SALAMH], "note": "Association, not individual prediction."},
 ]
 l7_scen = [{"prompt": "A 15-year-old pitcher says the shoulder hurts after games.", "goodAnswer": "Stop throwing and shoulder loading in the session; urgent: tell the athlete and a parent or carer to get an urgent GP appointment or NHS 111 the same day for referral to trauma and orthopaedics; emergency if any emergency sign.", "safety": "SAFETY.md sections 2 and 4"}]
-notes7 = ["The rotation record is qualitative (no angles or totals), because a trainer set-up without a defined zero and stabilisation cannot give repeatable numbers.", "The stop blocks use SAFETY.md's tiers: persistent night pain with stiffness is routine; persistent pins and needles is urgent; inability to move after trauma is emergency.",
+notes7 = ["The pitching-kinetics section, its objective and its quiz were removed: the only source (Fleisig 1995) is a primary study, which the claim pipeline does not admit, and no qualifying systematic review states those two moments (the 2023 normative meta-analysis by Mine et al. does not).",
+          "The rotation record is qualitative (no angles or totals), because a trainer set-up without a defined zero and stabilisation cannot give repeatable numbers.", "The stop blocks use SAFETY.md's tiers: persistent night pain with stiffness is routine; persistent pins and needles is urgent; inability to move after trauma is emergency.",
           "Throwing workload is stated as Spindle policy, not science. The cross-sport paragraph makes no claim about shared mechanics."]
 
 # ---------------------------------------------------------------- lesson 8
@@ -653,7 +651,7 @@ l8 = {
     H("Outside the base module"),
     L(EXCL_ROWS),
     H("Keeping routine referrals calm"),
-    S("For subacromial shoulder pain, 2025 UK specialist guidance describes the condition as usually self-limiting, with most symptoms responding to initial care within about three months.", "claim-slot:l8-subacromial-course"),
+    S("For subacromial shoulder pain, UK specialist guidance from the British Elbow & Shoulder Society lists reassurance among the treatments suitable for primary care: this is usually a self-limiting condition, and most symptoms respond within three months.", "claim-slot:l8-subacromial-course"),
     P("That keeps a routine referral calm. It is about one diagnosed condition, and it never delays an urgent or emergency referral."),
     H("Saying it, tier by tier"),
     L(["Emergency: call emergency services yourself, stay with the client, and do not let them drive. After a fall or impact, do not move the arm or try to put it back. Nothing else happens in the session.",
@@ -663,14 +661,15 @@ l8 = {
     H("Working with a clinician's plan"),
     P("Ask the client to share the plan, ideally in writing. Train within it, ask the clinician before changing it, and do not progress it on your own."),
     H("Check your understanding"),
-    Q("For subacromial shoulder pain, what does 2025 UK specialist guidance say about how symptoms usually go?", ["Most symptoms respond to initial care within about three months", "Symptoms never improve without surgery", "Most need emergency care"], 0,
-      "The guidance describes subacromial pain as usually self-limiting, with most symptoms responding to initial care within about three months.", "claim-slot:l8-subacromial-course"),
+    Q("For subacromial shoulder pain, what does UK specialist guidance say about how symptoms usually go?", ["It is usually self-limiting, and most symptoms respond within three months", "Symptoms never improve without surgery", "Most need emergency care"], 0,
+      "Among the treatments suitable for primary care, the guidance lists reassurance that this is usually a self-limiting condition, and that most symptoms respond within three months.", "claim-slot:l8-subacromial-course"),
     C("Talk it through", "Pick the tier and say what you do first, who to contact and how soon: (1) arm pain with chest tightness during a session; (2) a new lump above the collarbone; (3) shoulder pain that has got worse every day this week, with no other sign; (4) after a fall, the client cannot move the arm; (5) fever and shoulder pain; (6) an ache after training that settled within a day, with no other sign."),
   ],
   "media": [], "resources": [],
 }
 l8_slots = [
-  {"slot": "claim-slot:l8-subacromial-course", "statement": "BESS 2025 describes subacromial pain as usually self-limiting, with most symptoms responding within three months, in the context of initial primary-care management.", "candidateSources": [BESS25]},
+  {"slot": "claim-slot:l8-subacromial-course", "statement": "Among interventions suitable for primary care, the British Elbow & Shoulder Society subacromial pain care pathway lists reassurance: this is usually a self-limiting condition, and most symptoms respond within three months.", "candidateSources": [{**BESS25, "locator": "p. 716, Treatment in primary care and community triage services"}],
+   "note": "The attributed source excerpt stays in the private evidence packet (D-13)."},
 ]
 l8_scen = [
   {"prompt": "Arm pain with chest tightness during a session.", "goodAnswer": "Stop all exercise; emergency: call emergency services (999 in the UK) now and stay with the client.", "safety": "SAFETY.md section 4"},
@@ -703,39 +702,44 @@ LESSONS = [
 # Anatomy and biomechanics claims describe the human shoulder, not a sampled population, and say so.
 
 ANATOMY = "Human shoulder anatomy; not a sampled study population"
-MCCLURE_POP = '"8 healthy volunteers (5 men, 3 women)" (McClure 2001); normal scapular kinematics during arm elevation, reviewed by Ludewig 2009'
+FERNANDEZ_POP = '"asymptomatic individuals" (Fernández-Matías 2025, which reviewed "healthy individuals and those with RCRSP")'
 ACSM_POP = '"healthy adults (≥18 yr)" (ACSM 2026)'
 BESS_POP = '"Subacromial Shoulder Pain" (BESS 2025 patient care pathway)'
 CLAIM_META = {
-    "claim-slot:l1-bones-joints": ("Narrative review (anatomy)", ANATOMY + " (Frank 2013)."),
-    "claim-slot:l1-scapulothoracic": ("Narrative review (anatomy)", ANATOMY + ": \"the scapulothoracic articulation\" (Frank 2013)."),
-    "claim-slot:l1-shallow-socket": ("Narrative review (anatomy); anatomic specimen study", ANATOMY + "; \"25 anatomic specimen shoulders\" (Howell 1989)."),
-    "claim-slot:l1-cuff": ("Narrative reviews (anatomy)", ANATOMY + " (Cavanaugh 2024; Frank 2013)."),
-    "claim-slot:l1-concavity": ("Narrative review of in vitro biomechanical studies", "The glenohumeral joint in \"in vitro studies\" (Lippitt 1993); not a patient population."),
-    "claim-slot:l1-movers": ("Clinical examination guide; expert consensus guide; narrative review (anatomy)", ANATOMY + ": muscle actions described for bedside manual muscle testing (Vijian 2023) and in an expert guide to shoulder anatomy (Jacinto 2022)."),
-    "claim-slot:l2-scapular-motions": ("Narrative review; in vivo kinematic study (bone pins)", MCCLURE_POP + "."),
-    "claim-slot:l2-shared-ratio": ("Laboratory kinematic studies", '"25 normal subjects" (McQuade 1998); the Inman 1944 record has no abstract, so its population is not quoted.'),
-    "claim-slot:l2-dyskinesis": ("Consensus statement; cross-sectional study", '"67 with shoulder pain and 68 healthy controls" (Plummer 2017); shoulder injuries in general (Kibler 2013 Scapular Summit consensus).'),
+    "claim-slot:l1-bones-joints": ("Anatomy reference (narrative review)", ANATOMY + " (Frank 2013)."),
+    "claim-slot:l1-scapulothoracic": ("Anatomy reference (narrative review)", ANATOMY + ": \"the scapulothoracic articulation\" (Frank 2013)."),
+    "claim-slot:l1-shallow-socket": ("Anatomy reference (narrative review)", ANATOMY + " (Frank 2013)."),
+    "claim-slot:l1-cuff": ("Anatomy references (narrative reviews)", ANATOMY + " (Frank 2013, Table 1; Cavanaugh 2024)."),
+    "claim-slot:l1-attachments": ("Anatomy reference (narrative review)", ANATOMY + " (Frank 2013)."),
+    "claim-slot:l2-scapular-motions": ("Systematic review with multilevel meta-regression", FERNANDEZ_POP + "."),
+    "claim-slot:l2-shared-ratio": ("Systematic review with multilevel meta-regression", FERNANDEZ_POP + "."),
+    "claim-slot:l2-dyskinesis": ("Consensus statement", "People with shoulder injuries (Kibler 2013, Scapular Summit consensus)."),
     "claim-slot:l3-kyphosis-pain": ("Systematic review; systematic review with meta-analysis of cross-sectional studies", '"groups with and without shoulder pain" (Barrett 2016); "non-athletes with shoulder pain compared to asymptomatic individuals" (Fialho 2024).'),
     "claim-slot:l3-upright-range": ("Systematic review", '"people with and without shoulder pain" (Barrett 2016).'),
     "claim-slot:l4-exam-tests": ("Systematic reviews with meta-analysis (diagnostic accuracy)", '"3,438 patients" examined for "rotator cuff tears (RCTs) and subacromial impingement syndrome (SIS)" (Zhao 2024); shoulder physical examination studies (Hegedus 2012).'),
     "claim-slot:l5-subacromial-exercise": ("Clinical guideline (GRADE), British Elbow & Shoulder Society", BESS_POP + "."),
-    "claim-slot:l5-csaw": ("Randomised placebo-controlled surgical trial", 'Patients "who had subacromial pain for at least 3 months with intact rotator cuff tendons, were eligible for arthroscopic surgery, and had previously completed a non-operative management programme that included exercise therapy and at least one steroid injection" (CSAW, Beard 2018).'),
+    "claim-slot:l5-decompression": ("Systematic review with meta-analysis of randomised controlled trials", '"adult patients with subacromial pain syndrome lasting for more than 3 months" (Lähdeoja 2020).'),
     "claim-slot:l5-progressive-comparisons": ("Systematic review with meta-analysis of randomised controlled trials", '"people with rotator cuff related pain" (Naunton 2020).'),
     "claim-slot:l6-progression": ("Position stand (overview of systematic reviews)", ACSM_POP + "."),
-    "claim-slot:l6-overhead-upward": ("Narrative review; in vivo kinematic study (bone pins)", MCCLURE_POP + "."),
-    "claim-slot:l6-volume": ("Meta-regression; position stand (overview of systematic reviews)", "Participants in 35 studies contributing to the hypertrophy volume analysis, n=1,032 (Pelland 2026, section 3.6.1); " + ACSM_POP + "."),
-    "claim-slot:l6-failure": ("Systematic review with meta-analysis; exploratory meta-regression", '"healthy adults of any age and resistance training experience" (Refalo 2023); the Robinson 2024 abstract does not state a population.'),
-    "claim-slot:l7-load-moments": ("Laboratory biomechanical study (high-speed motion analysis)", '"26 highly skilled, healthy adult pitchers" (Fleisig 1995).'),
+    "claim-slot:l6-overhead-upward": ("Systematic review with multilevel meta-regression", FERNANDEZ_POP + "."),
+    "claim-slot:l6-volume": ("Meta-regression", "Participants in resistance training studies (Pelland 2026)."),
+    "claim-slot:l6-failure": ("Systematic review with meta-analysis; exploratory meta-regression", "Participants in resistance training studies (Refalo 2023; Robinson 2024)."),
     "claim-slot:l7-adaptation": ("Systematic review (level of evidence 4)", 'Professional baseball pitchers: the rotation result pools 13 studies of 1,101 professional pitchers (Paul 2025, whose overall eligibility was "nonrecreational baseball pitchers").'),
     "claim-slot:l7-injury-risk": ("Systematic reviews with meta-analysis; systematic review of prospective studies", '"overhead athletes" (Keller 2018); "overhead athletes from Olympic or college sports", with pooled data from "professional baseball pitchers" (Pozzi 2020); "the athletic population" (Salamh 2025).'),
     "claim-slot:l8-subacromial-course": ("Clinical guideline (GRADE), British Elbow & Shoulder Society", BESS_POP + "."),
 }
 
+# D-12 claim domains. Foundation: purely structural anatomy (names, parts, attachments, relations),
+# which may rest on an admitted foundation reference. Applied: everything else, which needs a
+# systematic review, meta-analysis, position stand or guideline.
+FOUNDATION = {"claim-slot:l1-bones-joints", "claim-slot:l1-scapulothoracic", "claim-slot:l1-shallow-socket", "claim-slot:l1-cuff", "claim-slot:l1-attachments"}
+DOMAINS = ("foundation", "applied")
+
 def with_meta(slot):
     """The slot with its claim metadata, in a stable key order."""
     level, population = CLAIM_META[slot["slot"]]
-    out = {"slot": slot["slot"], "statement": slot["statement"], "evidenceLevel": level, "population": population}
+    domain = "foundation" if slot["slot"] in FOUNDATION else "applied"
+    out = {"slot": slot["slot"], "statement": slot["statement"], "domain": domain, "evidenceLevel": level, "population": population}
     out.update({k: v for k, v in slot.items() if k not in out})
     return out
 
@@ -763,6 +767,8 @@ def check(number, lesson, slots, scenarios):
     if used != set(defined):
         errors.append(f"slots used {sorted(used)} differ from slots defined {sorted(defined)}")
     for s in slots:
+        if s.get("domain") not in DOMAINS:
+            errors.append(f"{s['slot']}: domain must be one of {DOMAINS}")
         if not 1 <= len(s.get("evidenceLevel", "")) <= 100:
             errors.append(f"{s['slot']}: evidenceLevel must be 1-100 characters")
         if not 1 <= len(s.get("population", "")) <= 500:
@@ -782,7 +788,7 @@ def check(number, lesson, slots, scenarios):
 
 def render():
     files = {}
-    unknown = set(CLAIM_META) - {s["slot"] for *_, slots, _, _ in LESSONS for s in slots}
+    unknown = (set(CLAIM_META) | FOUNDATION) - {s["slot"] for *_, slots, _, _ in LESSONS for s in slots}
     if unknown:
         raise SystemExit(f"claim metadata for unknown slots: {sorted(unknown)}")
     for number, name, lesson, slots, scenarios, notes in LESSONS:

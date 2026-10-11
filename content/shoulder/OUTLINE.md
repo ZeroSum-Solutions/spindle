@@ -19,29 +19,32 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 ## 1. Shoulder anatomy a trainer needs
 
-**One idea:** the shoulder is three bones and three joints working with the shoulder blade on the ribcage, and its big range comes from a shallow ball-and-socket that muscles keep centred.
+**Claim status (claim dry run 2):** lesson 1's claims are foundation claims (D-12, `domain: "foundation"`) and stay purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference. Review needs the open-licence full text in the packet, because the abstract is too thin. Functional points are removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabelled as practice.
+
+**One idea:** the shoulder is three bones and three joints, with the shoulder blade lying on the ribcage, a small socket deepened by the labrum, and muscles that attach the shoulder blade to the trunk.
 
 **Objectives**
 - Name the bones and joints of the shoulder complex in plain words and in standard terms.
-- Explain why the glenohumeral joint trades stability for range.
-- Describe what the rotator cuff does as a group.
+- Describe the small socket and what deepens it.
+- Name the four rotator cuff muscles and where they attach.
 - Point to where each structure is on a client, by surface landmarks.
 
 **Sections**
-1. *What it is: the parts.* [S] Bones: humerus, scapula, clavicle; joints: glenohumeral, acromioclavicular, sternoclavicular (the only bony joint between the shoulder girdle and the axial skeleton: the skull, spine and ribcage). There is no direct bony joint between the shoulder blade and the ribcage; muscles connect them. Candidate evidence: open CC BY articles read in full (Frank 2013, PMC3863500; Cavanaugh 2024; Vijian 2023; Jacinto 2022). OpenStax is not a claim source (its terms forbid ingestion into AI models); it is listed only as optional further reading. The scapulothoracic statement (no cartilage, lining or capsule; the shoulder blade slides on muscle and bursae, and muscles hold it in place) is supported by Frank 2013.
-2. *What it is: a shallow socket.* [S] The glenoid is shallow relative to the humeral head; the labrum deepens the socket, and the capsule and its ligaments help hold the joint stable. Candidate evidence: anatomy reference with an open consensus or review source.
-3. *What it is: the cuff.* [S] Four rotator cuff muscles (supraspinatus, infraspinatus, teres minor, subscapularis) and their role in keeping the humeral head centred during arm movement. Candidate evidence: a review of cuff function (e.g. a JOSPT clinical commentary on shoulder exercise rationale).
-4. *What it is: the big movers.* [S] Deltoid, pectoralis major, latissimus dorsi, trapezius, serratus anterior: what each moves. Candidate evidence: nomenclature plus a review.
+1. *What it is: the parts.* [S, foundation] Bones: humerus, scapula, clavicle; joints: glenohumeral, acromioclavicular, sternoclavicular. There is no osseous or ligamentous joint between the shoulder blade and the ribcage; muscles connect them. The scapulothoracic contact has no cartilage, synovium or capsule; bursal and muscular planes lie between the shoulder blade and the ribs. Source: Frank 2013 (PMC3863500). OpenStax is not a claim source (its terms forbid ingestion into AI models); it is listed only as optional further reading.
+2. *What it is: a small socket.* [S, foundation] The glenoid's articular surface is one third to one quarter the size of the humeral head; the labrum increases its surface area and depth. Source: Frank 2013.
+3. *What it is: the cuff.* [S, foundation] Supraspinatus, infraspinatus, teres minor and subscapularis: each from the scapula to the humerus (subscapularis to the lesser tubercle, the others to the greater tubercle). Sources: Frank 2013, Table 1 (attachments); Cavanaugh 2024 (names the four as the rotator cuff).
+4. *What it is: muscles that attach the shoulder blade.* [S, foundation] Trapezius, serratus anterior, rhomboids, levator scapulae and pectoralis minor attach the scapula to the axial skeleton (subclavius runs from the first rib to the clavicle, not to the scapula); serratus anterior along the anterior medial border. Source: Frank 2013. Muscle actions are function, not foundation, and are not claimed.
 5. *Why it matters.* [P] Load the range a client can control.
 6. *How to see it.* [P] Palpation tour on yourself: clavicle, acromion, spine of the scapula, inferior angle. Coach note: say what you are touching and ask first.
 7. *What to do.* [P] Use the plain names with clients and the standard names with clinicians; one-line glossary card.
-8. [!] Short note: the lesson teaches location and function, never what is "wrong". A painful spot is described, not named as an injury (SAFETY §1).
+8. [!] Short note: the lesson teaches location, never what is "wrong". A painful spot is described, not named as an injury (SAFETY §1).
 
-**Visuals:** original diagram of the shoulder complex from the front (the subject's left shoulder; drawing on main since PR #17); a planned diagram of the cuff around the humeral head.
+**Visuals:** original diagram of the shoulder complex from the front (the subject's left shoulder; drawing on main since PR #17); a planned diagram of the four rotator cuff muscles from the front and from behind (`shoulder-cuff`).
 
 **Graded quiz candidates**
-- Which joint connects the arm to the scapula? (glenohumeral) [binds §1 claim]
-- As a group, what does the rotator cuff do during arm movement? (helps keep the humeral head centred on the glenoid) [binds §3 claim]
+- Which joint connects the arm to the scapula? (glenohumeral) [§1]
+- What adds depth to the small socket? (the labrum) [§2]
+- Where do the four rotator cuff muscles attach? (from the shoulder blade to the top of the humerus) [§3]
 
 **Scenario (ungraded):** A client points to the front of the shoulder and asks "Is that my rotator cuff?" What do you say? (Describe the area; do not diagnose; if it hurts, follow SAFETY.)
 
@@ -60,10 +63,10 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - Watch a client's arm raise and describe what you see in plain words.
 
 **Sections**
-1. *What it is.* [S] During arm elevation the scapula upwardly rotates and tilts posteriorly. Its internal or external rotation varies with the plane of elevation and through the range, so it is not taught as one fixed pattern. Candidate evidence: review of scapular kinematics (JOSPT 2009, open in PMC) and an in vivo 3D kinematic study.
-2. *What it is: the shared ratio.* [S] Arm elevation is shared between glenohumeral and scapulothoracic motion; the often-quoted ratio is about 2:1 overall, and it varies by person, plane and load. Candidate evidence: classic kinematic study plus a modern review. The block must say the ratio varies.
+1. *What it is.* [S] In people without shoulder pain, the scapula moves from the very start of arm elevation toward upward rotation and posterior tilt, with a trend toward external rotation. Candidate evidence: systematic review with multilevel meta-regression of 3D scapular kinematics (Fernández-Matías et al. 2025, PMID 40845626). The earlier narrative review and bone-pin study are not admissible claim sources (claim dry run, 2026-10-11).
+2. *What it is: the shared ratio.* [S] The same review estimated the ratio of arm elevation to scapular upward rotation at about 3:1 on average, with great variability between people, and did not support a constant ratio. The block must say the ratio varies.
 3. *What it is: the force couple.* Removed 2026-10-11: no accessible source stated the named-muscle formulation, so the section and its quiz were dropped (no relabelling as practice).
-4. *Why it matters.* [S] Altered scapular movement is common in people with and without shoulder pain, so on its own it is not a diagnosis. Candidate evidence: scapular dyskinesis consensus statement (2013).
+4. *Why it matters.* [S] Scapular dyskinesis is present in a high percentage of shoulder injuries, but its exact role in causing or worsening shoulder problems is not clearly defined (wording approved in the claim dry run). Candidate evidence: scapular dyskinesis consensus statement (2013). [P] So a visible difference is something to watch and re-check, not a diagnosis.
 5. *How to see it.* [P] Watch from behind: raise and lower the arms slowly, 3 to 5 reps; look at symmetry, timing and the inferior angle on the way down. Light load can make it clearer.
 6. *What to do.* [P] Cues for overhead work: "reach long through the hands", "let the shoulder blades travel". Define "shoulder blades back and down" and when it does not fit overhead (STYLE › Cues).
 7. [!] Stop rules beside the observation drill: pain that comes on or rises during the raise, tingling, or an arm that cannot be lifted (SAFETY §3).
@@ -71,9 +74,9 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 **Visuals:** original animation-free diagram of scapular upward rotation at three arm angles.
 
 **Graded quiz candidates**
-- Which two scapular motions happen consistently as the arm is raised overhead? (Upward rotation and posterior tilt; internal/external rotation varies with plane and range) [§1]
-- True or false: the glenohumeral-to-scapular ratio is a fixed 2:1 in everyone. (False: it varies) [§2]
-- Does a visible change in scapular movement alone mean the client has a shoulder injury? (No) [§4]
+- Which two scapular motions happen consistently as the arm is raised overhead? (Upward rotation and posterior tilt) [§1]
+- Is the share between arm and shoulder blade fixed? (No: about 3:1 on average, with large differences between people) [§2]
+- What did the consensus statement conclude about scapular dyskinesis? (Common in shoulder injuries; its exact role is not clearly defined) [§4]
 
 **Scenario (ungraded):** As the client lowers the arms from overhead, the inner edge of one shoulder blade lifts slightly away from the ribs compared with the other side; the client has no pain. Continue, adjust, or refer? (Continue with load they control; observe; no referral without warning signs.)
 
@@ -157,7 +160,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - Know when a "corrective" should be a referral instead.
 
 **Sections**
-1. *What research supports.* [S] For subacromial shoulder pain (one specific condition, diagnosed by a clinician), UK specialist guidance reports evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and improving patient-reported function, and states that the most effective physiotherapy or exercise approach remains uncertain. A large trial found that surgery to decompress the space gave no extra benefit over an arthroscopy without decompression. Candidate evidence: BESS care pathway (2025); CSAW randomised trial (2018, PMID 29169668). Wording stays within the population studied, and the claim says nothing about who delivers the exercise (BESS also describes initial self-management). Separately, as **Spindle policy** and not as a science claim: a trainer's loading is not treatment for a diagnosed condition, and a client with diagnosed subacromial pain trains within the treating clinician's plan (SAFETY §2).
+1. *What research supports.* [S] For subacromial shoulder pain (one specific condition, diagnosed by a clinician), UK specialist guidance reports evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and improving patient-reported function, and states that the most effective physiotherapy or exercise approach remains uncertain. A systematic review with meta-analysis found high-certainty evidence that decompression surgery gives no additional benefit over placebo surgery for pain at 1 year or function at 1 to 2 years. Candidate evidence: BESS care pathway (2025; admission through D-12 pending; reviewed against a private publisher excerpt under D-13, p. 719, PICO 6); Lähdeoja et al. 2020, Br J Sports Med (PMID 30647053), which replaces the CSAW trial as the claim source because the pipeline admits systematic reviews, not single trials. Wording stays within the population studied, and the claim says nothing about who delivers the exercise (BESS also describes initial self-management). Separately, as **Spindle policy** and not as a science claim: a trainer's loading is not treatment for a diagnosed condition, and a client with diagnosed subacromial pain trains within the treating clinician's plan (SAFETY §2).
 2. *What the trials compared.* [S] For rotator cuff related shoulder pain, a 2020 systematic review compared each approach with placebo or no treatment, not with each other: progressive resisted exercise showed an uncertain clinical benefit, non-progressive exercise no significant benefit, and the certainty of the evidence was low. The block reports those comparisons and that uncertainty and ranks nothing. Candidate evidence: Naunton et al. 2020, Clinical Rehabilitation (PMID 32571081). If no claim is approved, the section is removed (no downgrade).
 3. *Scapular exercise.* Removed 2026-10-11: the accessible evidence did not support the EMG ratios or the inference limit, so the section and its quiz were dropped (no relabelling as practice).
 4. *Activation as practice.* [P] What activation drills are for in a session: rehearsal, attention, warm-up. What they are not: a fix.
@@ -208,14 +211,13 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 **One idea:** throwing puts the shoulder through fast, large rotations; trainers support throwers with total rotation, strength and sensible workload, not by "fixing" the adaptations throwers develop.
 
 **Objectives**
-- Describe the phases of a throw and where shoulder loads peak.
 - Explain throwers' typical range adaptations (more external rotation, less internal rotation) and total rotation.
 - Choose strength and rotation work for overhead and rotational athletes.
 - Know the warning signs in throwers and when to refer.
 
 **Sections**
-1. *What it is.* [S] Phases of the throw (wind-up, cocking, acceleration, deceleration, follow-through) and the large forces at the shoulder during arm cocking and deceleration. Candidate evidence: biomechanics study of pitching kinetics (1995).
-2. *Adaptations and injury risk.* [S] Throwers often show more external and less internal rotation in the throwing arm. Whether range predicts injury is uncertain and depends on the sport. A 2018 meta-analysis of overhead athletes found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury, though results leaned toward more injury with internal rotation loss. A 2020 meta-analysis of prospective cohorts found that too little extra external rotation in the throwing arm was associated with injury in professional baseball pitchers (pooled from three studies), suggested that range screening may not identify risk in handball, softball, volleyball or tennis players, and asked for caution because studies were few and varied. A 2025 systematic review across overhead sports listed range of motion among several risk factors, alongside reduced strength, previous pain or injury and training load, and noted that studies define injury inconsistently. The block presents this as current uncertainty, not as a screening rule. Candidate evidence: Pozzi et al. 2020, Br J Sports Med (systematic review and meta-analysis of prospective cohorts, PMID 31937577, doi:10.1136/bjsports-2019-100698, CC BY); Salamh et al. 2025, Int J Sports Phys Ther 20(3) (systematic review, doi:10.26603/001c.129462, CC BY-NC 4.0); Keller et al. 2018, Sports Health (PMID 29381423); Wilk et al. 2011 (a case series in professional pitchers, level of evidence 4, PMID 21131681) only as a bounded historical example.
+1. *What it is.* Removed 2026-10-11: the pitching-kinetics claim rested on one primary study (1995), which the claim pipeline does not admit, and no qualifying systematic review states it, so the section and its quiz were dropped (no relabelling as practice).
+2. *Adaptations and injury risk.* [S] In professional pitchers the throwing arm shows on average more external and less internal rotation, and humeral retroversion differs between the arms by about 15 degrees on average (no causal link stated). Whether range predicts injury is uncertain and depends on the sport. A 2018 meta-analysis of overhead athletes found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury, though results leaned toward more injury with internal rotation loss. A 2020 meta-analysis of prospective cohorts found that too little extra external rotation in the throwing arm was associated with injury in professional baseball pitchers (pooled from three studies), suggested that range screening may not identify risk in handball, softball, volleyball or tennis players, and asked for caution because studies were few and varied. A 2025 systematic review across overhead sports listed range of motion among several risk factors, alongside reduced strength, previous pain or injury and training load, and noted that studies define injury inconsistently. The block presents this as current uncertainty, not as a screening rule. Candidate evidence: Pozzi et al. 2020, Br J Sports Med (systematic review and meta-analysis of prospective cohorts, PMID 31937577, doi:10.1136/bjsports-2019-100698, CC BY); Salamh et al. 2025, Int J Sports Phys Ther 20(3) (systematic review, doi:10.26603/001c.129462, CC BY-NC 4.0); Keller et al. 2018, Sports Health (PMID 29381423); Wilk et al. 2011 (a case series in professional pitchers, level of evidence 4, PMID 21131681) only as a bounded historical example.
 3. *Why it matters.* [P] Do not "correct" a normal thrower's adaptation; compare total rotation between sides and over time.
 4. *How to see it.* [P] Measure rotation the same way each time; note change across a season.
 5. *What to do.* [P] Strength for the cuff and scapular muscles, trunk and hip rotation work, deceleration work; workload is the coach's and clinician's decision.
@@ -223,7 +225,6 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 7. [!] Pain while throwing, loss of velocity with pain, a "dead arm", or numbness: stop throwing and refer (SAFETY §3, §4). Young throwers with shoulder pain: urgent tier, an urgent GP appointment or NHS 111 the same day for referral to trauma and orthopaedics, with a parent or carer told (SAFETY §2, §4).
 
 **Graded quiz candidates**
-- In a 1995 study of skilled adult pitchers, which two moments stood out at the shoulder? (Shortly before maximum external rotation, with high internal rotation torque, and shortly after ball release, with a large compressive force) [§1]
 - What range pattern is common in a thrower's throwing arm? (More external, less internal rotation) [§2]
 
 **Scenario (ungraded):** A 15-year-old pitcher says the shoulder hurts after games. What do you do? (Stop throwing and shoulder loading in your session; urgent tier: tell the athlete and a parent or carer to get an urgent GP appointment or NHS 111 the same day, for referral to trauma and orthopaedics; emergency if any emergency sign is present. SAFETY §2, §4.)
