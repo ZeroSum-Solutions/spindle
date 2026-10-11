@@ -13,6 +13,7 @@ import {
   RESERVED_LESSON_SLUGS,
   mediaAssetSchema,
   parseCourse,
+  lessonViewCourse,
   parseLearnerCourse,
   parseModuleStatus,
   parseQuizAttemptResult,
@@ -127,6 +128,11 @@ describe("learner projection (ADR 0007, T21)", () => {
   it("parses a redacted graded quiz and a full practice self-check", () => {
     const parsed = parseLearnerCourse(course([quiz("science", true), quiz("practice-based", false)]));
     expect(parsed.parts[0]!.lessons[0]!.blocks).toHaveLength(2);
+  });
+
+  it("keeps practice self-checks and drops graded quizzes for the lesson view", () => {
+    const view = lessonViewCourse(parseLearnerCourse(course([quiz("science", true), quiz("practice-based", false), { kind: "heading", content: "H" }])));
+    expect(view.parts[0]!.lessons[0]!.blocks.map((b) => [b.kind, "support" in b ? b.support : null])).toEqual([["quiz", "practice-based"], ["heading", null]]);
   });
 
   it("refuses a graded quiz that still carries its answer key, and the authoring parser refuses a redacted one", () => {

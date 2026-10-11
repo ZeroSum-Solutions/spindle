@@ -214,3 +214,21 @@ export const parseCatalog = (value: unknown): Catalog => parseWith(catalogSchema
 export const parseCourse = (value: unknown): Course => parseWith(courseSchema, "course", value);
 /** Parses curriculum_versions.learner_snapshot, the only snapshot learners can read (ADR 0007). */
 export const parseLearnerCourse = (value: unknown): LearnerCourse => parseWith(learnerCourseSchema, "learner course", value);
+
+/**
+ * The course as the lesson pages render it: graded (science) quizzes are removed, because they belong to
+ * the module quiz page and arrive without an answer key. Practice self-checks stay. The result is a plain
+ * Course, so lesson rendering needs no knowledge of redaction.
+ */
+export function lessonViewCourse(course: LearnerCourse): Course {
+  return {
+    ...course,
+    parts: course.parts.map((part) => ({
+      ...part,
+      lessons: part.lessons.map((lesson) => ({
+        ...lesson,
+        blocks: lesson.blocks.filter((b): b is LessonBlock => !(b.kind === "quiz" && b.support === "science")),
+      })),
+    })),
+  };
+}

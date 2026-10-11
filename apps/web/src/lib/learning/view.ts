@@ -2,7 +2,8 @@
 // engine only names the version delta. Nothing here reads the network.
 import { diffVersions, type VersionDelta } from "@spindle/engine";
 import {
-  parseCourse,
+  lessonViewCourse,
+  parseLearnerCourse,
   parseLessonCompletions,
   parseVersionManifest,
   type Course,
@@ -28,6 +29,7 @@ export interface VersionRow {
   version_number: number;
   layer: string;
   org_id: string | null;
+  /** curriculum_versions.learner_snapshot (graded quizzes redacted), selected as `snapshot`. */
   snapshot: unknown;
 }
 
@@ -65,7 +67,7 @@ export function publishedVersion(row: VersionRow, manifestRows: readonly Manifes
   let course: Course;
   let manifest: VersionManifest;
   try {
-    course = parseCourse(row.snapshot);
+    course = lessonViewCourse(parseLearnerCourse(row.snapshot));
     const ordered = [...manifestRows].sort((a, b) => a.ordinal - b.ordinal);
     manifest = parseVersionManifest({
       versionId: row.id,
