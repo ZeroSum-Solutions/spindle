@@ -27,10 +27,14 @@ function Svg({ title, desc, viewBox, children }: { title: string; desc: string; 
 export const SHOULDER_MARKERS = [
   { n: 1, x: 100, y: 84 },
   { n: 2, x: 290, y: 76 },
-  { n: 3, x: 300, y: 136 },
+  // Marker 3 sits in clear space right of the humerus, with a leader line to the ball, so it
+  // never covers the socket it labels.
+  { n: 3, x: 414, y: 118 },
   { n: 4, x: 250, y: 250 },
 ] as const;
 const SHOULDER_VIEW = { width: 440, height: 340 };
+/** Key structures, in drawing units, for the marker clearance test. */
+export const SHOULDER_GEOMETRY = { view: SHOULDER_VIEW, glenoidMid: { x: 313, y: 133 }, ball: { x: 344, y: 133, r: 26 }, leader3: { from: { x: 402, y: 121 }, to: { x: 370, y: 128 } } } as const;
 
 /** The shoulder complex, left shoulder from the front (the subject's left): four numbered places, the ball and socket highlighted. */
 export function ShoulderComplex() {
@@ -57,6 +61,8 @@ export function ShoulderComplex() {
       <path d="M288 66 C 318 56 354 64 374 90 C 362 96 332 92 292 86" {...STROKE} />
       {/* Coracoid: the small hook below the collarbone. */}
       <path d="M262 104 C 276 102 290 108 294 120 C 288 126 278 122 270 116" {...STROKE} />
+      {/* Leader from marker 3 to the ball and socket. */}
+      <line x1={SHOULDER_GEOMETRY.leader3.from.x} y1={SHOULDER_GEOMETRY.leader3.from.y} x2={SHOULDER_GEOMETRY.leader3.to.x} y2={SHOULDER_GEOMETRY.leader3.to.y} data-leader="3" {...STROKE} />
       {/* Socket (glenoid): shallow, facing the ball. */}
       <path d="M320 108 C 311 122 311 144 320 158" {...STROKE} />
       {/* Upper arm bone: the ball (highlighted) and the shaft. */}
