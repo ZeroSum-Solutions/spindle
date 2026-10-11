@@ -1,0 +1,60 @@
+{
+  "result": {
+    "22507359": {
+      "uid": "22507359",
+      "title": "Exercise for rotator cuff tendinopathy: a systematic review.",
+      "pubdate": "2012 Jun",
+      "fulljournalname": "Physiotherapy",
+      "source": "Physiotherapy",
+      "pubtype": [
+        "Journal Article",
+        "Systematic Review"
+      ],
+      "articleids": [
+        {
+          "idtype": "pubmed",
+          "idtypen": 1,
+          "value": "22507359"
+        },
+        {
+          "idtype": "doi",
+          "idtypen": 3,
+          "value": "10.1016/j.physio.2011.08.002"
+        },
+        {
+          "idtype": "pii",
+          "idtypen": 4,
+          "value": "S0031-9406(11)00453-6"
+        }
+      ]
+    },
+    "40165544": {
+      "uid": "40165544",
+      "title": "Rotator Cuff Tendinopathy Diagnosis, Nonsurgical Medical Care, and Rehabilitation: A Clinical Practice Guideline.",
+      "pubdate": "2025 Apr",
+      "fulljournalname": "The Journal of orthopaedic and sports physical therapy",
+      "source": "J Orthop Sports Phys Ther",
+      "pubtype": [
+        "Journal Article",
+        "Practice Guideline",
+        "Research Support, Non-U.S. Gov't"
+      ],
+      "articleids": [
+        {
+          "idtype": "pubmed",
+          "idtypen": 1,
+          "value": "40165544"
+        },
+        {
+          "idtype": "doi",
+          "idtypen": 3,
+          "value": "10.2519/jospt.2025.13182"
+        }
+      ]
+    },
+    "uids": [
+      "40165544",
+      "22507359"
+    ]
+  }
+}

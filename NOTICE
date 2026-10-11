@@ -6,3 +6,8 @@ packages/contracts is licensed under the Apache License 2.0 (see packages/contra
 Original curriculum text in content/ is licensed under CC BY-SA 4.0.
 
 Third-party credits are listed below as code or material is adapted.
+
+packages/evidence calls third-party APIs. Data it returns keeps its own license:
+- wger exercise data (https://wger.de) is mostly CC BY-SA 4.0. Credit wger and each exercise's author when you reuse it.
+- Wikidata, OpenAlex and Unpaywall data are CC0.
+- Crossref metadata is free to reuse. PubMed, Europe PMC and Semantic Scholar data follow their own terms (see packages/evidence/README.md).

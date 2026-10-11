@@ -1,0 +1,44 @@
+{
+  "head": {
+    "vars": [
+      "item",
+      "itemLabel",
+      "itemDescription",
+      "uberon",
+      "ta98",
+      "ta2"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "uberon": {
+          "type": "literal",
+          "value": "0001103"
+        },
+        "item": {
+          "type": "uri",
+          "value": "http://www.wikidata.org/entity/Q9654"
+        },
+        "ta98": {
+          "type": "literal",
+          "value": "A04.4.02.001"
+        },
+        "ta2": {
+          "type": "literal",
+          "value": "2327"
+        },
+        "itemLabel": {
+          "xml:lang": "en",
+          "type": "literal",
+          "value": "thoracic diaphragm"
+        },
+        "itemDescription": {
+          "xml:lang": "en",
+          "type": "literal",
+          "value": "sheet of internal skeletal muscle"
+        }
+      }
+    ]
+  }
+}

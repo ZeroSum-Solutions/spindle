@@ -1,0 +1,26 @@
+{
+  "header": {
+    "type": "esearch",
+    "version": "0.3"
+  },
+  "esearchresult": {
+    "count": "349",
+    "retmax": "2",
+    "retstart": "0",
+    "idlist": [
+      "40165544",
+      "22507359"
+    ],
+    "translationset": [
+      {
+        "from": "rotator cuff",
+        "to": "\"rotator cuff\"[MeSH Terms] OR (\"rotator\"[All Fields] AND \"cuff\"[All Fields]) OR \"rotator cuff\"[All Fields]"
+      },
+      {
+        "from": "exercise",
+        "to": "\"exercise\"[MeSH Terms] OR \"exercise\"[All Fields] OR \"exercises\"[All Fields] OR \"exercise therapy\"[MeSH Terms] OR (\"exercise\"[All Fields] AND \"therapy\"[All Fields]) OR \"exercise therapy\"[All Fields] OR \"exercising\"[All Fields] OR \"exercise's\"[All Fields] OR \"exercised\"[All Fields] OR \"exerciser\"[All Fields] OR \"exercisers\"[All Fields]"
+      }
+    ],
+    "querytranslation": "(\"rotator cuff\"[MeSH Terms] OR (\"rotator\"[All Fields] AND \"cuff\"[All Fields]) OR \"rotator cuff\"[All Fields]) AND (\"exercise\"[MeSH Terms] OR \"exercise\"[All Fields] OR \"exercises\"[All Fields] OR \"exercise therapy\"[MeSH Terms] OR (\"exercise\"[All Fields] AND \"therapy\"[All Fields]) OR \"exercise therapy\"[All Fields] OR \"exercising\"[All Fields] OR \"exercise s\"[All Fields] OR \"exercised\"[All Fields] OR \"exerciser\"[All Fields] OR \"exercisers\"[All Fields]) AND (\"review\"[Publication Type] OR \"systematic\"[Filter] OR \"meta-analysis\"[Publication Type])"
+  }
+}
