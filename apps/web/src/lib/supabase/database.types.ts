@@ -1337,6 +1337,8 @@ export type Database = {
         Args: { org_name: string; org_slug: string }
         Returns: string
       }
+      member_brand: { Args: { p_org: string }; Returns: Json }
+      member_course_cards: { Args: { p_org: string }; Returns: Json }
       member_tenant_texts: {
         Args: { p_org: string }
         Returns: {
@@ -1458,6 +1460,10 @@ export type Database = {
       save_course_draft: {
         Args: { p_course: Json; p_org: string }
         Returns: string
+      }
+      save_org_brand: {
+        Args: { p_brand: Json; p_org: string }
+        Returns: number
       }
       save_tenant_text: {
         Args: {
