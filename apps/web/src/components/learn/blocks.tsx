@@ -4,6 +4,7 @@ import type { ClaimView } from "@/lib/learning/load";
 import { resolveContentUrl } from "@/lib/learning/media";
 import { ClaimDisclosure } from "./claim-disclosure";
 import { SupportLabel } from "./labels";
+import { MediaImage, MediaUnavailable } from "./media-image";
 import { QuizSelfCheck } from "./quiz-self-check";
 
 export interface BlockContext {
@@ -62,8 +63,6 @@ function Supported({ block, index, ctx }: { block: SupportedBlock; index: number
       <BlockBody block={block} index={index} />
       {block.support === "science" && block.claimIds.length > 0 ? (
         <ClaimDisclosure claimIds={block.claimIds} claims={ctx.claims} flagged={ctx.flagged} />
-      ) : block.support === "practice-based" ? (
-        <p className="text-label text-text-muted">Based on coaching practice, not a research claim.</p>
       ) : null}
     </section>
   );
@@ -76,7 +75,7 @@ function BlockBody({ block, index }: { block: SupportedBlock; index: number }) {
     case "callout":
       return (
         <aside className="rounded-card border-l-4 border-ink bg-surface-muted p-4">
-          <p className="text-label font-medium uppercase tracking-wide text-text-muted">{block.content.label}</p>
+          <p className="text-label font-medium text-text-muted">{block.content.label}</p>
           <p className="mt-1 whitespace-pre-line">{block.content.text}</p>
         </aside>
       );
@@ -104,21 +103,10 @@ function Figure({ asset, orgId }: { asset: MediaAsset; orgId: string | null }) {
           <source src={link.url} />
         </video>
       ) : (
-        // Lesson media comes from storage or vetted https hosts, not the Next image optimizer.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={link.url} alt={asset.alt} loading="lazy" referrerPolicy="no-referrer" className="w-full rounded-card bg-surface-muted" />
+        <MediaImage src={link.url} alt={asset.alt} />
       )}
       {asset.caption ? <figcaption className="text-label text-text-muted">{asset.caption}</figcaption> : null}
     </figure>
-  );
-}
-
-function MediaUnavailable({ alt }: { alt: string }) {
-  return (
-    <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-card border border-dashed border-control bg-surface-muted p-6 text-center text-text-muted">
-      <ImageOff aria-hidden strokeWidth={1.75} className="size-6" />
-      <p className="text-label">Media unavailable: {alt}</p>
-    </div>
   );
 }
 

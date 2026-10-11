@@ -6,11 +6,8 @@ import { completeLesson, type CompleteState } from "@/app/gyms/[slug]/learn/acti
 import { formatDate } from "@/lib/learning/format";
 
 /**
- * Marks the lesson done. Pending disables the button (no double submit). The check
- * draws only after the server confirms, and the text names the version the
- * completion belongs to. Failure keeps the button for a retry. This component stays
- * mounted when the page re-renders after the save, so the confirmation is not lost;
- * a lesson that was already done on load shows a static receipt with no motion.
+ * Marks the lesson done. This component stays mounted when the page re-renders
+ * after the save, so the server's confirmation is not lost.
  */
 export function CompleteLesson({
   gym,
@@ -28,7 +25,36 @@ export function CompleteLesson({
   receipt: ReactNode;
 }) {
   const [state, action, pending] = useActionState<CompleteState, FormData>(completeLesson, { status: "idle" });
+  return (
+    <CompletionView state={state} pending={pending} done={done} receipt={receipt} action={action}>
+      <input type="hidden" name="gym" value={gym} />
+      <input type="hidden" name="assignmentId" value={assignmentId} />
+      <input type="hidden" name="lessonId" value={lessonId} />
+    </CompletionView>
+  );
+}
 
+/**
+ * Every completion state, without data access (the design specimen mounts it too).
+ * Pending disables the button, so a double click cannot submit twice. The check
+ * draws only after a confirmed save and names the version; a lesson already done on
+ * load shows a static receipt. Failure keeps the button for a retry.
+ */
+export function CompletionView({
+  state,
+  pending,
+  done,
+  receipt,
+  action,
+  children,
+}: {
+  state: CompleteState;
+  pending: boolean;
+  done: boolean;
+  receipt: ReactNode;
+  action: (form: FormData) => void;
+  children?: ReactNode;
+}) {
   if (state.status === "saved") {
     return (
       <div role="status" data-testid="lesson-status" className="confirm-appear flex items-center gap-3 rounded-card border border-border bg-surface p-4">
@@ -47,13 +73,10 @@ export function CompleteLesson({
       </div>
     );
   }
-
   return (
     <form action={action} className="flex flex-col gap-3">
       {receipt ? <p className="text-text-muted">{receipt}</p> : null}
-      <input type="hidden" name="gym" value={gym} />
-      <input type="hidden" name="assignmentId" value={assignmentId} />
-      <input type="hidden" name="lessonId" value={lessonId} />
+      {children}
       <button
         type="submit"
         disabled={pending}

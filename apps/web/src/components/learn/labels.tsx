@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { TriangleAlert, Check, Clipboard, FileText } from "lucide-react";
+import { Check, CirclePlus, Clipboard, FileText, RefreshCw, TriangleAlert } from "lucide-react";
 import type { CurriculumLayer, Support } from "@spindle/schema";
 import { LAYER_LABEL, type LessonState, type LessonView } from "@/lib/learning/view";
 import { formatDate } from "@/lib/learning/format";
@@ -43,13 +43,11 @@ const STATE_TEXT: Record<LessonState, string> = {
 };
 
 export function LessonStateLabel({ lesson }: { lesson: Pick<LessonView, "state"> }) {
-  const done = lesson.state === "done" || lesson.state === "credited";
+  // Ink for every state the learner must act on or has finished; cobalt stays reserved for links and focus.
+  const icon = { done: <Check {...ICON} />, credited: <Check {...ICON} />, updated: <RefreshCw {...ICON} />, new: <CirclePlus {...ICON} />, todo: null }[lesson.state];
   return (
-    <span
-      data-state={lesson.state}
-      className={`inline-flex items-center gap-1 text-label font-medium ${done ? "text-text" : lesson.state === "todo" ? "text-text-muted" : "text-brand"}`}
-    >
-      {done ? <Check {...ICON} /> : null}
+    <span data-state={lesson.state} className={`inline-flex items-center gap-1 text-label font-medium ${lesson.state === "todo" ? "text-text-muted" : "text-text"}`}>
+      {icon}
       {STATE_TEXT[lesson.state]}
     </span>
   );
@@ -105,5 +103,21 @@ export function ProgressBar({ done, total }: { done: number; total: number }) {
     <span aria-hidden className="block h-1 w-full max-w-xs overflow-hidden rounded-full bg-surface-muted">
       <span className="block h-full bg-ink" style={{ width: `${total === 0 ? 0 : (done / total) * 100}%` }} />
     </span>
+  );
+}
+
+/** Shown once per lesson: what the two support labels mean. */
+export function SupportLegend() {
+  return (
+    <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 rounded-card border border-border bg-surface p-4 text-label">
+      <dt>
+        <SupportLabel support="science" />
+      </dt>
+      <dd className="text-text-muted">Backed by an approved research claim. Open its sources under the block.</dd>
+      <dt>
+        <SupportLabel support="practice-based" />
+      </dt>
+      <dd className="text-text-muted">Based on coaching practice, not a research claim.</dd>
+    </dl>
   );
 }

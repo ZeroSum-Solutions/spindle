@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { LessonBlocks, LessonMedia, LessonResources } from "@/components/learn/blocks";
 import { CompleteLesson } from "@/components/learn/complete-lesson";
-import { IntegrityAlert, LayerLabel, LessonStateDetail, VersionTag } from "@/components/learn/labels";
+import { IntegrityAlert, LayerLabel, LessonStateDetail, SupportLegend, VersionTag } from "@/components/learn/labels";
 import { LessonOutline } from "@/components/learn/outline";
 import { LearnShell, LoadingNote, VersionUnavailable } from "@/components/learn/shell";
 import { claimEvidence, learnerGym, lessonClaimIds, myAssignment } from "@/lib/learning/load";
@@ -90,6 +90,8 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
               </ul>
             </section>
           ) : null}
+
+          {lesson.blocks.some((b) => "support" in b) ? <SupportLegend /> : null}
 
           <LessonBlocks blocks={lesson.blocks} ctx={{ orgId: version.orgId, claims, flagged }} />
           <LessonMedia media={lesson.media} orgId={version.orgId} />

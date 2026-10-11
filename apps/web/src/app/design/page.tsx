@@ -1,0 +1,204 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import type { LessonBlock } from "@spindle/schema";
+import { LessonBlocks, LessonMedia, LessonResources } from "@/components/learn/blocks";
+import { CourseRow } from "@/components/learn/course-row";
+import { IntegrityAlert, LayerLabel, LessonStateLabel, SupportLabel, SupportLegend, VersionTag } from "@/components/learn/labels";
+import { LessonOutline } from "@/components/learn/outline";
+import { LearnShell, VersionUnavailable } from "@/components/learn/shell";
+import { VersionNotice } from "@/components/learn/version-notice";
+import { ErrorNote } from "@/components/ui";
+import type { ClaimView } from "@/lib/learning/load";
+import type { CourseView, LessonView } from "@/lib/learning/view";
+import { CompletionBoard, LogoReveal } from "./motion-board";
+
+// Design specimen for development only. It mounts the real learner components with
+// synthetic props: no database, no real curriculum, nothing saved. Production
+// builds answer 404 (asserted in e2e/player.spec.ts).
+
+export const metadata: Metadata = { title: "Design specimen (development only)", robots: { index: false } };
+
+const CLAIM = "00000000-0000-4000-8000-0000000000c1";
+const FLAGGED = "00000000-0000-4000-8000-0000000000c2";
+
+const claims = new Map<string, ClaimView>([
+  [
+    CLAIM,
+    {
+      id: CLAIM,
+      statement: "Synthetic claim: this sentence stands in for an approved statement about a joint.",
+      evidenceLevel: "Synthetic: systematic review",
+      population: "Synthetic: healthy adults",
+      sources: [
+        { id: "s1", kind: "systematic_review", title: "Synthetic review title", doi: "10.0000/synthetic.0001", pmid: null, url: null, locator: null, license: "Synthetic", retractedAt: null },
+      ],
+    },
+  ],
+  [
+    FLAGGED,
+    {
+      id: FLAGGED,
+      statement: "Synthetic claim whose source was later retracted.",
+      evidenceLevel: "Synthetic: randomized trial",
+      population: "Synthetic: trained adults",
+      sources: [
+        { id: "s2", kind: "textbook", title: "Synthetic textbook", doi: null, pmid: "12345678", url: null, locator: "Synthetic ed., p. 1", license: "Synthetic", retractedAt: "2026-10-09T12:00:00+00:00" },
+      ],
+    },
+  ],
+]);
+
+const blocks: LessonBlock[] = [
+  { kind: "heading", content: "Synthetic heading" },
+  { kind: "paragraph", content: "A science paragraph in reading type. It binds one approved synthetic claim, so it shows the Science label and its sources.", support: "science", claimIds: [CLAIM] },
+  { kind: "paragraph", content: "A practice-based paragraph. It carries no claim, so it says it comes from coaching practice.", support: "practice-based", claimIds: [] },
+  { kind: "callout", content: { label: "Coach note", text: "A synthetic callout block." }, support: "practice-based", claimIds: [] },
+  { kind: "checklist", content: ["First synthetic step", "Second synthetic step"], support: "science", claimIds: [FLAGGED] },
+  { kind: "image", content: { kind: "image", src: "/media/content/synthetic/missing.png", alt: "Synthetic missing figure", caption: "A storage figure that is not available.", provenanceId: "synthetic" } },
+  { kind: "diagram", content: { diagramId: "synthetic-diagram", caption: "A diagram block without an asset yet." } },
+  {
+    kind: "quiz",
+    content: { prompt: "Synthetic self-check: which option is right?", options: ["Option A", "Option B", "Option C"], answerIndex: 1, explanation: "Option B is the synthetic answer." },
+    support: "science",
+    claimIds: [CLAIM],
+  },
+];
+
+const lesson = (n: number, state: LessonView["state"], extra: Partial<LessonView> = {}): LessonView => ({
+  id: `l${n}`,
+  slug: `synthetic-lesson-${n}`,
+  title: `Synthetic lesson ${n}`,
+  partTitle: "Part one",
+  durationMinutes: 6,
+  format: "article",
+  state,
+  flagged: false,
+  ...extra,
+});
+
+const view: CourseView = {
+  title: "Synthetic course",
+  subtitle: "Specimen data only",
+  layer: "base",
+  versionNumber: 2,
+  lessons: [
+    lesson(1, "credited", { completedAt: "2026-10-01T10:00:00+00:00", origin: { completedAt: "2026-10-01T10:00:00+00:00", versionNumber: 1 } }),
+    lesson(2, "updated", { flagged: true }),
+    lesson(3, "new"),
+    lesson(4, "todo"),
+    lesson(5, "done", { completedAt: "2026-10-10T10:00:00+00:00" }),
+  ],
+  done: 2,
+  total: 5,
+  complete: false,
+  next: null,
+  flaggedClaimIds: [FLAGGED],
+  delta: { fromVersionNumber: 1, changed: ["Synthetic lesson 2"], added: ["Synthetic lesson 3"], removed: ["Retired synthetic lesson"] },
+};
+
+export default function DesignSpecimen() {
+  if (process.env.NODE_ENV === "production") notFound();
+  return (
+    <LearnShell gym="Synthetic gym">
+      <p role="note" className="rounded-small bg-brand-soft px-3 py-2 text-label font-medium text-brand">
+        Design specimen, development only. Synthetic data; nothing here is saved or real curriculum.
+      </p>
+
+      <Section title="Brand">
+        <div className="flex flex-wrap items-end gap-8">
+          {[120, 160, 240].map((w) => (
+            <figure key={w} className="flex flex-col gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG */}
+              <img src="/brand/spindle-wordmark-ink.svg" alt={`Spindle wordmark at ${w}px`} width={w} height={Math.round(w * 0.2746)} />
+              <figcaption className="font-mono text-code text-text-muted">{w}px</figcaption>
+            </figure>
+          ))}
+          <figure className="flex flex-col gap-2 rounded-card bg-ink p-6">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG */}
+            <img src="/brand/spindle-wordmark-white.svg" alt="Spindle wordmark reversed" width={160} height={44} />
+            <figcaption className="font-mono text-code text-white">reverse</figcaption>
+          </figure>
+          <figure className="flex flex-col gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG */}
+            <img src="/brand/spindle-wordmark-cobalt.svg" alt="Spindle wordmark cobalt" width={160} height={44} />
+            <figcaption className="font-mono text-code text-text-muted">cobalt</figcaption>
+          </figure>
+          <figure className="flex items-end gap-3">
+            {[16, 24, 32, 48].map((s) => (
+              // eslint-disable-next-line @next/next/no-img-element -- static brand SVG
+              <img key={s} src="/brand/spindle-symbol.svg" alt={`Spindle symbol at ${s}px`} width={s} height={s} />
+            ))}
+          </figure>
+        </div>
+      </Section>
+
+      <Section title="Labels">
+        <div className="flex flex-wrap items-center gap-3">
+          <SupportLabel support="science" />
+          <SupportLabel support="practice-based" />
+          <LayerLabel layer="base" />
+          <LayerLabel layer="modality" />
+          <LayerLabel layer="method" />
+          <VersionTag n={3} />
+          {(["done", "credited", "updated", "new", "todo"] as const).map((s) => (
+            <LessonStateLabel key={s} lesson={{ state: s }} />
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Course rows">
+        <ul className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
+          <li>
+            <CourseRow item={{ id: "a1", available: true, view }} base="/design" />
+          </li>
+          <li>
+            <CourseRow item={{ id: "a2", available: false, versionNumber: 4 }} base="/design" />
+          </li>
+        </ul>
+      </Section>
+
+      <Section title="Notices">
+        <VersionNotice delta={view.delta!} versionNumber={2} />
+        <IntegrityAlert title="A source cited in this version was retracted after it was published">
+          The affected blocks are marked. Read them with that in mind. Your completion and credit stay as they are.
+        </IntegrityAlert>
+        <VersionUnavailable versionNumber={4} />
+        <ErrorNote message="Synthetic form error message." />
+      </Section>
+
+      <Section title="Lesson player">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <div className="lg:sticky lg:top-6 lg:self-start">
+            <LessonOutline view={view} base="/design" currentId="l2" />
+          </div>
+          <article className="flex max-w-[68ch] flex-col gap-8 text-reading">
+            <SupportLegend />
+            <LessonBlocks blocks={blocks} ctx={{ orgId: null, claims, flagged: new Set([FLAGGED]) }} />
+            <LessonMedia media={[]} orgId={null} />
+            <LessonResources
+              resources={[
+                { label: "Synthetic external reference", href: "https://example.org/synthetic", type: "reference" },
+                { label: "Synthetic worksheet", href: "/worksheets/synthetic.pdf", type: "worksheet" },
+              ]}
+              orgId={null}
+            />
+          </article>
+        </div>
+      </Section>
+
+      <Section title="Motion board (demo states)">
+        <CompletionBoard />
+        <LogoReveal />
+      </Section>
+    </LearnShell>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-4 border-t border-border pt-6">
+      <h2 className="text-xl font-medium">{title}</h2>
+      {children}
+    </section>
+  );
+}

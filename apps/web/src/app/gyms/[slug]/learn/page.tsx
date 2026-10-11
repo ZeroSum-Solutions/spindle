@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { ArrowRight, TriangleAlert } from "lucide-react";
-import { LayerLabel, ProgressBar, ProgressText, VersionTag } from "@/components/learn/labels";
+import { ArrowRight } from "lucide-react";
+import { CourseRow } from "@/components/learn/course-row";
 import { LearnShell, LoadingNote } from "@/components/learn/shell";
 import { learnerGym, myAssignments, type AssignmentSummary } from "@/lib/learning/load";
 
@@ -58,45 +58,5 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
         </>
       )}
     </LearnShell>
-  );
-}
-
-function CourseRow({ item, base }: { item: AssignmentSummary; base: string }) {
-  if (!item.available) {
-    return (
-      <div className="flex flex-col gap-1 p-4 md:px-6">
-        <p className="font-medium">
-          Course unavailable <VersionTag n={item.versionNumber} />
-        </p>
-        <p className="text-label text-text-muted">This version can&apos;t be displayed. Tell your gym lead.</p>
-      </div>
-    );
-  }
-  const { view } = item;
-  const changed = view.delta ? view.delta.changed.length + view.delta.added.length : 0;
-  return (
-    <Link href={`${base}/${item.id}`} className="flex flex-col gap-2 p-4 hover:bg-surface-muted md:px-6" data-testid="course-row">
-      <span className="flex flex-wrap items-center gap-2">
-        <span className="text-lg font-medium">{view.title}</span>
-        <VersionTag n={view.versionNumber} />
-      </span>
-      <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <LayerLabel layer={view.layer} />
-        <ProgressText done={view.done} total={view.total} />
-        {view.complete ? <span className="text-label font-medium">Complete for v{view.versionNumber}</span> : null}
-        {changed > 0 ? (
-          <span className="text-label text-brand">
-            Updated: {changed} {changed === 1 ? "lesson" : "lessons"} changed or added since v{view.delta!.fromVersionNumber}
-          </span>
-        ) : null}
-        {view.flaggedClaimIds.length > 0 ? (
-          <span className="inline-flex items-center gap-1 text-label font-medium text-danger">
-            <TriangleAlert aria-hidden strokeWidth={1.75} className="size-4" />
-            Source retracted
-          </span>
-        ) : null}
-      </span>
-      <ProgressBar done={view.done} total={view.total} />
-    </Link>
   );
 }
