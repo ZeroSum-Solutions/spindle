@@ -90,10 +90,21 @@ $$;
 select set_config('role', 'authenticated', true),
   set_config('request.jwt.claims', '{"sub": "c2c2c2c2-0000-4000-8000-0000000000a2", "role": "authenticated"}', true);
 select public.save_course_draft('c2c2c2c2-0000-4000-8000-0000000000b1', $c2json$__METHOD__$c2json$::jsonb);
+-- P4-A2 rev4a: the publisher admits the held gym title before the owner publishes.
+select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+select public.publisher_decide_tenant_text('c2c2c2c2-0000-4000-8000-0000000000a1', t.id,
+  jsonb_build_object('decision', 'admitted', 'reason', 'Contract fixture title.', 'textHash', t.text_hash))
+from (select * from private.tenant_texts where course_id = 'c2c2c2c2-0000-4000-8000-000000000c02' and slot = 'course_title'
+      order by seq desc limit 1) t;
+select set_config('role', 'authenticated', true),
+  set_config('request.jwt.claims', '{"sub": "c2c2c2c2-0000-4000-8000-0000000000a2", "role": "authenticated"}', true);
 select set_config('c2.method_version', public.publish_course('c2c2c2c2-0000-4000-8000-000000000c02')::text, true);
 
 select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
 select '@@CLAIM@@' || current_setting('c2.claim');
+-- P4-A2 W9: a gym version freezes the receipt of its admitted title.
+select '@@TITLERECEIPT@@' || a.id from private.tenant_text_admissions a join private.tenant_texts t on t.id = a.text_id
+where t.course_id = 'c2c2c2c2-0000-4000-8000-000000000c02' and t.slot = 'course_title';
 select '@@SNAPSHOT@@' || snapshot::text from public.curriculum_versions
 where id in (current_setting('c2.base_version')::uuid, current_setting('c2.method_version')::uuid)
 order by snapshot ->> 'layer';

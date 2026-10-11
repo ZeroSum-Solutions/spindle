@@ -39,6 +39,28 @@ $$;
 create function pg_temp.reset_role() returns void language sql as $$
   select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
 $$;
+
+-- P4-A2 rev4a: a gym course title is held until a publisher admits it. Fixture titles are admitted
+-- here (as the publisher would) right before a gym publish; the hold itself is tested in
+-- course_presentation.test.sql.
+create function pg_temp.admit_titles() returns void language plpgsql as $$
+declare
+  r text := current_setting('role');
+  claims text := coalesce(current_setting('request.jwt.claims', true), '');
+  t record;
+begin
+  perform set_config('role', 'postgres', true);
+  for t in select tt.id, tt.text_hash from private.tenant_texts tt
+           where tt.slot = 'course_title' and tt.text is not null
+             and tt.seq = (select max(x.seq) from private.tenant_texts x where x.org_id = tt.org_id and x.slot = tt.slot and x.course_id = tt.course_id)
+             and not exists (select 1 from private.tenant_text_admissions a where a.text_id = tt.id) loop
+    perform public.publisher_decide_tenant_text('00000000-0000-0000-0000-0000000000c1', t.id,
+      jsonb_build_object('decision', 'admitted', 'reason', 'Synthetic fixture title.', 'textHash', t.text_hash));
+  end loop;
+  perform set_config('role', r, true);
+  perform set_config('request.jwt.claims', claims, true);
+end;
+$$;
 create function pg_temp.id(name text) returns uuid language sql as $$ select current_setting('test.' || name)::uuid $$;
 create function pg_temp.keep(name text, value uuid) returns uuid language sql as $$
   select set_config('test.' || name, value::text, true)::uuid
@@ -417,6 +439,7 @@ select throws_ok($$select public.save_course_draft(null,
   pg_temp.course('65000000-0000-4000-8000-000000000000', 'base',
     jsonb_build_array(pg_temp.lesson('65000000-0000-4000-8000-000000000011', 'xx', jsonb_build_array(pg_temp.prac('x'))))))$$,
   '42501', 'only owners and leads of this org can author or assign content', 'a lead cannot write a global (null org) course');
+select pg_temp.admit_titles();
 select throws_ok($$select public.publish_course('61000000-0000-4000-8000-000000000000')$$,
   '42501', 'only owners and leads of this org can author or assign content', 'a lead cannot publish a global course');
 select pg_temp.as_service();
@@ -453,9 +476,11 @@ select lives_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaa
   pg_temp.method_course('63000000-0000-4000-8000-000000000000',
     jsonb_build_array(pg_temp.prac('Greet every client by name.'), pg_temp.quiz('House rule.', 'practice-based', '{}'))))$$,
   'a lead saves a practice-based method course');
+select pg_temp.admit_titles();
 select lives_ok($$select pg_temp.keep('m_v1', public.publish_course('63000000-0000-4000-8000-000000000000'))$$,
   'a lead publishes the method course');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select pg_temp.admit_titles();
 select throws_ok($$select public.publish_course('63000000-0000-4000-8000-000000000000')$$,
   '42501', 'only owners and leads of this org can author or assign content', 'a trainer cannot publish');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000b1');
@@ -467,6 +492,7 @@ select throws_ok($$select public.save_course_draft('bbbbbbbb-bbbb-4bbb-8bbb-bbbb
   '42501', 'course belongs to another owner or layer', 'Bob cannot take over gym A''s course id');
 select public.save_course_draft('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   pg_temp.method_course('64000000-0000-4000-8000-000000000000', jsonb_build_array(pg_temp.prac('Gym B way.'))));
+select pg_temp.admit_titles();
 select pg_temp.keep('b_v1', public.publish_course('64000000-0000-4000-8000-000000000000'));
 select pg_temp.as_service();
 select throws_ok($$select public.publisher_save_course_draft('00000000-0000-0000-0000-0000000000c1',
@@ -479,6 +505,7 @@ insert into public.lesson_blocks (lesson_id, org_id, ordinal, kind, support, con
 values ('63000000-0000-4000-8000-000000000011', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 9, 'paragraph', 'science',
   '"Proven."', private.block_hash('paragraph', '"Proven."'));
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
+select pg_temp.admit_titles();
 select throws_ok($$select public.publish_course('63000000-0000-4000-8000-000000000000')$$, 'P0001',
   'publish gate: lesson 63000000-0000-4000-8000-000000000011 is gym method content, which is practice-based',
   'the gate refuses science in method content');
@@ -734,7 +761,7 @@ select is((select count(*) from information_schema.routine_privileges
   'no grant exposes content functions to anon or PUBLIC');
 select is((select array_agg(distinct action order by action) from private.content_audit
   where actor = '00000000-0000-0000-0000-0000000000c1'),
-  array['add_claim', 'add_source', 'publish', 'publish_unchanged', 'record_retraction', 'review_block', 'review_claim', 'review_course', 'review_lesson', 'save_draft'],
+  array['add_claim', 'add_source', 'decide_tenant_text', 'publish', 'publish_unchanged', 'record_retraction', 'review_block', 'review_claim', 'review_course', 'review_lesson', 'save_draft'],
   'every kind of publisher action is audited under the named actor');
 select ok(exists (select 1 from private.content_audit where actor = '00000000-0000-0000-0000-0000000000a2' and action = 'publish'
   and org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 'a gym publish is audited under the lead');

@@ -36,6 +36,28 @@ $$;
 create function pg_temp.reset_role() returns void language sql as $$
   select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
 $$;
+
+-- P4-A2 rev4a: a gym course title is held until a publisher admits it. Fixture titles are admitted
+-- here (as the publisher would) right before a gym publish; the hold itself is tested in
+-- course_presentation.test.sql.
+create function pg_temp.admit_titles() returns void language plpgsql as $$
+declare
+  r text := current_setting('role');
+  claims text := coalesce(current_setting('request.jwt.claims', true), '');
+  t record;
+begin
+  perform set_config('role', 'postgres', true);
+  for t in select tt.id, tt.text_hash from private.tenant_texts tt
+           where tt.slot = 'course_title' and tt.text is not null
+             and tt.seq = (select max(x.seq) from private.tenant_texts x where x.org_id = tt.org_id and x.slot = tt.slot and x.course_id = tt.course_id)
+             and not exists (select 1 from private.tenant_text_admissions a where a.text_id = tt.id) loop
+    perform public.publisher_decide_tenant_text('00000000-0000-0000-0000-0000000000c1', t.id,
+      jsonb_build_object('decision', 'admitted', 'reason', 'Synthetic fixture title.', 'textHash', t.text_hash));
+  end loop;
+  perform set_config('role', r, true);
+  perform set_config('request.jwt.claims', claims, true);
+end;
+$$;
 create function pg_temp.id(name text) returns uuid language sql as $$ select current_setting('test.' || name)::uuid $$;
 create function pg_temp.keep(name text, value uuid) returns uuid language sql as $$
   select set_config('test.' || name, value::text, true)::uuid
@@ -394,6 +416,7 @@ select lives_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaa
   'method', jsonb_build_array(pg_temp.lesson('73000000-0000-4000-8000-000000000011', 'house',
     jsonb_build_array(pg_temp.prac('Greet every client.'), pg_temp.quiz('House rule?', 'practice-based', '{}'))))))$$,
   'a gym owner saves a practice-based method course');
+select pg_temp.admit_titles();
 select lives_ok($$select pg_temp.keep('m_v1', public.publish_course('73000000-0000-4000-8000-000000000000'))$$,
   'a method course publishes with no receipts at all');
 select throws_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.course('73000000-0000-4000-8000-000000000000',
@@ -1092,6 +1115,7 @@ select course_id, org_id, layer, version_number + 1, snapshot, content_hash, pub
 from public.curriculum_versions where id = pg_temp.id('m_v1');
 select pg_temp.keep('m_v2_legacy', (select id from public.curriculum_versions where course_id = '73000000-0000-4000-8000-000000000000' and rules = 'phase2'));
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.admit_titles();
 select is(public.publish_course('73000000-0000-4000-8000-000000000000'), pg_temp.id('m_v2_legacy'),
   'republishing an unchanged gym course returns its latest version, whatever rules it was published under');
 select pg_temp.reset_role();
@@ -1270,6 +1294,7 @@ where lesson_id = '8b500000-0000-4000-8000-000000000011' and kind = 'image';
 alter table public.lesson_blocks enable trigger lesson_blocks_media_storage;
 update public.lesson_blocks set content_hash = private.block_hash(kind, content) where lesson_id = '8b500000-0000-4000-8000-000000000011';
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.admit_titles();
 select throws_ok($$select public.publish_course('8b500000-0000-4000-8000-000000000000')$$, 'P0001',
   'publish gate: lesson 8b500000-0000-4000-8000-000000000011 has media that is not a stored file of its owner',
   'a legacy external image cannot publish in gym content');
