@@ -40,7 +40,7 @@ jobs:
         with:
           version: 2.117.0
       - name: Start local Supabase
-        run: supabase start -x studio,imgproxy,logflare,vector,edge-runtime,realtime,storage-api,postgres-meta,supavisor
+        run: supabase start -x studio,imgproxy,logflare,vector,edge-runtime,realtime,postgres-meta,supavisor
       - name: Database policy tests
         run: supabase test db
       - name: Export local Supabase settings
@@ -55,6 +55,11 @@ jobs:
           supabase/tests/race/content-publishing-race-proc.test.sh
           supabase/tests/race/content-publishing-race.sh
       - name: End-to-end tests (production build)
+        # The local stack's service key exists only in this step's shell, for test
+        # setup and cleanup; it is never exported to $GITHUB_ENV or the app.
         run: |
           pnpm --filter web exec playwright install --with-deps chromium
-          pnpm --filter web e2e
+          SPINDLE_TEST_SERVICE_ROLE_KEY="$(supabase status -o env | sed -n 's/^SERVICE_ROLE_KEY=//p' | tr -d '"')"
+          test -n "$SPINDLE_TEST_SERVICE_ROLE_KEY"
+          echo "::add-mask::$SPINDLE_TEST_SERVICE_ROLE_KEY"
+          SPINDLE_TEST_SERVICE_ROLE_KEY="$SPINDLE_TEST_SERVICE_ROLE_KEY" pnpm --filter web e2e

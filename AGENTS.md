@@ -27,7 +27,7 @@ Use the pinned toolchain: `mise exec -- <cmd>` (Node 24, pnpm 10).
 - `pnpm check` — lint, typecheck, unit tests, build. Run it before opening a PR.
 - `pnpm test` — Vitest (`packages/*/src/**/*.test.ts`)
 - `pnpm dev` — web app on :3000
-- `supabase start -x studio,imgproxy,logflare,vector,edge-runtime,realtime,storage-api,postgres-meta,supavisor` — lean local stack (needs Docker); Mailpit on :54324 receives sign-in codes
+- `supabase start -x studio,imgproxy,logflare,vector,edge-runtime,realtime,postgres-meta,supavisor` — lean local stack with Storage (needs Docker); Mailpit on :54324 receives sign-in codes
 - `supabase test db` — pgTAP policy tests in `supabase/tests/database/`
 - `pnpm --filter web e2e` — Playwright end-to-end tests (needs the local stack; copy `apps/web/.env.example` to `apps/web/.env.local` with the key from `supabase status`)
 - `supabase gen types typescript --local > apps/web/src/lib/supabase/database.types.ts` — after every migration
