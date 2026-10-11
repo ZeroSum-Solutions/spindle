@@ -31,7 +31,7 @@ const FLOOR = [
 ];
 
 const promises = (name: string) => [
-  "Science and practice are labelled block by block, in words as well as colour.",
+  "Science and practice are labelled passage by passage, in words as well as colour.",
   "Sources are one tap away, by keyboard or touch.",
   "When a cited paper is retracted, the lesson says so and your credit stays.",
   `Safety warnings sit beside each assessment. ${name} never diagnoses.`,
@@ -183,7 +183,7 @@ function Layers() {
     <Section id="layers" labelledBy="layers-title" className="border-t border-border bg-surface">
       <SectionHead id="layers-title" eyebrow="Three layers of courses" title="Your system sits on top. The science underneath is shared and cited.">
         Base, modality and method are separate courses, each labelled with its layer. A gym can assign a trainer courses from every layer, and each
-        block inside a course says whether it is science or practice-based.
+        teaching passage inside a course says whether it is science or practice-based.
       </SectionHead>
       <ol className="flex flex-col gap-4">
         <LayerRow n="03" layer="method" title="Your method" lead="Yours." planned="Authoring planned">

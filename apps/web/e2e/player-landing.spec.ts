@@ -27,6 +27,18 @@ test.describe("signed-out landing", () => {
       if (dir) await page.screenshot({ path: `${dir}/${label}-landing.png`, fullPage: true });
     }
 
+    // Focus appears immediately, in the right colour: read the ring with no wait after Tab.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const ringAfterTab = async (selector: string) => {
+      const link = page.locator(selector).first();
+      await link.focus();
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("Tab");
+      return link.evaluate((el) => [document.activeElement === el, getComputedStyle(el).outlineColor, getComputedStyle(el).outlineStyle]);
+    };
+    expect(await ringAfterTab('header a:has-text("Sign in")')).toEqual([true, "rgb(36, 83, 212)", "solid"]);
+    expect(await ringAfterTab('section[aria-labelledby="closing-title"] a')).toEqual([true, "rgb(255, 255, 255)", "solid"]);
+
     await page.getByRole("main").getByRole("link", { name: "Sign in" }).first().click();
     await expect(page).toHaveURL(/\/sign-in\?next=%2Fgyms$/);
     await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();

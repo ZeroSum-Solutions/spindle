@@ -87,6 +87,9 @@ body {
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 3px solid var(--focus-ring, var(--color-brand));
   outline-offset: 4px;
+  /* Focus appears immediately: colour transitions (Tailwind's transition-colors includes
+     outline-color) must never fade the ring in. Everything else may still transition. */
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
 }
 
 /* Native disclosure: rotate the chevron, never animate the reading text itself. */
