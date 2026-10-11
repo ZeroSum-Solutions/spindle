@@ -8,7 +8,8 @@ import { moduleStatusView } from "@/lib/learning/quiz";
  * when the version has a graded quiz, a passing attempt. A status the app could not
  * read says so; it is never shown as zero or as "not complete".
  */
-export function ModuleStatusCard({ status, quizHref }: { status: ModuleStatus | null; quizHref: string | null }) {
+/** `titleId` keeps the heading id unique when more than one card is on a page (the brand preview). */
+export function ModuleStatusCard({ status, quizHref, titleId = "module-status-title" }: { status: ModuleStatus | null; quizHref: string | null; titleId?: string }) {
   if (!status) {
     return (
       <p role="status" data-testid="module-status" className="rounded-card border border-border bg-surface p-4 text-text-muted">
@@ -18,8 +19,8 @@ export function ModuleStatusCard({ status, quizHref }: { status: ModuleStatus | 
   }
   const view = moduleStatusView(status);
   return (
-    <section aria-labelledby="module-status-title" data-testid="module-status" data-complete={view.complete} className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4 md:p-5">
-      <h2 id="module-status-title" className="flex items-center gap-2 text-lg font-medium text-text">
+    <section aria-labelledby={titleId} data-testid="module-status" data-complete={view.complete} className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4 md:p-5">
+      <h2 id={titleId} className="flex items-center gap-2 text-lg font-medium text-text">
         {view.complete ? <Check aria-hidden strokeWidth={1.75} className="size-5 shrink-0" /> : null}
         {view.headline}
       </h2>

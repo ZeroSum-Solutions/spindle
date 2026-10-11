@@ -3,3 +3,5 @@ export * from "./progress";
 export * from "./version";
 export * from "./quiz";
 export * from "./tenant-text";
+export * from "./contrast";
+export * from "./brand";

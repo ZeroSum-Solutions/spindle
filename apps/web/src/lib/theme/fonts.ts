@@ -1,15 +1,15 @@
 import { Barlow_Condensed, Fraunces } from "next/font/google";
-import type { TenantFont } from "./tenant-theme";
+import type { BrandFont } from "@spindle/schema";
 
 // Bundled tenant fonts. next/font self-hosts them at build time (no request to Google from
-// the browser). Licences are recorded in TENANT_FONTS. Imported only where a tenant brand
+// the browser). Licences are recorded in BRAND_FONTS (@spindle/schema). Imported only where a tenant brand
 // is rendered, so other pages do not load them.
 
 const barlow = Barlow_Condensed({ subsets: ["latin"], weight: ["600"], variable: "--font-tenant-barlow" });
 const fraunces = Fraunces({ subsets: ["latin"], weight: ["600"], variable: "--font-tenant-fraunces" });
 
 /** Class names that make `font-family: var(--tenant-font)` resolve to the tenant's bundled font. */
-export function tenantFontClass(font: TenantFont): { className: string; family: string } {
+export function tenantFontClass(font: BrandFont): { className: string; family: string } {
   switch (font) {
     case "barlow-condensed":
       return { className: barlow.variable, family: "var(--font-tenant-barlow)" };

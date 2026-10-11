@@ -173,8 +173,33 @@
         "kind": "diagram",
         "content": {
           "diagramId": "screen-start-positions",
-          "caption": "Planned diagram, not available yet: start positions for the three screens."
-        }
+          "alt": "Four schematic figures: standing relaxed seen from behind with both shoulder blades highlighted; standing seen from the right side with the right elbow bent to a right angle; and two figures seen from behind reaching with the right hand over the shoulder and behind the back.",
+          "caption": "The three screens; where one arm is used, the right arm is shown. Schematic, not to scale.",
+          "legend": [
+            {
+              "key": "screen-1",
+              "label": "Screen 1, arm raise.",
+              "text": "Stand behind the client: arms by the sides, shoulder blades visible (highlighted)."
+            },
+            {
+              "key": "screen-2",
+              "label": "Screen 2, rotation range.",
+              "text": "Elbow at the side, bent to a right angle, thumb up."
+            },
+            {
+              "key": "screen-3-over",
+              "label": "Screen 3, over the shoulder.",
+              "text": "Reach over the shoulder to the upper back; note where the fingertips reach."
+            },
+            {
+              "key": "screen-3-behind",
+              "label": "Screen 3, behind the back.",
+              "text": "Reach behind the back and up the spine; note where the thumb reaches. One side at a time."
+            }
+          ]
+        },
+        "support": "practice-based",
+        "claimIds": []
       },
       {
         "kind": "heading",
