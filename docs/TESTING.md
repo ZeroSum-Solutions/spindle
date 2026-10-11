@@ -33,7 +33,7 @@ Run the smallest existing suite that exercises the change while developing. Befo
 | Repository check | `mise exec -- pnpm check` | Lint, typecheck, Vitest and builds; excludes SQL and browser tests |
 | Pure functions / evidence clients | `mise exec -- pnpm test` | Existing unit suites; evidence clients use mocked responses, not live provider proof |
 | Database policies / RPCs | `mise exec -- supabase test db` | pgTAP suites against the admitted local schema |
-| Concurrent last-owner protection | `supabase/tests/race/owner-race.sh` | Two competing transactions produce exactly one failure and leave exactly one owner; needs host `psql` and local DB on :54322, or an isolated local `DB_URL` |
+| Concurrent last-owner protection | `supabase/tests/race/owner-race.sh` | Two competing transactions produce exactly one failure and leave exactly one owner; needs host `psql` and, outside CI, an explicit isolated loopback `DB_URL` with a port and database (it refuses :54322 and inherited `PG*` settings); `owner-race-guard.test.sh` proves those refusals with a fake `psql` and no database |
 | Browser during development | `mise exec -- pnpm --filter web e2e` | Playwright against local Auth, Mailpit, Storage and database |
 | Browser production build | `CI=1 mise exec -- pnpm --filter web e2e` | The same suite against a fresh production build |
 

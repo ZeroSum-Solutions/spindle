@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { LessonBlock } from "@spindle/schema";
+import type { ClaimIntegrityState, LessonBlock } from "@spindle/schema";
 import { LessonBlocks, LessonMedia, LessonResources } from "@/components/learn/blocks";
 import { CourseRow } from "@/components/learn/course-row";
 import { IntegrityAlert, LayerLabel, LessonStateLabel, SupportLabel, SupportLegend, VersionTag } from "@/components/learn/labels";
 import { LessonOutline } from "@/components/learn/outline";
 import { LearnShell, VersionUnavailable } from "@/components/learn/shell";
 import { VersionNotice } from "@/components/learn/version-notice";
+import { YouTubeSegment } from "@/components/learn/youtube-segment";
 import { ErrorNote } from "@/components/ui";
 import type { ClaimView } from "@/lib/learning/load";
 import type { CourseView, LessonView } from "@/lib/learning/view";
 import { ReviewedDiagram } from "@/components/learn/diagrams";
 import { DIAGRAM_SAMPLES } from "./diagram-samples";
 import { CompletionBoard, LogoReveal } from "./motion-board";
+import { QuizBoard } from "./quiz-board";
+import { ModuleStatusCard } from "@/components/learn/module-status";
 
 // Design specimen for development only. It mounts the real learner components with
 // synthetic props: no database, no real curriculum, nothing saved. Production
@@ -22,6 +25,11 @@ export const metadata: Metadata = { title: "Design specimen (development only)",
 
 const CLAIM = "00000000-0000-4000-8000-0000000000c1";
 const FLAGGED = "00000000-0000-4000-8000-0000000000c2";
+// The integrity report the specimen blocks render against (synthetic).
+const SPECIMEN_INTEGRITY = new Map<string, ClaimIntegrityState>([
+  [CLAIM, "current"],
+  [FLAGGED, "retracted"],
+]);
 
 const claims = new Map<string, ClaimView>([
   [
@@ -100,6 +108,12 @@ const view: CourseView = {
   flaggedClaimIds: [FLAGGED],
   delta: { fromVersionNumber: 1, changed: ["Synthetic lesson 2"], added: ["Synthetic lesson 3"], removed: ["Retired synthetic lesson"] },
 };
+
+/** The specimen has no real version to recheck against; in development it always allows play. */
+async function specimenRecheck(): Promise<boolean> {
+  "use server";
+  return process.env.NODE_ENV !== "production";
+}
 
 export default function DesignSpecimen() {
   if (process.env.NODE_ENV === "production") notFound();
@@ -182,7 +196,7 @@ export default function DesignSpecimen() {
           </div>
           <article className="flex max-w-[68ch] flex-col gap-8 text-reading">
             <SupportLegend supports={["science", "practice-based"]} />
-            <LessonBlocks blocks={blocks} ctx={{ orgId: null, claims, flagged: new Set([FLAGGED]) }} />
+            <LessonBlocks blocks={blocks} ctx={{ orgId: null, claims, flagged: new Set([FLAGGED]), integrity: SPECIMEN_INTEGRITY }} />
             <LessonMedia media={[]} orgId={null} />
             <LessonResources
               resources={[
@@ -201,6 +215,45 @@ export default function DesignSpecimen() {
             <ReviewedDiagram key={content.diagramId} content={content} />
           ))}
           <ReviewedDiagram content={{ diagramId: "synthetic-missing", alt: "Synthetic", caption: "Sample text. A reviewed diagram id with no drawing.", legend: [{ key: "a", label: "Synthetic legend item.", text: "" }] }} />
+        </div>
+      </Section>
+
+      <Section title="Module status and graded quiz">
+        <div className="flex max-w-3xl flex-col gap-4">
+          <ModuleStatusCard status={null} quizHref={null} />
+          <ModuleStatusCard
+            status={{ assignmentId: "as1", versionId: "v1", lessonsTotal: 8, lessonsCompleted: 6, quizRequired: true, questionsTotal: 20, bestAttemptId: "a1", bestCorrect: 15, bestTotal: 20, quizPassed: false, quizCreditAttemptId: null, quizCarried: false, complete: false }}
+            quizHref="/design"
+          />
+          <ModuleStatusCard
+            status={{ assignmentId: "as1", versionId: "v1", lessonsTotal: 8, lessonsCompleted: 8, quizRequired: true, questionsTotal: 20, bestAttemptId: "a2", bestCorrect: 18, bestTotal: 20, quizPassed: true, quizCreditAttemptId: "a2", quizCarried: false, complete: true }}
+            quizHref="/design"
+          />
+          <QuizBoard />
+        </div>
+      </Section>
+
+      <Section title="Video (click to load)">
+        <p className="text-label text-text-muted">
+          Nothing loads from YouTube until Play is pressed. The first clip is YouTube&apos;s own IFrame API demo video (playable); the second is one the
+          provider reports as unavailable; the third is switched off in the registry, so nothing from YouTube is offered.
+        </p>
+        <div className="grid max-w-[46rem] grid-cols-1 gap-10">
+          <YouTubeSegment
+            recheck={specimenRecheck}
+            segment={{ mediaId: "m-demo", provider: "youtube", videoId: "M7lc1UVf-VE", startSeconds: 0, endSeconds: 30, rationale: "Synthetic rationale: shows how a coaching segment sits beside lesson text.", caption: "" }}
+            availability={{ mediaId: "m-demo", state: "playable", review: "model-described", title: "Specimen clip: YouTube IFrame API demo", channel: "YouTube API demo", available: true }}
+          />
+          <YouTubeSegment
+            recheck={specimenRecheck}
+            segment={{ mediaId: "m-gone", provider: "youtube", videoId: "000000000aa", startSeconds: 5, endSeconds: 20, rationale: "Synthetic rationale: the provider reports this clip as unavailable.", caption: "" }}
+            availability={{ mediaId: "m-gone", state: "playable", review: "model-described", title: null, channel: null, available: false }}
+          />
+          <YouTubeSegment
+            recheck={specimenRecheck}
+            segment={{ mediaId: "m-off", provider: "youtube", videoId: "000000000bb", startSeconds: 5, endSeconds: 20, rationale: "Synthetic rationale: the registry has switched this clip off.", caption: "" }}
+            availability={{ mediaId: "m-off", state: "disabled", review: null, title: null, channel: null, available: null }}
+          />
         </div>
       </Section>
 

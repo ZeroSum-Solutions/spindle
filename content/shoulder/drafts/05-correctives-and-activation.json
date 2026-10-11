@@ -1,0 +1,262 @@
+{
+  "draft": true,
+  "status": "provisional: written before the outline review; not publishable (claim slots are not approved claims)",
+  "module": "shoulder",
+  "lessonNumber": 5,
+  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
+  "reviewNotes": [
+    "The EMG section and its quiz were removed: the accessible abstract did not support the ratios or the inference limit.",
+    "The outline no longer says 'first-line'. The lesson does not generalise BESS PICO 18's narrower recommendation (physiotherapy as a possible first-line treatment for chronic subacromial pain).",
+    "The warm-up is practice-based and ranks nothing."
+  ],
+  "claimSlots": [
+    {
+      "slot": "claim-slot:l5-subacromial-exercise",
+      "statement": "For subacromial pain, BESS 2025 (PICO 6) reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves patient-reported function, grades this 'Conditional Positive (low evidence)', and states that the most effective physiotherapy or exercise approach remains uncertain.",
+      "evidenceLevel": "Clinical guideline (GRADE), British Elbow & Shoulder Society",
+      "population": "\"Subacromial Shoulder Pain\" (BESS 2025 patient care pathway).",
+      "candidateSources": [
+        {
+          "kind": "consensus",
+          "citation": "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724.",
+          "doi": "10.1177/17585732251374282",
+          "pmid": "41245988",
+          "pmcid": "PMC12611748",
+          "url": "https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf",
+          "rights": "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. Cited and paraphrased only."
+        }
+      ],
+      "note": "Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."
+    },
+    {
+      "slot": "claim-slot:l5-csaw",
+      "statement": "In the CSAW trial (subacromial pain for at least 3 months, intact rotator cuff tendons, eligible for surgery, after non-operative management including exercise therapy and at least one steroid injection), arthroscopic decompression gave no benefit over arthroscopy only on the Oxford Shoulder Score at 6 months, and the surgical groups' advantage over no treatment was not clinically important.",
+      "evidenceLevel": "Randomised placebo-controlled surgical trial",
+      "population": "Patients \"who had subacromial pain for at least 3 months with intact rotator cuff tendons, were eligible for arthroscopic surgery, and had previously completed a non-operative management programme that included exercise therapy and at least one steroid injection\" (CSAW, Beard 2018).",
+      "candidateSources": [
+        {
+          "kind": "paper",
+          "citation": "Beard DJ, Rees JL, Cook JA, et al. Arthroscopic subacromial decompression for subacromial shoulder pain (CSAW): a multicentre, pragmatic, parallel group, placebo-controlled, three-group, randomised surgical trial. Lancet. 2018;391(10118):329-338.",
+          "doi": "10.1016/S0140-6736(17)32457-1",
+          "pmid": "29169668",
+          "pmcid": "PMC5803129",
+          "rights": "CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/), PMC5803129. Cited and paraphrased only."
+        }
+      ]
+    },
+    {
+      "slot": "claim-slot:l5-progressive-comparisons",
+      "statement": "A 2020 systematic review found uncertain clinical benefit for progressive and resisted exercise and no significant benefit for non-progressive or non-resisted exercise, each versus placebo or no treatment at more than 6 weeks to 6 months, in rotator cuff related shoulder pain; evidence was low certainty and the categories were not compared directly.",
+      "evidenceLevel": "Systematic review with meta-analysis of randomised controlled trials",
+      "population": "\"people with rotator cuff related pain\" (Naunton 2020).",
+      "candidateSources": [
+        {
+          "kind": "meta_analysis",
+          "citation": "Naunton J, Street G, Littlewood C, Haines T, Malliaras P. Effectiveness of progressive and resisted and non-progressive or non-resisted exercise in rotator cuff related shoulder pain: a systematic review and meta-analysis of randomized controlled trials. Clin Rehabil. 2020;34(9):1198-1216.",
+          "doi": "10.1177/0269215520934147",
+          "pmid": "32571081",
+          "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "prompt": "A client wants 20 minutes of activation before every session.",
+      "goodAnswer": "Keep a short warm-up; move strengthening into the main session with progressive load; make no claim that activation fixes anything.",
+      "safety": "SAFETY.md section 1"
+    }
+  ],
+  "lesson": {
+    "id": "shoulder-05-correctives",
+    "slug": "correctives-and-activation",
+    "title": "Correctives and activation: what the evidence supports",
+    "summary": "What exercise research on shoulder pain actually compared, how certain it is, and how to use activation drills as a warm-up rather than a fix.",
+    "durationMinutes": 12,
+    "format": "article",
+    "objectives": [
+      "Describe what research reports about exercise for subacromial and rotator cuff related shoulder pain, for whom, and how certain it is.",
+      "Explain why that clinical research is not a trainer's treatment plan.",
+      "Use activation drills as warm-up and rehearsal, without ranking them.",
+      "Know when a \"corrective\" should be a referral instead."
+    ],
+    "anatomyIds": [
+      "UBERON:0001467",
+      "UBERON:0003683",
+      "UBERON:0006849"
+    ],
+    "blocks": [
+      {
+        "kind": "paragraph",
+        "content": "\"Correctives\" and \"activation\" are some of the most used words in shoulder training. This lesson separates what research tested from what is coaching practice, so you can use both honestly.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "What research reports, and for whom"
+      },
+      {
+        "kind": "paragraph",
+        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, 2025 UK specialist guidance reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves function. It rates that recommendation as conditional, based on low-certainty evidence, and says the most effective exercise approach remains uncertain.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l5-subacromial-exercise"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "content": "A UK trial enrolled people who had had subacromial pain for at least three months, had intact rotator cuff tendons, and had not improved with exercise therapy and a steroid injection. At six months, surgery to decompress the space gave no extra benefit on a shoulder pain and function score over an arthroscopy that left out the decompression, and neither surgery gave a clinically important benefit over no treatment.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l5-csaw"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "content": "For rotator cuff related shoulder pain, a 2020 systematic review compared each kind of exercise with placebo or no treatment, not with each other, over more than six weeks and up to six months. Progressive and resisted exercise showed an uncertain clinical benefit; non-progressive or non-resisted exercise showed no significant benefit. The certainty of the evidence was low.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l5-progressive-comparisons"
+        ]
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Spindle policy",
+          "text": "Your training is not treatment for a diagnosed condition. A client with diagnosed shoulder pain, or one recovering from surgery, a dislocation or a fracture, trains within the treating clinician's plan, and you do not progress that plan on your own. This is Spindle's rule for trainers, not a research finding."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "What activation is for"
+      },
+      {
+        "kind": "paragraph",
+        "content": "In a session, use activation drills as rehearsal and warm-up: a way to get the client's attention on a position before loading it. Do not present them as a fix, and keep them short.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "How to see it"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Can the client hold the position you want under a light load, with smooth movement and no pain? Re-check the screen from lesson 4 the same way in a later session to see whether anything changed.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. A new inability to lift or move the arm themselves, without an injury: urgent, today. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. This never clears anyone and never names an injury."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "A short shoulder warm-up"
+      },
+      {
+        "kind": "diagram",
+        "content": {
+          "diagramId": "shoulder-warm-up",
+          "caption": "Planned diagram, not available yet: the four warm-up positions."
+        }
+      },
+      {
+        "kind": "checklist",
+        "content": [
+          "Position: set up the stance or support you will use in the first lift. Easier version: support the back against a wall or bench.",
+          "Light rotation: elbow at the side, turn the forearm out and back with a light band, 8 to 12 slow reps. Easier version: no band.",
+          "Shoulder blade control: reach the arms forward and let the shoulder blades travel around the ribs, then reach overhead along a wall. Easier version: reach only as high as is comfortable.",
+          "First pattern: the session's first press or pull with a light load, one to three cues only."
+        ],
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. A warm-up drill that hurts is not a warm-up: skip it. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. A new inability to lift or move the arm themselves, without an injury: urgent, today. This never clears anyone and never names an injury."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Cues"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Give one to three cues per drill, as a direction or a target: \"reach long through your hands\", \"push the band away\". Watch the next rep, and keep a cue only if the movement changes the way you want.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Correctives never replace referral. Any stop rule means: Stop shoulder loading for the rest of the session. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. Anything in the urgent or emergency tiers: refer at that tier (see \"When to refer out\")."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Check your understanding"
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "What does 2025 UK specialist guidance report about exercise for subacromial shoulder pain?",
+          "options": [
+            "It reduces pain in the short term and improves function; the recommendation is conditional, on low-certainty evidence, and the best approach is uncertain",
+            "One exercise programme is proven best",
+            "Exercise does not help"
+          ],
+          "answerIndex": 0,
+          "explanation": "The guidance reports that exercise reduces short-term pain and improves function, rates this as a conditional recommendation on low-certainty evidence, and says the most effective approach remains uncertain."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l5-subacromial-exercise"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "How did the 2020 review compare progressive and non-progressive exercise for rotator cuff related shoulder pain?",
+          "options": [
+            "It found progressive exercise clearly better than non-progressive",
+            "It compared each with placebo or no treatment, not with each other, and the evidence was low certainty",
+            "It found no difference between them in a head-to-head comparison"
+          ],
+          "answerIndex": 1,
+          "explanation": "Each approach was compared with placebo or no treatment over more than six weeks to six months; the review did not compare them head to head, and certainty was low."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l5-progressive-comparisons"
+        ]
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Talk it through",
+          "text": "A client wants to spend 20 minutes on activation before every session. What do you keep as a short warm-up, and what moves into the main session as real training?"
+        },
+        "support": "practice-based",
+        "claimIds": []
+      }
+    ],
+    "media": [],
+    "resources": []
+  }
+}

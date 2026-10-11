@@ -103,10 +103,15 @@ export const claimIntegritySchema = z
   .strictObject({ lesson_id: idSchema, claim_id: idSchema, state: z.enum(["current", "recheck_due", "withdrawn", "retracted"]) })
   .transform((r): ClaimIntegrity => ({ lessonId: r.lesson_id, claimId: r.claim_id, state: r.state }));
 
-/** Playback state of a registry clip in a version (version_media). Provider fields are null unless fresh. */
+/**
+ * Playback state of a registry clip in a version (version_media). Provider fields are null unless fresh.
+ * `review` is "model-described" for a playable clip (D-11): a model described the segment and Sol reviewed
+ * that description. No human has checked it yet, so the player must never claim one did.
+ */
 export interface MediaAvailability {
   mediaId: string;
   state: "playable" | "disabled";
+  review: "model-described" | null;
   title: string | null;
   channel: string | null;
   available: boolean | null;
@@ -116,11 +121,12 @@ export const mediaAvailabilitySchema = z
   .strictObject({
     media_id: idSchema,
     state: z.enum(["playable", "disabled"]),
+    review: z.literal("model-described").nullable(),
     title: z.string().max(500).nullable(),
     channel: z.string().max(200).nullable(),
     available: z.boolean().nullable(),
   })
-  .transform((r): MediaAvailability => ({ mediaId: r.media_id, state: r.state, title: r.title, channel: r.channel, available: r.available }));
+  .transform((r): MediaAvailability => ({ mediaId: r.media_id, state: r.state, review: r.review, title: r.title, channel: r.channel, available: r.available }));
 
 export const parseQuizAttemptResult = (value: unknown): QuizAttemptResult => {
   const rows = parseWith(z.array(quizAttemptResultSchema).length(1), "quiz attempt result", value);

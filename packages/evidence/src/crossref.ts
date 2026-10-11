@@ -13,6 +13,7 @@ const messageSchema = z.object({
   relation: relationSchema.optional(),
   "update-to": z.array(z.object({ type: z.string(), DOI: z.string().optional() })).optional(),
   "updated-by": z.array(z.object({ type: z.string(), DOI: z.string().optional() })).optional(),
+  abstract: z.string().optional(),
 });
 
 const responseSchema = z.object({ message: messageSchema });
@@ -34,6 +35,8 @@ export interface CrossrefWork {
   retractionEvidence: string[];
   /** This record is itself a retraction notice for another work. */
   isRetractionNotice: boolean;
+  /** The deposited abstract (JATS tags stripped), when the publisher sent one. */
+  abstract?: string;
 }
 
 function kindOf(label: string): RetractionKind | null {
@@ -76,6 +79,7 @@ export function normalizeCrossref(m: z.output<typeof messageSchema>): CrossrefWo
     retractionNotices: [...new Set(hits.map((h) => h.doi).filter((d): d is string => !!d))],
     retractionEvidence: [...new Set(hits.map((h) => h.evidence))],
     isRetractionNotice: (m["update-to"] ?? []).some((u) => kindOf(u.type) !== null),
+    ...(m.abstract ? { abstract: stripTags(m.abstract) } : {}),
   };
 }
 

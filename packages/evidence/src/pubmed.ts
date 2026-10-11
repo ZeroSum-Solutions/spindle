@@ -91,6 +91,7 @@ export async function getPubMedSummaries(ctx: EvidenceContext, pmids: string[]):
       isReview: it.pubtype.some((t) => /review|meta-analysis/i.test(t) && !/retract/i.test(t)),
       ...retractionFromPubTypes(it.pubtype),
       oa: { isOa: it.articleids.some((a) => a.idtype === "pmc") },
+      pubTypes: it.pubtype,
     });
   }
   return out;

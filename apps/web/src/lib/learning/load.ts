@@ -58,7 +58,8 @@ interface AssignmentRow {
   version: VersionRow & { course_id: string };
 }
 
-const ASSIGNMENT_SELECT = "id, curriculum_versions!inner(id, course_id, version_number, layer, org_id, snapshot)";
+// Learners read the redacted projection only (ADR 0007, T21); the raw snapshot column is not granted to them.
+const ASSIGNMENT_SELECT = "id, curriculum_versions!inner(id, course_id, version_number, layer, org_id, snapshot:learner_snapshot, rules, question_set_hash)";
 
 function toAssignment(row: { id: string; curriculum_versions: unknown }): AssignmentRow {
   return { id: row.id, version: row.curriculum_versions as AssignmentRow["version"] };

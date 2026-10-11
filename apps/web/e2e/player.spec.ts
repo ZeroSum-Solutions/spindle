@@ -33,12 +33,18 @@ function lessonOne(w: PlayerWorld = world, set: CourseIds = ids, claim: string =
       { kind: "callout", content: { label: "Synthetic note", text: "Synthetic callout." }, support: "practice-based", claimIds: [] },
       { kind: "checklist", content: ["Synthetic step one", "Synthetic step two"], support: "practice-based", claimIds: [] },
       { kind: "image", content: { kind: "image", src: `/media/content/${w.run}/absent.png`, alt: "Synthetic absent figure", caption: "Synthetic caption", provenanceId: "synthetic" } },
-      { kind: "diagram", content: { diagramId: "synthetic-diagram", caption: "Synthetic diagram caption" } },
+      { kind: "diagram", content: { diagramId: "synthetic-diagram", alt: "Synthetic diagram", caption: "Synthetic diagram caption", legend: [] }, support: "practice-based", claimIds: [] },
       {
         kind: "quiz",
         content: { prompt: "Synthetic question?", options: ["Synthetic A", "Synthetic B"], answerIndex: 1, explanation: "Synthetic explanation." },
         support: "science",
         claimIds: [claim],
+      },
+      {
+        kind: "quiz",
+        content: { prompt: "Synthetic practice question?", options: ["Synthetic P1", "Synthetic P2"], answerIndex: 1, explanation: "Synthetic practice explanation." },
+        support: "practice-based",
+        claimIds: [],
       },
     ],
     resources: [{ label: "Synthetic reference", href: "https://example.org/synthetic", type: "reference" }],
@@ -185,18 +191,28 @@ test.describe.serial("learner flow", () => {
     await expect(doi).toHaveAttribute("rel", "noopener noreferrer");
     await expect(p.locator('[data-block="paragraph"][data-support="practice-based"]').getByText("Practice-based", { exact: true })).toBeVisible();
     // Back-to-back practice blocks (paragraph, callout, checklist) share one label; each keeps its support in data.
-    await expect(p.locator("article section[data-support]").getByText("Practice-based", { exact: true })).toHaveCount(1);
-    await expect(p.locator('article section[data-support="practice-based"]')).toHaveCount(3);
+    // The practice question near the end follows the science question, so it starts a new run with its own label.
+    await expect(p.locator('[data-block="callout"]').getByText("Practice-based", { exact: true })).toHaveCount(0);
+    await expect(p.locator('[data-block="checklist"]').getByText("Practice-based", { exact: true })).toHaveCount(0);
+    await expect(p.locator('[data-block="quiz"][data-support="practice-based"]').getByText("Practice-based", { exact: true })).toHaveCount(1);
+    await expect(p.locator("article section[data-support]").getByText("Practice-based", { exact: true })).toHaveCount(2);
+    await expect(p.locator('article section[data-support="practice-based"]')).toHaveCount(4);
     await expect(p.locator('[data-block="callout"]')).toContainText("Synthetic callout.");
     await expect(p.locator('[data-block="checklist"] li')).toHaveCount(2);
     await expect(p.locator('[data-block="diagram"]')).toContainText("This diagram is not available yet.");
     // A storage object that does not exist: honest placeholder, no broken image.
     await expect(p.locator('[data-block="image"] [data-media="unavailable"]')).toContainText("Synthetic absent figure");
-    // Ungraded self-check: feedback after checking, and it says nothing is saved.
-    const quiz = p.locator('[data-block="quiz"]');
-    await quiz.getByLabel("Synthetic A").check();
+    // A graded (science) question shows its prompt and points to the module quiz; the lesson never reveals its answer.
+    const graded = p.locator('[data-block="quiz"][data-support="science"]');
+    await expect(graded).toContainText("Synthetic question?");
+    await expect(graded.getByRole("link", { name: "Go to the module quiz" })).toHaveAttribute("href", learn(gymA, assignments.partial, "module/quiz"));
+    await expect(graded.getByRole("button", { name: "Check answer" })).toHaveCount(0);
+    await expect(graded).not.toContainText("Synthetic explanation.");
+    // A practice question stays an ungraded self-check: feedback after checking, and it says nothing is saved.
+    const quiz = p.locator('[data-block="quiz"][data-support="practice-based"]');
+    await quiz.getByLabel("Synthetic P1").check();
     await quiz.getByRole("button", { name: "Check answer" }).click();
-    await expect(quiz).toContainText("Not quite. The answer is: Synthetic B");
+    await expect(quiz).toContainText("Not quite. The answer is: Synthetic P2");
     await expect(quiz).toContainText("not saved or graded");
     const external = p.getByRole("link", { name: /Synthetic reference/ });
     await expect(external).toHaveAttribute("rel", "noopener noreferrer");
@@ -358,9 +374,9 @@ test.describe.serial("learner flow", () => {
     // The confirmation holds the one primary way forward.
     await expect(p.getByTestId("lesson-status").getByRole("link", { name: /Next: Synthetic lesson two/ })).toHaveAttribute("href", learn(gymA, assignments.partial, "lesson-2"));
     await p.goto(learn(gymA, assignments.partial));
-    await expect(p.getByText("1 of 3 lessons done")).toBeVisible();
+    await expect(p.getByText("1 of 3 lessons done", { exact: true })).toBeVisible();
     const fresh = await signIn(browser, actors.partial!, learn(gymA, assignments.partial));
-    await expect(fresh.getByText("1 of 3 lessons done")).toBeVisible();
+    await expect(fresh.getByText("1 of 3 lessons done", { exact: true })).toBeVisible();
     expect(rows()).toBe(first);
   });
 
@@ -411,7 +427,7 @@ test.describe.serial("learner flow", () => {
     await expect(lessonRow(f, "Synthetic lesson one")).toContainText("Credited");
     await expect(lessonRow(f, "Synthetic lesson two")).toContainText("Updated");
     await expect(lessonRow(f, "Synthetic lesson four")).toContainText("New");
-    await expect(f.getByText("1 of 3 lessons done")).toBeVisible();
+    await expect(f.getByText("1 of 3 lessons done", { exact: true })).toBeVisible();
     await f.goto(learn(gymA, assignments.full));
     await expect(f.getByText("You completed every lesson in v1.")).toBeVisible();
 
@@ -455,7 +471,7 @@ test.describe.serial("learner flow", () => {
 
   test("two gyms stay separate, and assignments are self-only", async ({ browser }) => {
     const m = await signIn(browser, actors.multi!, learn(gymB, assignments.multiB));
-    await expect(m.getByText("0 of 3 lessons done")).toBeVisible();
+    await expect(m.getByText("0 of 3 lessons done", { exact: true })).toBeVisible();
     await expectNotFound(m, learn(gymB, assignments.multiA));
     await expectNotFound(m, learn(gymB, assignments.method));
     const b = await signIn(browser, actors.ownerb!, learn(gymB));
@@ -476,7 +492,7 @@ test.describe.serial("learner flow", () => {
     world.retract(sourceId);
     const p = await signIn(browser, actors.partial!, learn(gymA, assignments.partial));
     await expect(p.getByText("A source cited in this version was retracted after it was published")).toBeVisible();
-    await expect(p.getByText("1 of 3 lessons done")).toBeVisible();
+    await expect(p.getByText("1 of 3 lessons done", { exact: true })).toBeVisible();
     await p.goto(learn(gymA, assignments.partial, "lesson-one"));
     await expect(p.locator('[data-block="paragraph"][data-support="science"]').getByText("Source retracted")).toBeVisible();
     await p.goto(learn(gymA, assignments.partial, "lesson-2"));

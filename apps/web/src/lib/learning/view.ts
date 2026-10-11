@@ -2,7 +2,8 @@
 // engine only names the version delta. Nothing here reads the network.
 import { diffVersions, type VersionDelta } from "@spindle/engine";
 import {
-  parseCourse,
+  lessonViewCourse,
+  parseLearnerCourse,
   parseLessonCompletions,
   parseVersionManifest,
   type Course,
@@ -21,6 +22,8 @@ export interface PublishedVersion {
   orgId: string | null;
   course: Course;
   manifest: VersionManifest;
+  /** True only for versions published under the phase-3 rules with a graded question set; older versions keep the ungraded self-check. */
+  gradedQuiz: boolean;
 }
 
 export interface VersionRow {
@@ -28,7 +31,11 @@ export interface VersionRow {
   version_number: number;
   layer: string;
   org_id: string | null;
+  /** curriculum_versions.learner_snapshot (graded quizzes redacted), selected as `snapshot`. */
   snapshot: unknown;
+  /** Quiz rules the version was published under (ADR 0007); absent rows count as phase 2. */
+  rules?: string | null;
+  question_set_hash?: string | null;
 }
 
 export interface ManifestRow {
@@ -65,7 +72,7 @@ export function publishedVersion(row: VersionRow, manifestRows: readonly Manifes
   let course: Course;
   let manifest: VersionManifest;
   try {
-    course = parseCourse(row.snapshot);
+    course = lessonViewCourse(parseLearnerCourse(row.snapshot));
     const ordered = [...manifestRows].sort((a, b) => a.ordinal - b.ordinal);
     manifest = parseVersionManifest({
       versionId: row.id,
@@ -89,7 +96,12 @@ export function publishedVersion(row: VersionRow, manifestRows: readonly Manifes
   if (!courseIds.every((id) => inManifest.has(id))) {
     throw new VersionUnavailableError(row.id, "lessons do not match the manifest");
   }
-  return { id: row.id, versionNumber: row.version_number, layer: row.layer as CurriculumLayer, orgId: row.org_id, course, manifest };
+  return { id: row.id, versionNumber: row.version_number, layer: row.layer as CurriculumLayer, orgId: row.org_id, course, manifest, gradedQuiz: hasGradedQuiz(row) };
+}
+
+/** The version's own quiz rules decide whether a graded quiz exists, never the blocks alone (submit_quiz_attempt refuses anything else). */
+export function hasGradedQuiz(row: Pick<VersionRow, "rules" | "question_set_hash">): boolean {
+  return row.rules === "phase3" && typeof row.question_set_hash === "string" && /^[0-9a-f]{64}$/.test(row.question_set_hash);
 }
 
 export function completionsFrom(rows: readonly CompletionRow[]): LessonCompletion[] {
