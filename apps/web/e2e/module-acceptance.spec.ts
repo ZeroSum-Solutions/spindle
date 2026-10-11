@@ -49,10 +49,14 @@ let baseline: string;
 
 /**
  * A diagram block as the published schema of this checkout accepts it. Before Sol R16 a diagram is
- * {diagramId, caption}; after it, the reviewed shape with alt, caption, legend and support. The
- * drafts still carry the old shape until the content follow-up, so the fixture adapts.
+ * {diagramId, caption}; after it, the reviewed shape with alt, caption, legend and support. A draft
+ * diagram already in the reviewed shape (the diagrams PR) is published as written, its claim slots
+ * mapped like any other block's; an older draft diagram is adapted.
  */
-function diagramBlock(block: Block): Block {
+function diagramBlock(block: Block, claims?: Map<string, string>): Block {
+  if ("support" in block && block.support && lessonBlockSchema.safeParse(block).success) {
+    return claims ? { ...block, claimIds: (block.claimIds ?? []).map((slot) => claims.get(slot)!) } : block;
+  }
   const { diagramId, caption } = block.content as { diagramId: string; caption: string };
   const reviewed: Block = { kind: "diagram", content: { diagramId, alt: caption || diagramId, caption, legend: [] }, support: "practice-based", claimIds: [] };
   return lessonBlockSchema.safeParse(reviewed).success ? reviewed : block;
@@ -67,7 +71,7 @@ function publishedCourse(claims: Map<string, string>): Json {
     ...d.lesson,
     id: ids.lessons[i],
     blocks: d.lesson.blocks.map((b) =>
-      b.kind === "diagram" ? diagramBlock(b) : "claimIds" in b ? { ...b, claimIds: b.claimIds!.map((slot) => claims.get(slot)!) } : b,
+      b.kind === "diagram" ? diagramBlock(b, claims) : "claimIds" in b ? { ...b, claimIds: b.claimIds!.map((slot) => claims.get(slot)!) } : b,
     ),
   }));
   return course;
