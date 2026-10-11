@@ -1,0 +1,96 @@
+// Thin adapters from the #38/#43 member DTOs to the brand components' view models. Pure, so they
+// are unit-tested; the server loaders (lib/learning/tenant.ts) only fetch and parse.
+import type { MemberBrandDto, VersionTenantText } from "@spindle/schema";
+import { MODALITY_LABELS, memberColors, TENANT_TEXT_FALLBACKS, type CatalogHeroView, type CoachNoteView, type CourseCardView, type MemberBrandView, type ModalityTag } from "./view";
+
+/** A branded member page's brand and hero, or null when the gym has no brand or its brand is refused. */
+export function brandFromDto(dto: MemberBrandDto): { brand: MemberBrandView; hero: CatalogHeroView } | null {
+  if (!dto.brand) return null;
+  const colors = memberColors(dto.brand);
+  if (!colors) return null;
+  return {
+    // The DTO's name is the admitted name or the fallback; the components show the fallback for null.
+    brand: { name: dto.nameAdmitted ? dto.name : null, font: dto.brand.font, colors },
+    // The DTO carries admitted catalog texts only; there are no catalog modality tags yet.
+    hero: { headline: dto.texts.headline ?? null, tagline: dto.texts.tagline ?? null, modalities: [] },
+  };
+}
+
+const isTag = (t: string): t is ModalityTag => Object.hasOwn(MODALITY_LABELS, t);
+
+function duration(minutes: number): string {
+  if (minutes < 60) return `About ${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `About ${h} hr${m ? ` ${m} min` : ""}`;
+}
+
+/** What the player may show of a version's held texts: live texts only; a revoked title reads as the fallback. */
+export function versionTexts(rows: readonly VersionTenantText[]): { titleRevoked: boolean; welcome: CoachNoteView | null; blurb: string | null } {
+  const live = (slot: VersionTenantText["slot"]) => rows.find((r) => r.slot === slot && r.state === "live" && r.text);
+  const welcome = live("welcome");
+  return {
+    titleRevoked: rows.some((r) => r.slot === "course_title" && r.state === "revoked"),
+    welcome: welcome ? { text: welcome.text!, displayName: welcome.displayName } : null,
+    blurb: live("course_blurb")?.text ?? null,
+  };
+}
+
+/** The course title a member sees: the published title, or "Untitled course" once its admission is revoked. */
+export function shownCourseTitle(title: string, texts: { titleRevoked: boolean }): string {
+  return texts.titleRevoked ? TENANT_TEXT_FALLBACKS.courseTitle : title;
+}
+
+/** What the catalog needs of one assignment: the version it opens and that version's card facts. */
+export interface CatalogAssignment {
+  id: string;
+  versionNumber: number;
+  available: boolean;
+  view?: { title: string; layer: CourseCardView["layer"]; done: number; next: { slug: string } | null };
+  card?: { cover?: CourseCardView["cover"]; tags: readonly string[]; lessonCount: number; durationMinutes: number; blurb: string | null };
+}
+
+/**
+ * One card per assigned course, built from the version the card opens (the newest assigned
+ * version), never from a newer published version the member is not assigned. Earlier assigned
+ * versions stay reachable as plain links beside the card.
+ */
+export function catalogCards(
+  courses: readonly { latest: CatalogAssignment; earlier: readonly CatalogAssignment[] }[],
+  base: string,
+): { card: CourseCardView | null; unavailable?: { versionNumber: number }; earlier: { href: string; label: string }[] }[] {
+  return courses.map(({ latest, earlier }) => {
+    const older = [...earlier].sort((x, y) => y.versionNumber - x.versionNumber).map((e) => ({ href: `${base}/${e.id}`, label: `Version ${e.versionNumber}` }));
+    // A newest version that cannot be displayed stays listed as unavailable, with its earlier versions.
+    if (!latest.available || !latest.view || !latest.card) return { card: null, unavailable: { versionNumber: latest.versionNumber }, earlier: older };
+    const facts = latest.card;
+    const card: CourseCardView = {
+      id: latest.id,
+      href: `${base}/${latest.id}`,
+      layer: latest.view.layer,
+      // The view's title already reads "Untitled course" when the gym title was revoked.
+      title: latest.view.title,
+      blurb: facts.blurb,
+      tags: facts.tags.filter(isTag).slice(0, 2),
+      meta: `${facts.lessonCount} ${facts.lessonCount === 1 ? "lesson" : "lessons"} · ${duration(facts.durationMinutes)}`,
+      ...(facts.cover ? { cover: facts.cover } : {}),
+    };
+    return { card, earlier: older };
+  });
+}
+
+/** The hero's one action: continue where the member left off, start if nothing is started, none when all is done. */
+export function catalogAction(courses: readonly { latest: CatalogAssignment }[], base: string): { label: string; href: string } | undefined {
+  const open = courses.map((c) => c.latest).filter((a) => a.available && a.view?.next);
+  // Continue only a course the member has started; otherwise start the first unfinished one.
+  const started = open.find((a) => (a.view?.done ?? 0) > 0);
+  const target = started ?? open[0];
+  if (!target) return undefined;
+  return { label: started ? "Continue where you left off" : "Start your first course", href: `${base}/${target.id}/${target.view!.next!.slug}` };
+}
+
+/** A card's summary: the published subtitle for Spindle's courses; only an admitted blurb for gym courses. */
+export function cardSummary(layer: CourseCardView["layer"], subtitle: string, blurb: string | null): string | null {
+  if (layer === "method") return blurb;
+  return subtitle.trim() ? subtitle : null;
+}
