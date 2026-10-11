@@ -93,7 +93,7 @@ function compile(rules: TenantTextRules) {
     visible: cls(rules.chars.visible),
     marks: cls(rules.chars.marks, "gu"),
     links: rules.links.map((l) => new RegExp(l)),
-    claims: rules.claims.map((c) => ({ name: c.name, re: new RegExp(c.re) })),
+    claims: rules.claims.map((c) => ({ name: c.name, re: new RegExp(c.re), despaced: new RegExp(c.re.replaceAll("\\s+", "\\s*")) })),
     deny: new Set(rules.deny),
     // Words of the folded copy, letters of any script kept, for the mixed-script check.
     words: new RegExp(`[a-z0-9${nonAscii(rules.chars.letters)}]+`, "gu"),
@@ -273,7 +273,11 @@ export function admitTenantText(
   const lc = linkCopy(text, rules);
   if (c.links.some((re) => re.test(lc))) return no("link", "must be plain text, without links, addresses or markup");
   const readings = [lc, ...claimReadings(foldedCopy(text, rules), rules)];
-  const claim = c.claims.find((x) => readings.some((r) => x.re.test(r)));
+  // Also with all whitespace removed, so spaced-out words cannot hide a claim (Sol R3); the
+  // patterns then allow no space where they required some. The filter is advisory: LEAD's
+  // hash-bound admission is the authority for every held text.
+  const despaced = readings.map((r) => r.replace(/\s+/g, ""));
+  const claim = c.claims.find((x) => readings.some((r) => x.re.test(r)) || despaced.some((r) => x.despaced.test(r)));
   if (claim) return no("claim", claim.name);
   const overridden = overrides.some((o) => o.orgId === input.orgId && o.slot === input.slot && o.text === text);
   if (!overridden) {

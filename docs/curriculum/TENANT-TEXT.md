@@ -28,7 +28,11 @@ Every save is a new row, so an edit always sends a slot back to pending. An edit
 - citation and outcome shapes: a year in parentheses ("(2019)"), "et al.", or a percentage with an outcome ("reduces pain by 30%", "30% stronger"). Other years and percentages pass ("Coaching since 2012", "80% of 1RM");
 - reserved words (science, review and evidence wording, Spindle, medical claims), even when the gym disguises them with spacing, look-alike letters or leet.
 
-A text that reaches you has passed this filter. Your review covers what a filter cannot judge.
+**The filter is advisory, and it can be evaded.** It is a first screen that catches common disguises: spacing, look-alike letters, leet, and spaced-out words. A determined writer can still get wording past it. It never decides anything:
+
+- No held text is ever served to a member or published until a content publisher records an admission bound to its exact text hash.
+- Read the whole text yourself. Never admit because the filter passed it.
+- When in doubt, reject with a reason the gym can act on.
 
 ## Review
 
