@@ -74,12 +74,12 @@ describe("catalogCards (Sol R1 on #45)", () => {
 
   it("describes the version the card opens: v1 assigned while v2 is published gives v1's title, blurb and lessons", () => {
     const [entry] = catalogCards([{ latest: assignment("a1", 1, "Squat v1"), earlier: [] }], "/gyms/x/learn");
-    expect(entry!.card).toMatchObject({ href: "/gyms/x/learn/a1", title: "Squat v1", blurb: "Blurb of v1", meta: "2 lessons · About 10 min", layer: "method" });
+    expect(entry!.card!).toMatchObject({ href: "/gyms/x/learn/a1", title: "Squat v1", blurb: "Blurb of v1", meta: "2 lessons · About 10 min", layer: "method" });
   });
 
   it("keeps earlier assigned versions reachable as links beside the card", () => {
     const [entry] = catalogCards([{ latest: assignment("a2", 2, "Squat v2"), earlier: [assignment("a1", 1, "Squat v1")] }], "/gyms/x/learn");
-    expect(entry!.card.href).toBe("/gyms/x/learn/a2");
+    expect(entry!.card!.href).toBe("/gyms/x/learn/a2");
     expect(entry!.earlier).toEqual([{ href: "/gyms/x/learn/a1", label: "Version 1" }]);
   });
 
