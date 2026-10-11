@@ -2,7 +2,7 @@
 -- progress, D-07 global-row and storage checks. All content is synthetic.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(124);
+select plan(147);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Lee lead, Tess and Tom trainers. Gym B: Bob owner.
@@ -83,6 +83,11 @@ create function pg_temp.approve(claim uuid) returns uuid language sql as $$
   select public.publisher_review_claim('00000000-0000-0000-0000-0000000000c1', claim,
     jsonb_build_object('decision', 'approved', 'expiresAt', to_char(now() + interval '1 year', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
       'receipt', pg_temp.receipt('faithful')))
+$$;
+
+create function pg_temp.approve_until(claim uuid, expires text) returns uuid language sql as $$
+  select public.publisher_review_claim('00000000-0000-0000-0000-0000000000c1', claim,
+    jsonb_build_object('decision', 'approved', 'expiresAt', expires, 'receipt', pg_temp.receipt('faithful')))
 $$;
 
 -- Evidence through the publisher path (service role, named publisher actor).
@@ -268,6 +273,49 @@ select throws_ok($$select pg_temp.save_n(jsonb_build_array(jsonb_build_object('k
   jsonb_build_object('kind', 'image', 'src', '/media/../admin', 'alt', 'x', 'caption', '', 'provenanceId', 'p1'))))$$,
   '22023', 'invalid course.parts[0].lessons[0].blocks[0].content.src: must be an https URL or a site path',
   'dot segments are refused in media paths');
+-- The database accepts only values the @spindle/schema runtime (parseCourse) also accepts.
+create function pg_temp.image(src text, provenance text) returns jsonb language sql as $$
+  select jsonb_build_object('kind', 'image', 'content',
+    jsonb_build_object('kind', 'image', 'src', src, 'alt', 'x', 'caption', '', 'provenanceId', provenance))
+$$;
+create function pg_temp.bad_src(src text) returns text language sql as $$
+  select 'invalid course.parts[0].lessons[0].blocks[0].content.src: must be an https URL or a site path'
+$$;
+select throws_ok($$select public.publisher_save_course_draft('00000000-0000-0000-0000-0000000000c1',
+  jsonb_set(pg_temp.course('62000000-0000-4000-8000-000000000000', 'base',
+    jsonb_build_array(pg_temp.lesson('62000000-0000-4000-8000-000000000011', 'neg', jsonb_build_array(pg_temp.prac('x'))))),
+    '{slug}', '"shoulder--basics"'))$$,
+  '22023', 'invalid course.slug: must be lowercase kebab-case', 'a slug with repeated hyphens is refused');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('/media/cuff.png?v=2', 'p1')))$$,
+  '22023', pg_temp.bad_src(''), 'a site path with a query string is refused');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https://1.2.3.999/x.png', 'p1')))$$,
+  '22023', pg_temp.bad_src(''), 'a numeric host the URL parser rejects is refused');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https://example.org:99999/x.png', 'p1')))$$,
+  '22023', pg_temp.bad_src(''), 'a port out of range is refused');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https://xn--zz.org/x.png', 'p1')))$$,
+  '22023', pg_temp.bad_src(''), 'a punycode host is refused');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https://user:pass@example.org/x.png', 'p1')))$$,
+  '22023', pg_temp.bad_src(''), 'an https URL with credentials is refused');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('/media/%2e%2e/x.png', 'p1')))$$,
+  '22023', pg_temp.bad_src(''), 'a percent-escaped dot segment is refused');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('/media/cuff.png#top', 'p1')))$$,
+  '22023', pg_temp.bad_src(''), 'a site path with a fragment is refused');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('/media/cuff.png', 'original illustration')))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0].content.provenanceId: must be a plain identifier',
+  'a provenance id must be a plain identifier');
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(jsonb_build_object('kind', 'diagram', 'content',
+  jsonb_build_object('diagramId', 'my diagram', 'caption', ''))))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0].content.diagramId: must be a plain identifier',
+  'a diagram id must be a plain identifier');
+select throws_ok($$select public.publisher_save_course_draft('00000000-0000-0000-0000-0000000000c1',
+  jsonb_set(pg_temp.course('62000000-0000-4000-8000-000000000000', 'base',
+    jsonb_build_array(pg_temp.lesson('62000000-0000-4000-8000-000000000011', 'neg', jsonb_build_array(pg_temp.prac('x'))))),
+    '{parts,0,lessons,0,title}', to_jsonb(E'\t\u00a0'::text)))$$,
+  '22023', 'invalid course.parts[0].lessons[0].title: must be 1 to 200 characters', 'a whitespace-only title is blank');
+select lives_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https://cdn.example.org:8443/a/b.png?v=2#top', 'img:cuff-1'),
+  pg_temp.image('/media/shoulder/cuff_2.webp', 'p.1'), jsonb_build_object('kind', 'diagram', 'content',
+  jsonb_build_object('diagramId', 'shoulder.rhythm', 'caption', 'x'))))$$,
+  'safe https URLs, site paths and plain ids are accepted');
 select throws_ok($$select public.publisher_add_claim('00000000-0000-0000-0000-0000000000c1',
   '{"statement": "x", "evidenceLevel": "x", "population": "x"}')$$,
   '22023', 'invalid claim.sourceIds: is required', 'a claim needs sources');
@@ -276,9 +324,28 @@ select throws_ok(format($$select public.publisher_review_claim('00000000-0000-00
   pg_temp.id('c_unrev')),
   '22023', 'invalid review.receipt.faithfulness: an approval needs a faithful claim', 'an unfaithful claim cannot be approved');
 select throws_ok(format($$select public.publisher_review_claim('00000000-0000-0000-0000-0000000000c1', %L,
-  jsonb_build_object('decision', 'approved', 'expiresAt', '2040-01-01T00:00:00Z', 'receipt', pg_temp.receipt('faithful')))$$,
+  jsonb_build_object('decision', 'approved', 'expiresAt', '2020-01-01T00:00:00Z', 'receipt', pg_temp.receipt('faithful')))$$,
   pg_temp.id('c_unrev')),
-  '22023', 'invalid review.expiresAt: must be in the future and within five years', 'approvals expire within five years');
+  '22023', 'invalid review.expiresAt: must be in the future', 'an approval must expire in the future');
+select pg_temp.keep('c_long', pg_temp.claim('Synthetic claim with a long review cycle.', pg_temp.id('s3')));
+select lives_ok($$select pg_temp.approve_until(pg_temp.id('c_long'), '2040-01-01T00:00:00Z')$$,
+  'an approval may run longer than five years (no unrequested ceiling)');
+-- Source citation metadata depends on the kind (plan v3 section 4).
+select throws_ok($$select public.publisher_add_source('00000000-0000-0000-0000-0000000000c1',
+  '{"kind": "textbook", "title": "x", "url": "https://example.org/book", "license": "x"}')$$,
+  '22023', 'invalid source.locator: a textbook needs its edition and page', 'a textbook needs edition and page');
+select throws_ok($$select public.publisher_add_source('00000000-0000-0000-0000-0000000000c1',
+  '{"kind": "position_stand", "title": "x", "pmid": "456", "license": "x"}')$$,
+  '22023', 'invalid source.doi: a position stand needs a DOI', 'a position stand needs a DOI');
+select throws_ok($$select public.publisher_add_source('00000000-0000-0000-0000-0000000000c1',
+  '{"kind": "systematic_review", "title": "x", "url": "https://example.org/review", "license": "x"}')$$,
+  '22023', 'invalid source: a systematic_review needs a DOI or PMID', 'an applied review needs a DOI or PMID');
+select throws_ok($$select public.publisher_add_source('00000000-0000-0000-0000-0000000000c1',
+  '{"kind": "meta_analysis", "title": "x", "url": "https://example.org/meta", "license": "x"}')$$,
+  '22023', 'invalid source: a meta_analysis needs a DOI or PMID', 'a meta-analysis needs a DOI or PMID');
+select lives_ok($$select public.publisher_add_source('00000000-0000-0000-0000-0000000000c1',
+  '{"kind": "nomenclature", "title": "Synthetic nomenclature", "url": "https://example.org/terms", "license": "x"}')$$,
+  'a nomenclature source may cite a URL only');
 select throws_ok(format($$select public.publisher_record_retraction('00000000-0000-0000-0000-0000000000c1', %L,
   '{"origin": "rumour", "reference": "x", "detectedAt": "2026-10-09T12:00:00Z"}')$$, pg_temp.id('s1')),
   '22023', 'invalid notice.origin: must be one of crossref, manual', 'retraction notices are validated');
@@ -454,6 +521,35 @@ select is(public.complete_lesson(pg_temp.id('tess_v2'), '61000000-0000-4000-8000
   (select id from public.lesson_completions where version_id = pg_temp.id('g_v2') and lesson_id = '61000000-0000-4000-8000-000000000011'),
   'completing a carried lesson again returns the carried credit');
 select pg_temp.keep('tess_v2_l2', public.complete_lesson(pg_temp.id('tess_v2'), '61000000-0000-4000-8000-000000000012'));
+-- Alice is assigned v1 and v2 before she does the unchanged lesson in v1.
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
+select pg_temp.keep('alice_v1', public.assign_version('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.id('g_v1'), '00000000-0000-0000-0000-0000000000a1'));
+select pg_temp.keep('alice_v2', public.assign_version('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.id('g_v2'), '00000000-0000-0000-0000-0000000000a1'));
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.keep('alice_l1', public.complete_lesson(pg_temp.id('alice_v1'), '61000000-0000-4000-8000-000000000011'));
+select pg_temp.reset_role();
+create function pg_temp.alice_v2_credit() returns setof record language sql as $$
+  select lesson_id, origin_completion_id from public.lesson_completions
+  where version_id = pg_temp.id('g_v2') and user_id = '00000000-0000-0000-0000-0000000000a1'
+$$;
+select results_eq($$select * from pg_temp.alice_v2_credit() as t (lesson_id uuid, origin uuid)$$,
+  format($$values ('61000000-0000-4000-8000-000000000011'::uuid, %L::uuid)$$, pg_temp.id('alice_l1')),
+  'a completion made after the next version was assigned still carries into it');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select is(public.complete_lesson(pg_temp.id('alice_v1'), '61000000-0000-4000-8000-000000000011'), pg_temp.id('alice_l1'),
+  'repeating the late completion returns the same row');
+select pg_temp.reset_role();
+select is((select count(*) from public.lesson_completions where user_id = '00000000-0000-0000-0000-0000000000a1'), 2::bigint,
+  'repeating the late completion does not duplicate credit');
+-- If a carried row is ever missing, assigning again restores it.
+delete from public.lesson_completions where version_id = pg_temp.id('g_v2') and user_id = '00000000-0000-0000-0000-0000000000a1';
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
+select is(public.assign_version('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.id('g_v2'), '00000000-0000-0000-0000-0000000000a1'),
+  pg_temp.id('alice_v2'), 'assigning again returns the same assignment');
+select pg_temp.reset_role();
+select results_eq($$select * from pg_temp.alice_v2_credit() as t (lesson_id uuid, origin uuid)$$,
+  format($$values ('61000000-0000-4000-8000-000000000011'::uuid, %L::uuid)$$, pg_temp.id('alice_l1')),
+  'an assignment retry cannot permanently skip carried credit');
 
 -- v3: only the course title changes, so every lesson hash carries over.
 select pg_temp.as_service();

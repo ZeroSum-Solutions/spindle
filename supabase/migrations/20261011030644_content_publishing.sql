@@ -83,7 +83,11 @@ create table public.sources (
   license text not null check (char_length(license) between 1 and 200),
   created_by uuid not null,
   created_at timestamptz not null default now(),
-  check (doi is not null or pmid is not null or url is not null)
+  check (doi is not null or pmid is not null or url is not null),
+  -- Citation metadata by kind (plan v3 section 4).
+  check (kind <> 'textbook' or locator is not null),
+  check (kind <> 'position_stand' or doi is not null),
+  check (kind not in ('systematic_review', 'meta_analysis') or doi is not null or pmid is not null)
 );
 
 create table public.claims (
@@ -151,7 +155,7 @@ create table public.courses (
   org_id uuid references public.orgs (id) on delete cascade,
   scope uuid not null generated always as (coalesce(org_id, '00000000-0000-0000-0000-000000000000'::uuid)) stored,
   layer text not null check (layer in ('base', 'modality', 'method')),
-  slug text not null check (slug ~ '^[a-z0-9][a-z0-9-]{0,78}[a-z0-9]$'),
+  slug text not null check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(slug) between 2 and 80),
   title text not null,
   subtitle text not null,
   description text not null,
@@ -433,7 +437,12 @@ declare
 begin
   if jsonb_typeof(p_value) is distinct from 'string' then perform private.jfail(p_path, 'must be a string'); end if;
   s := p_value #>> '{}';
-  if char_length(btrim(s)) < p_min or char_length(s) > p_max then
+  -- Trim the characters JavaScript's String.trim removes, and count length in
+  -- UTF-16 units as JavaScript does, so @spindle/schema accepts what we store.
+  if char_length(regexp_replace(s,
+       '^[\u0009-\u000d\u0020\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+|[\u0009-\u000d\u0020\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+$',
+       '', 'g')) < p_min
+     or char_length(s) + char_length(regexp_replace(s, '[^\U00010000-\U0010ffff]', '', 'g')) > p_max then
     perform private.jfail(p_path, format('must be %s to %s characters', p_min, p_max));
   end if;
   return s;
@@ -517,17 +526,47 @@ begin
 end;
 $$;
 
-/** Absolute https URLs or same-site paths; never javascript:, data:, protocol-relative, backslashes or dot segments. */
+/**
+ * The @spindle/schema isSafeContentUrl grammar, or a stricter subset of it:
+ * root-relative paths of [A-Za-z0-9._~-] segments without dot segments, or
+ * https URLs without credentials, with an alphabetic top-level label (no
+ * numeric or punycode hosts) and a port from 1 to 65535.
+ */
 create function private.jlink(p_value jsonb, p_path text)
 returns text
 language plpgsql immutable set search_path = ''
 as $$
 declare
   s text := private.jstr(p_value, p_path, 1, 2048);
+  m text[];
+  ok boolean;
 begin
-  if s !~ '^(https://[^\s/]+(/\S*)?|/[^\s/\\]\S*)$' or strpos(s, '\') > 0 or s ~ '(^|/)\.\.?(/|$|[?#])' then
-    perform private.jfail(p_path, 'must be an https URL or a site path');
+  if s ~ '[\s\\\u0001-\u001f\u007f]' then
+    ok := false;
+  elsif left(s, 1) = '/' then
+    ok := s ~ '^(/[A-Za-z0-9._~-]+)+$' and s !~ '/\.\.?(/|$)';
+  else
+    m := regexp_match(s,
+      '^https://((?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)*([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?))(?::([0-9]{1,5}))?(?:[/?#].*)?$');
+    ok := m is not null
+      and m[2] ~ '^[A-Za-z]{2,63}$'
+      and m[1] !~* '(^|\.)xn--'
+      and coalesce(m[3]::integer between 1 and 65535, true);
   end if;
+  if not ok then perform private.jfail(p_path, 'must be an https URL or a site path'); end if;
+  return s;
+end;
+$$;
+
+/** A plain identifier, as @spindle/schema's idSchema: provenance and diagram ids. */
+create function private.jid(p_value jsonb, p_path text)
+returns text
+language plpgsql immutable set search_path = ''
+as $$
+declare
+  s text := private.jstr(p_value, p_path, 1, 128);
+begin
+  if s !~ '^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$' then perform private.jfail(p_path, 'must be a plain identifier'); end if;
   return s;
 end;
 $$;
@@ -562,7 +601,7 @@ begin
     'src', private.jlink(p_value -> 'src', p_path || '.src'),
     'alt', private.jstr(p_value -> 'alt', p_path || '.alt', 1, 500),
     'caption', private.jstr(p_value -> 'caption', p_path || '.caption', 0, 1000),
-    'provenanceId', private.jstr(p_value -> 'provenanceId', p_path || '.provenanceId', 1, 200));
+    'provenanceId', private.jid(p_value -> 'provenanceId', p_path || '.provenanceId'));
 end;
 $$;
 
@@ -600,7 +639,7 @@ begin
     when 'diagram' then
       perform private.jobject(p_value -> 'content', p_path || '.content', array['diagramId', 'caption'], array['diagramId', 'caption']);
       content := jsonb_build_object(
-        'diagramId', private.jstr(p_value -> 'content' -> 'diagramId', p_path || '.content.diagramId', 1, 200),
+        'diagramId', private.jid(p_value -> 'content' -> 'diagramId', p_path || '.content.diagramId'),
         'caption', private.jstr(p_value -> 'content' -> 'caption', p_path || '.content.caption', 0, 1000));
     when 'quiz' then
       perform private.jobject(p_value -> 'content', p_path || '.content',
@@ -664,7 +703,7 @@ begin
   layer := private.jenum(p_course -> 'layer', 'course.layer', array['base', 'modality', 'method']);
   ids := array[private.juuid(p_course -> 'id', 'course.id')];
   slug := private.jstr(p_course -> 'slug', 'course.slug', 2, 80);
-  if slug !~ '^[a-z0-9][a-z0-9-]{0,78}[a-z0-9]$' then perform private.jfail('course.slug', 'must be lowercase kebab-case'); end if;
+  if slug !~ '^[a-z0-9]+(-[a-z0-9]+)*$' then perform private.jfail('course.slug', 'must be lowercase kebab-case'); end if;
   if jsonb_typeof(p_course -> 'parts') is distinct from 'array'
      or jsonb_array_length(p_course -> 'parts') not between 1 and 50 then
     perform private.jfail('course.parts', 'must have 1 to 50 parts');
@@ -696,7 +735,7 @@ begin
       if id = any (ids) then perform private.jfail(lp || '.id', 'is a duplicate id'); end if;
       ids := ids || id;
       slug := private.jstr(lesson -> 'slug', lp || '.slug', 2, 80);
-      if slug !~ '^[a-z0-9][a-z0-9-]{0,78}[a-z0-9]$' then perform private.jfail(lp || '.slug', 'must be lowercase kebab-case'); end if;
+      if slug !~ '^[a-z0-9]+(-[a-z0-9]+)*$' then perform private.jfail(lp || '.slug', 'must be lowercase kebab-case'); end if;
       if slug = any (slugs) then perform private.jfail(lp || '.slug', 'is a duplicate lesson slug'); end if;
       slugs := slugs || slug;
 
@@ -786,6 +825,49 @@ create function private.block_hash(p_kind text, p_content jsonb)
 returns text
 language sql immutable set search_path = ''
 as $$ select private.sha256(jsonb_build_object('kind', p_kind, 'content', p_content)) $$;
+
+-- Serialization ---------------------------------------------------------------------------
+-- Transaction-scoped advisory locks, taken before any validation or scan.
+-- Each later statement in these read-committed functions sees what the
+-- other side committed, so a retraction cannot miss a concurrent publish,
+-- and a completion cannot miss a concurrent assignment (or the reverse).
+
+create function private.require_read_committed()
+returns void
+language plpgsql stable set search_path = ''
+as $$
+begin
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception 'content writes need read committed isolation' using errcode = '25000';
+  end if;
+end;
+$$;
+
+/** Publishes share the lock; a retraction takes it alone. */
+create function private.lock_publishing(p_exclusive boolean)
+returns void
+language plpgsql set search_path = ''
+as $$
+begin
+  perform private.require_read_committed();
+  if p_exclusive then
+    perform pg_advisory_xact_lock(7101, 0);
+  else
+    perform pg_advisory_xact_lock_shared(7101, 0);
+  end if;
+end;
+$$;
+
+/** One learner's assignments and completions within one org change one at a time. */
+create function private.lock_learner(p_org uuid, p_user uuid)
+returns void
+language plpgsql set search_path = ''
+as $$
+begin
+  perform private.require_read_committed();
+  perform pg_advisory_xact_lock(7102, hashtext(p_org::text || '/' || p_user::text));
+end;
+$$;
 
 -- Saving drafts ------------------------------------------------------------------------
 
@@ -953,6 +1035,7 @@ declare
   latest public.curriculum_versions%rowtype;
   vid uuid;
 begin
+  perform private.lock_publishing(false);
   select * into c from public.courses where id = p_course for update;
   if not found then raise exception 'no such course' using errcode = 'P0002'; end if;
   if not exists (select 1 from public.lessons where course_id = p_course) then
@@ -1058,8 +1141,9 @@ $$;
 
 /**
  * Assigns a version to a member. Credit carries forward from the member's
- * earlier completions of the same course in this org when the lesson id and
- * content hash both match; changed lessons stay open; removed lessons drop out.
+ * completions in other versions of the same course in this org when the lesson
+ * id and content hash both match; changed lessons stay open; removed lessons
+ * drop out. Assigning again re-runs the carry-forward and returns the same id.
  */
 create function public.assign_version(p_org uuid, p_version uuid, p_user uuid)
 returns uuid
@@ -1077,6 +1161,7 @@ begin
   if not exists (select 1 from public.memberships where org_id = p_org and user_id = p_user) then
     raise exception 'not a member of this org' using errcode = 'P0002';
   end if;
+  perform private.lock_learner(p_org, p_user);
 
   insert into public.assignments (org_id, version_id, user_id, assigned_by)
   values (p_org, p_version, p_user, uid)
@@ -1084,7 +1169,8 @@ begin
   returning id into aid;
   if aid is null then
     select id into aid from public.assignments where org_id = p_org and version_id = p_version and user_id = p_user;
-    return aid;
+  else
+    perform private.audit(uid, 'assign', p_org, aid, jsonb_build_object('version_id', p_version, 'user_id', p_user));
   end if;
 
   insert into public.lesson_completions (org_id, user_id, version_id, lesson_id, content_hash, origin_completion_id)
@@ -1101,13 +1187,16 @@ begin
   ) prior
   where vl.version_id = p_version
   on conflict (org_id, user_id, version_id, lesson_id) do nothing;
-
-  perform private.audit(uid, 'assign', p_org, aid, jsonb_build_object('version_id', p_version, 'user_id', p_user));
   return aid;
 end;
 $$;
 
-/** Marks a lesson done for the caller's own assignment. Calling it again returns the same row. */
+/**
+ * Marks a lesson done for the caller's own assignment. Calling it again returns
+ * the same row. The credit also reaches the caller's other assigned versions of
+ * the course that contain the same lesson with the same hash, linked to the
+ * original completion, so a late completion is not lost.
+ */
 create function public.complete_lesson(p_assignment uuid, p_lesson uuid)
 returns uuid
 language plpgsql security definer set search_path = ''
@@ -1121,6 +1210,7 @@ begin
   if uid is null then raise exception 'not signed in' using errcode = '28000'; end if;
   select * into a from public.assignments where id = p_assignment;
   if not found or a.user_id <> uid then raise exception 'no such assignment' using errcode = 'P0002'; end if;
+  perform private.lock_learner(a.org_id, uid);
   select content_hash into hash from public.version_lessons where version_id = a.version_id and lesson_id = p_lesson;
   if not found then raise exception 'lesson is not in this version' using errcode = 'P0002'; end if;
 
@@ -1132,6 +1222,17 @@ begin
     select id into cid from public.lesson_completions
     where org_id = a.org_id and user_id = uid and version_id = a.version_id and lesson_id = p_lesson;
   end if;
+
+  insert into public.lesson_completions (org_id, user_id, version_id, lesson_id, content_hash, origin_completion_id)
+  select a.org_id, uid, other.version_id, p_lesson, hash,
+    (select coalesce(lc.origin_completion_id, lc.id) from public.lesson_completions lc where lc.id = cid)
+  from public.assignments other
+  join public.curriculum_versions ov on ov.id = other.version_id
+  join public.version_lessons ovl
+    on ovl.version_id = other.version_id and ovl.lesson_id = p_lesson and ovl.content_hash = hash
+  where other.org_id = a.org_id and other.user_id = uid and other.version_id <> a.version_id
+    and ov.course_id = (select course_id from public.curriculum_versions where id = a.version_id)
+  on conflict (org_id, user_id, version_id, lesson_id) do nothing;
   return cid;
 end;
 $$;
@@ -1174,6 +1275,17 @@ begin
   if not (p_source ? 'doi' or p_source ? 'pmid' or p_source ? 'url') then
     perform private.jfail('source', 'needs a doi, pmid or url');
   end if;
+  case p_source ->> 'kind'
+    when 'textbook' then
+      if not p_source ? 'locator' then perform private.jfail('source.locator', 'a textbook needs its edition and page'); end if;
+    when 'position_stand' then
+      if not p_source ? 'doi' then perform private.jfail('source.doi', 'a position stand needs a DOI'); end if;
+    when 'systematic_review', 'meta_analysis' then
+      if not (p_source ? 'doi' or p_source ? 'pmid') then
+        perform private.jfail('source', format('a %s needs a DOI or PMID', p_source ->> 'kind'));
+      end if;
+    else null;
+  end case;
   insert into public.sources (kind, title, doi, pmid, url, locator, license, created_by)
   values (
     private.jenum(p_source -> 'kind', 'source.kind',
@@ -1221,7 +1333,7 @@ $$;
 
 /**
  * Records a claim review. An approval needs a receipt showing the source
- * exists and the claim is faithful to it, and an expiry within five years.
+ * exists and the claim is faithful to it, and a future expiry.
  */
 create function public.publisher_review_claim(p_actor uuid, p_claim uuid, p_review jsonb)
 returns uuid
@@ -1254,8 +1366,8 @@ begin
       perform private.jfail('review.receipt.faithfulness', 'an approval needs a faithful claim');
     end if;
     expires := private.jtimestamp(p_review -> 'expiresAt', 'review.expiresAt');
-    if expires <= clock_timestamp() or expires > clock_timestamp() + interval '5 years' then
-      perform private.jfail('review.expiresAt', 'must be in the future and within five years');
+    if expires <= clock_timestamp() then
+      perform private.jfail('review.expiresAt', 'must be in the future');
     end if;
   elsif p_review ? 'expiresAt' then
     perform private.jfail('review.expiresAt', 'only approvals expire');
@@ -1308,6 +1420,7 @@ declare
   flagged integer;
 begin
   perform private.require_publisher(p_actor);
+  perform private.lock_publishing(true);
   if not exists (select 1 from public.sources where id = p_source) then
     raise exception 'no such source' using errcode = 'P0002';
   end if;
