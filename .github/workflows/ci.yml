@@ -36,3 +36,17 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Lint, typecheck, test, build
         run: pnpm check
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.117.0
+      - name: Start local Supabase
+        run: supabase start -x studio,imgproxy,logflare,vector,edge-runtime,realtime,storage-api,postgres-meta,supavisor
+      - name: Database policy tests
+        run: supabase test db
+      - name: End-to-end tests
+        run: |
+          supabase status -o env --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
+            --override-name auth.publishable_key=NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
+            | grep '^NEXT_PUBLIC_' | sed 's/"//g' >> "$GITHUB_ENV"
+          pnpm --filter web exec playwright install --with-deps chromium
+          pnpm --filter web e2e
