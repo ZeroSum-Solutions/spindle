@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
   ContentParseError,
   blockReviewInputSchema,
+  courseReviewInputSchema,
+  parseReviewTargets,
   isVideoHostUrl,
   lessonBlockSchema,
   lessonReviewInputSchema,
@@ -72,6 +74,19 @@ describe("review receipt bodies", () => {
     expect(lessonReviewInputSchema.safeParse({ ...clean, findings: [{ severity: "WARN", item: "x", note: "x" }] }).success).toBe(false);
     expect(lessonReviewInputSchema.safeParse({ ...clean, checks: { safety: "fail", originality: "pass" } }).success).toBe(false);
     expect(lessonReviewInputSchema.safeParse({ ...clean, verdict: "changes_required", run: undefined, findings: [{ severity: "BLOCK", item: "x", note: "x" }] }).success).toBe(true);
+  });
+
+  it("apply the same rules to a course review, which has no claim set", () => {
+    const { claimIds: _claims, ...course } = clean;
+    expect(courseReviewInputSchema.safeParse(course).success).toBe(true);
+    expect(courseReviewInputSchema.safeParse(clean).success).toBe(false);
+    expect(courseReviewInputSchema.safeParse({ ...course, checks: { safety: "pass", originality: "fail" } }).success).toBe(false);
+  });
+
+  it("parse review targets with the course shell", () => {
+    const targets = { courseId: UUID, course: { hash: HASH, shell: { title: "x" } }, lessons: [{ lessonId: UUID, hash: HASH, claimIds: [], lesson: {}, blocks: [] }] };
+    expect(parseReviewTargets(targets).course.hash).toBe(HASH);
+    expect(() => parseReviewTargets({ ...targets, course: undefined })).toThrow(ContentParseError);
   });
 
   it("need a run for a supported block and a lowercase model id", () => {

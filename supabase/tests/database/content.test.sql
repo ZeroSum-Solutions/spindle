@@ -79,6 +79,9 @@ begin
       jsonb_build_object('verdict', 'clean', 'expectedHash', l -> 'hash', 'claimIds', l -> 'claimIds',
         'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', pg_temp.run()));
   end loop;
+  perform public.publisher_review_course('00000000-0000-0000-0000-0000000000c1', cid, jsonb_build_object('verdict', 'clean',
+    'expectedHash', public.publisher_review_targets('00000000-0000-0000-0000-0000000000c1', cid) -> 'course' -> 'hash',
+    'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', pg_temp.run()));
 end;
 $$;
 create function pg_temp.review_course(cid uuid, verdict text) returns void language plpgsql as $$
@@ -593,6 +596,8 @@ select results_eq($$select * from pg_temp.alice_v2_credit() as t (lesson_id uuid
 select pg_temp.as_service();
 select public.publisher_save_course_draft('00000000-0000-0000-0000-0000000000c1',
   pg_temp.g_tree('The scapula rotates upward as the arm rises.', false, 'Synthetic course, revised'));
+-- Only the course title changed: the lesson receipts still match; the course text needs its own.
+select pg_temp.review_lessons('61000000-0000-4000-8000-000000000000');
 select pg_temp.keep('g_v3', public.publisher_publish_course('00000000-0000-0000-0000-0000000000c1', '61000000-0000-4000-8000-000000000000'));
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
 select pg_temp.keep('tess_v3', public.assign_version('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.id('g_v3'), '00000000-0000-0000-0000-0000000000a3'));
@@ -724,7 +729,7 @@ select is((select count(*) from information_schema.routine_privileges
   'no grant exposes content functions to anon or PUBLIC');
 select is((select array_agg(distinct action order by action) from private.content_audit
   where actor = '00000000-0000-0000-0000-0000000000c1'),
-  array['add_claim', 'add_source', 'publish', 'publish_unchanged', 'record_retraction', 'review_block', 'review_claim', 'review_lesson', 'save_draft'],
+  array['add_claim', 'add_source', 'publish', 'publish_unchanged', 'record_retraction', 'review_block', 'review_claim', 'review_course', 'review_lesson', 'save_draft'],
   'every kind of publisher action is audited under the named actor');
 select ok(exists (select 1 from private.content_audit where actor = '00000000-0000-0000-0000-0000000000a2' and action = 'publish'
   and org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 'a gym publish is audited under the lead');

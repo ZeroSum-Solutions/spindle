@@ -52,6 +52,10 @@ begin
       jsonb_build_object('verdict', 'clean', 'expectedHash', l -> 'hash', 'claimIds', l -> 'claimIds',
         'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', current_setting('c2.run')::jsonb));
   end loop;
+  perform public.publisher_review_course('c2c2c2c2-0000-4000-8000-0000000000a1', 'c2c2c2c2-0000-4000-8000-000000000c01',
+    jsonb_build_object('verdict', 'clean', 'expectedHash', public.publisher_review_targets('c2c2c2c2-0000-4000-8000-0000000000a1',
+      'c2c2c2c2-0000-4000-8000-000000000c01') -> 'course' -> 'hash',
+      'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', current_setting('c2.run')::jsonb));
 end;
 $$;
 select set_config('c2.base_version', public.publisher_publish_course('c2c2c2c2-0000-4000-8000-0000000000a1',

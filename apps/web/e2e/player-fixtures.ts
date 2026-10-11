@@ -262,8 +262,8 @@ export class PlayerWorld {
   }
 
   /**
-   * Saves and publishes a global course as the publisher, recording synthetic block and
-   * lesson receipts against the hashes and claim sets the database reports. Returns the version id.
+   * Saves and publishes a global course as the publisher, recording synthetic block, lesson
+   * and course receipts against the hashes and claim sets the database reports. Returns the version id.
    */
   publishGlobal(course: Json): string {
     if (!this.courses.includes(String(course.id))) this.courses.push(String(course.id));
@@ -278,6 +278,9 @@ export class PlayerWorld {
           'expectedHash', l -> 'hash', 'claimIds', l -> 'claimIds', 'checks', '{"safety": "pass", "originality": "pass"}'::jsonb,
           'findings', '[]'::jsonb, 'run', ${runReceipt(this.run)}))
         from jsonb_path_query(public.publisher_review_targets(${p}, ${c}), '$.lessons[*]') l;
+      select public.publisher_review_course(${p}, ${c}, jsonb_build_object('verdict', 'clean',
+          'expectedHash', public.publisher_review_targets(${p}, ${c}) -> 'course' -> 'hash',
+          'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', ${runReceipt(this.run)}));
       select public.publisher_publish_course(${p}, ${c});
       commit;`)
       .split("\n")
@@ -329,13 +332,14 @@ export class PlayerWorld {
     const orgs = [...this.orgs.values()].map((o) => lit(o.id)).join(", ") || "null";
     const courses = this.courses.map(lit).join(", ") || "null";
     const p = lit(this.publisherId);
-    const tables = ["sources", "claims", "claim_sources", "claim_reviews", "source_retractions", "binding_reviews", "lesson_reviews", "review_runs", "curriculum_versions", "version_lessons", "version_claims", "version_flags"];
+    const tables = ["sources", "claims", "claim_sources", "claim_reviews", "source_retractions", "binding_reviews", "lesson_reviews", "course_reviews", "review_runs", "curriculum_versions", "version_lessons", "version_claims", "version_flags"];
     sql(`begin;
       ${tables.map((t) => `alter table public.${t} disable trigger user;`).join("\n")}
       delete from public.orgs where id in (${orgs});
       delete from public.courses where id in (${courses});
       delete from public.binding_reviews where reviewer = ${p};
       delete from public.lesson_reviews where reviewer = ${p};
+      delete from public.course_reviews where reviewer = ${p};
       delete from public.claim_reviews where reviewer = ${p};
       delete from public.version_flags where source_id in (select id from public.sources where created_by = ${p});
       delete from public.source_retractions where recorded_by = ${p};
@@ -355,6 +359,7 @@ export class PlayerWorld {
       + (select count(*) from public.claim_reviews where reviewer = ${p})
       + (select count(*) from public.binding_reviews where reviewer = ${p})
       + (select count(*) from public.lesson_reviews where reviewer = ${p})
+      + (select count(*) from public.course_reviews where reviewer = ${p})
       + (select count(*) from public.review_runs where recorded_by = ${p})
       + (select count(*) from public.source_retractions where recorded_by = ${p})
       + (select count(*) from public.curriculum_versions where course_id in (${courses}))

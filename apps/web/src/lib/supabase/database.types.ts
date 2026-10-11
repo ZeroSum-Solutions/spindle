@@ -306,6 +306,59 @@ export type Database = {
           },
         ]
       }
+      course_reviews: {
+        Row: {
+          course_id: string
+          created_at: string
+          findings: Json
+          id: string
+          notes: string
+          originality: string
+          reviewer: string
+          run_id: string | null
+          safety: string
+          seq: number
+          shell_hash: string
+          verdict: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          findings: Json
+          id?: string
+          notes?: string
+          originality: string
+          reviewer: string
+          run_id?: string | null
+          safety: string
+          seq?: never
+          shell_hash: string
+          verdict: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          findings?: Json
+          id?: string
+          notes?: string
+          originality?: string
+          reviewer?: string
+          run_id?: string | null
+          safety?: string
+          seq?: never
+          shell_hash?: string
+          verdict?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_reviews_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "review_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           created_at: string
@@ -1265,6 +1318,10 @@ export type Database = {
       }
       publisher_review_claim: {
         Args: { p_actor: string; p_claim: string; p_review: Json }
+        Returns: string
+      }
+      publisher_review_course: {
+        Args: { p_actor: string; p_course: string; p_review: Json }
         Returns: string
       }
       publisher_review_lesson: {

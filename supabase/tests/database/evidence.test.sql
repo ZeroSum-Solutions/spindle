@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(145);
+select plan(155);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -120,7 +120,12 @@ create function pg_temp.supported(target jsonb, tag text) returns jsonb language
   select jsonb_build_object('verdict', 'supported', 'expectedHash', target -> 'hash', 'claimIds', target -> 'claimIds',
     'run', pg_temp.run(tag))
 $$;
-/** Records synthetic block and lesson receipts for the course exactly as it is now. */
+create function pg_temp.review_shell(cid uuid, tag text) returns uuid language sql as $$
+  select public.publisher_review_course(pg_temp.pat(), cid, jsonb_build_object('verdict', 'clean',
+    'expectedHash', pg_temp.targets(cid) -> 'course' -> 'hash', 'checks', '{"safety": "pass", "originality": "pass"}'::jsonb,
+    'findings', '[]'::jsonb, 'run', pg_temp.run(tag)))
+$$;
+/** Records synthetic block, lesson and course receipts for the course exactly as it is now. */
 create function pg_temp.review_all(cid uuid, tag text) returns void language plpgsql as $$
 declare
   l jsonb;
@@ -134,6 +139,7 @@ begin
     end loop;
     perform public.publisher_review_lesson(pg_temp.pat(), (l ->> 'lessonId')::uuid, pg_temp.clean(l, tag));
   end loop;
+  perform pg_temp.review_shell(cid, tag);
 end;
 $$;
 
@@ -151,6 +157,7 @@ create function pg_temp.s_tree(body text, claims uuid[], cue text) returns jsonb
     pg_temp.lesson('71000000-0000-4000-8000-000000000011', 'stale', jsonb_build_array(pg_temp.sci(body, claims), pg_temp.prac(cue)))))
 $$;
 select pg_temp.save(pg_temp.s_tree('The cuff has four muscles.', array[pg_temp.id('c_ok')], 'Cue a tall posture.'));
+select pg_temp.review_shell('71000000-0000-4000-8000-000000000000', 'shell');
 create function pg_temp.s_block() returns jsonb language sql as $$
   select pg_temp.targets('71000000-0000-4000-8000-000000000000') -> 'lessons' -> 0 -> 'blocks' -> 0
 $$;
@@ -247,6 +254,58 @@ select lives_ok($$select public.publisher_review_lesson(pg_temp.pat(), pg_temp.i
   pg_temp.clean(pg_temp.lesson_target('71000000-0000-4000-8000-000000000000', pg_temp.id('l_stale')), 'l2'))$$,
   'a fresh clean review of the new lesson records');
 select lives_ok($$select pg_temp.publish('71000000-0000-4000-8000-000000000000')$$, 'after a fresh clean review it publishes');
+
+-- 2b. Course text needs its own receipt; a phase-2 version is not reused --------------------------
+select pg_temp.save(pg_temp.s_tree('The cuff has five muscles.', array[pg_temp.id('c_ok'), pg_temp.id('c_other')], 'Cue a slouch.')
+  || '{"description": "Unreviewed course guidance."}');
+select throws_ok($$select pg_temp.publish('71000000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: course 71000000-0000-4000-8000-000000000000 has no clean course review for its exact text',
+  'changed course text cannot publish on an older course receipt');
+select is((pg_temp.targets('71000000-0000-4000-8000-000000000000') -> 'course' -> 'shell') ->> 'description',
+  'Unreviewed course guidance.', 'the course target carries the text to review');
+select throws_ok($$select public.publisher_review_course(pg_temp.pat(), '71000000-0000-4000-8000-000000000000',
+  jsonb_build_object('verdict', 'clean', 'expectedHash', repeat('b', 64), 'checks', '{"safety": "pass", "originality": "pass"}'::jsonb,
+    'findings', '[]'::jsonb, 'run', pg_temp.run('shell-2')))$$, 'P0001',
+  'stale review: course 71000000-0000-4000-8000-000000000000 changed after its review packet was built', 'a stale course review is refused');
+select throws_ok($$select public.publisher_review_course(pg_temp.pat(), '71000000-0000-4000-8000-000000000000',
+  jsonb_build_object('verdict', 'clean', 'expectedHash', pg_temp.targets('71000000-0000-4000-8000-000000000000') -> 'course' -> 'hash',
+    'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '{}'::jsonb, 'run', pg_temp.run('shell-2')))$$,
+  '22023', 'invalid review.findings: must be an array of at most 200 findings', 'course review findings must be an array');
+select lives_ok($$select pg_temp.review_shell('71000000-0000-4000-8000-000000000000', 'shell-2')$$, 'a course review of the current text records');
+select lives_ok($$select pg_temp.keep('s_v3', pg_temp.publish('71000000-0000-4000-8000-000000000000'))$$,
+  'with the course text reviewed it publishes');
+select pg_temp.reset_role();
+-- A version published under the phase-2 rules, with the same content as the draft.
+insert into public.curriculum_versions (course_id, org_id, layer, version_number, snapshot, content_hash, published_by, rules)
+select course_id, null, layer, version_number + 1, snapshot, content_hash, published_by, 'phase2'
+from public.curriculum_versions where id = pg_temp.id('s_v3');
+select pg_temp.as_service();
+select pg_temp.keep('s_v5', pg_temp.publish('71000000-0000-4000-8000-000000000000'));
+select ok((select rules = 'phase3' and version_number = 5 from public.curriculum_versions where id = pg_temp.id('s_v5')),
+  'republishing a tree whose latest version is phase-2 makes a new phase-3 version');
+select pg_temp.reset_role();
+insert into public.lesson_blocks (lesson_id, org_id, ordinal, kind, support, content, content_hash)
+select '71000000-0000-4000-8000-000000000011', null, 9, 'image', null, c, private.block_hash('image', c)
+from (select jsonb_build_object('kind', 'image', 'src', 'https://www.youtube.com/watch?v=AbCdEfGhIj0', 'alt', 'x', 'caption', '',
+  'provenanceId', 'p1') as c) t;
+select pg_temp.as_service();
+select throws_ok($$select pg_temp.publish('71000000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 71000000-0000-4000-8000-000000000011 has media on a video host; use a registry video block',
+  'media saved around the validator cannot smuggle YouTube in');
+select pg_temp.reset_role();
+delete from public.lesson_blocks where lesson_id = '71000000-0000-4000-8000-000000000011' and ordinal = 9;
+update public.lessons set media = jsonb_build_array(jsonb_build_object('kind', 'video', 'src', 'https://youtu.be/AbCdEfGhIj0',
+  'alt', 'x', 'caption', '', 'provenanceId', 'p1')) where id = '71000000-0000-4000-8000-000000000011';
+select pg_temp.as_service();
+select throws_ok($$select pg_temp.publish('71000000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: course 71000000-0000-4000-8000-000000000000 has lesson media on a video host; use a registry video block',
+  'lesson media saved around the validator cannot smuggle YouTube in');
+select pg_temp.reset_role();
+update public.lessons set media = '[]' where id = '71000000-0000-4000-8000-000000000011';
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000c2');
+select throws_ok($$select public.publisher_review_course(pg_temp.pat(), '71000000-0000-4000-8000-000000000000', '{}')$$, '42501', null,
+  'a signed-in user cannot record a course review');
+select pg_temp.as_service();
 
 -- 3. Run metadata is separate from the publisher actor ----------------------------------------
 select pg_temp.reset_role();
@@ -701,6 +760,7 @@ select throws_ok($$insert into public.quiz_attempts (org_id, user_id, version_id
 -- Across versions and gyms: credit carries only on an unchanged question set, in the same gym.
 select pg_temp.as_service();
 select pg_temp.save(pg_temp.q_tree('Q five?', 'Quiz course, retitled'));
+select pg_temp.review_shell('79000000-0000-4000-8000-000000000000', 'quiz-2');
 select pg_temp.keep('q_v2', pg_temp.publish('79000000-0000-4000-8000-000000000000'));
 select pg_temp.save(pg_temp.q_tree('Q five, reworded?', 'Quiz course, retitled'));
 select pg_temp.review_all('79000000-0000-4000-8000-000000000000', 'quiz-3');
@@ -758,7 +818,7 @@ reset role;
 
 -- 10. Privileges and hygiene -------------------------------------------------------------------
 create temp table p3_tables (name text);
-insert into p3_tables values ('review_runs'), ('lesson_reviews'), ('practice_media'), ('practice_media_checks'),
+insert into p3_tables values ('review_runs'), ('lesson_reviews'), ('course_reviews'), ('practice_media'), ('practice_media_checks'),
   ('practice_media_status'), ('practice_media_metadata'), ('quiz_attempts');
 select is((select count(*) from p3_tables t, (values ('anon'), ('authenticated'), ('service_role')) r (role),
     (values ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE'), ('REFERENCES'), ('TRIGGER')) p (priv)
@@ -771,7 +831,7 @@ select is((select count(*) from p3_tables t where has_table_privilege('anon', 'p
 select ok((select bool_and(c.relrowsecurity) from p3_tables t join pg_class c on c.oid = ('public.' || t.name)::regclass),
   'RLS is on for every phase-3 table');
 select is((select count(*) from (values ('publisher_claim_target(uuid,uuid)'), ('publisher_review_targets(uuid,uuid)'),
-    ('publisher_review_lesson(uuid,uuid,jsonb)'), ('publisher_admit_media(uuid,jsonb)'), ('publisher_record_media_check(uuid,uuid,jsonb)'),
+    ('publisher_review_lesson(uuid,uuid,jsonb)'), ('publisher_review_course(uuid,uuid,jsonb)'), ('publisher_admit_media(uuid,jsonb)'), ('publisher_record_media_check(uuid,uuid,jsonb)'),
     ('publisher_set_media_status(uuid,uuid,jsonb)'), ('publisher_refresh_media_metadata(uuid,uuid,jsonb)')) f (sig),
     (values ('anon'), ('authenticated')) r (role)
   where has_function_privilege(r.role, 'public.' || f.sig, 'EXECUTE')), 0::bigint,
@@ -787,7 +847,7 @@ select is((select count(*) from pg_proc p where p.prosecdef and p.pronamespace i
   and not coalesce(p.proconfig, '{}') @> array['search_path=""']), 0::bigint,
   'every security-definer function pins an empty search_path');
 select ok((select array_agg(distinct action) from private.content_audit where actor = '00000000-0000-0000-0000-0000000000c1')
-  @> array['review_lesson', 'admit_media', 'check_media', 'set_media_status', 'refresh_media_metadata', 'review_block', 'review_claim'],
+  @> array['review_lesson', 'review_course', 'admit_media', 'check_media', 'set_media_status', 'refresh_media_metadata', 'review_block', 'review_claim'],
   'every new publisher action is audited under the named actor');
 
 select * from finish();

@@ -89,10 +89,12 @@ alter table public.source_retractions disable trigger user; alter table public.b
 alter table public.curriculum_versions disable trigger user; alter table public.version_lessons disable trigger user;
 alter table public.version_claims disable trigger user; alter table public.version_flags disable trigger user;
 alter table public.review_runs disable trigger user; alter table public.lesson_reviews disable trigger user;
+alter table public.course_reviews disable trigger user;
 delete from public.orgs where id = '$ORG';
 delete from public.courses where id in ('$C1', '$C2', '$C4');
 delete from public.binding_reviews where reviewer = '$P';
 delete from public.lesson_reviews where reviewer = '$P';
+delete from public.course_reviews where reviewer = '$P';
 delete from public.claim_reviews where reviewer = '$P';
 delete from public.source_retractions where recorded_by = '$P';
 delete from public.claim_sources where claim_id in (select id from public.claims where created_by = '$P');
@@ -107,6 +109,7 @@ alter table public.source_retractions enable trigger user; alter table public.bi
 alter table public.curriculum_versions enable trigger user; alter table public.version_lessons enable trigger user;
 alter table public.version_claims enable trigger user; alter table public.version_flags enable trigger user;
 alter table public.review_runs enable trigger user; alter table public.lesson_reviews enable trigger user;
+alter table public.course_reviews enable trigger user;
 commit;
 SQL
   [ "$(q "select count(*) from auth.users where id in ('$P', '$O', '$T1', '$T2')")" = 0 ]
@@ -177,6 +180,10 @@ select public.publisher_review_block('$P', (b ->> 'blockId')::uuid, jsonb_build_
 from unnest(array['$C1', '$C2']::uuid[]) c, jsonb_path_query(public.publisher_review_targets('$P', c), '\$.lessons[*].blocks[*]') b;
 select $(lesson_review "(l ->> 'lessonId')::uuid" "l -> 'hash'" "l -> 'claimIds'")
 from unnest(array['$C1', '$C2']::uuid[]) c, jsonb_path_query(public.publisher_review_targets('$P', c), '\$.lessons[*]') l;
+select public.publisher_review_course('$P', c, jsonb_build_object('verdict', 'clean',
+  'expectedHash', public.publisher_review_targets('$P', c) -> 'course' -> 'hash',
+  'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', '$RUNJ'::jsonb))
+from unnest(array['$C1', '$C2']::uuid[]) c;
 commit;
 begin;
 $(as_user "$O")

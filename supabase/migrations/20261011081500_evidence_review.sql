@@ -7,8 +7,9 @@
 -- - A positive review (approved claim, supported block, clean lesson) needs a
 --   model run receipt and the exact database-computed hash (and sorted claim
 --   set) the reviewer saw. A stale packet is refused, never re-stamped.
--- - Global (founder) content needs a clean lesson receipt for every lesson.
---   The gym method path keeps its phase-2 rules: practice-based, no receipts.
+-- - Global (founder) content needs a clean lesson receipt for every lesson and
+--   a clean course receipt for its course and part text. The gym method path
+--   keeps its phase-2 rules: practice-based, no receipts.
 -- - Claim approvals last at most 24 months, whatever an older row says.
 -- - Videos live in a practice-media registry, never in `sources`.
 -- - Quiz attempts are scored here, from the assigned immutable version.
@@ -58,6 +59,29 @@ create table public.lesson_reviews (
     and not jsonb_path_exists(findings, '$[*] ? (@.severity == "BLOCK" || @.severity == "WARN")')))
 );
 create index lesson_reviews_key_idx on public.lesson_reviews (lesson_id, lesson_hash, seq desc);
+
+/**
+ * The same verdict for a global course's own text: title, subtitle,
+ * description, outcomes, part titles and summaries, and the lesson order
+ * (the snapshot without lesson bodies, see private.course_shell).
+ */
+create table public.course_reviews (
+  id uuid primary key default gen_random_uuid(),
+  seq bigint generated always as identity unique,
+  course_id uuid not null,
+  shell_hash text not null check (shell_hash ~ '^[0-9a-f]{64}$'),
+  verdict text not null check (verdict in ('clean', 'changes_required')),
+  safety text not null check (safety in ('pass', 'fail')),
+  originality text not null check (originality in ('pass', 'fail')),
+  findings jsonb not null check (jsonb_typeof(findings) = 'array'),
+  notes text not null default '' check (char_length(notes) <= 2000),
+  run_id uuid references public.review_runs (id),
+  reviewer uuid not null,
+  created_at timestamptz not null default now(),
+  check (verdict <> 'clean' or (run_id is not null and safety = 'pass' and originality = 'pass'
+    and not jsonb_path_exists(findings, '$[*] ? (@.severity == "BLOCK" || @.severity == "WARN")')))
+);
+create index course_reviews_key_idx on public.course_reviews (course_id, shell_hash, seq desc);
 
 -- Practice-media registry ---------------------------------------------------------
 -- Coaching clips. Never a `sources` row and never evidence for a claim. The
@@ -166,7 +190,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['review_runs', 'lesson_reviews', 'practice_media', 'practice_media_checks',
+  foreach t in array array['review_runs', 'lesson_reviews', 'course_reviews', 'practice_media', 'practice_media_checks',
     'practice_media_status'] loop
     execute format('create trigger %I before update or delete on public.%I for each row execute function private.guard_immutable()',
       t || '_immutable', t);
@@ -417,6 +441,68 @@ returns text
 language sql stable security definer set search_path = ''
 as $$ select private.sha256(private.lesson_json(p_lesson)) $$;
 
+/** The course snapshot without lesson bodies: course and part text plus each part's lesson order. */
+create function private.course_shell(p_course uuid)
+returns jsonb
+language sql stable security definer set search_path = ''
+as $$
+  select (s - 'parts') || jsonb_build_object('parts', coalesce((
+    select jsonb_agg((p - 'lessons') || jsonb_build_object('lessonIds', coalesce((
+        select jsonb_agg(l -> 'id' order by lo) from jsonb_array_elements(p -> 'lessons') with ordinality as ls (l, lo)), '[]'::jsonb))
+      order by po)
+    from jsonb_array_elements(s -> 'parts') with ordinality as ps (p, po)), '[]'::jsonb))
+  from (select private.course_snapshot(p_course) as s) t
+$$;
+
+/**
+ * Validates the shared body of a lesson or course review and returns it
+ * normalized: verdict, safety, originality, findings, notes. 'clean' needs a
+ * run, both checks passing and no BLOCK or WARN finding.
+ */
+create function private.review_body(p_review jsonb)
+returns jsonb
+language plpgsql immutable set search_path = ''
+as $$
+declare
+  verdict text;
+  safety text;
+  originality text;
+  findings jsonb := '[]'::jsonb;
+  f jsonb;
+  worst text := 'none';
+begin
+  verdict := private.jenum(p_review -> 'verdict', 'review.verdict', array['clean', 'changes_required']);
+  perform private.jobject(p_review -> 'checks', 'review.checks', array['safety', 'originality'], array['safety', 'originality']);
+  safety := private.jenum(p_review -> 'checks' -> 'safety', 'review.checks.safety', array['pass', 'fail']);
+  originality := private.jenum(p_review -> 'checks' -> 'originality', 'review.checks.originality', array['pass', 'fail']);
+  if jsonb_typeof(p_review -> 'findings') is distinct from 'array' then
+    perform private.jfail('review.findings', 'must be an array of at most 200 findings');
+  end if;
+  if jsonb_array_length(p_review -> 'findings') > 200 then
+    perform private.jfail('review.findings', 'must be an array of at most 200 findings');
+  end if;
+  for i in 0 .. jsonb_array_length(p_review -> 'findings') - 1 loop
+    f := p_review -> 'findings' -> i;
+    perform private.jobject(f, format('review.findings[%s]', i), array['severity', 'item', 'note'], array['severity', 'item', 'note']);
+    f := jsonb_build_object(
+      'severity', private.jenum(f -> 'severity', format('review.findings[%s].severity', i), array['BLOCK', 'WARN', 'NIT']),
+      'item', private.jstr(f -> 'item', format('review.findings[%s].item', i), 1, 200),
+      'note', private.jstr(f -> 'note', format('review.findings[%s].note', i), 1, 2000));
+    if f ->> 'severity' in ('BLOCK', 'WARN') then worst := f ->> 'severity'; end if;
+    findings := findings || jsonb_build_array(f);
+  end loop;
+  if verdict = 'clean' then
+    if worst <> 'none' then perform private.jfail('review.verdict', 'a clean review has no BLOCK or WARN finding'); end if;
+    if safety <> 'pass' or originality <> 'pass' then
+      perform private.jfail('review.verdict', 'a clean review passes the safety and originality checks');
+    end if;
+    if not p_review ? 'run' then perform private.jfail('review.run', 'a clean review needs a model run receipt'); end if;
+  end if;
+  return jsonb_build_object('verdict', verdict, 'safety', safety, 'originality', originality, 'findings', findings,
+    'notes', case when p_review ? 'notes' then private.jstr(p_review -> 'notes', 'review.notes', 0, 2000) else '' end);
+end;
+$$;
+
 -- The claim lifecycle ------------------------------------------------------------------
 
 /** An approval is valid for 24 months at most, whatever expiry an older row carries. */
@@ -498,6 +584,17 @@ as $$
   select coalesce((
     select verdict = 'clean' and run_id is not null from public.lesson_reviews
     where lesson_id = p_lesson and lesson_hash = p_hash and claim_ids = p_claims
+    order by seq desc limit 1), false)
+$$;
+
+/** True when the latest review of this exact course shell is clean. */
+create function private.course_review_clean(p_course uuid, p_hash text)
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select coalesce((
+    select verdict = 'clean' and run_id is not null from public.course_reviews
+    where course_id = p_course and shell_hash = p_hash
     order by seq desc limit 1), false)
 $$;
 
@@ -700,6 +797,11 @@ begin
         using errcode = 'P0001';
     end if;
     claim_set := array(select bc.claim_id from public.block_claims bc where bc.block_id = b.id order by bc.claim_id);
+    -- Media saved before this migration is not re-validated on save, so check here too.
+    if b.kind = 'image' and private.is_video_host_url(b.content ->> 'src') then
+      raise exception 'publish gate: lesson % has media on a video host; use a registry video block', b.lesson_id
+        using errcode = 'P0001';
+    end if;
     if b.kind = 'video' then
       if c.org_id is not null then
         raise exception 'publish gate: lesson % is gym method content, which cannot embed registry videos', b.lesson_id
@@ -747,9 +849,15 @@ begin
     end if;
   end loop;
 
+  if exists (select 1 from public.lessons l, jsonb_array_elements(l.media) m
+             where l.course_id = p_course and private.is_video_host_url(m ->> 'src')) then
+    raise exception 'publish gate: course % has lesson media on a video host; use a registry video block', p_course
+      using errcode = 'P0001';
+  end if;
+
   -- Founder (global) content: a clean lesson receipt on the exact lesson hash,
-  -- practice text and frozen video fields included. Gym method content keeps
-  -- the phase-2 rules.
+  -- practice text and frozen video fields included, and a clean course receipt
+  -- on the course and part text. Gym method content keeps the phase-2 rules.
   if c.org_id is null then
     for les in select id from public.lessons where course_id = p_course order by id loop
       if not private.lesson_review_clean(les.id, private.lesson_hash(les.id), private.lesson_claims(les.id)) then
@@ -757,12 +865,17 @@ begin
           using errcode = 'P0001';
       end if;
     end loop;
+    if not private.course_review_clean(p_course, private.sha256(private.course_shell(p_course))) then
+      raise exception 'publish gate: course % has no clean course review for its exact text', p_course
+        using errcode = 'P0001';
+    end if;
   end if;
 
   snap := private.course_snapshot(p_course);
   hash := private.sha256(snap);
   select * into latest from public.curriculum_versions where course_id = p_course order by version_number desc limit 1;
-  if found and latest.content_hash = hash then
+  -- A tree last published under the phase-2 rules gets a new phase-3 version.
+  if found and latest.content_hash = hash and latest.rules = 'phase3' then
     perform private.audit(p_actor, 'publish_unchanged', c.org_id, latest.id);
     return latest.id;
   end if;
@@ -955,9 +1068,10 @@ end;
 $$;
 
 /**
- * Everything a reviewer needs to build block and lesson packets for a global
- * draft: each lesson's snapshot JSON, hash and claim set, and each block's
- * id, hash and claim set. Send the hashes and claim sets back with the review.
+ * Everything a reviewer needs to build course, lesson and block packets for a
+ * global draft: the course shell and its hash, each lesson's snapshot JSON,
+ * hash and claim set, and each block's id, hash and claim set. Send the
+ * hashes and claim sets back with the review.
  */
 create function public.publisher_review_targets(p_actor uuid, p_course uuid)
 returns jsonb
@@ -970,7 +1084,9 @@ begin
   if not exists (select 1 from public.courses where id = p_course and org_id is null) then
     raise exception 'no such global course' using errcode = 'P0002';
   end if;
-  select jsonb_build_object('courseId', p_course, 'lessons', coalesce(jsonb_agg(jsonb_build_object(
+  select jsonb_build_object('courseId', p_course,
+    'course', jsonb_build_object('hash', private.sha256(private.course_shell(p_course)), 'shell', private.course_shell(p_course)),
+    'lessons', coalesce(jsonb_agg(jsonb_build_object(
       'lessonId', l.id,
       'hash', private.lesson_hash(l.id),
       'claimIds', to_jsonb(private.lesson_claims(l.id)),
@@ -1021,6 +1137,7 @@ begin
   select l.course_id into course from public.lesson_blocks lb join public.lessons l on l.id = lb.lesson_id
   where lb.id = p_block and lb.org_id is null;
   if not found then raise exception 'no such global block' using errcode = 'P0002'; end if;
+  perform private.require_read_committed();
   perform 1 from public.courses where id = course for share;
   -- A later statement sees anything a concurrent save committed before the lock.
   select * into b from public.lesson_blocks where id = p_block and org_id is null;
@@ -1057,12 +1174,7 @@ declare
   course uuid;
   expected_hash text;
   expected_claims uuid[];
-  verdict text;
-  safety text;
-  originality text;
-  findings jsonb := '[]'::jsonb;
-  f jsonb;
-  worst text := 'none';
+  body jsonb;
   run uuid;
   rid uuid;
 begin
@@ -1070,36 +1182,15 @@ begin
   perform private.jobject(p_review, 'review',
     array['verdict', 'expectedHash', 'claimIds', 'checks', 'findings', 'notes', 'run'],
     array['verdict', 'expectedHash', 'claimIds', 'checks', 'findings']);
-  verdict := private.jenum(p_review -> 'verdict', 'review.verdict', array['clean', 'changes_required']);
   expected_hash := private.jhash(p_review -> 'expectedHash', 'review.expectedHash');
   expected_claims := private.juuids(p_review -> 'claimIds', 'review.claimIds', 1000);
-  perform private.jobject(p_review -> 'checks', 'review.checks', array['safety', 'originality'], array['safety', 'originality']);
-  safety := private.jenum(p_review -> 'checks' -> 'safety', 'review.checks.safety', array['pass', 'fail']);
-  originality := private.jenum(p_review -> 'checks' -> 'originality', 'review.checks.originality', array['pass', 'fail']);
-  if jsonb_typeof(p_review -> 'findings') is distinct from 'array' or jsonb_array_length(p_review -> 'findings') > 200 then
-    perform private.jfail('review.findings', 'must be an array of at most 200 findings');
-  end if;
-  for i in 0 .. jsonb_array_length(p_review -> 'findings') - 1 loop
-    f := p_review -> 'findings' -> i;
-    perform private.jobject(f, format('review.findings[%s]', i), array['severity', 'item', 'note'], array['severity', 'item', 'note']);
-    f := jsonb_build_object(
-      'severity', private.jenum(f -> 'severity', format('review.findings[%s].severity', i), array['BLOCK', 'WARN', 'NIT']),
-      'item', private.jstr(f -> 'item', format('review.findings[%s].item', i), 1, 200),
-      'note', private.jstr(f -> 'note', format('review.findings[%s].note', i), 1, 2000));
-    if f ->> 'severity' in ('BLOCK', 'WARN') then worst := f ->> 'severity'; end if;
-    findings := findings || jsonb_build_array(f);
-  end loop;
-  if verdict = 'clean' then
-    if worst <> 'none' then perform private.jfail('review.verdict', 'a clean review has no BLOCK or WARN finding'); end if;
-    if safety <> 'pass' or originality <> 'pass' then
-      perform private.jfail('review.verdict', 'a clean review passes the safety and originality checks');
-    end if;
-    if not p_review ? 'run' then perform private.jfail('review.run', 'a clean review needs a model run receipt'); end if;
-  end if;
+  body := private.review_body(p_review);
 
   select course_id into course from public.lessons where id = p_lesson and org_id is null;
   if not found then raise exception 'no such global lesson' using errcode = 'P0002'; end if;
+  perform private.require_read_committed();
   perform 1 from public.courses where id = course for share;
+  -- A later statement sees anything a concurrent save committed before the lock.
   if not exists (select 1 from public.lessons where id = p_lesson and org_id is null) then
     raise exception 'no such global lesson' using errcode = 'P0002';
   end if;
@@ -1109,12 +1200,49 @@ begin
   if p_review ? 'run' then run := private.record_run(p_actor, p_review -> 'run', 'review.run'); end if;
   insert into public.lesson_reviews (lesson_id, lesson_hash, claim_ids, verdict, safety, originality, findings, notes,
     run_id, reviewer)
-  values (p_lesson, expected_hash, expected_claims, verdict, safety, originality, findings,
-    case when p_review ? 'notes' then private.jstr(p_review -> 'notes', 'review.notes', 0, 2000) else '' end,
-    run, p_actor)
+  values (p_lesson, expected_hash, expected_claims, body ->> 'verdict', body ->> 'safety', body ->> 'originality',
+    body -> 'findings', body ->> 'notes', run, p_actor)
   returning id into rid;
   perform private.audit(p_actor, 'review_lesson', null, p_lesson,
-    jsonb_build_object('review_id', rid, 'lesson_hash', expected_hash, 'verdict', verdict));
+    jsonb_build_object('review_id', rid, 'lesson_hash', expected_hash, 'verdict', body ->> 'verdict'));
+  return rid;
+end;
+$$;
+
+/**
+ * Records a review of a global course's own text (private.course_shell)
+ * against the shell hash the reviewer saw, with the same rules as a lesson review.
+ */
+create function public.publisher_review_course(p_actor uuid, p_course uuid, p_review jsonb)
+returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  expected_hash text;
+  body jsonb;
+  run uuid;
+  rid uuid;
+begin
+  perform private.require_publisher(p_actor);
+  perform private.jobject(p_review, 'review', array['verdict', 'expectedHash', 'checks', 'findings', 'notes', 'run'],
+    array['verdict', 'expectedHash', 'checks', 'findings']);
+  expected_hash := private.jhash(p_review -> 'expectedHash', 'review.expectedHash');
+  body := private.review_body(p_review);
+  if not exists (select 1 from public.courses where id = p_course and org_id is null) then
+    raise exception 'no such global course' using errcode = 'P0002';
+  end if;
+  perform private.require_read_committed();
+  perform 1 from public.courses where id = p_course for share;
+  if private.sha256(private.course_shell(p_course)) <> expected_hash then
+    raise exception 'stale review: course % changed after its review packet was built', p_course using errcode = 'P0001';
+  end if;
+  if p_review ? 'run' then run := private.record_run(p_actor, p_review -> 'run', 'review.run'); end if;
+  insert into public.course_reviews (course_id, shell_hash, verdict, safety, originality, findings, notes, run_id, reviewer)
+  values (p_course, expected_hash, body ->> 'verdict', body ->> 'safety', body ->> 'originality', body -> 'findings',
+    body ->> 'notes', run, p_actor)
+  returning id into rid;
+  perform private.audit(p_actor, 'review_course', null, p_course,
+    jsonb_build_object('review_id', rid, 'shell_hash', expected_hash, 'verdict', body ->> 'verdict'));
   return rid;
 end;
 $$;
@@ -1417,8 +1545,8 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['review_runs', 'lesson_reviews', 'practice_media', 'practice_media_checks', 'practice_media_status',
-    'practice_media_metadata', 'quiz_attempts'] loop
+  foreach t in array array['review_runs', 'lesson_reviews', 'course_reviews', 'practice_media', 'practice_media_checks',
+    'practice_media_status', 'practice_media_metadata', 'quiz_attempts'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('revoke all on public.%I from public, anon, authenticated, service_role', t);
     execute format('grant select on public.%I to service_role', t);
@@ -1431,6 +1559,10 @@ grant select on public.quiz_attempts to authenticated;
 create policy quiz_attempts_select on public.quiz_attempts for select to authenticated
   using (user_id = (select auth.uid()) or private.role_in(org_id) in ('owner', 'lead'));
 
+-- Identity sequences of the new tables: no client needs them (inserts run in definer functions).
+revoke all on sequence public.lesson_reviews_seq_seq, public.course_reviews_seq_seq, public.practice_media_checks_seq_seq,
+  public.practice_media_status_seq_seq from public, anon, authenticated, service_role;
+
 revoke all on all functions in schema private from public, anon, authenticated, service_role;
 grant execute on function private.role_in(uuid), private.is_member(uuid), private.path_org(text) to authenticated;
 
@@ -1441,11 +1573,13 @@ grant execute on function public.version_integrity(uuid), public.version_media(u
   public.submit_quiz_attempt(uuid, uuid, jsonb), public.module_status(uuid) to authenticated;
 
 revoke all on function public.publisher_claim_target(uuid, uuid), public.publisher_review_targets(uuid, uuid),
-  public.publisher_review_lesson(uuid, uuid, jsonb), public.publisher_admit_media(uuid, jsonb),
+  public.publisher_review_lesson(uuid, uuid, jsonb), public.publisher_review_course(uuid, uuid, jsonb),
+  public.publisher_admit_media(uuid, jsonb),
   public.publisher_record_media_check(uuid, uuid, jsonb), public.publisher_set_media_status(uuid, uuid, jsonb),
   public.publisher_refresh_media_metadata(uuid, uuid, jsonb)
   from public, anon, authenticated, service_role;
 grant execute on function public.publisher_claim_target(uuid, uuid), public.publisher_review_targets(uuid, uuid),
-  public.publisher_review_lesson(uuid, uuid, jsonb), public.publisher_admit_media(uuid, jsonb),
+  public.publisher_review_lesson(uuid, uuid, jsonb), public.publisher_review_course(uuid, uuid, jsonb),
+  public.publisher_admit_media(uuid, jsonb),
   public.publisher_record_media_check(uuid, uuid, jsonb), public.publisher_set_media_status(uuid, uuid, jsonb),
   public.publisher_refresh_media_metadata(uuid, uuid, jsonb) to service_role;

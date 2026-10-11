@@ -43,26 +43,36 @@ export interface LessonReviewInput {
   run?: ReviewRun;
 }
 
+const reviewBody = {
+  verdict: z.enum(["clean", "changes_required"]),
+  expectedHash: hash,
+  checks: z.strictObject({ safety: z.enum(["pass", "fail"]), originality: z.enum(["pass", "fail"]) }),
+  findings: z
+    .array(z.strictObject({ severity: z.enum(["BLOCK", "WARN", "NIT"]), item: z.string().min(1).max(200), note: z.string().min(1).max(2000) }))
+    .max(200),
+  notes: z.string().max(2000).optional(),
+  run: reviewRunSchema.optional(),
+};
+
+type ReviewBody = Omit<LessonReviewInput, "claimIds">;
+
+function cleanMeansClean(r: ReviewBody, ctx: z.core.$RefinementCtx): void {
+  if (r.verdict !== "clean") return;
+  if (r.findings.some((f) => f.severity !== "NIT")) ctx.addIssue({ code: "custom", path: ["verdict"], message: "a clean review has no BLOCK or WARN finding" });
+  if (r.checks.safety !== "pass" || r.checks.originality !== "pass") {
+    ctx.addIssue({ code: "custom", path: ["verdict"], message: "a clean review passes the safety and originality checks" });
+  }
+  if (!r.run) ctx.addIssue({ code: "custom", path: ["run"], message: "a clean review needs a model run receipt" });
+}
+
 export const lessonReviewInputSchema = z
-  .strictObject({
-    verdict: z.enum(["clean", "changes_required"]),
-    expectedHash: hash,
-    claimIds: z.array(idSchema).max(1000),
-    checks: z.strictObject({ safety: z.enum(["pass", "fail"]), originality: z.enum(["pass", "fail"]) }),
-    findings: z
-      .array(z.strictObject({ severity: z.enum(["BLOCK", "WARN", "NIT"]), item: z.string().min(1).max(200), note: z.string().min(1).max(2000) }))
-      .max(200),
-    notes: z.string().max(2000).optional(),
-    run: reviewRunSchema.optional(),
-  })
-  .superRefine((r, ctx) => {
-    if (r.verdict !== "clean") return;
-    if (r.findings.some((f) => f.severity !== "NIT")) ctx.addIssue({ code: "custom", path: ["verdict"], message: "a clean review has no BLOCK or WARN finding" });
-    if (r.checks.safety !== "pass" || r.checks.originality !== "pass") {
-      ctx.addIssue({ code: "custom", path: ["verdict"], message: "a clean review passes the safety and originality checks" });
-    }
-    if (!r.run) ctx.addIssue({ code: "custom", path: ["run"], message: "a clean review needs a model run receipt" });
-  }) satisfies z.ZodType<LessonReviewInput>;
+  .strictObject({ ...reviewBody, claimIds: z.array(idSchema).max(1000) })
+  .superRefine(cleanMeansClean) satisfies z.ZodType<LessonReviewInput>;
+
+/** Body of publisher_review_course: the lesson review rules, keyed on the course shell hash (no claim set). */
+export type CourseReviewInput = ReviewBody;
+
+export const courseReviewInputSchema = z.strictObject(reviewBody).superRefine(cleanMeansClean) satisfies z.ZodType<CourseReviewInput>;
 
 /** Body of publisher_review_block. "supported" needs a run. */
 export interface BlockReviewInput {
@@ -94,11 +104,14 @@ export interface LessonReviewTarget {
 
 export interface ReviewTargets {
   courseId: string;
+  /** The course snapshot without lesson bodies (title, description, outcomes, parts and lesson order) and its hash. */
+  course: { hash: string; shell: unknown };
   lessons: LessonReviewTarget[];
 }
 
 export const reviewTargetsSchema = z.strictObject({
   courseId: idSchema,
+  course: z.strictObject({ hash, shell: z.unknown() }),
   lessons: z.array(
     z.strictObject({
       lessonId: idSchema,
