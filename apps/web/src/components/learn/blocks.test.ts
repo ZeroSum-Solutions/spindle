@@ -95,3 +95,34 @@ describe("an unreadable integrity report", () => {
     expect(html).toMatch(/Show sources[\s\S]*Synthetic claim one\./);
   });
 });
+
+describe("practice runs and the integrity report", () => {
+  // The player e2e lesson: a science paragraph, a practice run of three, an image and a diagram
+  // (which end runs), then a science question and a practice question.
+  const blocks: LessonBlock[] = [
+    { kind: "heading", content: "Synthetic heading" },
+    { kind: "paragraph", content: "Synthetic science.", support: "science", claimIds: [C1] },
+    { kind: "paragraph", content: "Synthetic practice.", support: "practice-based", claimIds: [] },
+    { kind: "callout", content: { label: "Synthetic note", text: "Synthetic callout." }, support: "practice-based", claimIds: [] },
+    { kind: "checklist", content: ["Synthetic one", "Synthetic two"], support: "practice-based", claimIds: [] },
+    { kind: "image", content: { kind: "image", src: "/media/content/synthetic/absent.png", alt: "Synthetic alt", caption: "", provenanceId: "synthetic" } },
+    { kind: "diagram", content: { diagramId: "synthetic-diagram", caption: "" } },
+    { kind: "quiz", content: { prompt: "Synthetic?", options: ["A", "B"], answerIndex: 1, explanation: "Synthetic." }, support: "science", claimIds: [C1] },
+    { kind: "quiz", content: { prompt: "Synthetic practice?", options: ["A", "B"], answerIndex: 1, explanation: "Synthetic." }, support: "practice-based", claimIds: [] },
+  ];
+  const labels = (html: string) =>
+    html
+      .split("<section ")
+      .slice(1)
+      .map((s) => {
+        const body = s.split("</section>")[0]!;
+        return body.includes(">Practice-based<") ? "P" : body.includes(">Science<") ? "S" : "-";
+      });
+
+  it.each([
+    ["present", CURRENT, ["S", "P", "-", "-", "S", "P"]],
+    ["unreadable", null, ["-", "P", "-", "-", "-", "P"]],
+  ] as const)("integrity %s: one label per practice run; only science blocks change", (_, integrity, expected) => {
+    expect(labels(render(blocks, [], integrity))).toEqual(expected);
+  });
+});

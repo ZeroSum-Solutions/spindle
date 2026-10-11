@@ -191,8 +191,12 @@ test.describe.serial("learner flow", () => {
     await expect(doi).toHaveAttribute("rel", "noopener noreferrer");
     await expect(p.locator('[data-block="paragraph"][data-support="practice-based"]').getByText("Practice-based", { exact: true })).toBeVisible();
     // Back-to-back practice blocks (paragraph, callout, checklist) share one label; each keeps its support in data.
-    await expect(p.locator("article section[data-support]").getByText("Practice-based", { exact: true })).toHaveCount(1);
-    await expect(p.locator('article section[data-support="practice-based"]')).toHaveCount(3);
+    // The practice question near the end follows the science question, so it starts a new run with its own label.
+    await expect(p.locator('[data-block="callout"]').getByText("Practice-based", { exact: true })).toHaveCount(0);
+    await expect(p.locator('[data-block="checklist"]').getByText("Practice-based", { exact: true })).toHaveCount(0);
+    await expect(p.locator('[data-block="quiz"][data-support="practice-based"]').getByText("Practice-based", { exact: true })).toHaveCount(1);
+    await expect(p.locator("article section[data-support]").getByText("Practice-based", { exact: true })).toHaveCount(2);
+    await expect(p.locator('article section[data-support="practice-based"]')).toHaveCount(4);
     await expect(p.locator('[data-block="callout"]')).toContainText("Synthetic callout.");
     await expect(p.locator('[data-block="checklist"] li')).toHaveCount(2);
     await expect(p.locator('[data-block="diagram"]')).toContainText("This diagram is not available yet.");
