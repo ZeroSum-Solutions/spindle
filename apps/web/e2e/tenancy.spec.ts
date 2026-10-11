@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { authCookiesSet, forceExpiresAt, jwtClaims, readSession, sha256 } from "./helpers/auth-cookie";
-import { deleteRunRows, lit, orgIdsBySlug, residue, serviceClient, sql, userIdsByEmail } from "./helpers/local-supabase";
+import { cleanupRun, lit, sql } from "./helpers/local-supabase";
 
 // Traces would record sign-in codes, cookie values and the service key's headers.
 test.use({ trace: "off" });
@@ -17,12 +17,8 @@ const carols = [0, 1, 2].map((i) => `carol-${run}-${i}@c.test`);
 
 // Every account and gym this run creates, removed by exact address and slug.
 test.afterAll(async () => {
-  const users = userIdsByEmail([alice, tess, bob, rita, ...carols]);
-  const orgs = orgIdsBySlug([gymA, gymR]);
-  await deleteRunRows(serviceClient(), users, orgs);
-  expect(residue(users, orgs)).toEqual({
-    authUsers: 0, sessions: 0, refreshTokens: 0, orgs: 0, memberships: 0, invites: 0, orgObjects: 0,
-  });
+  test.setTimeout(60_000);
+  await cleanupRun({ emails: [alice, tess, bob, rita, ...carols], slugs: [gymA, gymR], objects: "false" });
 });
 
 async function latestCode(email: string): Promise<string> {

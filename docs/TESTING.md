@@ -44,7 +44,7 @@ SPINDLE_TEST_SERVICE_ROLE_KEY="$(supabase status -o env | sed -n 's/^SERVICE_ROL
   mise exec -- pnpm --filter web e2e
 ```
 
-Only test code reads it; the app never uses a service key. Specs that use it turn traces off, because traces record request headers and cookies. Never use a production key.
+Only test code reads it. The Playwright web-server command unsets it before the app starts and refuses to start (exit 97) if it remains. Specs that use it turn traces off, because traces record request headers and cookies. Never use a production key.
 
 Install the pinned browser binary if missing with `mise exec -- pnpm --filter web exec playwright install chromium`. CI also installs OS dependencies on its runner. Read [apps/web/playwright.config.ts](../apps/web/playwright.config.ts) for timeouts, reporting and retained traces.
 
@@ -67,7 +67,7 @@ Each feature PR names the acceptance criteria it changes, the tests that assert 
 
 Use synthetic actors in separate browser contexts. The tenancy spec covers an owner, a trainer, an outsider with no gym and a signed-out visitor, with unique `@a.test`, `@b.test` and `@c.test` addresses and gym slugs per run; Mailpit supplies their codes. The storage spec creates its own owners, lead and trainer through the admin API, with a per-run password held in memory. Never use a real client account, mailbox or gym method.
 
-pgTAP fixtures and the content contract spec roll back. The owner race script cleans its fixed synthetic rows on exit, so never run two copies concurrently. The tenancy and storage specs delete exactly the objects, gyms and accounts their run created (by exact id, address or slug, in that order) and assert that none of them, nor their sessions and refresh tokens, remain. Mailpit messages stay. Do not reset a shared stack, clear all mail, or delete another run's fixtures as cleanup.
+pgTAP fixtures and the content contract spec roll back. The owner race script cleans its fixed synthetic rows on exit, so never run two copies concurrently. The tenancy and storage specs name their accounts and gyms (exact addresses and slugs) before creating them. Teardown removes the run's storage objects, revokes every session of each run account, then deletes the gyms and the accounts. It attempts every step, then fails with the errors and exact residue if anything (including a session or refresh token) remains. Mailpit messages stay. Do not reset a shared stack, clear all mail, or delete another run's fixtures as cleanup.
 
 Stop only your own app process. Leave shared services running for their owner. Keep evidence after removing test state.
 

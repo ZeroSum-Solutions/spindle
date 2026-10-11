@@ -11,17 +11,15 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     // CI tests the production build (NEXT_PUBLIC_* values are inlined at build time).
-    command: process.env.CI
-      ? "pnpm exec next build && pnpm exec next start --port 3100 --hostname 127.0.0.1"
-      : "pnpm exec next dev --port 3100 --hostname 127.0.0.1",
+    // The app never gets the test-only service key: it is unset before the server
+    // starts, and the server refuses to start (exit 97) if it is still present.
+    command: `env -u SPINDLE_TEST_SERVICE_ROLE_KEY sh -c 'test -z "\${SPINDLE_TEST_SERVICE_ROLE_KEY+x}" || exit 97; ${
+      process.env.CI
+        ? "pnpm exec next build && pnpm exec next start --port 3100 --hostname 127.0.0.1"
+        : "pnpm exec next dev --port 3100 --hostname 127.0.0.1"
+    }'`,
     url: "http://127.0.0.1:3100",
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,
-    // The app never gets the test-only service key; only test code uses it.
-    env: Object.fromEntries(
-      Object.entries(process.env).filter(
-        (entry): entry is [string, string] => entry[0] !== "SPINDLE_TEST_SERVICE_ROLE_KEY" && entry[1] !== undefined,
-      ),
-    ),
   },
 });

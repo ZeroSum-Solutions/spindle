@@ -18,11 +18,25 @@ function required(name: string): string {
   return value;
 }
 
-const noSession = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } };
+/** One HTTP call a test client made: method, path and status only (no headers, query or body). */
+export type Call = { method: string; path: string; status: number };
 
-/** A signed-out client with the publishable key, as a browser would have. */
-export function anonClient(): SupabaseClient {
-  return createClient(SUPABASE_URL, required("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"), noSession);
+function options(calls?: Call[]) {
+  const auth = { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false };
+  if (!calls) return { auth };
+  const recording: typeof fetch = async (input, init) => {
+    const response = await fetch(input, init);
+    const request = input instanceof Request ? input : null;
+    const url = new URL(request ? request.url : String(input));
+    calls.push({ method: (init?.method ?? request?.method ?? "GET").toUpperCase(), path: url.pathname, status: response.status });
+    return response;
+  };
+  return { auth, global: { fetch: recording } };
+}
+
+/** A signed-out client with the publishable key, as a browser would have. Pass `calls` to record statuses. */
+export function anonClient(calls?: Call[]): SupabaseClient {
+  return createClient(SUPABASE_URL, required("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"), options(calls));
 }
 
 /**
@@ -30,8 +44,8 @@ export function anonClient(): SupabaseClient {
  * into this process's environment only (SPINDLE_TEST_SERVICE_ROLE_KEY); never
  * log it, and keep traces off in specs that use it (they record headers).
  */
-export function serviceClient(): SupabaseClient {
-  return createClient(SUPABASE_URL, required("SPINDLE_TEST_SERVICE_ROLE_KEY"), noSession);
+export function serviceClient(calls?: Call[]): SupabaseClient {
+  return createClient(SUPABASE_URL, required("SPINDLE_TEST_SERVICE_ROLE_KEY"), options(calls));
 }
 
 /** Runs SQL as the local postgres user; the script travels on stdin, never argv. Returns tab-separated rows. */
@@ -83,20 +97,78 @@ export function residue(userIds: string[], orgIds: string[]) {
   return { authUsers, sessions, refreshTokens, orgs: orgRows, memberships, invites, orgObjects };
 }
 
+/** What a run owns, named before anything is created so a lost response cannot hide a row. */
+export type RunScope = {
+  emails: string[];
+  slugs: string[];
+  /** SQL predicate on storage.objects matching exactly this run's objects; "false" if none. */
+  objects: string;
+};
+
 /**
- * Deletes exactly the given run-owned orgs, then users, through the service
- * APIs. Deleting a user removes its sessions and refresh tokens. Storage
- * objects must already be gone. Throws on any failure; the caller asserts residue.
+ * Removes a run's fixtures in dependency order: storage objects, sessions,
+ * orgs, then users. Every step is attempted; failures are collected and
+ * reported with the exact residue, and any failure or residue throws.
  */
-export async function deleteRunRows(service: SupabaseClient, userIds: string[], orgIds: string[]) {
+export async function cleanupRun(scope: RunScope): Promise<void> {
+  const errors: string[] = [];
+  const attempt = async (step: string, run: () => Promise<void>) => {
+    try {
+      await run();
+    } catch (error) {
+      errors.push(`${step}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+  const userIds = userIdsByEmail(scope.emails);
+  const orgIds = orgIdsBySlug(scope.slugs);
+  const service = serviceClient();
+
+  await attempt("objects", async () => {
+    const rows = sql(`select bucket_id, name from storage.objects where ${scope.objects}`);
+    for (const bucket of new Set(rows.map(([bk]) => bk!))) {
+      const names = rows.filter(([bk]) => bk === bucket).map(([, name]) => name!);
+      const { data, error } = await service.storage.from(bucket).remove(names);
+      if (error) throw new Error(`${bucket}: ${error.message}`);
+      if (data?.length !== names.length) throw new Error(`${bucket}: removed ${data?.length} of ${names.length}`);
+    }
+  });
+
+  // Revoke every session: sign each user in once more through a one-time link
+  // (no mail is sent) and sign out with global scope.
+  for (const email of scope.emails.filter((e) => userIdsByEmail([e]).length > 0)) {
+    await attempt(`revoke ${email}`, async () => {
+      const link = await service.auth.admin.generateLink({ type: "magiclink", email });
+      if (link.error) throw new Error(link.error.message);
+      const client = anonClient();
+      const verified = await client.auth.verifyOtp({ token_hash: link.data.properties.hashed_token, type: "magiclink" });
+      if (verified.error) throw new Error(verified.error.message);
+      const out = await client.auth.signOut({ scope: "global" });
+      if (out.error) throw new Error(out.error.message);
+    });
+  }
+  await attempt("sessions revoked", async () => {
+    const { sessions, refreshTokens } = residue(userIds, []);
+    if (sessions + refreshTokens > 0) throw new Error(`${sessions} sessions, ${refreshTokens} refresh tokens remain`);
+  });
+
   if (orgIds.length > 0) {
-    const { error, count } = await service.from("orgs").delete({ count: "exact" }).in("id", orgIds);
-    if (error) throw new Error(`org cleanup failed: ${error.message}`);
-    if (count !== orgIds.length) throw new Error(`org cleanup removed ${count} of ${orgIds.length}`);
+    await attempt("orgs", async () => {
+      const { error, count } = await service.from("orgs").delete({ count: "exact" }).in("id", orgIds);
+      if (error) throw new Error(error.message);
+      if (count !== orgIds.length) throw new Error(`removed ${count} of ${orgIds.length}`);
+    });
   }
   for (const id of userIds) {
-    const { error } = await service.auth.admin.deleteUser(id);
-    if (error) throw new Error(`user cleanup failed: ${error.message}`);
+    await attempt(`user ${id}`, async () => {
+      const { error } = await service.auth.admin.deleteUser(id);
+      if (error) throw new Error(error.message);
+    });
+  }
+
+  const [[objects]] = sql(`select count(*) from storage.objects where ${scope.objects}`) as [[string]];
+  const left = { ...residue(userIds, orgIds), runObjects: Number(objects) };
+  if (errors.length > 0 || Object.values(left).some((n) => n !== 0)) {
+    throw new Error(`cleanup incomplete: ${JSON.stringify({ errors, residue: left })}`);
   }
 }
 
