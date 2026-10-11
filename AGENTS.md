@@ -3,7 +3,7 @@
 Spindle teaches personal trainers how the human body works. Every science claim is cited. Gyms layer their own method on top of the base curriculum. This file is the canonical guide for any coding agent; `CLAUDE.md` imports it.
 
 ## Ground rules
-- **Public repo, AGPL-3.0-only.** Never commit tenant method content, client data, secrets, `.env*`, screenshots of third-party products, generated bundles, logs or `.codegraph/`. `packages/contracts` is Apache-2.0; original curriculum text in `content/` is CC BY-SA 4.0.
+- **Public repo, AGPL-3.0-only.** Never commit tenant method content, client data, secrets, real `.env` files (only `.env.example` with placeholders), screenshots of third-party products, generated bundles, logs or `.codegraph/`. `packages/contracts` is Apache-2.0; original curriculum text in `content/` is CC BY-SA 4.0.
 - **Copyright:** lesson text is our own explanation of facts. Never paste paper text beyond a short attributed quote. Record each source's license.
 - **Science vs practice:** a block with `support: "science"` must bind at least one approved claim. Practice-based blocks must not carry claims. Gym method courses (`layer: "method"`) are always practice-based. Modality courses may use science where evidence exists and practice-based otherwise. `validateCatalog` and (from phase 2) the database publish gate enforce this. Do not weaken either one.
 - **Tenancy:** every tenant row carries `org_id`, and RLS covers every operation. Code that uses the service key bypasses RLS, so it needs its own tests. Cache keys include `org_id`.
@@ -27,7 +27,10 @@ Use the pinned toolchain: `mise exec -- <cmd>` (Node 24, pnpm 10).
 - `pnpm check` — lint, typecheck, unit tests, build. Run it before opening a PR.
 - `pnpm test` — Vitest (`packages/*/src/**/*.test.ts`)
 - `pnpm dev` — web app on :3000
-- `supabase start` / `supabase test db` — local database and policy tests (needs Docker)
+- `supabase start -x studio,imgproxy,logflare,vector,edge-runtime,realtime,storage-api,postgres-meta,supavisor` — lean local stack (needs Docker); Mailpit on :54324 receives sign-in codes
+- `supabase test db` — pgTAP policy tests in `supabase/tests/database/`
+- `pnpm --filter web e2e` — Playwright end-to-end tests (needs the local stack; copy `apps/web/.env.example` to `.env.local` with the key from `supabase status`)
+- `supabase gen types typescript --local > apps/web/src/lib/supabase/database.types.ts` — after every migration
 
 ## Team workflow
 - **One lead, at most two writers.** The lead sets priorities, keeps `docs/DECISIONS.md` and is the only one who lands PRs. Writers each own one claimed unit.
