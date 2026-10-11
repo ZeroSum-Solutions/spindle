@@ -36,6 +36,7 @@ See [docs/TESTING.md](docs/TESTING.md) for test scope, local runtime ownership, 
 
 ## Team workflow
 - **One lead, at most two writers.** The lead sets priorities, keeps `docs/DECISIONS.md` and is the only one who lands PRs. Writers each own one claimed unit.
+- **Effort:** Opus 5.5 Medium is the default. Choose higher-effort/Ultracode work only when the task warrants it; return to Medium after a temporary escalation.
 - **Dynamic delegation:** Opus may adapt its workflow and delegate read-only exploration or review. Every helper that edits files counts toward the two-writer limit and needs its own lead-approved claim and worktree. A writer must not launch extra writers inside its unit. Helpers inherit the unit's scope and cannot mutate shared runtimes or land PRs.
 - **Claim before code:** every writer works in its own worktree, `~/projects/spindle-worktrees/<slug>` on branch `<type>/<slug>`, prepared with `scripts/worktree-setup.sh`. Never edit another writer's files without the lead's OK, and never run two git commands at once in one worktree.
 - **Shared guidance:** the lead announces landed instruction changes to active writers. Each writer acknowledges and follows the new guidance immediately, then merges current `origin/main` at a safe checkpoint before final validation and review. Do not copy or cherry-pick the guidance into multiple branches. Report any overlap to the lead before resolving it.
