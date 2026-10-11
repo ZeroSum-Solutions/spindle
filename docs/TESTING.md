@@ -4,7 +4,7 @@ Use the existing Vitest, pgTAP and Playwright suites. This document owns verific
 
 ## Launch and ownership
 
-Use `mise exec --` for the pinned toolchain. Prepare a fresh checkout with `scripts/worktree-setup.sh`; it installs dependencies but does not start a database or copy environment files. Copy `apps/web/.env.example` to `apps/web/.env.local` only if the destination does not exist, and fill the two `NEXT_PUBLIC_SUPABASE_*` values from the local stack. Never use a production endpoint or service key for these tests. `supabase status` prints local keys; inspect it locally without copying its full output into a receipt.
+Use `mise exec --` for the pinned Node and pnpm versions. Database work also needs Docker, the Supabase CLI (CI uses 2.117.0), and PostgreSQL client tools (`psql`, `pg_isready`); mise does not install these. Prepare a fresh checkout with `scripts/worktree-setup.sh`; it installs dependencies but does not start a database or copy environment files. Copy `apps/web/.env.example` to `apps/web/.env.local` only if the destination does not exist. Confirm its prefilled local URL and fill the blank publishable key from the local stack. Never use a production endpoint or service key for these tests. `supabase status` prints local keys; inspect it locally without copying its full output into a receipt.
 
 During concurrent work, the lead owns the shared local Supabase stack and migration admission. Writers ask the lead before starting/stopping/resetting it or applying migrations. Rollback-only pgTAP may run after admission. The owner race test and browser tests write synthetic rows, so schedule them with the lead too. An isolated database needs its own recorded owner, ports and cleanup plan.
 
@@ -32,7 +32,7 @@ Run the smallest existing suite that exercises the change while developing. Befo
 | Repository check | `mise exec -- pnpm check` | Lint, typecheck, Vitest and builds; excludes SQL and browser tests |
 | Pure functions / evidence clients | `mise exec -- pnpm test` | Existing unit suites; evidence clients use mocked responses, not live provider proof |
 | Database policies / RPCs | `mise exec -- supabase test db` | pgTAP suites against the admitted local schema |
-| Concurrent last-owner protection | `supabase/tests/race/owner-race.sh` | Two competing database transactions leave an owner |
+| Concurrent last-owner protection | `supabase/tests/race/owner-race.sh` | Two competing transactions produce exactly one failure and leave exactly one owner; needs host `psql` and local DB on :54322, or an isolated local `DB_URL` |
 | Browser during development | `mise exec -- pnpm --filter web e2e` | Playwright Chromium against local Auth, Mailpit and database |
 | Browser production build | `CI=1 mise exec -- pnpm --filter web e2e` | The same browser suite against a fresh production build |
 
@@ -47,12 +47,12 @@ Each feature PR names the acceptance criteria it changes, the tests that assert 
 | Catalog rules, navigation, in-memory progress | `packages/engine/src/engine.test.ts` | Does not prove durable progress or a publish RPC |
 | Evidence-client parsing and transport behavior | `packages/evidence/src/` unit suites | Mocked network responses |
 | Tenant privileges and last-owner rules | `supabase/tests/database/`, `supabase/tests/race/` | Applies to the schema tested |
-| Sign-in, gym creation, invitations and tenant isolation | `apps/web/e2e/tenancy.spec.ts` | Exercises those browser flows only |
+| Sign-in, redirect safety, gym creation, invitations and tenant isolation | `apps/web/e2e/tenancy.spec.ts` | Exercises those browser flows only |
 | Phase 2 publish gate, immutable versions, credit lineage, storage isolation and durable player progress | Phase 2 PR acceptance receipts | Pending until the corresponding code and tests land and pass |
 
 ## Fixtures and cleanup
 
-Use synthetic actors in separate browser contexts: owner, lead/trainer, a member of another gym and a signed-out visitor. The current browser suite creates unique `@a.test`, `@b.test` and `@c.test` addresses and gym slugs; Mailpit supplies their codes. Never use a real client account, mailbox or gym method.
+Use synthetic actors in separate browser contexts. The current browser suite covers an owner, a trainer, an outsider with no gym and a signed-out visitor; it creates one unique gym slug and unique `@a.test`, `@b.test` and `@c.test` addresses. Mailpit supplies their codes. Add lead-role and second-gym member fixtures when a feature needs those cases. Never use a real client account, mailbox or gym method.
 
 pgTAP fixtures roll back. The owner race script cleans its fixed synthetic rows on exit, so never run two copies concurrently. The current browser suite leaves uniquely named synthetic accounts and gym rows in the local stack. Record the run's fixture identifiers; cleanup must target only that run's rows with lead approval. Do not reset a shared stack, clear all mail, or delete another run's fixtures as cleanup.
 
