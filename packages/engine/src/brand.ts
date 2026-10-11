@@ -171,3 +171,22 @@ export function validateOrgBrand(input: unknown): { ok: true; brand: OrgBrandInp
   if (failing.length > 0) return { ok: false, problems: failing.map((c) => `${c.role} (${c.state}): ${c.shown}:1, needs ${c.minimum}:1`), checks };
   return { ok: true, brand: parsed.data, checks };
 }
+
+/**
+ * The catalog hero chip pair (spec 2.4): chip text (onBand) on the band tint, with its exact ratio
+ * and verdict. brandChecks includes the same pair; this is the single call for W2's hero chips.
+ */
+export function heroChipCheck(colors: TenantBrand["colors"]): ContrastCheck {
+  const t = brandTokens(colors);
+  const ratio = contrast(t.onBand, t.bandTint);
+  return {
+    role: "Chip text on the band tint",
+    state: "default",
+    foreground: t.onBand,
+    background: t.bandTint,
+    minimum: 4.5,
+    ratio,
+    shown: (Math.floor(ratio * 100) / 100).toFixed(2),
+    pass: ratio >= 4.5,
+  };
+}
