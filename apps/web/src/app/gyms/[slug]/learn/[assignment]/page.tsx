@@ -76,12 +76,12 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
         {parts.map(({ partId, title, lessons }) => (
           <section key={partId} className="flex flex-col gap-2">
             <h2 className="text-lg font-medium">{title}</h2>
-            <ol className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
+            <ol data-testid="lesson-list" className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
               {lessons.map((lesson) => (
                 <li key={lesson.id}>
                   <Link href={`${base}/${lesson.slug}`} className="flex flex-col gap-1 p-4 hover:bg-surface-muted md:flex-row md:items-start md:justify-between md:gap-6">
                     <span className="flex flex-col gap-0.5">
-                      <span className="font-medium">{lesson.title}</span>
+                      <span data-testid="lesson-title" className="font-medium">{lesson.title}</span>
                       <span className="text-label text-text-muted">
                         {lesson.durationMinutes} min · {lesson.format}
                         {lesson.flagged ? <span className="font-medium text-caution"> · Source retracted</span> : null}
