@@ -39,7 +39,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
   const { view } = detail;
   const base = `/gyms/${ctx.org.slug}/learn/${detail.assignmentId}`;
   const parts = groupByPart(view.lessons);
-  const hasQuiz = gradedQuestions(detail.version.course).length > 0;
+  const hasQuiz = detail.version.gradedQuiz && gradedQuestions(detail.version.course).length > 0;
   const status = await loadModuleStatus(ctx, detail.assignmentId);
 
   return (

@@ -18,7 +18,10 @@ export function ModuleQuiz({ questions, submit }: { questions: QuizQuestionView[
   const attemptKey = useRef<string | null>(null);
   // The attempt whose result the learner put away with "Try again"; the form starts empty.
   const [dismissed, setDismissed] = useState<string | null>(null);
-  const shown: QuizState = state.status === "result" && state.attemptId === dismissed ? { status: "idle" } : state;
+  // Set when the learner starts a new attempt after a key conflict; cleared by the next submit.
+  const [freshAttempt, setFreshAttempt] = useState(false);
+  const shown: QuizState =
+    (state.status === "result" && state.attemptId === dismissed) || (freshAttempt && state.status === "error") ? { status: "idle" } : state;
   return (
     <QuizView
       key={dismissed ?? "first"}
@@ -26,6 +29,9 @@ export function ModuleQuiz({ questions, submit }: { questions: QuizQuestionView[
       state={shown}
       pending={pending}
       action={(form) => {
+        // An unconfirmed or refused submit keeps its key, so the same answers reconcile
+        // without counting twice; only "Try again" or "Start a new attempt" replaces it.
+        setFreshAttempt(false);
         attemptKey.current ??= crypto.randomUUID();
         form.set("attemptKey", attemptKey.current);
         action(form);
@@ -34,6 +40,11 @@ export function ModuleQuiz({ questions, submit }: { questions: QuizQuestionView[
         attemptKey.current = null;
         if (state.status === "result") setDismissed(state.attemptId);
       }}
+      onNewAttempt={() => {
+        attemptKey.current = null;
+        setFreshAttempt(true);
+      }}
+      newAttemptReady={freshAttempt}
     />
   );
 }
@@ -45,12 +56,16 @@ export function QuizView({
   pending,
   action,
   onTryAgain,
+  onNewAttempt = () => {},
+  newAttemptReady = false,
 }: {
   questions: QuizQuestionView[];
   state: QuizState;
   pending: boolean;
   action: (form: FormData) => void;
   onTryAgain: () => void;
+  onNewAttempt?: () => void;
+  newAttemptReady?: boolean;
 }) {
   const resultRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -103,10 +118,20 @@ export function QuizView({
 
       <div id="quiz-status" aria-live="polite" className="flex flex-col gap-3">
         {state.status === "error" ? (
-          <p role="alert" className="rounded-small bg-danger-soft px-3 py-2 text-sm text-danger">
-            {state.message}
-          </p>
+          <div role="alert" data-error-kind={state.kind} className="flex flex-col items-start gap-2 rounded-small bg-danger-soft px-3 py-2 text-sm text-danger">
+            <p>{state.message}</p>
+            {state.kind === "key-conflict" ? (
+              <button
+                type="button"
+                onClick={onNewAttempt}
+                className="inline-flex min-h-11 items-center gap-2 rounded-control border border-control bg-surface px-4 font-medium text-text hover:bg-surface-muted"
+              >
+                Start a new attempt
+              </button>
+            ) : null}
+          </div>
         ) : null}
+        {newAttemptReady ? <p className="text-label text-text-muted">New attempt ready. Submit your answers when you are ready.</p> : null}
         {result ? (
           <div ref={resultRef} tabIndex={-1} data-testid="quiz-result" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
             <p className="text-base">

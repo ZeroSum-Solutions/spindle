@@ -100,6 +100,12 @@ const view: CourseView = {
   delta: { fromVersionNumber: 1, changed: ["Synthetic lesson 2"], added: ["Synthetic lesson 3"], removed: ["Retired synthetic lesson"] },
 };
 
+/** The specimen has no real version to recheck against; in development it always allows play. */
+async function specimenRecheck(): Promise<boolean> {
+  "use server";
+  return process.env.NODE_ENV !== "production";
+}
+
 export default function DesignSpecimen() {
   if (process.env.NODE_ENV === "production") notFound();
   return (
@@ -216,14 +222,17 @@ export default function DesignSpecimen() {
         </p>
         <div className="grid max-w-[46rem] grid-cols-1 gap-10">
           <YouTubeSegment
+            recheck={specimenRecheck}
             segment={{ mediaId: "m-demo", provider: "youtube", videoId: "M7lc1UVf-VE", startSeconds: 0, endSeconds: 30, rationale: "Synthetic rationale: shows how a coaching segment sits beside lesson text.", caption: "" }}
             availability={{ mediaId: "m-demo", state: "playable", title: "Specimen clip: YouTube IFrame API demo", channel: "YouTube API demo", available: true }}
           />
           <YouTubeSegment
+            recheck={specimenRecheck}
             segment={{ mediaId: "m-gone", provider: "youtube", videoId: "000000000aa", startSeconds: 5, endSeconds: 20, rationale: "Synthetic rationale: the provider reports this clip as unavailable.", caption: "" }}
             availability={{ mediaId: "m-gone", state: "playable", title: null, channel: null, available: false }}
           />
           <YouTubeSegment
+            recheck={specimenRecheck}
             segment={{ mediaId: "m-off", provider: "youtube", videoId: "000000000bb", startSeconds: 5, endSeconds: 20, rationale: "Synthetic rationale: the registry has switched this clip off.", caption: "" }}
             availability={{ mediaId: "m-off", state: "disabled", title: null, channel: null, available: null }}
           />

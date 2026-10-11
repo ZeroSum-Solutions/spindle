@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useReducer, useRef, useState } from "react";
 import { ExternalLink, Play, VideoOff } from "lucide-react";
+import { createIframeApiLoader, type YTNamespace } from "@/lib/video/iframe-api";
 import { embedSrc, IFRAME_API_URL, nextPlayerState, PRIVACY_URL, READY_TIMEOUT_MS, segmentLabel, TERMS_URL, watchUrl } from "@/lib/video/youtube";
 
 /** The frozen segment plus the label the facade shows. */
@@ -19,45 +20,31 @@ export interface PlayerClip {
 // to learn whether the video actually plays; errors and a ready timeout end in a
 // truthful "unavailable" state with a link to watch on YouTube.
 
-interface YTPlayerOptions {
-  events: { onReady?: () => void; onError?: (event: { data: number }) => void };
-}
-interface YTNamespace {
-  Player: new (frame: HTMLIFrameElement, options: YTPlayerOptions) => unknown;
-}
-declare global {
-  interface Window {
-    YT?: YTNamespace;
-    onYouTubeIframeAPIReady?: () => void;
-  }
-}
+let loader: (() => Promise<YTNamespace>) | null = null;
 
-let apiPromise: Promise<YTNamespace> | null = null;
-
-/** Loads the official IFrame API once per page. A failed load can be retried by a later mount. */
+/** The page's single, bounded IFrame API loader, created on first play. */
 function loadIframeApi(): Promise<YTNamespace> {
-  if (apiPromise) return apiPromise;
-  apiPromise = new Promise<YTNamespace>((resolve, reject) => {
-    const previous = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = () => {
-      previous?.();
-      if (window.YT?.Player) resolve(window.YT);
-      else reject(new Error("YouTube IFrame API did not define a player"));
-    };
-    const script = document.createElement("script");
-    script.src = IFRAME_API_URL;
-    script.async = true;
-    script.onerror = () => {
-      apiPromise = null;
-      script.remove();
-      reject(new Error("YouTube IFrame API failed to load"));
-    };
-    document.head.appendChild(script);
+  loader ??= createIframeApiLoader({
+    win: window as unknown as Parameters<typeof createIframeApiLoader>[0]["win"],
+    doc: document as unknown as Parameters<typeof createIframeApiLoader>[0]["doc"],
+    url: IFRAME_API_URL,
+    timeoutMs: READY_TIMEOUT_MS,
   });
-  return apiPromise;
+  return loader();
 }
 
-export function YouTubePlayer({ video, gone = false, readyTimeoutMs = READY_TIMEOUT_MS }: { video: PlayerClip; gone?: boolean; readyTimeoutMs?: number }) {
+export function YouTubePlayer({
+  video,
+  gone = false,
+  recheck,
+  readyTimeoutMs = READY_TIMEOUT_MS,
+}: {
+  video: PlayerClip;
+  gone?: boolean;
+  /** Asks the registry, at the moment of play, whether the clip may still play. Missing or failing: nothing loads. */
+  recheck: (() => Promise<boolean>) | undefined;
+  readyTimeoutMs?: number;
+}) {
   // A clip the provider already reports as unavailable starts in that state; nothing is offered to load.
   const [state, dispatch] = useReducer(nextPlayerState, gone ? "unavailable" : "idle");
   const [src, setSrc] = useState<string | null>(null);
@@ -94,6 +81,14 @@ export function YouTubePlayer({ video, gone = false, readyTimeoutMs = READY_TIME
       window.clearTimeout(timer);
     };
   }, [src, readyTimeoutMs]);
+
+  if (state === "blocked") {
+    return (
+      <p data-video="blocked" role="status" className="rounded-card bg-surface-muted p-4 text-base text-text-muted">
+        This video can&apos;t be played right now. You can complete the lesson without it.
+      </p>
+    );
+  }
 
   if (state === "unavailable") {
     return (
@@ -154,15 +149,28 @@ export function YouTubePlayer({ video, gone = false, readyTimeoutMs = READY_TIME
       </div>
       <button
         type="button"
-        onClick={() => {
-          setSrc(embedSrc(video, window.location.origin));
+        disabled={state === "loading"}
+        onClick={async () => {
           dispatch("activate");
+          // Recheck the registry before anything from YouTube loads; fail closed.
+          let allowed = false;
+          try {
+            allowed = recheck ? await recheck() : false;
+          } catch {
+            allowed = false;
+          }
+          if (!allowed) {
+            dispatch("blocked");
+            return;
+          }
+          setSrc(embedSrc(video, window.location.origin));
         }}
         aria-describedby={noticeId}
         className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-white px-5 font-medium text-ink transition-colors duration-[var(--duration-feedback)] hover:bg-surface-muted"
       >
         <Play aria-hidden strokeWidth={1.75} className="size-4" />
-        Play video<span className="sr-only">: {video.title}</span>
+        {state === "loading" ? "Checking…" : "Play video"}
+        <span className="sr-only">: {video.title}</span>
       </button>
       <p id={noticeId} data-video="notice" className="text-label text-white/80">
         Plays from YouTube. Pressing play loads YouTube&apos;s player, which may collect data and store information on your device. See Google&apos;s{" "}
@@ -172,6 +180,10 @@ export function YouTubePlayer({ video, gone = false, readyTimeoutMs = READY_TIME
         and YouTube&apos;s{" "}
         <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" className="text-white underline underline-offset-2">
           terms
+        </a>
+        . How Spindle handles this:{" "}
+        <a href="/privacy" className="text-white underline underline-offset-2">
+          Spindle&apos;s privacy page
         </a>
         .
       </p>

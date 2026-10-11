@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { ExternalLink, ImageOff, TriangleAlert } from "lucide-react";
-import type { LessonBlock, LessonResource, MediaAsset, MediaAvailability } from "@spindle/schema";
+import type { ClaimIntegrityState, LessonBlock, LessonResource, MediaAsset, MediaAvailability } from "@spindle/schema";
 import type { ClaimView } from "@/lib/learning/load";
-import { resolveContentUrl, resolveMediaUrl } from "@/lib/learning/media";
+import { renderableMediaUrl, resolveContentUrl } from "@/lib/learning/media";
 import { ClaimDisclosure } from "./claim-disclosure";
 import { SupportLabel } from "./labels";
 import { MediaImage, MediaUnavailable, MediaVideo } from "./media-image";
 import { QuizSelfCheck } from "./quiz-self-check";
+import { evidenceView } from "@/lib/learning/evidence";
 import { YouTubeSegment } from "./youtube-segment";
 
 export interface BlockContext {
@@ -18,6 +19,12 @@ export interface BlockContext {
   media?: ReadonlyMap<string, MediaAvailability>;
   /** The course's module quiz page, where graded questions are answered. */
   quizHref?: string;
+  /** Claim integrity for this lesson (version_integrity); null when it could not be read, absent where it does not apply. */
+  integrity?: ReadonlyMap<string, ClaimIntegrityState> | null;
+  /** The version being rendered; registry clips recheck their state against it when played. */
+  versionId?: string;
+  /** Whether this version has a graded quiz (phase-3 rules). Without one, science quiz blocks stay ungraded self-checks. */
+  gradedQuiz?: boolean;
 }
 
 export function LessonBlocks({ blocks, ctx }: { blocks: LessonBlock[]; ctx: BlockContext }) {
@@ -47,7 +54,7 @@ function Block({ block, index, ctx }: { block: LessonBlock; index: number; ctx: 
         </figure>
       );
     case "video":
-      return <YouTubeSegment segment={block.content} availability={ctx.media?.get(block.content.mediaId)} />;
+      return <YouTubeSegment segment={block.content} availability={ctx.media?.get(block.content.mediaId)} versionId={ctx.versionId} />;
     default:
       return <Supported block={block} index={index} ctx={ctx} />;
   }
@@ -56,27 +63,46 @@ function Block({ block, index, ctx }: { block: LessonBlock; index: number; ctx: 
 type SupportedBlock = Extract<LessonBlock, { support: unknown }>;
 
 function Supported({ block, index, ctx }: { block: SupportedBlock; index: number; ctx: BlockContext }) {
-  const retracted = block.claimIds.some((id) => ctx.flagged.has(id));
+  const science = block.support === "science";
+  // Integrity applies to science blocks only; practice blocks carry no claims.
+  const evidence = science ? evidenceView(block.claimIds, ctx.flagged, ctx.integrity === undefined ? null : ctx.integrity) : null;
+  const withdrawn = evidence !== null && !evidence.presentsAsScience;
+  const retracted = evidence?.retracted ?? false;
   return (
-    <section data-block={block.kind} data-support={block.support} className="flex flex-col gap-3">
+    <section data-block={block.kind} data-support={block.support} data-evidence={withdrawn ? "withdrawn" : evidence?.recheckDue ? "recheck-due" : undefined} className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <SupportLabel support={block.support} />
+        {withdrawn ? (
+          // A withdrawn claim loses the Science presentation; the text and its sources stay as history.
+          <span className="inline-flex items-center gap-1.5 rounded-small bg-caution-soft px-2 py-0.5 text-label font-medium text-caution">
+            <TriangleAlert aria-hidden strokeWidth={1.75} className="size-4" />
+            Claim withdrawn
+          </span>
+        ) : (
+          <SupportLabel support={block.support} />
+        )}
         {retracted ? (
           <span className="inline-flex items-center gap-1.5 rounded-small bg-caution-soft px-2 py-0.5 text-label font-medium text-caution">
             <TriangleAlert aria-hidden strokeWidth={1.75} className="size-4" />
             Source retracted
           </span>
         ) : null}
+        {evidence?.recheckDue && !withdrawn ? (
+          <span className="inline-flex items-center gap-1.5 rounded-small bg-caution-soft px-2 py-0.5 text-label font-medium text-caution">
+            <TriangleAlert aria-hidden strokeWidth={1.75} className="size-4" />
+            Evidence due for recheck
+          </span>
+        ) : null}
       </div>
-      <BlockBody block={block} index={index} quizHref={ctx.quizHref} />
-      {block.support === "science" && block.claimIds.length > 0 ? (
-        <ClaimDisclosure claimIds={block.claimIds} claims={ctx.claims} flagged={ctx.flagged} />
+      {withdrawn ? (
+        <p className="text-label text-text-muted">The research claim behind this statement was withdrawn after publishing, so it is no longer presented as science.</p>
       ) : null}
+      <BlockBody block={block} index={index} quizHref={ctx.quizHref} graded={ctx.gradedQuiz === true} />
+      {science && block.claimIds.length > 0 ? <ClaimDisclosure claimIds={block.claimIds} claims={ctx.claims} flagged={ctx.flagged} /> : null}
     </section>
   );
 }
 
-function BlockBody({ block, index, quizHref }: { block: SupportedBlock; index: number; quizHref?: string }) {
+function BlockBody({ block, index, quizHref, graded }: { block: SupportedBlock; index: number; quizHref?: string; graded: boolean }) {
   switch (block.kind) {
     case "paragraph":
       return <p className="whitespace-pre-line">{block.content}</p>;
@@ -98,7 +124,7 @@ function BlockBody({ block, index, quizHref }: { block: SupportedBlock; index: n
     case "quiz":
       // A science quiz block is a graded question of the module quiz: the lesson shows the
       // question but never its answer. Practice quizzes stay ungraded self-checks.
-      return block.support === "science" ? (
+      return block.support === "science" && graded ? (
         <div data-graded-question className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4">
           <p className="font-medium">{block.content.prompt}</p>
           <p className="text-label text-text-muted">
@@ -117,7 +143,7 @@ function BlockBody({ block, index, quizHref }: { block: SupportedBlock; index: n
 }
 
 function Figure({ asset, orgId }: { asset: MediaAsset; orgId: string | null }) {
-  const link = resolveMediaUrl(asset.src, { orgId });
+  const link = renderableMediaUrl(asset.src, { orgId });
   return (
     <figure data-block="image" className="flex flex-col gap-2">
       {link.kind === "unavailable" ? (

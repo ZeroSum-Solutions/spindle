@@ -71,9 +71,10 @@ export function clipLabels(availability: MediaAvailability | undefined): { title
   return { title: availability?.title ?? "Coaching video", channel: availability?.channel ?? "YouTube" };
 }
 
-// Player states. Nothing from YouTube exists in "idle"; "unavailable" is final for this mount.
-export type PlayerState = "idle" | "loading" | "ready" | "unavailable";
-export type PlayerEvent = "activate" | "ready" | "error" | "timeout" | "script-failed";
+// Player states. Nothing from YouTube exists in "idle". "blocked": the registry no longer
+// allows the clip when play was pressed, so nothing loads. Both end states are final for this mount.
+export type PlayerState = "idle" | "loading" | "ready" | "unavailable" | "blocked";
+export type PlayerEvent = "activate" | "ready" | "error" | "timeout" | "script-failed" | "blocked";
 
 export function nextPlayerState(state: PlayerState, event: PlayerEvent): PlayerState {
   switch (state) {
@@ -81,11 +82,13 @@ export function nextPlayerState(state: PlayerState, event: PlayerEvent): PlayerS
       return event === "activate" ? "loading" : state;
     case "loading":
       if (event === "ready") return "ready";
+      if (event === "blocked") return "blocked";
       return event === "error" || event === "timeout" || event === "script-failed" ? "unavailable" : state;
     case "ready":
       // A late timeout cannot undo a player that already reported ready.
       return event === "error" ? "unavailable" : state;
     case "unavailable":
+    case "blocked":
       return state;
   }
 }

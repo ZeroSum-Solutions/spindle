@@ -71,6 +71,11 @@ describe("nextPlayerState", () => {
     ["ready", "error", "unavailable"],
     ["unavailable", "ready", "unavailable"],
     ["unavailable", "activate", "unavailable"],
+    ["loading", "blocked", "blocked"],
+    ["idle", "blocked", "idle"],
+    ["ready", "blocked", "ready"],
+    ["blocked", "activate", "blocked"],
+    ["blocked", "ready", "blocked"],
   ];
   it.each(cases)("%s + %s -> %s", (state, event, expected) => {
     expect(nextPlayerState(state, event)).toBe(expected);

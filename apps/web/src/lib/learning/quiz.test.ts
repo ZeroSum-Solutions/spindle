@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ModuleStatus } from "@spindle/schema";
 import type { GradedQuestion } from "@spindle/engine";
-import { fieldName, MISSING_ANSWERS, moduleStatusView, neededToPass, questionViews, readSubmission, resultState, submitErrorMessage } from "./quiz";
+import { fieldName, MISSING_ANSWERS, moduleStatusView, neededToPass, questionViews, readSubmission, resultState, classifySubmitError } from "./quiz";
 
 const KEY = "6a64a1c2-0000-4000-8000-000000005619";
 const Q: GradedQuestion[] = [
@@ -60,16 +60,29 @@ describe("readSubmission", () => {
   });
 });
 
-describe("submitErrorMessage", () => {
+describe("classifySubmitError", () => {
   it.each([
-    [{ code: "22023", message: "invalid attemptKey: was already used for different answers" }, "already submitted"],
-    [{ code: "22023", message: "invalid answers: every graded question needs exactly one answer" }, "did not match this quiz"],
-    [{ code: "P0002", message: "no such assignment" }, "no longer assigned"],
-    [{ code: "P0001", message: "this version has no graded quiz" }, "no graded quiz"],
-    [{ code: "XX000", message: "boom" }, "Nothing was saved"],
-    [null, "Nothing was saved"],
-  ])("maps %j", (error, text) => {
-    expect(submitErrorMessage(error)).toContain(text);
+    [{ code: "22023", message: "invalid answers: every graded question needs exactly one answer" }, "rejected", "Nothing was saved"],
+    [{ code: "P0002", message: "no such assignment" }, "rejected", "Nothing was saved"],
+    [{ code: "P0001", message: "this version has no graded quiz" }, "rejected", "no graded quiz"],
+    [{ code: "28000", message: "not signed in" }, "rejected", "Nothing was saved"],
+  ])("a refusal (%j) is rejected and says nothing was saved", (error, kind, text) => {
+    const e = classifySubmitError(error);
+    expect(e.kind).toBe(kind);
+    expect(e.message).toContain(text);
+  });
+
+  it("an attempt key reused for other answers is a key conflict, not a failure", () => {
+    const e = classifySubmitError({ code: "22023", message: "invalid attemptKey: was already used for different answers" });
+    expect(e.kind).toBe("key-conflict");
+    expect(e.message).toContain("Start a new attempt");
+  });
+
+  it.each([[{ code: "XX000", message: "boom" }], [{ message: "Failed to fetch" }], [null]])("an unknown outcome (%j) is unconfirmed and never claims nothing was saved", (error) => {
+    const e = classifySubmitError(error);
+    expect(e.kind).toBe("unconfirmed");
+    expect(e.message).not.toContain("Nothing was saved");
+    expect(e.message).toContain("will not count twice");
   });
 });
 

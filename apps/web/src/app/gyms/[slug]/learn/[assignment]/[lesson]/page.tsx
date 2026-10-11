@@ -11,6 +11,7 @@ import { completeLesson, type CompleteState, type LessonRoute } from "@/lib/lear
 import { claimEvidence, learnerGym, lessonClaimIds, myAssignment } from "@/lib/learning/load";
 import { lessonsOf } from "@/lib/learning/view";
 import { versionMedia } from "@/lib/learning/version-media";
+import { versionIntegrity } from "@/lib/learning/integrity";
 
 const FORMAT: Record<string, string> = { article: "Article", video: "Video", diagram: "Diagram", practice: "Practice", quiz: "Quiz" };
 
@@ -48,7 +49,12 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
   const state = view.lessons[index]!;
   const flagged = new Set(view.flaggedClaimIds);
   const hasVideo = lesson.blocks.some((b) => b.kind === "video");
-  const [claims, media] = await Promise.all([claimEvidence(ctx, lessonClaimIds(version, lesson.id)), hasVideo ? versionMedia(ctx, version.id) : Promise.resolve(new Map())]);
+  const hasScience = lesson.blocks.some((b) => "support" in b && b.support === "science");
+  const [claims, media, integrity] = await Promise.all([
+    claimEvidence(ctx, lessonClaimIds(version, lesson.id)),
+    hasVideo ? versionMedia(ctx, version.id) : Promise.resolve(new Map()),
+    hasScience ? versionIntegrity(ctx, version.id, lesson.id) : Promise.resolve(new Map()),
+  ]);
   const prev = lessons[index - 1];
   const next = lessons[index + 1];
   const done = state.state === "done" || state.state === "credited";
@@ -77,6 +83,12 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
             {lesson.summary ? <p className="text-text-muted">{lesson.summary}</p> : null}
           </header>
 
+          {integrity === null ? (
+            <IntegrityAlert title="We could not check the evidence status of this lesson right now">
+              Science labels are shown as published. Reload the page to check again.
+            </IntegrityAlert>
+          ) : null}
+
           {state.flagged ? (
             <IntegrityAlert title="A source in this lesson was retracted after publishing">
               The affected blocks are marked &quot;Source retracted&quot;. Your completion and credit stay as they are.
@@ -96,7 +108,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
 
           <SupportLegend supports={lesson.blocks.flatMap((b) => ("support" in b ? [b.support] : []))} />
 
-          <LessonBlocks blocks={lesson.blocks} ctx={{ orgId: version.orgId, claims, flagged, media, quizHref: `${courseHref}/quiz` }} />
+          <LessonBlocks blocks={lesson.blocks} ctx={{ orgId: version.orgId, claims, flagged, media, quizHref: `${courseHref}/quiz`, gradedQuiz: version.gradedQuiz, versionId: version.id, integrity }} />
           <LessonMedia media={lesson.media} orgId={version.orgId} />
           <LessonResources resources={lesson.resources} orgId={version.orgId} />
 

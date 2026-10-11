@@ -71,3 +71,14 @@ export function resolveMediaUrl(src: string, owner: { orgId: string | null }): R
   if (isVideoHostUrl(src)) return { kind: "unavailable" };
   return resolveContentUrl(src, owner);
 }
+
+/**
+ * Where a lesson image or video may load from: same-origin Storage only. The CSP allows
+ * images and video from the app's own origin (and signed Storage URLs it redirects to), so
+ * an external https file would be blocked by the browser; it shows as unavailable instead
+ * of a broken element. Links in lesson resources are navigation and stay external.
+ */
+export function renderableMediaUrl(src: string, owner: { orgId: string | null }): ResolvedLink {
+  const link = resolveMediaUrl(src, owner);
+  return link.kind === "media" ? link : { kind: "unavailable" };
+}

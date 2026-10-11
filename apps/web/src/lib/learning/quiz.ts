@@ -23,7 +23,12 @@ export const fieldName = (questionId: string) => `q:${questionId}`;
 
 export type QuizState =
   | { status: "idle" }
-  | { status: "error"; message: string }
+  /**
+   * rejected: the server refused the answers, so nothing was saved. unconfirmed: the outcome is
+   * unknown; the same attempt key is kept, so resubmitting the same answers reconciles without
+   * counting twice. key-conflict: this attempt key was already used for other answers.
+   */
+  | { status: "error"; kind: "rejected" | "unconfirmed" | "key-conflict"; message: string }
   | {
       status: "result";
       attemptId: string;
@@ -49,24 +54,34 @@ export function readSubmission(form: FormData, questions: readonly GradedQuestio
     answers.push({ questionId: q.questionId, answerIndex });
   }
   const parsed = submissionSchema.safeParse({ attemptKey: form.get("attemptKey"), answers });
-  if (!parsed.success) return { error: "We could not read your answers. Reload the page and try again." };
+  if (!parsed.success) return { error: "We could not read your answers. Nothing was saved. Reload the page and try again." };
   return parsed.data;
 }
 
-/** Plain words for submit_quiz_attempt failures. Nothing is saved in any of these cases. */
-export function submitErrorMessage(error: { code?: string; message?: string } | null): string {
-  switch (error?.code) {
-    case "22023":
-      return error.message?.includes("attemptKey")
-        ? "That attempt was already submitted with different answers. Start a new attempt."
-        : "Your answers did not match this quiz. Reload the page and try again.";
-    case "P0002":
-      return "This course is no longer assigned to you here. Reload the page.";
-    case "P0001":
-      return "This course version has no graded quiz.";
-    default:
-      return "We could not submit your answers. Nothing was saved. Try again.";
+export type SubmitError = Extract<QuizState, { status: "error" }>;
+
+/** Postgres codes submit_quiz_attempt raises when it refuses an attempt; nothing is written in those cases. */
+const REFUSED = new Set(["22023", "P0001", "P0002", "28000", "42501"]);
+
+export const UNCONFIRMED: SubmitError = {
+  status: "error",
+  kind: "unconfirmed",
+  message: "We could not confirm whether your answers were saved. Submit the same answers again: if they were saved, they will not count twice.",
+};
+
+/** Plain words for submit_quiz_attempt failures. "Nothing was saved" is said only when the server refused the attempt. */
+export function classifySubmitError(error: { code?: string; message?: string } | null): SubmitError {
+  const code = error?.code ?? "";
+  if (!REFUSED.has(code)) return UNCONFIRMED;
+  if (code === "22023" && error?.message?.includes("attemptKey")) {
+    return { status: "error", kind: "key-conflict", message: "These answers differ from an attempt you already submitted. Start a new attempt to submit them." };
   }
+  const message = {
+    "22023": "Your answers did not match this quiz. Nothing was saved. Reload the page and try again.",
+    P0002: "This course is no longer assigned to you here. Nothing was saved. Reload the page.",
+    P0001: "This course version has no graded quiz. Nothing was saved.",
+  }[code] ?? "Your answers could not be submitted. Nothing was saved. Sign in again and retry.";
+  return { status: "error", kind: "rejected", message };
 }
 
 /**

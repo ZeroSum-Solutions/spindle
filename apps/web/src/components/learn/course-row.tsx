@@ -4,10 +4,14 @@ import type { AssignmentSummary } from "@/lib/learning/load";
 import { LayerLabel, ProgressBar, ProgressText, VersionTag } from "./labels";
 
 /** One assigned course: title, version, layer, literal progress, change and integrity notes. */
-export function CourseRow({ item, base, earlier = [] }: { item: AssignmentSummary; base: string; earlier?: AssignmentSummary[] }) {
+/**
+ * `moduleComplete` comes from module_status (lessons plus a passing quiz where one applies);
+ * the lesson count alone never makes a course complete. Null or absent: no completion label.
+ */
+export function CourseRow({ item, base, earlier = [], moduleComplete = null }: { item: AssignmentSummary; base: string; earlier?: AssignmentSummary[]; moduleComplete?: boolean | null }) {
   return (
     <div className="flex flex-col">
-      <LatestRow item={item} base={base} />
+      <LatestRow item={item} base={base} moduleComplete={moduleComplete} />
       {earlier.length > 0 ? (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-4 text-label text-text-muted md:px-6">
           <span>Earlier versions:</span>
@@ -23,7 +27,7 @@ export function CourseRow({ item, base, earlier = [] }: { item: AssignmentSummar
   );
 }
 
-function LatestRow({ item, base }: { item: AssignmentSummary; base: string }) {
+function LatestRow({ item, base, moduleComplete }: { item: AssignmentSummary; base: string; moduleComplete: boolean | null }) {
   if (!item.available) {
     return (
       <div className="flex flex-col gap-1 p-4 md:px-6">
@@ -45,7 +49,7 @@ function LatestRow({ item, base }: { item: AssignmentSummary; base: string }) {
       <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <LayerLabel layer={view.layer} />
         <ProgressText done={view.done} total={view.total} />
-        {view.complete ? <span className="text-label font-medium">Complete for v{view.versionNumber}</span> : null}
+        {moduleComplete === true ? <span className="text-label font-medium">Complete for v{view.versionNumber}</span> : null}
         {changed > 0 ? (
           <span className="text-label text-text">
             Updated: {changed} {changed === 1 ? "lesson" : "lessons"} changed or added since v{view.delta!.fromVersionNumber}
