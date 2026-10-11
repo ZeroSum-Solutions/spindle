@@ -4,6 +4,7 @@ import type { Course, LessonBlock } from "@spindle/schema";
 import {
   byCourse,
   groupByPart,
+  hasGradedQuiz,
   completionsFrom,
   courseView,
   previousVersion,
@@ -230,5 +231,17 @@ describe("groupByPart", () => {
       ["Practice", ["Two"]],
       ["Review", ["Three"]],
     ]);
+  });
+});
+
+describe("hasGradedQuiz", () => {
+  const HASH = "a".repeat(64);
+  it("is true only for phase-3 versions with a graded question set", () => {
+    expect(hasGradedQuiz({ rules: "phase3", question_set_hash: HASH })).toBe(true);
+    expect(hasGradedQuiz({ rules: "phase2", question_set_hash: null })).toBe(false);
+    expect(hasGradedQuiz({ rules: "phase3", question_set_hash: null })).toBe(false);
+    expect(hasGradedQuiz({ rules: "phase2", question_set_hash: HASH })).toBe(false);
+    expect(hasGradedQuiz({})).toBe(false);
+    expect(hasGradedQuiz({ rules: "phase3", question_set_hash: "not-a-hash" })).toBe(false);
   });
 });
