@@ -42,8 +42,6 @@ export type ResolvedLink = { kind: "external"; url: string } | { kind: "media"; 
  * authorizes every request again on its own.
  */
 export function resolveContentUrl(src: string, owner: { orgId: string | null }): ResolvedLink {
-  // Video hosts load only through the click-to-load registry player (ADR 0007), never as plain media or links.
-  if (isVideoHostUrl(src)) return { kind: "unavailable" };
   if (src.startsWith("https://")) return { kind: "external", url: src };
   if (!src.startsWith("/media/")) return { kind: "unavailable" };
   const object = storageObjectFor(src.slice("/media/".length).split("/"));
@@ -61,4 +59,15 @@ export const VIDEO_URL_SECONDS = 60;
 /** Video is redirected to a short-lived signed Storage URL instead of streamed. Decided by the object's stored MIME type. */
 export function isVideoType(contentType: string | undefined): boolean {
   return /^video\/(mp4|webm)$/.test((contentType ?? "").toLowerCase().split(";")[0]!.trim());
+}
+
+/**
+ * Like resolveContentUrl, for media the player loads on its own (images, video files). Video hosts
+ * load only through the click-to-load registry player (ADR 0007), so legacy video-host media renders
+ * as unavailable and nothing is requested from YouTube. Resource links keep resolveContentUrl: a
+ * link is followed only on a click.
+ */
+export function resolveMediaUrl(src: string, owner: { orgId: string | null }): ResolvedLink {
+  if (isVideoHostUrl(src)) return { kind: "unavailable" };
+  return resolveContentUrl(src, owner);
 }
