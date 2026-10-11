@@ -84,9 +84,17 @@ export function Landing({ brand }: { brand: Brand }) {
       <footer className="border-t border-border bg-surface">
         <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-2 px-4 py-8 text-label text-text-muted md:flex-row md:items-center md:justify-between md:px-8">
           <p>Open source under AGPL-3.0. Original curriculum text under CC BY-SA 4.0.</p>
-          <a href="https://github.com/ZeroSum-Solutions/spindle" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
-            Source code on GitHub
-          </a>
+          <span className="flex flex-wrap items-center gap-x-5">
+            <Link href="/privacy" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
+              Privacy
+            </Link>
+            <Link href="/terms" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
+              Terms
+            </Link>
+            <a href="https://github.com/ZeroSum-Solutions/spindle" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
+              Source code on GitHub
+            </a>
+          </span>
         </div>
       </footer>
     </>
