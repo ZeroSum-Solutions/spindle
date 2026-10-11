@@ -19,11 +19,13 @@ export class PracticeMedia {
 
   constructor(private readonly world: PlayerWorld) {}
 
-  /** Admits a clip that version_media will report as playable, with fresh provider metadata. */
+  /**
+   * Admits a clip with a passing embed check and fresh provider metadata. Its segment review
+   * (D-11) is recorded by PlayerWorld.publishGlobal, once a lesson embeds it, so the review is
+   * bound to that lesson; only then does version_media report it as playable.
+   */
   playable(spec: ClipSpec, metadata: { title: string; channel: string; available: boolean }): string {
     const p = lit(this.world.publisherId);
-    const n = this.ids.length + 1;
-    const run = JSON.stringify({ model: "synthetic-fixture", session: `ci-media-${this.world.run}-${n}`, packetDigest: "0".repeat(63) + "5", reviewedAt: "2026-10-01T00:00:00Z" });
     const now = new Date().toISOString();
     const id = sql(`begin; ${asService}
       select public.publisher_admit_media(${p}, ${lit(JSON.stringify({ provider: "youtube", ...spec, embedCheckedAt: now }))}::jsonb);
@@ -32,7 +34,6 @@ export class PracticeMedia {
       .at(-1)!;
     this.ids.push(id);
     sql(`begin; ${asService}
-      select public.publisher_record_media_check(${p}, ${lit(id)}, ${lit(JSON.stringify({ kind: "segment", outcome: "pass", checkedAt: now, run: JSON.parse(run) }))}::jsonb);
       select public.publisher_refresh_media_metadata(${p}, ${lit(id)}, ${lit(JSON.stringify({ ...metadata, fetchedAt: now }))}::jsonb);
       commit;`);
     return id;
