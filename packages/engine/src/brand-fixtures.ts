@@ -6,21 +6,32 @@ import { sqlLiteral } from "./tenant-text-fixtures";
 
 interface FixtureBrand {
   mark: { kind: "text" };
-  colors: { accent: string; onAccent: string; band?: string };
+  colors: { accent: string; onAccent: string; accentDark: string; onAccentDark: string; band?: string };
   font: "geist" | "barlow-condensed" | "fraunces";
 }
 
-/** Synthetic brands: no real gym. Passing, failing and boundary cases, with and without a band. */
+/** Synthetic brands: no real gym. Passing, failing and boundary cases in both Lab themes, with and without a band. */
 export const BRAND_FIXTURES: readonly FixtureBrand[] = [
-  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF" }, font: "barlow-condensed" },
-  { mark: { kind: "text" }, colors: { accent: "#506E4B", onAccent: "#FFFFFF", band: "#0B3D2E" }, font: "fraunces" },
-  { mark: { kind: "text" }, colors: { accent: "#9CAF88", onAccent: "#FFFFFF" }, font: "geist" },
-  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#84B7A0" }, font: "geist" },
-  { mark: { kind: "text" }, colors: { accent: "#1F4E8C", onAccent: "#FFFFFF", band: "#F2E8D5" }, font: "geist" },
-  { mark: { kind: "text" }, colors: { accent: "#1F4E8C", onAccent: "#FFFFFF", band: "#808080" }, font: "geist" },
-  { mark: { kind: "text" }, colors: { accent: "#1F4E8C", onAccent: "#FFFFFF", band: "#767676" }, font: "geist" },
-  // Pressroom: with ink #111111, #777777 is the grey on which neither ink (4.22) nor white (4.48) reaches 4.5:1.
-  { mark: { kind: "text" }, colors: { accent: "#1F4E8C", onAccent: "#FFFFFF", band: "#777777" }, font: "geist" },
+  // Passing in both themes: a dark accent with white text for light, a light accent with midnight text for dark.
+  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF", accentDark: "#F2877E", onAccentDark: "#0B0D12" }, font: "barlow-condensed" },
+  { mark: { kind: "text" }, colors: { accent: "#1F4E8C", onAccent: "#FFFFFF", accentDark: "#7AB8FF", onAccentDark: "#0B0D12", band: "#0B3D2E" }, font: "fraunces" },
+  // Refused in light only: a pale sage is too light for links on white.
+  { mark: { kind: "text" }, colors: { accent: "#9CAF88", onAccent: "#FFFFFF", accentDark: "#B5CFA8", onAccentDark: "#0B0D12" }, font: "geist" },
+  // Refused in dark only: the light theme's oxblood used again for dark is too dark for links on graphite.
+  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF", accentDark: "#7A1F2B", onAccentDark: "#FFFFFF" }, font: "geist" },
+  // Boundary: #593300 on #F2877E is 4.49998:1, so the dark selected control fails on the exact ratio.
+  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF", accentDark: "#F2877E", onAccentDark: "#593300" }, font: "geist" },
+  // A light band takes graphite text in both themes.
+  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF", accentDark: "#F2877E", onAccentDark: "#0B0D12", band: "#F2E8D5" }, font: "geist" },
+  // Bands: #5C5C5C passes (its chip tint is 4.63:1); on #707070 light ink is 4.497:1 and graphite 3.69:1, so it is refused.
+  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF", accentDark: "#F2877E", onAccentDark: "#0B0D12", band: "#5C5C5C" }, font: "geist" },
+  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF", accentDark: "#F2877E", onAccentDark: "#0B0D12", band: "#707070" }, font: "geist" },
+  // Distance: every contrast pair passes, but an accent sits too close to a Spindle colour in its theme.
+  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF", accentDark: "#FF69B4", onAccentDark: "#0B0D12" }, font: "geist" },
+  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF", accentDark: "#2DD4BF", onAccentDark: "#0B0D12" }, font: "geist" },
+  { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF", accentDark: "#FB923C", onAccentDark: "#0B0D12" }, font: "geist" },
+  { mark: { kind: "text" }, colors: { accent: "#B5175C", onAccent: "#FFFFFF", accentDark: "#F2877E", onAccentDark: "#0B0D12" }, font: "geist" },
+  { mark: { kind: "text" }, colors: { accent: "#A3312B", onAccent: "#FFFFFF", accentDark: "#F2877E", onAccentDark: "#0B0D12" }, font: "geist" },
 ];
 
 /** The values list org_brand.test.sql must carry between its markers: one row per check, in order. */
