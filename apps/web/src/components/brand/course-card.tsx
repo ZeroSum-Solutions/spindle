@@ -3,7 +3,7 @@ import { LayerLabel } from "../learn/labels";
 import { BaseSeal } from "./base-seal";
 import { CourseCover } from "./course-cover";
 import { ModalityChip } from "./modality-chip";
-import { courseTitle, NEUTRAL_COVER, type CourseCardView } from "./view";
+import { courseTitle, NEUTRAL_COVER, type BrandColors, type CourseCardView } from "./view";
 
 /**
  * One course in the member catalog. The whole card is one link, named by its title; its focus ring
@@ -11,7 +11,7 @@ import { courseTitle, NEUTRAL_COVER, type CourseCardView } from "./view";
  * own pattern; Base and Modality courses always draw Spindle's neutral cover. Base cards carry the
  * seal; Modality cards say "Published by Spindle". Support labels stay on blocks, never here.
  */
-export function CourseCard({ course, fontFamily }: { course: CourseCardView; fontFamily: string }) {
+export function CourseCard({ course, fontFamily }: { course: CourseCardView; colors: BrandColors; fontFamily: string; headingLevel?: 3 | 4 }) {
   const id = useId();
   const cover = course.layer === "method" && course.cover ? course.cover : NEUTRAL_COVER;
   return (

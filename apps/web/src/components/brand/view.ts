@@ -2,17 +2,14 @@
 // `VersionTenantText` rows (course_title, course_blurb, welcome): every tenant text field is either
 // live admitted text or null (pending, revoked or absent), so components never receive unadmitted
 // text, and a later adapter only maps rows onto these fields. Pure helpers, unit-tested.
-import type { BrandFont, CurriculumLayer } from "@spindle/schema";
-import { ATLAS, contrast, mix } from "@spindle/engine";
+import { ATLAS, brandTokens, TENANT_TEXT_FALLBACKS as ENGINE_FALLBACKS, validateOrgBrand } from "@spindle/engine";
+import { COVER_PATTERNS, type BrandFont, type CoverPattern, type CurriculumLayer, type ModalityTag } from "@spindle/schema";
 
-/**
- * Fixed Spindle text shown while a tenant slot is pending (DESIGN.md › Brand, held identity text).
- * TODO(P4-A2 W1, #38): replace with TENANT_TEXT_FALLBACKS from @spindle/schema when it lands.
- */
-export const TENANT_TEXT_FALLBACKS = { brandName: "Your gym", courseTitle: "Untitled course" } as const;
+/** Fixed Spindle text shown while a tenant slot is pending (DESIGN.md › Brand, held identity text), from the shared rule set. */
+export const TENANT_TEXT_FALLBACKS = { brandName: ENGINE_FALLBACKS.brand_name, courseTitle: ENGINE_FALLBACKS.course_title } as const;
 
-/** Modality taxonomy (spec rev4 §2). TODO(P4-A2 W1): import the schema enum when it lands. */
-export const MODALITY_LABELS = {
+/** Display labels for the modality taxonomy (`MODALITY_TAGS` in @spindle/schema). */
+export const MODALITY_LABELS: Record<ModalityTag, string> = {
   strength: "Strength",
   powerlifting: "Powerlifting",
   weightlifting: "Weightlifting",
@@ -27,11 +24,10 @@ export const MODALITY_LABELS = {
   "team-sport": "Team sport",
   // Coaches learn about youth athletes; youth never use the app (P4-11).
   youth: "Youth coaching education",
-} as const;
-export type ModalityTag = keyof typeof MODALITY_LABELS;
+};
 
-export const COVER_PATTERNS = ["solid", "diagonal", "grid", "dots", "rings", "waves"] as const;
-export type CoverPattern = (typeof COVER_PATTERNS)[number];
+export { COVER_PATTERNS };
+export type { CoverPattern, ModalityTag };
 
 /** Mirrors #38's `CourseCover`: a pattern and two literal colours, drawn by Spindle. Never an image. */
 export interface CoverView {
@@ -42,16 +38,8 @@ export interface CoverView {
   foreground: string;
 }
 
-/** The colours a branded member page draws with, already validated (accent pairs by validateBrand). */
-export interface BrandColors {
-  accent: string;
-  onAccent: string;
-  accentSoft: string;
-  band: string;
-  onBand: string;
-  bandTint: string;
-  bandEdge: string;
-}
+/** The colours a branded member page draws with: exactly what the engine's `brandTokens` derives. */
+export type BrandColors = ReturnType<typeof brandTokens>;
 
 /** A gym's brand as member pages see it. `name` is null while it is pending admission. */
 export interface MemberBrandView {
@@ -95,21 +83,24 @@ export interface CoachNoteView {
 }
 
 /**
- * The band and its derived tokens (DESIGN.md › Colors): on-band is ink or white, whichever has
- * more contrast; tint and edge mix on-band 12% and 20% into the band. Null when even the better
- * on-band is under 4.5:1, because such a band is refused.
- * TODO(P4-A2 W1): use brandTokens from @spindle/engine once it derives the band.
+ * A gym brand's member colours, or null when the brand is refused. The engine decides: the stored
+ * brand must pass `validateOrgBrand` (every AA pair, including chip text on the band tint), and
+ * the colours are `brandTokens`. No colour maths here.
  */
-export function bandTokens(band: string): { band: string; onBand: string; bandTint: string; bandEdge: string } | null {
-  const onBand = contrast(ATLAS.ink, band) >= contrast("#ffffff", band) ? ATLAS.ink : "#ffffff";
-  if (contrast(onBand, band) < 4.5) return null;
-  return { band, onBand, bandTint: mix(band, onBand, 0.12), bandEdge: mix(band, onBand, 0.2) };
+export function memberColors(_brand: unknown): BrandColors | null {
+  return null;
+}
+
+/** A gym method course with no cover of its own: diagonal in the accent (spec rev4 §2). */
+export function methodDefaultCover(colors: BrandColors): CoverView {
+  return { pattern: "solid", background: colors.accent, foreground: colors.onAccent };
 }
 
 /** CSS custom properties for a branded member scene: the accent set plus the band set. */
 export function brandScopeVars(colors: BrandColors): Record<string, string> {
   return {
     "--color-brand": colors.accent,
+    "--color-brand-hover": colors.accentHover,
     "--color-on-brand": colors.onAccent,
     "--color-brand-soft": colors.accentSoft,
     "--focus-ring": colors.accent,

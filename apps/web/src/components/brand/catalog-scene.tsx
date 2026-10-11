@@ -40,13 +40,13 @@ export function CatalogPreviewScene({ scene }: { scene: CatalogScene }) {
               <ul className="grid gap-5 @[640px]:grid-cols-2 @[1024px]:grid-cols-3">
                 {scene.methodCourses.map((c) => (
                   <li key={c.id}>
-                    <CourseCard course={c} fontFamily={font.family} />
+                    <CourseCard course={c} colors={scene.brand.colors} fontFamily={font.family} />
                   </li>
                 ))}
               </ul>
             </section>
           ) : null}
-          {scene.spindleCourses.length > 0 ? (
+          {[...scene.baseCourses, ...scene.modalityCourses].length > 0 ? (
             <section aria-labelledby={`${headingId}-base`} className="flex flex-col gap-4">
               <div className="flex flex-col gap-3">
                 <h3 id={`${headingId}-base`} className="text-label font-medium uppercase tracking-[0.08em] text-text-muted">
@@ -55,9 +55,9 @@ export function CatalogPreviewScene({ scene }: { scene: CatalogScene }) {
                 <BaseSeal strip />
               </div>
               <ul className="grid gap-5 @[640px]:grid-cols-2 @[1024px]:grid-cols-3">
-                {scene.spindleCourses.map((c) => (
+                {[...scene.baseCourses, ...scene.modalityCourses].map((c) => (
                   <li key={c.id}>
-                    <CourseCard course={c} fontFamily={font.family} />
+                    <CourseCard course={c} colors={scene.brand.colors} fontFamily={font.family} />
                   </li>
                 ))}
               </ul>

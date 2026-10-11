@@ -1,9 +1,8 @@
 // Synthetic member-catalog scenes for the test-only /brand-preview page (P4-A2 spec section 7).
 // No real gym, coach or name. Every tenant text here stands for admitted text; the "pending" scene
 // stands for a gym whose held texts are all pending, so the fixed fallbacks show.
-import { brandTokens, validateBrand } from "@spindle/engine";
 import type { BrandFont } from "@spindle/schema";
-import { bandTokens, type BrandColors, type CatalogHeroView, type CoachNoteView, type CourseCardView, type MemberBrandView, type NavLink } from "@/components/brand/view";
+import { memberColors, type BrandColors, type CatalogHeroView, type CoachNoteView, type CourseCardView, type MemberBrandView, type NavLink } from "@/components/brand/view";
 
 export interface CatalogScene {
   id: "strength" | "pilates" | "pending" | "long-name";
@@ -13,18 +12,19 @@ export interface CatalogScene {
   links: NavLink[];
   action: NavLink;
   methodCourses: CourseCardView[];
-  spindleCourses: CourseCardView[];
+  baseCourses: CourseCardView[];
+  modalityCourses: CourseCardView[];
   note: CoachNoteView | null;
 }
 
-/** Validated colours for a scene: accent pairs through validateBrand, the band through bandTokens. */
+/**
+ * A scene's colours, decided by the engine: the brand must pass validateOrgBrand (as save_org_brand
+ * will), and the colours are brandTokens. A refused preview brand is a fixture error.
+ */
 function colours(name: string, font: BrandFont, accent: string, onAccent: string, band: string): BrandColors {
-  const result = validateBrand({ name, mark: { kind: "text" }, colors: { accent, onAccent }, font });
-  if (!result.ok) throw new Error(`preview brand ${name} must pass: ${result.problems.join("; ")}`);
-  const b = bandTokens(band);
-  if (!b) throw new Error(`preview band ${band} must pass`);
-  const t = brandTokens(result.brand.colors);
-  return { accent: t.accent, onAccent: t.onAccent, accentSoft: t.accentSoft, ...b };
+  const result = memberColors({ mark: { kind: "text" }, colors: { accent, onAccent, band }, font });
+  if (!result) throw new Error(`preview brand ${name} must pass validateOrgBrand`);
+  return result;
 }
 
 const STRENGTH = colours("Example Strength Club", "barlow-condensed", "#7a1b26", "#ffffff", "#17232b");
@@ -35,8 +35,8 @@ const LINKS: NavLink[] = [
   { label: "About the gym", href: "#about" },
 ];
 
-/** Spindle's own courses, the same for every gym: titles are Spindle's, never tenant text. */
-const spindleCourses = (scene: string): CourseCardView[] => [
+/** Spindle's base courses, the same for every gym: titles are Spindle's, never tenant text. */
+const baseCourses = (scene: string): CourseCardView[] => [
   {
     id: `${scene}-base-shoulder`,
     href: "#base-shoulder",
@@ -46,6 +46,10 @@ const spindleCourses = (scene: string): CourseCardView[] => [
     tags: [],
     meta: "8 lessons",
   },
+];
+
+/** Spindle's modality courses: published by Spindle, no seal. */
+const modalityCourses = (scene: string): CourseCardView[] => [
   {
     id: `${scene}-modality`,
     href: "#modality",
@@ -87,7 +91,8 @@ export const CATALOG_SCENES: CatalogScene[] = [
         cover: { pattern: "grid", background: STRENGTH.accent, foreground: STRENGTH.onAccent },
       },
     ],
-    spindleCourses: spindleCourses("strength"),
+    baseCourses: baseCourses("strength"),
+    modalityCourses: modalityCourses("strength"),
     note: { text: "Learn the squat the way we teach it on our floor. Start with the setup, then the cues I use most.", displayName: "Coach A. Example" },
   },
   {
@@ -126,10 +131,11 @@ export const CATALOG_SCENES: CatalogScene[] = [
         blurb: null,
         tags: [],
         meta: "4 lessons",
-        cover: { pattern: "dots", background: PILATES.band, foreground: PILATES.onBand },
+        // No cover of its own: the card draws the method default (diagonal in the accent).
       },
     ],
-    spindleCourses: spindleCourses("pilates"),
+    baseCourses: baseCourses("pilates"),
+    modalityCourses: modalityCourses("pilates"),
     note: { text: "Slow is the skill. I show how I cue breath before movement. Try each cue on yourself first.", displayName: "Instructor B. Example" },
   },
   {
@@ -143,7 +149,8 @@ export const CATALOG_SCENES: CatalogScene[] = [
       { id: "pending-1", href: "#p1", layer: "method", title: null, blurb: null, tags: ["strength"], meta: "6 lessons", cover: { pattern: "solid", background: STRENGTH.band, foreground: STRENGTH.onBand } },
       { id: "pending-2", href: "#p2", layer: "method", title: null, blurb: null, tags: [], meta: "4 lessons", cover: { pattern: "diagonal", background: STRENGTH.accent, foreground: STRENGTH.onAccent } },
     ],
-    spindleCourses: spindleCourses("pending"),
+    baseCourses: baseCourses("pending"),
+    modalityCourses: modalityCourses("pending"),
     note: null,
   },
   {
@@ -165,7 +172,8 @@ export const CATALOG_SCENES: CatalogScene[] = [
         cover: { pattern: "waves", background: PILATES.accentSoft, foreground: PILATES.accent },
       },
     ],
-    spindleCourses: [],
+    baseCourses: [],
+    modalityCourses: [],
     note: null,
   },
 ];
