@@ -16,7 +16,7 @@ const JATS = `<?xml version="1.0"?><!DOCTYPE article PUBLIC "-//NLM//DTD JATS//E
   <p>After the subsection.<![CDATA[ x<y ]]></p></sec>
 <sec id="s2"><title>2. Treatment</title><p>Not anatomy.</p></sec>
 </body><back><ref-list><ref><p>Reference text.</p></ref></ref-list></back>
-<floats-group><table-wrap id="t2"><label>Table 2</label><caption><p>Floating table.</p></caption><table><tbody><tr><td>A</td><td>B</td></tr></tbody></table></table-wrap></floats-group></article>`;
+<floats-group><table-wrap id="t2"><label>Table 2</label><caption><p>Floating table.</p></caption><table><thead><tr><th>X</th><th>Y</th></tr></thead><tbody><tr><td>A</td><td>B</td></tr></tbody></table></table-wrap></floats-group></article>`;
 
 describe("jatsSections", () => {
   it("returns body sections with their own prose and a title path, then tables as header: value rows, skipping figures, front and back", () => {
@@ -25,7 +25,7 @@ describe("jatsSections", () => {
       { locator: "Section: 1. Anatomy", text: "The scapula is a flat bone & rests on the thorax (p < 0.05). After the subsection. x<y" },
       { locator: "Section: 2. Treatment", text: "Not anatomy." },
       { locator: "Table: Table 1", text: "Synthetic muscles. Muscle: Subscapularis; Insertion: Lesser tubercle. Muscle: Supraspinatus; Insertion: Greater tubercle. Synthetic footnote." },
-      { locator: "Table: Table 2", text: "Floating table. A; B." },
+      { locator: "Table: Table 2", text: "Floating table. X: A; Y: B." },
     ]);
   });
 });
@@ -151,5 +151,25 @@ describe("Sol R1 on #31", () => {
       evidence: [words, words],
     } as unknown as ReviewPacket;
     expect(() => assertPacket(packet)).toThrow(/appears twice/);
+  });
+
+  it.each([
+    ["a decimal-encoded span", '<tr><td rowspan="&#50;">A</td><td>x</td><td>10</td></tr><tr><td>y</td><td>20</td></tr>'],
+    ["a hex-encoded span", '<tr><td rowspan="&#x32;">A</td><td>x</td><td>10</td></tr><tr><td>y</td><td>20</td></tr>'],
+    ["an unquoted span", "<tr><td colspan=2>A</td><td>10</td></tr>"],
+    ["a ragged row", "<tr><td>A</td><td>x</td></tr>"],
+  ])("PR31-02 R2: refuses a table that is not a plain grid: %s", (_n, cells) => {
+    const sections = jatsSections(table(cells));
+    expect(() => selectSections(sections, ["Table 9"], "cc-by")).toThrow(/plain grid/);
+  });
+
+  it("PR31-02 R2: refuses a table without a header row", () => {
+    const xml = `<article><body><sec><title>S</title><p>x</p></sec></body><floats-group><table-wrap><label>Table 8</label><table><tbody><tr><td>A</td></tr></tbody></table></table-wrap></floats-group></article>`;
+    expect(() => selectSections(jatsSections(xml), ["Table 8"], "cc-by")).toThrow(/plain grid/);
+  });
+
+  it("PR31-02 R2: accepts an explicit span of 1", () => {
+    const t = jatsSections(table('<tr><td rowspan="1" colspan="&#49;">A</td><td>x</td><td>10</td></tr>')).find((x) => x.locator === "Table: Table 9")!;
+    expect(t.unsupported).toBeUndefined();
   });
 });
