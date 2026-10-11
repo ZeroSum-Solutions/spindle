@@ -152,7 +152,7 @@ export async function userClient(email: string): Promise<{ client: SupabaseClien
 
 // ---- Synthetic curriculum ------------------------------------------------------------
 
-type Json = Record<string, unknown>;
+export type Json = Record<string, unknown>;
 
 export interface LessonSpec {
   id: string;
@@ -376,6 +376,41 @@ export class PlayerWorld {
       commit;`)
       .split("\n")
       .at(-1)!;
+  }
+
+  /** P4-A2: the owner saves the gym's brand through save_org_brand (which repeats the AA checks). */
+  saveBrand(org: { id: string }, owner: Actor, brand: Json): void {
+    sql(`begin; ${asUser(owner.id)} select public.save_org_brand(${lit(org.id)}, ${lit(JSON.stringify(brand))}::jsonb); commit;`);
+  }
+
+  /** P4-A2: an author saves a held text through save_tenant_text; it stays pending until admitted. Returns the text id. */
+  saveText(org: { id: string }, author: Actor, slot: string, courseId: string | null, text: string): string {
+    return sql(`begin; ${asUser(author.id)} select public.save_tenant_text(${lit(org.id)}, ${lit(slot)}, ${courseId ? lit(courseId) : "null"}, ${lit(text)}); commit;`)
+      .split("\n")
+      .at(-1)!;
+  }
+
+  /** P4-A2: the publisher admits a held text through publisher_decide_tenant_text (never a direct receipt row). */
+  admitText(textId: string): void {
+    sql(`begin; select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+      select public.publisher_decide_tenant_text(${lit(this.publisherId)}, t.id, jsonb_build_object('decision', 'admitted',
+          'reason', 'Synthetic e2e text.', 'textHash', t.text_hash))
+        from private.tenant_texts t where t.id = ${lit(textId)};
+      commit;`);
+  }
+
+  /** P4-A2: the publisher revokes a gym course's admitted title through publisher_revoke_tenant_text. */
+  revokeTitle(courseId: string): void {
+    sql(`begin; select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+      select public.publisher_revoke_tenant_text(${lit(this.publisherId)}, t.id, jsonb_build_object('reason', 'Synthetic e2e revocation.'))
+        from (select * from private.tenant_texts where course_id = ${lit(courseId)} and slot = 'course_title' order by seq desc limit 1) t;
+      commit;`);
+  }
+
+  /** Saves a gym method course draft as its author, so held course texts can be saved against it before publishing. */
+  saveMethodDraft(org: { id: string }, author: Actor, course: Json): void {
+    if (!this.courses.includes(String(course.id))) this.courses.push(String(course.id));
+    sql(`begin; ${asUser(author.id)} select public.save_course_draft(${lit(org.id)}, ${lit(JSON.stringify(course))}::jsonb); commit;`);
   }
 
   /** Assigns a version through the tenant RPC, as the gym's owner. Returns the assignment id. */
