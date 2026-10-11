@@ -115,6 +115,7 @@ test.describe.serial("click-to-load registry clips", () => {
     const page = await signIn(browser, actors.vlearner!, learnPath(gym, assignment, LESSON));
     const playable = clip(page, "playable");
     const label = playable.locator('[data-review="model-described"]');
+    await expect(label).toBeVisible();
     await expect(label).toHaveText("· Clip described by a model; human check pending");
     // It sits in the clip's label row, beside the Practice-based label.
     await expect(playable.locator("p").first()).toContainText("Practice-based");
