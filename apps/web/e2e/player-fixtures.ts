@@ -73,8 +73,11 @@ const asService = `select set_config('role', 'service_role', true), set_config('
  * A synthetic review run (ADR 0007): CI records receipts through the real RPCs and never calls
  * a model. The session is unique per test run, so each run's cleanup removes only its own run row.
  */
-const runReceipt = (run: string) =>
-  `${lit(JSON.stringify({ model: "synthetic-fixture", session: `ci-player-${run}`, packetDigest: "0".repeat(63) + "4", reviewedAt: "2026-10-01T00:00:00Z" }))}::jsonb`;
+const runReceipt = (run: string, reviewedAt: string) =>
+  `${lit(JSON.stringify({ model: "synthetic-fixture", session: `ci-player-${run}`, packetDigest: "0".repeat(63) + "4", reviewedAt }))}::jsonb`;
+
+/** A whole-second UTC timestamp in the receipts' format. */
+const stamp = (ms: number) => new Date(Math.floor(ms / 1000) * 1000).toISOString().replace(".000Z", "Z");
 
 /** A synthetic describer run (D-11): what a Gemini segment description records. No model is called. */
 const describerReceipt = (run: string) =>
@@ -201,6 +204,14 @@ export interface Actor {
 export class PlayerWorld {
   readonly run = Date.now().toString(36);
   readonly publisherId = randomUUID();
+  /**
+   * One review time per world: every synthetic receipt is dated now and every approval expires a
+   * year later, so the fixtures never drift past the review rules' date limits.
+   */
+  readonly reviewedAt = stamp(Date.now());
+  readonly expiresAt = stamp(Date.now() + 365 * 24 * 3600 * 1000);
+  /** Every email this run asks Auth for, recorded before the code is requested so cleanup can find it even if sign-in fails. */
+  readonly emails = new Set<string>();
   readonly actors = new Map<string, Actor>();
   readonly orgs = new Map<string, { id: string; slug: string }>();
   readonly courses: string[] = [];
@@ -225,6 +236,7 @@ export class PlayerWorld {
 
   async actor(name: string): Promise<Actor & { client: SupabaseClient }> {
     const email = this.email(name);
+    this.emails.add(email);
     const { client, id } = await userClient(email);
     this.actors.set(name, { email, id });
     return { email, id, client };
@@ -256,15 +268,52 @@ export class PlayerWorld {
         'evidenceLevel', 'Synthetic level', 'population', 'Synthetic population',
         'sourceIds', jsonb_build_array((select id from public.sources where doi = ${lit(this.doi)}))));
       select public.publisher_review_claim(${lit(this.publisherId)}, c.id,
-        jsonb_build_object('decision', 'approved', 'expiresAt', to_char(now() + interval '1 year', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
-          'expectedHash', public.publisher_claim_target(${lit(this.publisherId)}, c.id) ->> 'hash', 'run', ${runReceipt(this.run)},
-          'receipt', '{"existenceCheckedAt": "2026-10-01T00:00:00Z", "faithfulness": "faithful", "retractionCheckedAt": "2026-10-01T00:00:00Z"}'::jsonb))
+        jsonb_build_object('decision', 'approved', 'expiresAt', ${lit(this.expiresAt)},
+          'expectedHash', public.publisher_claim_target(${lit(this.publisherId)}, c.id) ->> 'hash', 'run', ${runReceipt(this.run, this.reviewedAt)},
+          'receipt', ${lit(JSON.stringify({ existenceCheckedAt: this.reviewedAt, faithfulness: "faithful", retractionCheckedAt: this.reviewedAt }))}::jsonb))
       from public.claims c where c.statement = ${lit(`Synthetic claim ${this.run}.`)};
       commit;`).split("\n");
     const claim = sql(`select id from public.claims where statement = ${lit(`Synthetic claim ${this.run}.`)}`);
     const source = sql(`select id from public.sources where doi = ${lit(this.doi)}`);
     if (out.length === 0 || !claim || !source) throw new Error("claim fixture failed");
     return [claim, source];
+  }
+
+  /** The statement of the synthetic claim `syntheticClaims` creates for a key. */
+  claimStatement(key: string): string {
+    return `Synthetic fixture approval for ${key} (run ${this.run}); not a real review.`;
+  }
+
+  /**
+   * One approved synthetic claim per key, all citing one synthetic source. FIXTURE ONLY: the
+   * approvals are synthetic review receipts recorded through the real RPCs, never real Sol
+   * approvals, and the statements say so. Returns a map from key to claim id.
+   */
+  syntheticClaims(keys: readonly string[]): Map<string, string> {
+    const statement = (key: string) => this.claimStatement(key);
+    const p = lit(this.publisherId);
+    sql(`begin; ${asService}
+      select public.publisher_add_source(${p}, ${lit(JSON.stringify({ kind: "systematic_review", title: `Synthetic review ${this.run}`, doi: this.doi, license: "Synthetic test record" }))});
+      ${keys
+        .map(
+          (key) => `select public.publisher_add_claim(${p}, jsonb_build_object('statement', ${lit(statement(key))},
+        'evidenceLevel', 'Synthetic level', 'population', 'Synthetic population',
+        'sourceIds', jsonb_build_array((select id from public.sources where doi = ${lit(this.doi)}))));`,
+        )
+        .join("\n")}
+      select public.publisher_review_claim(${p}, c.id,
+        jsonb_build_object('decision', 'approved', 'expiresAt', ${lit(this.expiresAt)},
+          'expectedHash', public.publisher_claim_target(${p}, c.id) ->> 'hash', 'run', ${runReceipt(this.run, this.reviewedAt)},
+          'receipt', ${lit(JSON.stringify({ existenceCheckedAt: this.reviewedAt, faithfulness: "faithful", retractionCheckedAt: this.reviewedAt }))}::jsonb))
+      from public.claims c where c.created_by = ${p};
+      commit;`);
+    const ids = new Map<string, string>();
+    for (const key of keys) {
+      const id = sql(`select id from public.claims where statement = ${lit(statement(key))} and created_by = ${p}`);
+      if (!id) throw new Error(`synthetic claim for ${key} was not created`);
+      ids.set(key, id);
+    }
+    return ids;
   }
 
   /**
@@ -280,7 +329,7 @@ export class PlayerWorld {
       -- D-11: each registry clip the course embeds gets a synthetic segment review, with a
       -- synthetic describer run, bound to the lessons (and lesson hashes) that embed it now.
       select public.publisher_record_media_check(${p}, m.id, jsonb_build_object('kind', 'segment', 'outcome', 'pass',
-          'checkedAt', ${lit(new Date().toISOString())}, 'run', ${runReceipt(this.run)},
+          'checkedAt', ${lit(new Date().toISOString())}, 'run', ${runReceipt(this.run, this.reviewedAt)},
           'describer', jsonb_build_object('run', ${describerReceipt(this.run)}, 'costUsd', 0),
           -- Every global lesson that embeds the clip, in any course (Sol R2 PR20-13).
           'context', (select jsonb_agg(jsonb_build_object('lessonId', l ->> 'lessonId', 'hash', l ->> 'hash') order by (l ->> 'lessonId')::uuid)
@@ -292,15 +341,15 @@ export class PlayerWorld {
         from (select distinct (x #>> '{}')::uuid as id from jsonb_path_query(public.publisher_review_targets(${p}, ${c}),
           '$.lessons[*].lesson.blocks[*] ? (@.kind == "video").content.mediaId') x) m;
       select public.publisher_review_block(${p}, (b ->> 'blockId')::uuid, jsonb_build_object('verdict', 'supported',
-          'expectedHash', b -> 'hash', 'claimIds', b -> 'claimIds', 'run', ${runReceipt(this.run)}))
+          'expectedHash', b -> 'hash', 'claimIds', b -> 'claimIds', 'run', ${runReceipt(this.run, this.reviewedAt)}))
         from jsonb_path_query(public.publisher_review_targets(${p}, ${c}), '$.lessons[*].blocks[*] ? (@.claimIds.size() > 0)') b;
       select public.publisher_review_lesson(${p}, (l ->> 'lessonId')::uuid, jsonb_build_object('verdict', 'clean',
           'expectedHash', l -> 'hash', 'claimIds', l -> 'claimIds', 'checks', '{"safety": "pass", "originality": "pass"}'::jsonb,
-          'findings', '[]'::jsonb, 'run', ${runReceipt(this.run)}))
+          'findings', '[]'::jsonb, 'run', ${runReceipt(this.run, this.reviewedAt)}))
         from jsonb_path_query(public.publisher_review_targets(${p}, ${c}), '$.lessons[*]') l;
       select public.publisher_review_course(${p}, ${c}, jsonb_build_object('verdict', 'clean',
           'expectedHash', public.publisher_review_targets(${p}, ${c}) -> 'course' -> 'hash',
-          'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', ${runReceipt(this.run)}));
+          'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', ${runReceipt(this.run, this.reviewedAt)}));
       select public.publisher_publish_course(${p}, ${c});
       commit;`)
       .split("\n")
@@ -348,7 +397,10 @@ export class PlayerWorld {
   /** Removes exactly this run's rows and asserts none remain. Immutable-history triggers are paused only inside this transaction. */
   async cleanup(): Promise<void> {
     for (const u of this.uploads) await u.client.storage.from(u.bucket).remove([u.name]);
-    const users = [this.publisherId, ...[...this.actors.values()].map((a) => a.id)].map(lit).join(", ");
+    // Accounts Auth created for this run's emails count too, even if their sign-in never finished.
+    const emails = [...this.emails].map(lit).join(", ") || "null";
+    const byEmail = sql(`select coalesce(string_agg(id::text, ','), '') from auth.users where email in (${emails})`).split(",").filter(Boolean);
+    const users = [...new Set([this.publisherId, ...[...this.actors.values()].map((a) => a.id), ...byEmail])].map(lit).join(", ");
     const orgs = [...this.orgs.values()].map((o) => lit(o.id)).join(", ") || "null";
     const courses = this.courses.map(lit).join(", ") || "null";
     const p = lit(this.publisherId);
