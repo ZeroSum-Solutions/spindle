@@ -1,0 +1,132 @@
+{
+ "module": "shoulder",
+ "note": "Sources the shoulder drafts cite, with the D-12 overrides, D-13 full-text sections and D-13 publisher-excerpt locators. Excerpt TEXT is never committed: files named here live in the private SPINDLE_EXCERPT_DIR.",
+ "sources": [
+  {
+   "doi": "10.1155/2013/635628",
+   "pmid": "24369502",
+   "citation": "Frank RM, Ramirez J, Chalmers PN, McCormick FM, Romeo AA. Scapulothoracic anatomy and snapping scapula syndrome. Anat Res Int. 2013;2013:635628.",
+   "kindOverride": "anatomy_reference",
+   "justification": "Open-access (CC BY) narrative review of scapulothoracic anatomy, admitted only for foundation anatomy claims about structure and attachments, never for effects.",
+   "fullText": [
+    "2. Anatomical Description",
+    "3. Movement of the Glenohumeral",
+    "4. Normal Scapulothoracic",
+    "Table 1"
+   ]
+  },
+  {
+   "doi": "10.3390/sports12120349",
+   "pmid": "39728889",
+   "citation": "Cavanaugh E, Arcot Santillan A, Hoshikawa K, Giambini H. Subregions of the rotator cuff muscles present distinct anatomy, biomechanics, and function. Sports (Basel). 2024;12(12):349.",
+   "kindOverride": "anatomy_reference",
+   "justification": "Open-access (CC BY 4.0) review of rotator cuff muscle subregions, admitted only for the foundation claim naming the four rotator cuff muscles, never for its functional content."
+  },
+  {
+   "doi": "10.1016/j.bjpt.2025.101261",
+   "pmid": "40845626",
+   "citation": "Fernández-Matías R, Ballesteros-Frutos J, Gallardo-Zamora P, Requejo-Salinas N, Caballero-Pozo I, Ludewig P, Lluch-Girbés E. Scapular kinematics variability in individuals with and without rotator cuf"
+  },
+  {
+   "doi": "10.1136/bjsports-2013-092425",
+   "pmid": "23580420",
+   "citation": "Kibler WB, Ludewig PM, McClure PW, et al. Clinical implications of scapular dyskinesis in shoulder injury: the 2013 consensus statement from the 'Scapular Summit'. Br J Sports Med. 2013;47(14):877-885"
+  },
+  {
+   "doi": "10.1016/j.math.2016.07.008",
+   "pmid": "27475532",
+   "citation": "Barrett E, O'Keeffe M, O'Sullivan K, Lewis J, McCreesh K. Is thoracic spine posture associated with shoulder pain, range of motion and function? A systematic review. Man Ther. 2016;26:38-46."
+  },
+  {
+   "doi": "10.1371/journal.pone.0314909",
+   "pmid": "39652591",
+   "citation": "Fonseca Fialho HR, Gava V, Fonseca RNS, Kamonseki DH, Barbosa GM. Thinking outside the shoulder: a systematic review and metanalysis of kinetic chain characteristics in non-athletes with shoulder pain"
+  },
+  {
+   "doi": "10.1186/s12891-024-08144-z",
+   "pmid": "39702033",
+   "citation": "Zhao Q, Palani P, Kassab NS, et al. Evidence-based approach to the shoulder examination for subacromial bursitis and rotator cuff tears: a systematic review and meta-analysis. BMC Musculoskelet Disord"
+  },
+  {
+   "doi": "10.1136/bjsports-2012-091066",
+   "pmid": "22773322",
+   "citation": "Hegedus EJ, Goode AP, Cook CE, et al. Which physical examination tests provide clinicians with the most value when examining the shoulder? Update of a systematic review with meta-analysis of individua"
+  },
+  {
+   "doi": "10.1177/17585732251374282",
+   "pmid": "41245988",
+   "citation": "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724.",
+   "kindOverride": "care_pathway",
+   "justification": "The British Elbow and Shoulder Society publishes this as its 2025 patient care pathway for subacromial pain, a consensus guidance document; PubMed tags it only as a journal article.",
+   "excerpts": [
+    {
+     "file": "bess-pico6.txt",
+     "locator": "Shoulder Elbow 2025;17(6), p. 719: PICO 6, narrative review and grade",
+     "attribution": "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724. (c) The Author(s) 2025; quoted for review only."
+    },
+    {
+     "file": "bess-primary-care.txt",
+     "locator": "Shoulder Elbow 2025;17(6), p. 716: Treatment in primary care and community triage services",
+     "attribution": "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724. (c) The Author(s) 2025; quoted for review only."
+    },
+    {
+     "file": "bess-red-flags.txt",
+     "locator": "Shoulder Elbow 2025;17(6), pp. 715-716: Red flags for the Shoulder",
+     "attribution": "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724. (c) The Author(s) 2025; quoted for review only."
+    }
+   ]
+  },
+  {
+   "doi": "10.1136/bjsports-2018-100486",
+   "pmid": "30647053",
+   "citation": "Lähdeoja T, Karjalainen T, Jokihaara J, Salamh P, Kavaja L, Agarwal A, et al. Subacromial decompression surgery for adults with shoulder pain: a systematic review with meta-analysis. Br J Sports Med. "
+  },
+  {
+   "doi": "10.1177/0269215520934147",
+   "pmid": "32571081",
+   "citation": "Naunton J, Street G, Littlewood C, Haines T, Malliaras P. Effectiveness of progressive and resisted and non-progressive or non-resisted exercise in rotator cuff related shoulder pain: a systematic rev"
+  },
+  {
+   "doi": "10.1249/mss.0000000000003897",
+   "pmid": "41843416",
+   "citation": "Currier BS, D'Souza AC, Singh MAF, et al. American College of Sports Medicine position stand: resistance training prescription for muscle function, hypertrophy, and physical performance in healthy adu",
+   "kindOverride": "position_stand",
+   "justification": "The American College of Sports Medicine publishes this as its official 2026 position stand on resistance training; PubMed tags it only as a review."
+  },
+  {
+   "doi": "10.1007/s40279-025-02344-w",
+   "pmid": "41343037",
+   "citation": "Pelland JC, Remmert JF, Robinson ZP, Hinson SR, et al. The resistance training dose response: meta-regressions exploring the effects of weekly volume and frequency on muscle hypertrophy and strength g"
+  },
+  {
+   "doi": "10.1007/s40279-022-01784-y",
+   "pmid": "36334240",
+   "citation": "Refalo MC, Helms ER, Trexler ET, Hamilton DL, Fyfe JJ. Influence of resistance training proximity-to-failure on skeletal muscle hypertrophy: a systematic review with meta-analysis. Sports Med. 2023;53"
+  },
+  {
+   "doi": "10.1007/s40279-024-02069-2",
+   "pmid": "38970765",
+   "citation": "Robinson ZP, Pelland JC, Remmert JF, Refalo MC, et al. Exploring the dose-response relationship between estimated resistance training proximity to failure, strength gain, and muscle hypertrophy: a ser"
+  },
+  {
+   "doi": "10.1177/03635465251317202",
+   "pmid": "40029165",
+   "citation": "Paul RW, Sirch FR, Vata A, Zhu E, Alberta FG, et al. Chronic adaptations of the shoulder in baseball pitchers: a systematic review. Am J Sports Med. 2025;53(12):2984-2994."
+  },
+  {
+   "doi": "10.1177/1941738118756577",
+   "pmid": "29381423",
+   "citation": "Keller RA, De Giacomo AF, Neumann JA, et al. Glenohumeral internal rotation deficit and risk of upper extremity injury in overhead athletes: a meta-analysis and systematic review. Sports Health. 2018;"
+  },
+  {
+   "doi": "10.1136/bjsports-2019-100698",
+   "pmid": "31937577",
+   "citation": "Pozzi F, Plummer HA, Shanley E, et al. Preseason shoulder range of motion screening and in-season risk of shoulder and elbow injuries in overhead athletes: systematic review and meta-analysis. Br J Sp"
+  },
+  {
+   "doi": "10.26603/001c.129462",
+   "pmid": "40041538",
+   "citation": "Salamh P, Bullock G, Chester R, Daniell H, et al. Risk factors associated with new onset of shoulder pain and injury among the athletic population: a systematic review of the literature. Int J Sports "
+  }
+ ]
+}
