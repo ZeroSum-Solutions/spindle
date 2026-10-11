@@ -12,6 +12,7 @@ import { ErrorNote } from "@/components/ui";
 import type { ClaimView } from "@/lib/learning/load";
 import type { CourseView, LessonView } from "@/lib/learning/view";
 import { CompletionBoard, LogoReveal } from "./motion-board";
+import { BrandPreview } from "./brand-preview";
 import { QuizBoard } from "./quiz-board";
 import { ModuleStatusCard } from "@/components/learn/module-status";
 
@@ -205,6 +206,10 @@ export default function DesignSpecimen() {
             />
           </article>
         </div>
+      </Section>
+
+      <Section title="Brand preview">
+        <BrandPreview />
       </Section>
 
       <Section title="Module status and graded quiz">
