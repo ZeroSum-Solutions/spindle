@@ -15,7 +15,7 @@ export function MotionTokens() {
           <RotateCcw aria-hidden strokeWidth={1.75} className="size-4" />
           Replay
         </button>
-        <button type="button" aria-pressed={reduced} onClick={() => setReduced((r) => !r)} className="min-h-11 rounded-control border border-control bg-surface px-3 text-label font-semibold aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-white">
+        <button type="button" aria-pressed={reduced} onClick={() => setReduced((r) => !r)} className="min-h-11 rounded-control border border-control bg-surface px-3 text-label font-semibold aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-on-ink">
           Reduced motion
         </button>
       </div>

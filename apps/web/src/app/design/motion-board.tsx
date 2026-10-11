@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { CompletionView } from "@/components/learn/complete-lesson";
 import type { CompleteState } from "@/lib/learning/completion";
+import { SpindleWordmark } from "@/components/brand-mark/wordmark";
 
 type Demo = "idle" | "pending" | "saved" | "error" | "done";
 
@@ -32,7 +33,7 @@ export function CompletionBoard() {
               setDemo(d);
               setRun((n) => n + 1);
             }}
-            className="min-h-11 rounded-control border border-control bg-surface px-3 text-label font-medium aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-white"
+            className="min-h-11 rounded-control border border-control bg-surface px-3 text-label font-medium aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-on-ink"
           >
             {d === "done" ? "Done on load" : d[0]!.toUpperCase() + d.slice(1)}
           </button>
@@ -51,14 +52,13 @@ export function CompletionBoard() {
   );
 }
 
-/** Demo only: the wordmark reveal for brand surfaces, along the d cut's 12° slant. Never gates app access. */
+/** Demo only: the wordmark reveal for brand surfaces, along the cut's 1-in-2 rise (--duration-logo). Never gates app access. */
 export function LogoReveal() {
   const [run, setRun] = useState(0);
   return (
     <div className="flex flex-col items-start gap-4">
-      <div className="rounded-card border border-border bg-surface p-8">
-        {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG */}
-        <img key={run} src="/brand/spindle-wordmark-ink.svg" alt="Spindle" width={240} height={81} className="logo-reveal h-[81px] w-[240px]" />
+      <div className="rounded-card border border-border bg-surface p-8 text-text">
+        <SpindleWordmark key={run} height={55} className="logo-reveal" />
       </div>
       <button
         type="button"
