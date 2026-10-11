@@ -10,20 +10,21 @@ export interface EvidenceView {
   withdrawn: boolean;
   retracted: boolean;
   recheckDue: boolean;
-  /** The integrity report could not be read; the block is shown as published and the page says so. */
+  /** The integrity report could not be read: the block loses the Science presentation (fail closed) but is not called withdrawn. */
   statusUnknown: boolean;
 }
 
 /**
  * `integrity` is the version's report keyed by claim id, or null when it could not be read.
  * With a report, a claim it does not mention counts as withdrawn (fail closed, as the engine
- * rules). Without one, nothing is inferred: the page shows a notice instead of guessing.
+ * rules). Without one, the block fails closed too: it is not presented as science, but
+ * nothing else is inferred, so it is not called withdrawn either.
  * `flagged` carries the existing retraction flags, which stay authoritative either way.
  */
 export function evidenceView(claimIds: readonly string[], flagged: ReadonlySet<string>, integrity: ReadonlyMap<string, ClaimIntegrityState> | null): EvidenceView {
   const flaggedHere = claimIds.some((id) => flagged.has(id));
   if (integrity === null) {
-    return { presentsAsScience: claimIds.length > 0, withdrawn: false, retracted: flaggedHere, recheckDue: false, statusUnknown: true };
+    return { presentsAsScience: false, withdrawn: false, retracted: flaggedHere, recheckDue: false, statusUnknown: true };
   }
   const e = blockEvidence(claimIds, integrity);
   return { presentsAsScience: e.presentsAsScience, withdrawn: e.withdrawn, retracted: e.retracted || flaggedHere, recheckDue: e.recheckDue, statusUnknown: false };

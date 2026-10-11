@@ -87,7 +87,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
 
           {integrity === null ? (
             <IntegrityAlert title="We could not check the evidence status of this lesson right now">
-              Science labels are shown as published. Reload the page to check again.
+              Until it is checked, its research statements are not labelled as science. Their sources stay listed. Reload the page to check again.
             </IntegrityAlert>
           ) : null}
 

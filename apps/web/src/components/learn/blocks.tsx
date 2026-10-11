@@ -21,8 +21,8 @@ export interface BlockContext {
   media?: ReadonlyMap<string, MediaAvailability>;
   /** The course's module quiz page, where graded questions are answered. */
   quizHref?: string;
-  /** Claim integrity for this lesson (version_integrity); null when it could not be read, absent where it does not apply. */
-  integrity?: ReadonlyMap<string, ClaimIntegrityState> | null;
+  /** Claim integrity for this lesson (version_integrity), or null when it could not be read. Required: science never presents without it. */
+  integrity: ReadonlyMap<string, ClaimIntegrityState> | null;
   /** The version being rendered; registry clips recheck their state against it when played. */
   versionId?: string;
   /** Whether this version has a graded quiz (phase-3 rules). Without one, science quiz blocks stay ungraded self-checks. */
@@ -33,16 +33,24 @@ type SupportedBlock = Extract<LessonBlock, { support: unknown }>;
 
 /** Integrity applies to science blocks only; practice blocks carry no claims. */
 function blockEvidenceView(block: SupportedBlock, ctx: BlockContext): EvidenceView | null {
-  return block.support === "science" ? evidenceView(block.claimIds, ctx.flagged, ctx.integrity === undefined ? null : ctx.integrity) : null;
+  return block.support === "science" ? evidenceView(block.claimIds, ctx.flagged, ctx.integrity) : null;
 }
 
+/** A science block that has lost its Science presentation: withdrawn, or its evidence status could not be read. */
 function isWithdrawn(evidence: EvidenceView | null): boolean {
-  return evidence !== null && !evidence.presentsAsScience;
+  return evidence !== null && !evidence.presentsAsScience && !evidence.statusUnknown;
+}
+
+function isUnknown(evidence: EvidenceView | null): boolean {
+  return evidence !== null && evidence.statusUnknown;
 }
 
 export function LessonBlocks({ blocks, ctx }: { blocks: LessonBlock[]; ctx: BlockContext }) {
   // A withdrawn science block no longer presents as science, so it never shares a Science label.
-  const labelled = supportLabelPlan(blocks, (block) => (isWithdrawn(blockEvidenceView(block, ctx)) ? "withdrawn" : block.support));
+  const labelled = supportLabelPlan(blocks, (block) => {
+    const evidence = blockEvidenceView(block, ctx);
+    return isWithdrawn(evidence) ? "withdrawn" : isUnknown(evidence) ? "unknown" : block.support;
+  });
   return (
     <div className="flex flex-col gap-8">
       {blocks.map((block, i) => (
@@ -94,23 +102,30 @@ function Supported({ block, index, ctx, showLabel }: { block: SupportedBlock; in
   const science = block.support === "science";
   const evidence = blockEvidenceView(block, ctx);
   const withdrawn = isWithdrawn(evidence);
+  const unknown = isUnknown(evidence);
   const retracted = evidence?.retracted ?? block.claimIds.some((id) => ctx.flagged.has(id));
   const recheckDue = !withdrawn && (evidence?.recheckDue ?? false);
-  const rule = withdrawn ? "lg:border-control" : science ? "lg:border-science" : "lg:border-practice";
+  const rule = withdrawn || unknown ? "lg:border-control" : science ? "lg:border-science" : "lg:border-practice";
   return (
     <section
       data-block={block.kind}
       data-support={block.support}
-      data-evidence={withdrawn ? "withdrawn" : recheckDue ? "recheck-due" : undefined}
+      data-evidence={withdrawn ? "withdrawn" : unknown ? "unknown" : recheckDue ? "recheck-due" : undefined}
       className={`flex flex-col gap-3 lg:-ml-[18px] lg:border-l-2 lg:pl-4 ${rule}`}
     >
-      {showLabel || withdrawn || retracted || recheckDue ? (
+      {showLabel || withdrawn || unknown || retracted || recheckDue ? (
         <div className="flex flex-wrap items-center gap-2">
           {withdrawn ? (
             // A withdrawn claim loses the Science presentation; the text and its sources stay as history.
             <span className="inline-flex items-center gap-1.5 rounded-small bg-caution-soft px-2 py-0.5 text-label font-medium text-caution">
               <TriangleAlert aria-hidden strokeWidth={1.75} className="size-4" />
               Claim withdrawn
+            </span>
+          ) : unknown ? (
+            // Fail closed: without the integrity report the statement is not presented as science.
+            <span className="inline-flex items-center gap-1.5 rounded-small bg-surface-muted px-2 py-0.5 text-label font-medium text-text-muted">
+              <TriangleAlert aria-hidden strokeWidth={1.75} className="size-4" />
+              Evidence status unavailable
             </span>
           ) : showLabel ? (
             <SupportLabel support={block.support} />

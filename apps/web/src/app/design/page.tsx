@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { LessonBlock } from "@spindle/schema";
+import type { ClaimIntegrityState, LessonBlock } from "@spindle/schema";
 import { LessonBlocks, LessonMedia, LessonResources } from "@/components/learn/blocks";
 import { CourseRow } from "@/components/learn/course-row";
 import { IntegrityAlert, LayerLabel, LessonStateLabel, SupportLabel, SupportLegend, VersionTag } from "@/components/learn/labels";
@@ -23,6 +23,11 @@ export const metadata: Metadata = { title: "Design specimen (development only)",
 
 const CLAIM = "00000000-0000-4000-8000-0000000000c1";
 const FLAGGED = "00000000-0000-4000-8000-0000000000c2";
+// The integrity report the specimen blocks render against (synthetic).
+const SPECIMEN_INTEGRITY = new Map<string, ClaimIntegrityState>([
+  [CLAIM, "current"],
+  [FLAGGED, "retracted"],
+]);
 
 const claims = new Map<string, ClaimView>([
   [
@@ -189,7 +194,7 @@ export default function DesignSpecimen() {
           </div>
           <article className="flex max-w-[68ch] flex-col gap-8 text-reading">
             <SupportLegend supports={["science", "practice-based"]} />
-            <LessonBlocks blocks={blocks} ctx={{ orgId: null, claims, flagged: new Set([FLAGGED]) }} />
+            <LessonBlocks blocks={blocks} ctx={{ orgId: null, claims, flagged: new Set([FLAGGED]), integrity: SPECIMEN_INTEGRITY }} />
             <LessonMedia media={[]} orgId={null} />
             <LessonResources
               resources={[
