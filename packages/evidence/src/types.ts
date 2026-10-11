@@ -32,8 +32,10 @@ export interface SourceCheck {
   retracted: boolean;
   retractionSources: string[];
   oa: OaInfo;
-  /** `unknown` when Unpaywall had no license, no record, or failed. */
+  /** `unknown` unless a matching Unpaywall record carries a license (404, error or mismatch all give unknown). */
   licenseStatus: "known" | "unknown";
+  /** License OpenAlex reports, kept separate because Unpaywall is the license authority. */
+  openalexLicense?: string;
   /** Which services answered. A false entry means the call failed or found nothing. */
   answered: { crossref: boolean; openalex: boolean; unpaywall: boolean };
   issues: string[];

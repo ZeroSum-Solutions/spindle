@@ -23,9 +23,11 @@ function matching<T extends { doi?: string | undefined }>(
   wanted: string,
   res: Settled<T>,
   issues: string[],
+  blocking: string[],
 ): T | null {
   if (!res.ok) {
     issues.push(`${name} failed: ${res.error}`);
+    blocking.push(name);
     return null;
   }
   if (!res.value) {
@@ -34,7 +36,8 @@ function matching<T extends { doi?: string | undefined }>(
   }
   const got = res.value.doi ? normalizeDoi(res.value.doi) : null;
   if (got !== wanted) {
-    issues.push(`${name} returned a different DOI (${got ?? "none"}); record ignored`);
+    issues.push(`${name} returned a different DOI (${sanitize(String(got ?? res.value.doi ?? "none")).slice(0, 120)}); record ignored`);
+    blocking.push(name);
     return null;
   }
   return res.value;
@@ -58,9 +61,10 @@ export async function verifySource(ctx: EvidenceContext, rawDoi: string): Promis
   ]);
 
   const issues: string[] = [];
-  const crossref = matching("crossref", doi, crRes, issues);
-  const openalex = matching("openalex", doi, oaRes, issues);
-  const unpaywall = matching("unpaywall", doi, upRes, issues);
+  const blocking: string[] = []; // services that errored or answered for a different DOI
+  const crossref = matching("crossref", doi, crRes, issues, blocking);
+  const openalex = matching("openalex", doi, oaRes, issues, blocking);
+  const unpaywall = matching("unpaywall", doi, upRes, issues, blocking);
   if (openalex && typeof openalex.isRetracted !== "boolean") {
     issues.push("openalex did not report is_retracted");
   }
@@ -71,7 +75,8 @@ export async function verifySource(ctx: EvidenceContext, rawDoi: string): Promis
   if (openalex?.isRetracted === true) retractionSources.push("openalex");
   const retracted = retractionSources.length > 0;
 
-  const license = unpaywall?.license ?? openalex?.oa.license;
+  // Only Unpaywall's license counts as known; OpenAlex's is kept apart as a cross-check.
+  const license = unpaywall?.license;
   const url = unpaywall?.url ?? openalex?.oa.url;
   const oa: OaInfo = {
     isOa: unpaywall?.isOa ?? openalex?.oa.isOa ?? false,
@@ -79,7 +84,7 @@ export async function verifySource(ctx: EvidenceContext, rawDoi: string): Promis
     ...(url ? { url } : {}),
   };
 
-  const noErrors = crRes.ok && oaRes.ok && upRes.ok;
+  const noErrors = blocking.length === 0;
   const complete = crossref !== null && openalex !== null && typeof openalex.isRetracted === "boolean";
   const status = retracted || crossref?.isRetractionNotice ? "flagged" : complete && noErrors ? "verified" : "unverified";
 
@@ -93,6 +98,7 @@ export async function verifySource(ctx: EvidenceContext, rawDoi: string): Promis
     retractionSources,
     oa,
     licenseStatus: license ? "known" : "unknown",
+    ...(openalex?.oa.license ? { openalexLicense: openalex.oa.license } : {}),
     answered: { crossref: crossref !== null, openalex: openalex !== null, unpaywall: unpaywall !== null },
     issues,
   };

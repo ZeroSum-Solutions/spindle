@@ -13,6 +13,20 @@ import {
 const schema = z.object({ ok: z.literal(true) });
 const opts = { userAgent: "test-agent" };
 
+/** Virtual clock: sleeping advances time instantly. */
+function vclock(start = 1_000_000) {
+  let t = start;
+  const sleeps: number[] = [];
+  return {
+    sleeps,
+    now: () => t,
+    sleep: async (ms: number) => {
+      sleeps.push(ms);
+      t += ms;
+    },
+  };
+}
+
 function sequence(...replies: Response[]) {
   const calls: string[] = [];
   const fetch = async (url: string) => {
@@ -26,21 +40,21 @@ function sequence(...replies: Response[]) {
 
 describe("fetchJson", () => {
   it("retries 429 and honors Retry-After", async () => {
-    const sleeps: number[] = [];
+    const { sleeps, ...clock } = vclock();
     const { fetch, calls } = sequence(
       new Response("", { status: 429, headers: { "retry-after": "2" } }),
       Response.json({ ok: true }),
     );
-    const http = createHttp({ fetch, sleep: async (ms) => void sleeps.push(ms), intervalsMs: {} });
+    const http = createHttp({ fetch, ...clock, intervalsMs: {} });
     await expect(http.fetchJson("https://a.test/x", schema, opts)).resolves.toEqual({ ok: true });
     expect(calls).toHaveLength(2);
     expect(sleeps).toEqual([2000]);
   });
 
   it("backs off on 5xx and gives up after maxRetries", async () => {
-    const sleeps: number[] = [];
+    const { sleeps, ...clock } = vclock();
     const { fetch, calls } = sequence(...[1, 2, 3].map(() => new Response("", { status: 503 })));
-    const http = createHttp({ fetch, maxRetries: 2, sleep: async (ms) => void sleeps.push(ms), intervalsMs: {} });
+    const http = createHttp({ fetch, maxRetries: 2, ...clock, intervalsMs: {} });
     await expect(http.fetchJson("https://a.test/x", schema, opts)).rejects.toMatchObject({ status: 503 });
     expect(calls).toHaveLength(3);
     expect(sleeps).toEqual([500, 1000]);
@@ -73,7 +87,7 @@ describe("fetchJson", () => {
       if (n++ === 0) throw new TypeError("fetch failed");
       return Response.json({ ok: true });
     };
-    const http = createHttp({ fetch, sleep: async () => {}, intervalsMs: {} });
+    const http = createHttp({ fetch, ...vclock(), intervalsMs: {} });
     await http.fetchJson("https://a.test/x", schema, opts);
     expect(seen[1]?.signal).toBeInstanceOf(AbortSignal);
     expect((seen[1]?.headers as Record<string, string>)["User-Agent"]).toBe("test-agent");
@@ -125,11 +139,35 @@ describe("hardening", () => {
   });
 
   it("honors a Retry-After up to the cap in full, and queued requests wait for it too", async () => {
-    const sleeps: number[] = [];
+    const { sleeps, ...clock } = vclock();
     const { fetch } = sequence(new Response("", { status: 429, headers: { "retry-after": "45" } }), Response.json({ ok: true }));
-    const http = createHttp({ fetch, now: () => 0, sleep: async (ms) => void sleeps.push(ms), intervalsMs: {} });
+    const http = createHttp({ fetch, ...clock, intervalsMs: {} });
     await http.fetchJson("https://a.test/x", schema, opts);
     expect(sleeps).toEqual([45_000]);
+  });
+
+  it("makes requests already waiting for a slot honor a pause set meanwhile", async () => {
+    // Sleeps take real (tiny) time proportional to the virtual wait, so requests truly overlap.
+    let t = 0;
+    const sleep = (ms: number) =>
+      new Promise<void>((r) =>
+        setTimeout(() => {
+          t = Math.max(t, t + ms);
+          r();
+        }, ms / 1000),
+      );
+    const sentAt: number[] = [];
+    let n = 0;
+    const fetch = async () => {
+      sentAt.push(t);
+      return n++ === 0 ? new Response("", { status: 429, headers: { "retry-after": "45" } }) : Response.json({ ok: true });
+    };
+    const http = createHttp({ fetch, now: () => t, sleep, intervalsMs: { "slow.test": 100 }, concurrency: { "slow.test": 5 } });
+    await Promise.all([1, 2, 3, 4].map(() => http.fetchJson("https://slow.test/x", schema, opts)));
+    const [first, ...rest] = sentAt;
+    expect(first).toBe(0);
+    expect(rest.length).toBeGreaterThanOrEqual(4);
+    expect(Math.min(...rest)).toBeGreaterThanOrEqual(45_000);
   });
 
   it("retries a body-read timeout instead of reporting a validation error", async () => {
@@ -145,7 +183,7 @@ describe("hardening", () => {
       }
       return Response.json({ ok: true });
     };
-    const http = createHttp({ fetch, sleep: async () => {}, intervalsMs: {} });
+    const http = createHttp({ fetch, ...vclock(), intervalsMs: {} });
     await expect(http.fetchJson("https://a.test/x", schema, opts)).resolves.toEqual({ ok: true });
     expect(n).toBe(2);
   });
@@ -153,7 +191,7 @@ describe("hardening", () => {
   it("aborts a hung request at the timeout and reports it", async () => {
     const fetch = (_u: string, init?: RequestInit) =>
       new Promise<Response>((_res, rej) => init?.signal?.addEventListener("abort", () => rej(init.signal?.reason)));
-    const http = createHttp({ fetch, timeoutMs: 20, maxRetries: 1, sleep: async () => {}, intervalsMs: {} });
+    const http = createHttp({ fetch, timeoutMs: 20, maxRetries: 1, ...vclock(), intervalsMs: {} });
     await expect(http.fetchJson("https://a.test/x", schema, opts)).rejects.toThrow(/Network error or timeout/);
   });
 

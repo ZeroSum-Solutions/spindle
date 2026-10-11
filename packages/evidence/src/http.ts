@@ -141,6 +141,7 @@ export function createHttp(options: HttpOptions = {}): Http {
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const now = options.now ?? (() => Date.now());
   const nextSlot = new Map<string, number>();
+  const cooldownUntil = new Map<string, number>();
   const semaphores = new Map<string, Semaphore>();
 
   function semaphore(host: string): Semaphore {
@@ -156,10 +157,14 @@ export function createHttp(options: HttpOptions = {}): Http {
     nextSlot.set(host, slot + Math.max(interval, 0));
     const wait = slot - now();
     if (wait > 0) await sleep(wait);
+    // A pause set while we slept (429 + Retry-After) applies to us too: re-check until it ends.
+    for (let left = (cooldownUntil.get(host) ?? 0) - now(); left > 0; left = (cooldownUntil.get(host) ?? 0) - now()) {
+      await sleep(left);
+    }
   }
 
   function pauseHost(host: string, ms: number): void {
-    nextSlot.set(host, Math.max(nextSlot.get(host) ?? 0, now() + ms));
+    cooldownUntil.set(host, Math.max(cooldownUntil.get(host) ?? 0, now() + ms));
   }
 
   function countDaily(host: string, safeUrl: string): void {

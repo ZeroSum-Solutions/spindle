@@ -34,11 +34,15 @@ export function testContext(
 ): { ctx: EvidenceContext; calls: Call[]; sleeps: number[] } {
   const { fetch, calls } = fakeFetch(routes);
   const sleeps: number[] = [];
+  let t = Date.parse("2026-01-01T00:00:00Z"); // virtual clock: sleeping advances it
   const ctx = createContext({
     env,
     fetch,
-    sleep: async (ms) => void sleeps.push(ms),
-    now: () => new Date("2026-01-01T00:00:00Z"),
+    sleep: async (ms) => {
+      sleeps.push(ms);
+      t += ms;
+    },
+    now: () => new Date(t),
   });
   return { ctx, calls, sleeps };
 }

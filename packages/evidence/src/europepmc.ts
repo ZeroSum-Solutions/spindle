@@ -42,7 +42,7 @@ export async function searchEuropePmc(
     resultType: "core",
     pageSize: String(opts.max ?? 20),
   });
-  const email = ctx.env.SPINDLE_CONTACT_EMAIL?.trim();
+  const email = ctx.contactEmail();
   if (email) p.set("email", email);
   const data = await ctx.http.fetchJson(`${BASE}?${p}`, responseSchema, { userAgent: ctx.userAgent() });
   const maxChars = opts.maxAbstractChars ?? 600;

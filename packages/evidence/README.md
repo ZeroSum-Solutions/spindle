@@ -29,7 +29,7 @@ Environment (see `.env.example`):
 |---|---|---|---|---|
 | `searchPubMed`, `getPubMedSummaries` | NCBI E-utilities | `tool` + `email` always sent; `NCBI_API_KEY` optional | 3 req/s (10 with a key) | Metadata is public. Abstracts may be copyrighted: do not republish. [NCBI policies](https://www.ncbi.nlm.nih.gov/home/about/policies/) |
 | `searchEuropePmc`, `getEuropePmcByDoi` | Europe PMC REST | none | 10 req/s | Metadata is free to query. Abstracts and full text follow each article's license (see `oa.license`); do not republish. [Terms](https://europepmc.org/help) |
-| `searchOpenAlex`, `getOpenAlexByDoi` | OpenAlex works | `mailto` | 10 req/s; OpenAlex now meters usage by budget, so keep batches small | Data is CC0. [Docs](https://help.openalex.org/api/authentication/) |
+| `searchOpenAlex`, `getOpenAlexByDoi` | OpenAlex works | `mailto` | 10 req/s; OpenAlex now meters usage by budget; its budget headers are not read yet, so keep batches small | Data is CC0. [Docs](https://help.openalex.org/api/authentication/) |
 | `getCrossrefWork` | Crossref REST | email in User-Agent | max 3 in flight (polite pool) | Bibliographic metadata is free to reuse; no blanket license is stated for every field. [Limits](https://www.crossref.org/blog/announcing-changes-to-rest-api-rate-limits/) |
 | `getUnpaywall` | Unpaywall v2 | `email` query param | 10 req/s and 90,000 per UTC day per process (limit is 100,000/day) | Check [Unpaywall terms](https://unpaywall.org/api) before storing more than license and OA flags. |
 | `getSemanticScholarByDoi` | Semantic Scholar Graph | `x-api-key` optional | 1 req/s | [API license](https://api.semanticscholar.org/license/) restricts redistribution and requires attribution; TLDRs are model output. Review before commercial use. |

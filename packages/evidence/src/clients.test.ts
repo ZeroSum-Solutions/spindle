@@ -48,6 +48,13 @@ describe("PubMed", () => {
     expect(calls[0]?.url).toContain("email=t%40example.org");
   });
 
+  it("rejects a malformed contact email with a clear error", async () => {
+    const { ctx } = testContext([], { SPINDLE_CONTACT_EMAIL: "not-an-email" });
+    expect(() => ctx.requireEmail()).toThrow(/not a valid email/);
+    expect(ctx.userAgent()).not.toContain("mailto");
+    await expect(searchPubMed(ctx, "x")).rejects.toThrow(/not a valid email/);
+  });
+
   it("requires tool and email", async () => {
     const { ctx } = testContext([], {});
     await expect(searchPubMed(ctx, "x")).rejects.toThrow(/SPINDLE_CONTACT_EMAIL/);
@@ -63,6 +70,8 @@ describe("PubMed", () => {
   it("skips explicit unknown PMIDs but throws on malformed records", async () => {
     const unknown = { result: { uids: ["9"], "9": { uid: "9", error: "cannot get document summary" } } };
     expect(await getPubMedSummaries(testContext([["esummary.fcgi", unknown]]).ctx, ["9"])).toEqual([]);
+    const outage = { result: { uids: ["9"], "9": { uid: "9", error: "temporary server failure" } } };
+    await expect(getPubMedSummaries(testContext([["esummary.fcgi", outage]]).ctx, ["9"])).rejects.toThrow(/malformed/);
     const bad = { result: { uids: ["9"], "9": { uid: "9" } } };
     await expect(getPubMedSummaries(testContext([["esummary.fcgi", bad]]).ctx, ["9"])).rejects.toThrow(/malformed/);
     await expect(getPubMedSummaries(testContext([]).ctx, ["9; drop"])).rejects.toThrow(/numeric/);

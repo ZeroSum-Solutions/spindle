@@ -73,6 +73,7 @@ describe("verifySource", () => {
     ["openalex mismatched DOI", ["ok", "mismatch", "ok"]],
     ["openalex missing is_retracted", ["ok", "missingFlag", "ok"]],
     ["unpaywall error", ["ok", "ok", "error"]],
+    ["unpaywall mismatched DOI", ["ok", "ok", "mismatch"]],
     ["all services 404", ["notFound", "notFound", "notFound"]],
   ];
   it.each(unverified)("is unverified: %s", async (_name, args) => {
@@ -86,6 +87,25 @@ describe("verifySource", () => {
     const check = await run("mismatch", "ok", "ok");
     expect(check).toMatchObject({ exists: false, answered: { crossref: false } });
     expect(check.title).not.toContain("different");
+  });
+
+  it("sanitizes a hostile mismatched DOI before it reaches issues", async () => {
+    const hostile = { ...up, doi: "10.1000/x?email=me@example.org&api_key=SECRET" };
+    const { ctx } = testContext([["api.crossref.org", cr], ["api.openalex.org", oa], ["api.unpaywall.org", hostile]]);
+    const check = await verifySource(ctx, DOI);
+    expect(check.status).toBe("unverified");
+    expect(JSON.stringify(check)).not.toMatch(/example\.org|SECRET/);
+  });
+
+  it("reports license unknown when Unpaywall 404s, errors or mismatches, even if OpenAlex has one", async () => {
+    const licensed = { ...oa, best_oa_location: { license: "cc-by", landing_page_url: "https://x.test" } };
+    for (const unpaywall of [notFound, failed, variants.unpaywall.mismatch]) {
+      const { ctx } = testContext([["api.crossref.org", cr], ["api.openalex.org", licensed], ["api.unpaywall.org", unpaywall]]);
+      const check = await verifySource(ctx, DOI);
+      expect(check.licenseStatus).toBe("unknown");
+      expect(check.oa.license).toBeUndefined();
+      expect(check.openalexLicense).toBe("cc-by");
+    }
   });
 
   it("treats an Unpaywall 404 as unknown license, recorded as an issue, not an error", async () => {

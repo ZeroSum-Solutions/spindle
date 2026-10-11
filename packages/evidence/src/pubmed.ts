@@ -21,7 +21,7 @@ const itemSchema = z.object({
   articleids: z.array(z.object({ idtype: z.string(), value: z.string() })).default([]),
 });
 
-const unknownPmid = z.object({ uid: z.string(), error: z.string() });
+const unknownPmid = z.object({ uid: z.string(), error: z.string().regex(/invalid|not found|cannot get document summary/i) });
 
 const summarySchema = z.object({ result: z.record(z.string(), z.unknown()) });
 
