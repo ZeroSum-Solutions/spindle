@@ -5,6 +5,7 @@ import { MODEL, SESSION, type ReviewOutcome } from "./harness";
 import { assertPacket, canonicalJson, MAX_EVIDENCE_AGE_DAYS, packetDigest, type ReviewPacket, type SegmentDescriber } from "./packet";
 import { parseReviewResult } from "./result";
 import { DESCRIBER_MODEL } from "../video/describe";
+import { DESCRIBE_INTERVAL_DAYS } from "../video/ledger";
 
 /** The only model whose run may record a segment review (D-11). */
 export const SEGMENT_REVIEWER_MODEL = "gpt-6.1-sol";
@@ -91,6 +92,11 @@ export function receiptCalls(packet: ReviewPacket, outcome: ReviewOutcome, now: 
         // Only Sol reviews a segment, and only a Gemini run describes it (Sol PR20-04).
         if (run.model !== SEGMENT_REVIEWER_MODEL) throw new Error(`${item.id}: a segment is reviewed only by ${SEGMENT_REVIEWER_MODEL}, not ${run.model}; the describer cannot be the reviewer`);
         if (describer.run.model !== DESCRIBER_MODEL) throw new Error(`${item.id}: the describer run is not ${DESCRIBER_MODEL}`);
+        // A fresh review never renews an old description (Sol R2 PR20-11).
+        const described = Date.parse(describer.run.reviewedAt);
+        if (!(now.getTime() - described < DESCRIBE_INTERVAL_DAYS * 86_400_000 && described <= now.getTime() + 5 * 60_000)) {
+          throw new Error(`${item.id}: the description is over ${DESCRIBE_INTERVAL_DAYS} days old or not dated; describe the clip again`);
+        }
         const context = (item.content as { context?: unknown }).context;
         if (!Array.isArray(context) || context.length === 0) throw new Error(`${item.id} has no lesson context`);
         return {

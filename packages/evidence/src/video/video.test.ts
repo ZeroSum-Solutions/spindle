@@ -32,7 +32,7 @@ const reply = (status: number, body: unknown) => async () => Response.json(body,
 const gemini = (desc: unknown, extra: Record<string, unknown> = {}) => ({
   modelVersion: "gemini-3.8-flash",
   responseId: "resp_abc123",
-  usageMetadata: { promptTokenCount: 5645, candidatesTokenCount: 158, thoughtsTokenCount: 511 },
+  usageMetadata: { promptTokenCount: 5645, candidatesTokenCount: 158, thoughtsTokenCount: 511, totalTokenCount: 6314 },
   candidates: [{ content: { parts: [{ text: typeof desc === "string" ? desc : JSON.stringify(desc) }] }, finishReason: "STOP" }],
   ...extra,
 });
@@ -55,7 +55,7 @@ describe("describeSegment", () => {
     if (!r.ok) throw new Error(r.error);
     expect(r.run).toMatchObject({ model: "gemini-3.8-flash", session: "gemini-resp_abc123", reviewedAt: NOW.toISOString() });
     expect(r.run.packetDigest).toMatch(/^[0-9a-f]{64}$/);
-    expect(r.costUsd).toBe(costUsd({ promptTokenCount: 5645, candidatesTokenCount: 158, thoughtsTokenCount: 511 }, NOW));
+    expect(r.costUsd).toBe(costUsd({ promptTokenCount: 5645, candidatesTokenCount: 158, thoughtsTokenCount: 511, totalTokenCount: 6314 }, NOW));
     expect(r.costUsd).toBeCloseTo(0.0067, 4);
     expect(r.uncertain).toBe(false);
   });
@@ -122,6 +122,19 @@ describe("describer failures that may still cost money (Sol PR20-02, PR20-09)", 
   });
 });
 
+describe("incomplete usage (Sol R2 PR20-02)", () => {
+  it("charges the reported total, at the output price beyond the prompt, when output counts are missing", async () => {
+    const r = await describeSegment(SEG, deps(reply(200, gemini(DESC, { usageMetadata: { promptTokenCount: 1000, totalTokenCount: 1669 } }))));
+    expect(r.ok).toBe(true);
+    expect(r.costUsd).toBe(Math.ceil(1000 * 0.75 + 669 * 3.75) / 1e6);
+  });
+
+  it("leaves the cost unknown without a total", async () => {
+    const r = await describeSegment(SEG, deps(reply(200, gemini(DESC, { usageMetadata: { promptTokenCount: 1000, candidatesTokenCount: 10 } }))));
+    expect(r).toMatchObject({ ok: false, costUsd: null });
+  });
+});
+
 describe("description timestamps (Sol PR20-08)", () => {
   it("parses m:ss and h:mm:ss and nothing else", () => {
     expect(parseTimestamp("0:31")).toBe(31);
@@ -152,7 +165,7 @@ describe("prices and upper bound (Sol PR20-06)", () => {
     // 90 s window x 300 + 2000 prompt tokens in; 4096 + 1024 out.
     expect(estimateMaxCostUsd(SEG, NOW)).toBeCloseTo((29000 * 0.75 + 5120 * 3.75) / 1e6, 9);
     expect(estimateMaxCostUsd(SEG, new Date("2027-01-15T00:00:00Z"))).toBeCloseTo((29000 * 1.5 + 5120 * 7.5) / 1e6, 9);
-    expect(costUsd({ promptTokenCount: 1e6 }, new Date("2027-01-15T00:00:00Z"))).toBe(1.5);
+    expect(costUsd({ promptTokenCount: 1e6, totalTokenCount: 1e6 }, new Date("2027-01-15T00:00:00Z"))).toBe(1.5);
   });
 
   it("refuses to price a call once the verified prices run out", () => {
@@ -187,6 +200,26 @@ describe("spend ledger (Sol PR20-01, PR20-02, PR20-03, PR20-05)", () => {
     settleCall(path, a, 0.01, true, NOW);
     settleCall(path, b, null, false, NOW);
     expect(monthSpendUsd(parseLedger(readFileSync(path, "utf8")), "2026-10")).toBeCloseTo(2.01);
+  });
+
+  it("accepts an identical retry of a settlement and refuses a conflicting or orphan one (Sol R2 PR20-12)", () => {
+    const path = ledger();
+    const r = reserveCall(path, req(NOW, { maxUsd: 1 }));
+    settleCall(path, r, 0.5, true, NOW);
+    expect(() => settleCall(path, r, 0.5, true, NOW)).not.toThrow();
+    expect(() => settleCall(path, r, 0, true, NOW)).toThrow(/already settled/);
+    expect(() => settleCall(path, { ...r, id: "99999999-9999-4999-8999-999999999999" }, 0, true, NOW)).toThrow(/no reservation/);
+    expect(monthSpendUsd(parseLedger(readFileSync(path, "utf8")), "2026-10")).toBeCloseTo(0.5);
+  });
+
+  it("counts the highest of conflicting settlements written by hand, and an unknown one at the bound", () => {
+    const path = ledger();
+    const r = reserveCall(path, req(NOW, { maxUsd: 1 }));
+    const line = (cost: number | null) => `${JSON.stringify({ type: "settle", id: r.id, at: NOW.toISOString(), costUsd: cost, ok: true })}\n`;
+    writeFileSync(path, readFileSync(path, "utf8") + line(0.5) + line(0));
+    expect(monthSpendUsd(parseLedger(readFileSync(path, "utf8")), "2026-10")).toBeCloseTo(0.5);
+    writeFileSync(path, readFileSync(path, "utf8") + line(null));
+    expect(monthSpendUsd(parseLedger(readFileSync(path, "utf8")), "2026-10")).toBeCloseTo(1);
   });
 
   it("charges a call to the month it was reserved in, even if it settles in the next", () => {
@@ -286,6 +319,13 @@ describe("segment review", () => {
     const outcome = await runReview(packet(), sol(items as unknown[]), () => NOW);
     expect(outcome.ok).toBe(false);
     if (!outcome.ok) expect(outcome.errors.join("\n")).toMatch(error);
+  });
+
+  it("refuses to record a review of a description older than 90 days (Sol R2 PR20-11)", async () => {
+    const old = { ...describer, run: { ...describer.run, reviewedAt: new Date(NOW.getTime() - 91 * 86_400_000).toISOString() } };
+    const p = buildSegmentPacket(SEG, DESC, old, [lesson], context, "Stop on pain.", NOW.toISOString());
+    const outcome = await runReview(p, sol([pass]), () => NOW);
+    expect(() => receiptCalls(p, outcome, NOW)).toThrow(/description is over 90 days old/);
   });
 
   it.each([

@@ -78,7 +78,9 @@ const runReceipt = (run: string) =>
 
 /** A synthetic describer run (D-11): what a Gemini segment description records. No model is called. */
 const describerReceipt = (run: string) =>
-  `${lit(JSON.stringify({ model: "gemini-3.8-flash", session: `ci-describer-${run}`, packetDigest: "0".repeat(63) + "6", reviewedAt: "2026-10-01T00:00:00Z" }))}::jsonb`;
+  `${lit(JSON.stringify({ model: "gemini-3.8-flash", session: `ci-describer-${run}`, packetDigest: "0".repeat(63) + "6", reviewedAt: describedAt }))}::jsonb`;
+/** A description counts for 90 days, so the synthetic one is always a day old. */
+const describedAt = new Date(Date.now() - 86_400_000).toISOString();
 
 /** The app's public Supabase settings: CI exports them; locally they come from the ignored .env.local. */
 export function publicEnv(): { url: string; key: string } {
@@ -280,8 +282,11 @@ export class PlayerWorld {
       select public.publisher_record_media_check(${p}, m.id, jsonb_build_object('kind', 'segment', 'outcome', 'pass',
           'checkedAt', ${lit(new Date().toISOString())}, 'run', ${runReceipt(this.run)},
           'describer', jsonb_build_object('run', ${describerReceipt(this.run)}, 'costUsd', 0),
+          -- Every global lesson that embeds the clip, in any course (Sol R2 PR20-13).
           'context', (select jsonb_agg(jsonb_build_object('lessonId', l ->> 'lessonId', 'hash', l ->> 'hash') order by (l ->> 'lessonId')::uuid)
-            from jsonb_path_query(public.publisher_review_targets(${p}, ${c}), '$.lessons[*]') l
+            from (select distinct ls.course_id from public.lesson_blocks b join public.lessons ls on ls.id = b.lesson_id
+                  where b.kind = 'video' and b.org_id is null and b.content ->> 'mediaId' = m.id::text) cc,
+                 jsonb_path_query(public.publisher_review_targets(${p}, cc.course_id), '$.lessons[*]') l
             where l -> 'lesson' -> 'blocks' @> jsonb_build_array(jsonb_build_object('kind', 'video',
               'content', jsonb_build_object('mediaId', m.id::text))))))
         from (select distinct (x #>> '{}')::uuid as id from jsonb_path_query(public.publisher_review_targets(${p}, ${c}),

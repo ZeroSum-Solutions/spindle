@@ -160,7 +160,8 @@ begin
   foreach k in array array['embed', 'segment'] loop
     select * into latest from public.practice_media_checks where media_id = p_media and kind = k order by seq desc limit 1;
     if not found or latest.outcome <> 'pass' or latest.checked_at <= clock_timestamp() - interval '90 days'
-       or (k = 'segment' and (latest.describer_run_id is null or latest.context is null)) then
+       or (k = 'segment' and (latest.describer_run_id is null or latest.context is null
+                              or latest.described_at <= clock_timestamp() - interval '90 days')) then
       return k || '-unchecked';
     end if;
   end loop;
@@ -175,6 +176,23 @@ language sql stable security definer set search_path = ''
 as $$
   select coalesce((
     select c.context @> jsonb_build_array(jsonb_build_object('lessonId', p_lesson, 'hash', private.lesson_hash(p_lesson)))
+    from public.practice_media_checks c where c.media_id = p_media and c.kind = 'segment' order by c.seq desc limit 1), false)
+$$;
+
+/**
+ * True when the clip's latest segment review saw every lesson of this version that embeds
+ * it, exactly as the version froze it (Sol R2 PR20-10). Snapshot lessons are lesson_json,
+ * so their hash is the lesson hash the review recorded.
+ */
+create function private.segment_covers_version(p_media uuid, p_snapshot jsonb)
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select coalesce((
+    select c.context is not null and not exists (
+      select 1 from jsonb_path_query(p_snapshot, '$.parts[*].lessons[*]') l
+      where jsonb_path_exists(l, '$.blocks[*] ? (@.kind == "video" && @.content.mediaId == $m)', jsonb_build_object('m', p_media::text))
+        and not c.context @> jsonb_build_array(jsonb_build_object('lessonId', l ->> 'id', 'hash', private.sha256(l))))
     from public.practice_media_checks c where c.media_id = p_media and c.kind = 'segment' order by c.seq desc limit 1), false)
 $$;
 
@@ -357,13 +375,13 @@ declare
 begin
   return query
     select m.id,
-      case when private.media_publishable(m.id) = 'ok' then 'playable' else 'disabled' end,
-      case when private.media_publishable(m.id) = 'ok' then 'model-described' end,
+      case when private.media_publishable(m.id) = 'ok' and private.segment_covers_version(m.id, v.snapshot) then 'playable' else 'disabled' end,
+      case when private.media_publishable(m.id) = 'ok' and private.segment_covers_version(m.id, v.snapshot) then 'model-described' end,
       md.title, md.channel, md.available
     from public.practice_media m
     left join public.practice_media_metadata md
       on md.media_id = m.id and md.fetched_at > clock_timestamp() - interval '30 days'
-         and private.media_publishable(m.id) = 'ok'
+         and private.media_publishable(m.id) = 'ok' and private.segment_covers_version(m.id, v.snapshot)
     where m.id in (select (x #>> '{}')::uuid
                    from jsonb_path_query(v.snapshot, '$.parts[*].lessons[*].blocks[*] ? (@.kind == "video").content.mediaId') x)
     order by m.id;
@@ -374,5 +392,5 @@ revoke all on function public.version_media(uuid) from public, anon, authenticat
 grant execute on function public.version_media(uuid) to authenticated;
 revoke all on function public.publisher_record_media_check(uuid, uuid, jsonb) from public, anon, authenticated, service_role;
 grant execute on function public.publisher_record_media_check(uuid, uuid, jsonb) to service_role;
-revoke all on function private.segment_context(uuid), private.segment_covers(uuid, uuid),
+revoke all on function private.segment_context(uuid), private.segment_covers(uuid, uuid), private.segment_covers_version(uuid, jsonb),
   private.video_block_status(jsonb, uuid) from public, anon, authenticated, service_role;
