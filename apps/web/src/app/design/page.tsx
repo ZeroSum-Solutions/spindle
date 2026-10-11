@@ -10,6 +10,8 @@ import { VersionNotice } from "@/components/learn/version-notice";
 import { ErrorNote } from "@/components/ui";
 import type { ClaimView } from "@/lib/learning/load";
 import type { CourseView, LessonView } from "@/lib/learning/view";
+import { ReviewedDiagram } from "@/components/learn/diagrams";
+import { DIAGRAM_SAMPLES } from "./diagram-samples";
 import { CompletionBoard, LogoReveal } from "./motion-board";
 
 // Design specimen for development only. It mounts the real learner components with
@@ -190,6 +192,15 @@ export default function DesignSpecimen() {
               orgId={null}
             />
           </article>
+        </div>
+      </Section>
+
+      <Section title="Reviewed diagrams (sample text)">
+        <div data-specimen="diagrams" className="mx-auto flex w-full max-w-[68ch] flex-col gap-8">
+          {DIAGRAM_SAMPLES.map((content) => (
+            <ReviewedDiagram key={content.diagramId} content={content} />
+          ))}
+          <ReviewedDiagram content={{ diagramId: "synthetic-missing", alt: "Synthetic", caption: "Sample text. A reviewed diagram id with no drawing.", legend: [{ key: "a", label: "Synthetic legend item.", text: "" }] }} />
         </div>
       </Section>
 

@@ -1,13 +1,11 @@
-import { ArrowHead, ACCENT_FILL, CONTEXT, GHOST, Markers, Person, STROKE, SURFACE_FILL, Svg, type DrawingText, type Marker, type Point, type Pose } from "./primitives";
+import { ArrowHead, ACCENT_FILL, CONTEXT, GHOST, P, Person, STROKE, SURFACE_FILL, type DrawingSpec, type Limb, type Point, type Pose } from "./primitives";
 
 // Original schematic line art for the shoulder module's practice lessons (Spindle,
 // AI-assisted, CC BY-SA 4.0; provenance in docs/design/spindle/asset-provenance.json).
 // Hand-written geometry, not traced from any image. Not to scale. Each drawing shows only
 // positions the lesson already describes; it adds no claim of its own. Geometry and marker
-// numbers only: the title, description and legend come from the lesson.
-
-type Limb = readonly [Point, Point, Point];
-const P = (x: number, y: number): Point => ({ x, y });
+// numbers only: alt text, caption and legend come from the lesson's diagram block, whose
+// legend keys pick the anchors below.
 
 /* ------------------------------------------------------------------ */
 /* Lesson 4: the three screens (right arm where one arm is used).      */
@@ -17,12 +15,12 @@ const SCREENS_VIEW = { width: 560, height: 300 } as const;
 const FLOOR = 250;
 const DROP = 40; // figures sit below a strip that holds the panel markers
 
-export const SCREEN_MARKERS: readonly Marker[] = [
-  { n: 1, x: 30, y: 24 },
-  { n: 2, x: 170, y: 24 },
-  { n: 3, x: 310, y: 24 },
-  { n: 4, x: 450, y: 24 },
-];
+const SCREEN_ANCHORS = {
+  "screen-1": P(34, 32),
+  "screen-2": P(174, 32),
+  "screen-3-over": P(314, 32),
+  "screen-3-behind": P(454, 32),
+} as const;
 
 /** A standing figure seen from behind, centred on cx: the viewer's right is the subject's right. */
 function standingFromBehind(cx: number, rightArm?: Limb): Pose {
@@ -56,7 +54,7 @@ export const SCREEN_GEOMETRY = {
   behindBack: [P(514, 66), P(526, 110), P(494, 100)] as Limb,
 } as const;
 
-export function ScreenPositions(text: DrawingText) {
+function ScreenArt() {
   const g = SCREEN_GEOMETRY;
   const side: Pose = {
     head: P(210, 40),
@@ -69,8 +67,6 @@ export function ScreenPositions(text: DrawingText) {
     farLegs: [[P(210, 150), P(206, 200), P(204, FLOOR)]],
   };
   return (
-    <div className="relative">
-      <Svg {...text} width={SCREENS_VIEW.width} height={SCREENS_VIEW.height}>
         <g transform={`translate(0 ${DROP})`}>
           <path d={`M12 ${FLOOR} H548`} {...CONTEXT} />
           {/* 1: standing relaxed, seen from behind; both shoulder blades highlighted. */}
@@ -88,25 +84,27 @@ export function ScreenPositions(text: DrawingText) {
           <circle cx={g.overShoulder[2].x} cy={g.overShoulder[2].y} r={4} {...STROKE} style={ACCENT_FILL} />
           <circle cx={g.behindBack[2].x} cy={g.behindBack[2].y} r={4} {...STROKE} style={ACCENT_FILL} />
         </g>
-      </Svg>
-      <Markers markers={SCREEN_MARKERS} {...SCREENS_VIEW} />
-    </div>
   );
 }
+
+/** Lesson 4: the three shoulder screens, right arm where one arm is used. */
+export const SCREEN_POSITIONS: DrawingSpec = { view: SCREENS_VIEW, anchors: SCREEN_ANCHORS, Art: ScreenArt };
 
 /* ------------------------------------------------------------------ */
 /* Lesson 6: pressing, pulling and overhead progressions.              */
 /* ------------------------------------------------------------------ */
 
-const LOAD_VIEW = { width: 480, height: 400 } as const;
-const ROW_BASE = [124, 254, 384] as const;
+const LOAD_VIEW = { width: 480, height: 480 } as const;
+const ROW_BASE = [110, 250, 466] as const;
+/** Height of each row's arrows and marker, above the row's floor. */
+const ROW_TOP = [80, 100, 160] as const;
 const COLS = [115, 265, 415] as const;
 
-export const LOADING_MARKERS: readonly Marker[] = [
-  { n: 1, x: 24, y: 40 },
-  { n: 2, x: 24, y: 170 },
-  { n: 3, x: 24, y: 300 },
-];
+const LOADING_ANCHORS = {
+  pressing: P(28, ROW_BASE[0] - ROW_TOP[0]),
+  pulling: P(28, ROW_BASE[1] - ROW_TOP[1]),
+  overhead: P(28, ROW_BASE[2] - ROW_TOP[2]),
+} as const;
 
 function unit(from: Point, to: Point): Point {
   const len = Math.hypot(to.x - from.x, to.y - from.y);
@@ -160,14 +158,15 @@ function overheadPress(cx: number, base: number, kneeling: boolean): { pose: Pos
   const hipY = kneeling ? base - 58 : base - 80;
   const hip = P(cx, hipY);
   const neck = P(cx, hipY - 50);
-  const hand = P(cx + 5, hipY - 104);
+  // The pressing arm finishes beside the head, so it is drawn just behind the head's outline.
+  const hand = P(cx - 7, hipY - 108);
   const legs: Limb[] = kneeling
     ? [[hip, P(cx + 28, hipY), P(cx + 28, base)]]
     : [[hip, P(cx + 2, hipY + 40), P(cx + 2, base)]];
   const farLegs: Limb[] = kneeling ? [[hip, P(cx - 8, base - 2), P(cx - 36, base)]] : [[hip, P(cx - 4, hipY + 40), P(cx - 6, base)]];
   return {
     hand,
-    pose: { head: P(cx, hipY - 66), neck, hip, facing: "right", arms: [[P(cx, hipY - 46), P(cx + 3, hipY - 76), hand]], legs, farLegs },
+    pose: { head: P(cx + 7, hipY - 64), neck, hip, facing: "right", arms: [[P(cx - 1, hipY - 46), P(cx - 7, hipY - 78), hand]], legs, farLegs },
   };
 }
 
@@ -182,7 +181,7 @@ function Step({ y, from, to }: { y: number; from: number; to: number }) {
 
 export const LOADING_GEOMETRY = { view: LOAD_VIEW, rowBase: ROW_BASE, cols: COLS } as const;
 
-export function LoadingProgressions(text: DrawingText) {
+function LoadingArt() {
   const [b1, b2, b3] = ROW_BASE;
   const pushes = [56, 30, 0].map((h, i) => pushUp(COLS[i]!, b1, h));
   const rowB = bentRow(COLS[1], b2);
@@ -205,8 +204,7 @@ export function LoadingProgressions(text: DrawingText) {
     farLegs: [[lmHip, P(COLS[0] + 30, b3 - 40), P(COLS[0] + 38, b3)]],
   };
   return (
-    <div className="relative">
-      <Svg {...text} width={LOAD_VIEW.width} height={LOAD_VIEW.height}>
+      <g>
         {ROW_BASE.map((b) => (
           <path key={b} d={`M48 ${b} H470`} {...CONTEXT} />
         ))}
@@ -254,17 +252,18 @@ export function LoadingProgressions(text: DrawingText) {
           <Person pose={stand.pose} />
           <Dumbbell at={stand.hand} />
         </g>
-        {ROW_BASE.map((b) => (
+        {ROW_BASE.map((b, i) => (
           <g key={`s${b}`}>
-            <Step y={b - 92} from={COLS[0] + 60} to={COLS[1] - 62} />
-            <Step y={b - 92} from={COLS[1] + 60} to={COLS[2] - 62} />
+            <Step y={b - ROW_TOP[i]!} from={COLS[0] + 60} to={COLS[1] - 62} />
+            <Step y={b - ROW_TOP[i]!} from={COLS[1] + 60} to={COLS[2] - 62} />
           </g>
         ))}
-      </Svg>
-      <Markers markers={LOADING_MARKERS} {...LOAD_VIEW} />
-    </div>
+      </g>
   );
 }
+
+/** Lesson 6: pressing, pulling and overhead progressions, one row each. */
+export const PRESS_PULL_OVERHEAD: DrawingSpec = { view: LOAD_VIEW, anchors: LOADING_ANCHORS, Art: LoadingArt };
 
 /* ------------------------------------------------------------------ */
 /* Lesson 7: the lying rotation record position (right arm).           */
@@ -275,12 +274,6 @@ const BENCH = 150;
 const ELBOW = P(124, 118);
 const FOREARM = 64;
 
-export const RECORD_MARKERS: readonly Marker[] = [
-  { n: 1, x: 176, y: 196 },
-  { n: 2, x: 30, y: 36 },
-  { n: 3, x: 218, y: 36 },
-  { n: 4, x: 236, y: 96 },
-];
 
 export const RECORD_GEOMETRY = {
   view: RECORD_VIEW,
@@ -288,39 +281,37 @@ export const RECORD_GEOMETRY = {
   forearm: FOREARM,
   arcRadius: 78,
   towel: { x: 114, y: 124, w: 22, h: BENCH - 124 },
-  head: { x: 52, y: 136, r: 11 },
-  leader1: { from: P(162, 186), to: P(132, 152) },
+  head: { x: 48, y: 136, r: 11 },
+  torso: { x: 62, y: 128, w: 230, h: 20 },
 } as const;
 
-export function RotationRecordPosition(text: DrawingText) {
+const RECORD_ANCHORS = {
+  towel: { x: 176, y: 196, leader: { from: P(162, 186), to: P(132, 152) } },
+  "toward-head": P(30, 36),
+  "toward-feet": P(218, 36),
+  level: { x: 238, y: 92, leader: { from: P(226, 102), to: P(208, 116) } },
+} as const;
+
+function RecordArt() {
   const g = RECORD_GEOMETRY;
   const r = g.arcRadius;
   const top = P(ELBOW.x, ELBOW.y - r);
   const headSide = P(ELBOW.x - r, ELBOW.y);
   const feetSide = P(ELBOW.x + r, ELBOW.y);
   return (
-    <div className="relative">
-      <Svg {...text} width={RECORD_VIEW.width} height={RECORD_VIEW.height}>
+      <g>
         {/* Bench and floor. */}
         <path d={`M30 ${BENCH} H440`} {...STROKE} />
         <path d={`M30 ${BENCH + 12} H440 M50 ${BENCH + 12} V212 M420 ${BENCH + 12} V212 M14 212 H452`} {...CONTEXT} />
-        {/* Lying on the back, head to the left, seen from the right side. */}
-        <Person
-          pose={{
-            head: P(g.head.x, g.head.y),
-            neck: P(68, 140),
-            hip: P(290, 140),
-            facing: "up",
-            arms: [],
-            legs: [[P(290, 140), P(360, 140), P(430, 140)]],
-          }}
-        />
-        <path d="M430 140 V128" {...STROKE} />
+        {/* Lying on the back, head to the left, seen from the right side; knees bent, feet on the bench. */}
+        <path d={`M${g.torso.x + g.torso.w - 6} 140 L350 110 L392 ${BENCH}`} {...STROKE} data-legs />
+        <rect x={g.torso.x} y={g.torso.y} width={g.torso.w} height={g.torso.h} rx={10} {...STROKE} style={SURFACE_FILL} data-torso />
+        <circle cx={g.head.x} cy={g.head.y} r={g.head.r} {...STROKE} style={SURFACE_FILL} />
         {/* Folded towel under the elbow (highlighted), so the upper arm is level. */}
         <rect x={g.towel.x} y={g.towel.y} width={g.towel.w} height={g.towel.h} rx={3} {...STROKE} style={ACCENT_FILL} data-towel />
         <path d={`M${g.towel.x} ${g.towel.y + 12} H${g.towel.x + g.towel.w}`} {...STROKE} />
         {/* Upper arm out to the side at shoulder height, toward the viewer; elbow bent to a right angle. */}
-        <path d={`M100 140 L${ELBOW.x} ${ELBOW.y}`} {...STROKE} />
+        <path d={`M104 134 L${ELBOW.x} ${ELBOW.y}`} {...STROKE} />
         {/* Level with the floor, toward the head and toward the feet. */}
         <path d={`M${headSide.x} ${ELBOW.y} H${feetSide.x}`} {...GHOST} data-level />
         {/* Forearm pointing up, with the two directions it turns. */}
@@ -330,9 +321,9 @@ export function RotationRecordPosition(text: DrawingText) {
         <path d={`M${top.x} ${top.y} A${r} ${r} 0 0 1 ${feetSide.x} ${feetSide.y - 2}`} {...CONTEXT} data-arc="feet" />
         <ArrowHead from={P(feetSide.x - 0.5, feetSide.y - 14)} to={P(feetSide.x, feetSide.y - 2)} />
         <circle cx={ELBOW.x} cy={ELBOW.y} r={6} {...STROKE} style={SURFACE_FILL} />
-        <line x1={g.leader1.from.x} y1={g.leader1.from.y} x2={g.leader1.to.x} y2={g.leader1.to.y} data-leader="1" {...STROKE} />
-      </Svg>
-      <Markers markers={RECORD_MARKERS} {...RECORD_VIEW} />
-    </div>
+      </g>
   );
 }
+
+/** Lesson 7: the lying rotation record position, right arm, seen from the athlete's right side. */
+export const ROTATION_RECORD_POSITION: DrawingSpec = { view: RECORD_VIEW, anchors: RECORD_ANCHORS, Art: RecordArt };

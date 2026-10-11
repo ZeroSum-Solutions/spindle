@@ -1,0 +1,81 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import { DRAWINGS, ReviewedDiagram, drawingFor, type ReviewedDiagramContent } from "../learn/diagrams";
+import { Drawing, placeMarkers, type DrawingSpec } from "./primitives";
+
+const render = (content: ReviewedDiagramContent) => renderToStaticMarkup(createElement(ReviewedDiagram, { content }));
+const legendFor = (spec: DrawingSpec) => Object.keys(spec.anchors).map((key) => ({ key, label: `Synthetic ${key}`, text: "Synthetic text." }));
+const entries = Object.entries(DRAWINGS);
+
+// At a 320px screen the figure is about 256px wide; a 28px marker (radius 14px) is then this many drawing units.
+const markerRadius = (spec: DrawingSpec) => 14 * (spec.view.width / 256);
+
+describe("reviewed diagrams: geometry in code, words from the lesson", () => {
+  it.each(entries)("%s draws no words of its own", (_, spec) => {
+    const html = renderToStaticMarkup(createElement(Drawing, { spec, alt: "Synthetic alt", legend: [] }));
+    expect(html).toContain('role="img"');
+    expect(html).toMatch(/<title id="[^"]+">Synthetic alt<\/title>/);
+    // Apart from the title, the drawing has no text at all: no <text>, no <desc>, no markers without a legend.
+    const withoutTitle = html.replace(/<title[^>]*>[^<]*<\/title>/, "");
+    expect(withoutTitle).not.toMatch(/<text|<desc|data-marker/);
+    expect(withoutTitle.replace(/<[^>]*>/g, "")).toBe("");
+    // Drawn, not embedded, in the house stroke.
+    expect(html).not.toMatch(/<image|href="http|url\(http/);
+    expect(html).toMatch(/stroke-width="1.75"/);
+    expect(html).toMatch(/vector-effect="non-scaling-stroke"/);
+  });
+
+  it.each(entries)("%s keeps every marker inside the drawing and clear of the others at 320px", (_, spec) => {
+    const r = markerRadius(spec);
+    const anchors = Object.values(spec.anchors);
+    for (const a of anchors) {
+      expect(a.x - r).toBeGreaterThanOrEqual(0);
+      expect(a.x + r).toBeLessThanOrEqual(spec.view.width);
+      expect(a.y - r).toBeGreaterThanOrEqual(0);
+      expect(a.y + r).toBeLessThanOrEqual(spec.view.height);
+    }
+    for (const [i, a] of anchors.entries()) {
+      for (const b of anchors.slice(i + 1)) expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(2 * r);
+    }
+  });
+
+  it.each(entries)("%s numbers its markers in legend order, as HTML at label size", (_, spec) => {
+    const legend = legendFor(spec).reverse();
+    const html = renderToStaticMarkup(createElement(Drawing, { spec, alt: "Synthetic alt", legend }));
+    const placed = [...html.matchAll(/data-marker="(\d+)" data-anchor="([^"]+)"[^>]*class="[^"]*text-label[^"]*"[^>]*>(\d+)</g)].map((m) => [m[2], Number(m[3])]);
+    expect(placed).toEqual(legend.map((item, i) => [item.key, i + 1]));
+  });
+
+  it("gives no marker to a legend key the drawing does not have, and does not resolve inherited names", () => {
+    const spec = DRAWINGS["rotation-record-position"]!;
+    expect(placeMarkers(spec, [{ key: "toString", label: "x", text: "" }, { key: "towel", label: "y", text: "" }])).toMatchObject([{ key: "towel", n: 2 }]);
+    expect(drawingFor("toString")).toBeUndefined();
+    expect(drawingFor("constructor")).toBeUndefined();
+  });
+
+  it("draws a leader line only for an anchor the legend uses", () => {
+    const spec = DRAWINGS["rotation-record-position"]!;
+    const without = renderToStaticMarkup(createElement(Drawing, { spec, alt: "Synthetic alt", legend: [] }));
+    const withTowel = renderToStaticMarkup(createElement(Drawing, { spec, alt: "Synthetic alt", legend: [{ key: "towel", label: "Synthetic", text: "" }] }));
+    expect(without).not.toContain('data-leader="towel"');
+    expect(withTowel).toContain('data-leader="towel"');
+  });
+
+  it("renders the block's caption and legend, and keeps them when the id has no drawing", () => {
+    const content: ReviewedDiagramContent = {
+      diagramId: "synthetic-missing",
+      alt: "Synthetic alt",
+      caption: "Synthetic caption.",
+      legend: [{ key: "a", label: "Synthetic label.", text: "Synthetic legend text." }],
+    };
+    const html = render(content);
+    expect(html).toContain("This diagram is not available yet.");
+    expect(html).not.toContain('data-diagram="available"');
+    expect(html).toMatch(/<figcaption[^>]*>Synthetic caption\.<\/figcaption>/);
+    expect(html).toMatch(/data-legend="a"[\s\S]*Synthetic label\.[\s\S]*Synthetic legend text\./);
+    const drawn = render({ ...content, diagramId: "screen-start-positions", legend: [{ key: "screen-2", label: "Synthetic label.", text: "" }] });
+    expect(drawn).toContain('data-diagram="available"');
+    expect(drawn).toContain('data-anchor="screen-2"');
+  });
+});

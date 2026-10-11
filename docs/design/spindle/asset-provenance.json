@@ -56,6 +56,39 @@
       "rights": "CC BY-SA 4.0 for the drawing; the surrounding code is AGPL-3.0-only",
       "method": "Hand-written SVG geometry (paths, circles, polygons) in code. Not traced from, or generated from, any image, atlas, textbook figure or third-party illustration; no reference image was opened while drawing.",
       "accuracy": "Schematic and not to scale; the landing caption says so."
+    },
+    {
+      "id": "screen-start-positions",
+      "file": "apps/web/src/components/illustrations/shoulder-practice.tsx (SCREEN_POSITIONS)",
+      "subject": "Shoulder screens (lesson 4): standing from behind; right side view with the right elbow bent to a right angle; right hand over the shoulder and behind the back, seen from behind",
+      "source": "original-svg",
+      "createdAt": "2026-10-11",
+      "creator": "Spindle (drafted with AI assistance: Claude Opus 5.5; reviewed in the rendered app)",
+      "rights": "CC BY-SA 4.0 for the drawing; the surrounding code is AGPL-3.0-only",
+      "method": "Hand-written SVG geometry (paths, circles, polygons) in code. Not traced from, or generated from, any image, atlas, textbook figure or third-party illustration; no reference image was opened while drawing.",
+      "accuracy": "Schematic and not to scale. Shows only positions the lesson text describes; adds no claim. All words (alt, caption, legend) come from the lesson's diagram block."
+    },
+    {
+      "id": "press-pull-overhead",
+      "file": "apps/web/src/components/illustrations/shoulder-practice.tsx (PRESS_PULL_OVERHEAD)",
+      "subject": "Loading progressions (lesson 6): push-ups from a raised surface to the floor; chest-supported, unsupported and heavier rows; landmine, half-kneeling and standing presses; side views",
+      "source": "original-svg",
+      "createdAt": "2026-10-11",
+      "creator": "Spindle (drafted with AI assistance: Claude Opus 5.5; reviewed in the rendered app)",
+      "rights": "CC BY-SA 4.0 for the drawing; the surrounding code is AGPL-3.0-only",
+      "method": "Hand-written SVG geometry (paths, circles, polygons) in code. Not traced from, or generated from, any image, atlas, textbook figure or third-party illustration; no reference image was opened while drawing.",
+      "accuracy": "Schematic and not to scale. Shows only positions the lesson text describes; adds no claim. All words (alt, caption, legend) come from the lesson's diagram block."
+    },
+    {
+      "id": "rotation-record-position",
+      "file": "apps/web/src/components/illustrations/shoulder-practice.tsx (ROTATION_RECORD_POSITION)",
+      "subject": "Lying rotation record position (lesson 7): right arm, athlete on their back seen from the right side, towel under the elbow, forearm turning toward the head and the feet",
+      "source": "original-svg",
+      "createdAt": "2026-10-11",
+      "creator": "Spindle (drafted with AI assistance: Claude Opus 5.5; reviewed in the rendered app)",
+      "rights": "CC BY-SA 4.0 for the drawing; the surrounding code is AGPL-3.0-only",
+      "method": "Hand-written SVG geometry (paths, circles, polygons) in code. Not traced from, or generated from, any image, atlas, textbook figure or third-party illustration; no reference image was opened while drawing.",
+      "accuracy": "Schematic and not to scale. Shows only positions the lesson text describes; adds no claim. All words (alt, caption, legend) come from the lesson's diagram block."
     }
   ]
 }
