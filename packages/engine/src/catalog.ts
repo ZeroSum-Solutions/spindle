@@ -13,7 +13,12 @@ export interface ProvenanceLookup {
   has(id: string): boolean;
 }
 
-export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup): void {
+/** Answers whether a claim record exists, is approved, unexpired and not retracted. */
+export interface ClaimLookup {
+  isPublishable(id: string): boolean;
+}
+
+export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, claims: ClaimLookup): void {
   const ids = new Set<string>();
   const slugs = new Set<string>();
   for (const course of catalog.courses) {
@@ -30,10 +35,22 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup):
         lessonSlugs.add(lesson.slug);
         for (const block of lesson.blocks) {
           if (block.kind === "image") requireProvenance(provenance, block.content.provenanceId);
-          if ("support" in block && block.support === "science") {
-            invariant(block.claimIds.length > 0, `${lesson.id} has a science block without a claim`);
+          if (block.kind === "quiz") {
+            const { options, answerIndex } = block.content;
+            invariant(options.length >= 2, `${lesson.id} has a quiz with fewer than two options`);
+            invariant(
+              Number.isInteger(answerIndex) && answerIndex >= 0 && answerIndex < options.length,
+              `${lesson.id} has a quiz answer outside its options`,
+            );
           }
-          if ("support" in block && block.support === "practice-based") {
+          if (!("support" in block)) continue;
+          if (block.support === "science") {
+            invariant(course.layer !== "method", `${lesson.id} is gym method content and cannot claim science`);
+            invariant(block.claimIds.length > 0, `${lesson.id} has a science block without a claim`);
+            for (const id of block.claimIds) {
+              invariant(claims.isPublishable(id), `${lesson.id} cites claim ${id}, which is not approved`);
+            }
+          } else {
             invariant(block.claimIds.length === 0, `${lesson.id} has a practice-based block posing as science`);
           }
         }

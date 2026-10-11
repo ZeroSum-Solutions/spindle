@@ -14,6 +14,8 @@ import {
 } from "./index";
 
 const provenance = new Set(["art-1"]);
+const approved = new Set(["claim-approved"]);
+const claims = { isPublishable: (id: string) => approved.has(id) };
 
 function lesson(id: string, blocks: LessonBlock[] = []): Lesson {
   return {
@@ -53,13 +55,13 @@ const firstCourse = (catalog: Catalog): Course => catalog.courses[0]!;
 
 describe("catalog contract", () => {
   it("accepts a valid catalog", () => {
-    expect(() => validateCatalog(fixture(), provenance)).not.toThrow();
+    expect(() => validateCatalog(fixture(), provenance, claims)).not.toThrow();
   });
 
   it("rejects duplicate lesson slugs inside a course", () => {
     const catalog = fixture();
     firstCourse(catalog).parts[1]!.lessons[0]!.slug = "l1";
-    expect(() => validateCatalog(catalog, provenance)).toThrow(/Duplicate lesson slug/);
+    expect(() => validateCatalog(catalog, provenance, claims)).toThrow(/Duplicate lesson slug/);
   });
 
   it("rejects media without a provenance record", () => {
@@ -71,7 +73,7 @@ describe("catalog contract", () => {
       caption: "x",
       provenanceId: "missing",
     });
-    expect(() => validateCatalog(catalog, provenance)).toThrow(/Missing provenance missing/);
+    expect(() => validateCatalog(catalog, provenance, claims)).toThrow(/Missing provenance missing/);
   });
 
   it("rejects a science block without a claim", () => {
@@ -82,7 +84,7 @@ describe("catalog contract", () => {
       support: "science",
       claimIds: [],
     });
-    expect(() => validateCatalog(catalog, provenance)).toThrow(/science block without a claim/);
+    expect(() => validateCatalog(catalog, provenance, claims)).toThrow(/science block without a claim/);
   });
 
   it("rejects a practice-based block that carries claims", () => {
@@ -93,7 +95,51 @@ describe("catalog contract", () => {
       support: "practice-based",
       claimIds: ["claim-1"],
     });
-    expect(() => validateCatalog(catalog, provenance)).toThrow(/posing as science/);
+    expect(() => validateCatalog(catalog, provenance, claims)).toThrow(/posing as science/);
+  });
+
+  function scienceBlock(claimIds: string[]): LessonBlock {
+    return { kind: "paragraph", content: "The rotator cuff centres the humeral head.", support: "science", claimIds };
+  }
+
+  function quiz(options: string[], answerIndex: number): LessonBlock {
+    return {
+      kind: "quiz",
+      content: { prompt: "Which muscle?", options, answerIndex, explanation: "Because." },
+      support: "practice-based",
+      claimIds: [],
+    };
+  }
+
+  it("accepts a science block bound to an approved claim", () => {
+    const catalog = fixture();
+    firstCourse(catalog).parts[0]!.lessons[0]!.blocks.push(scienceBlock(["claim-approved"]));
+    expect(() => validateCatalog(catalog, provenance, claims)).not.toThrow();
+  });
+
+  it.each([["claim-unknown"], ["claim-pending"]])("rejects a science block citing %s", (id) => {
+    const catalog = fixture();
+    firstCourse(catalog).parts[0]!.lessons[0]!.blocks.push(scienceBlock([id]));
+    expect(() => validateCatalog(catalog, provenance, claims)).toThrow(/not approved/);
+  });
+
+  it("rejects science claims inside gym method courses", () => {
+    const catalog = fixture();
+    firstCourse(catalog).layer = "method";
+    firstCourse(catalog).parts[0]!.lessons[0]!.blocks.push(scienceBlock(["claim-approved"]));
+    expect(() => validateCatalog(catalog, provenance, claims)).toThrow(/cannot claim science/);
+  });
+
+  it.each([[10], [-1], [0.5], [2]])("rejects a quiz answer index of %s", (index) => {
+    const catalog = fixture();
+    firstCourse(catalog).parts[0]!.lessons[0]!.blocks.push(quiz(["A", "B"], index));
+    expect(() => validateCatalog(catalog, provenance, claims)).toThrow(/quiz answer outside/);
+  });
+
+  it("accepts a quiz with a valid answer index", () => {
+    const catalog = fixture();
+    firstCourse(catalog).parts[0]!.lessons[0]!.blocks.push(quiz(["A", "B"], 1));
+    expect(() => validateCatalog(catalog, provenance, claims)).not.toThrow();
   });
 
   it("finds lessons and the next lesson in order", () => {

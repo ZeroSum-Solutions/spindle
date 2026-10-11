@@ -5,7 +5,7 @@ Spindle teaches personal trainers how the human body works. Every science claim 
 ## Ground rules
 - **Public repo, AGPL-3.0-only.** Never commit tenant method content, client data, secrets, `.env*`, screenshots of third-party products, generated bundles, logs or `.codegraph/`. `packages/contracts` is Apache-2.0; original curriculum text in `content/` is CC BY-SA 4.0.
 - **Copyright:** lesson text is our own explanation of facts. Never paste paper text beyond a short attributed quote. Record each source's license.
-- **Science vs practice:** a block with `support: "science"` must bind at least one approved claim. Gym methods and modality teaching use `support: "practice-based"` and must not carry claims. `validateCatalog` and (from phase 2) the database publish gate enforce this. Do not weaken either one.
+- **Science vs practice:** a block with `support: "science"` must bind at least one approved claim. Practice-based blocks must not carry claims. Gym method courses (`layer: "method"`) are always practice-based. Modality courses may use science where evidence exists and practice-based otherwise. `validateCatalog` and (from phase 2) the database publish gate enforce this. Do not weaken either one.
 - **Tenancy:** every tenant row carries `org_id`, and RLS covers every operation. Code that uses the service key bypasses RLS, so it needs its own tests. Cache keys include `org_id`.
 - **Client data:** do not ingest any cohort or client data until the disclosure contract (roadmap phase 5) and its tests exist. A suppressed count means unknown, never zero.
 - **AI:** Spindle's runtime never calls a model through a personal subscription on behalf of tenants. Founder drafting runs locally and is reviewed by a human before it is committed.
