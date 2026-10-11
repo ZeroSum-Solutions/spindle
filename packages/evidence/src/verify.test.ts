@@ -3,16 +3,52 @@ import { fixture, testContext } from "./testing";
 import { verifySource } from "./verify";
 
 const DOI = "10.1177/0269215520934147";
-const clean = () => [
-  ["api.crossref.org", fixture("crossref-work")],
-  ["api.openalex.org", fixture("openalex-work")],
-  ["api.unpaywall.org", fixture("unpaywall")],
-] as const;
+type Json = Record<string, unknown>;
+const notFound = () => new Response("Resource not found.", { status: 404 });
+const failed = () => new Response("", { status: 400 });
+
+const cr = fixture<Json>("crossref-work");
+const oa = fixture<Json>("openalex-work");
+const up = fixture<Json>("unpaywall");
+const crMsg = cr.message as Json;
+
+const variants = {
+  crossref: {
+    ok: cr,
+    notFound,
+    error: failed,
+    mismatch: { message: { ...crMsg, DOI: "10.1000/different" } },
+    retracted: { message: { ...crMsg, "updated-by": [{ type: "retraction", DOI: "10.1000/n" }] } },
+    withdrawn: { message: { ...crMsg, "updated-by": [{ type: "withdrawal", DOI: "10.1000/n" }] } },
+  },
+  openalex: {
+    ok: oa,
+    notFound,
+    error: failed,
+    mismatch: { ...oa, doi: "https://doi.org/10.1000/different" },
+    missingFlag: { ...oa, is_retracted: null },
+    retracted: { ...oa, is_retracted: true },
+  },
+  unpaywall: {
+    ok: up,
+    notFound,
+    error: failed,
+    mismatch: { ...up, doi: "10.1000/different" },
+  },
+} as const;
+
+async function run(c: keyof typeof variants.crossref, o: keyof typeof variants.openalex, u: keyof typeof variants.unpaywall) {
+  const { ctx } = testContext([
+    ["api.crossref.org", variants.crossref[c]],
+    ["api.openalex.org", variants.openalex[o]],
+    ["api.unpaywall.org", variants.unpaywall[u]],
+  ]);
+  return verifySource(ctx, DOI);
+}
 
 describe("verifySource", () => {
   it("builds a verified receipt for a clean open-access DOI", async () => {
-    const { ctx } = testContext([...clean()]);
-    const check = await verifySource(ctx, `https://doi.org/${DOI.toUpperCase()}`);
+    const check = await run("ok", "ok", "ok");
     expect(check).toMatchObject({
       doi: DOI,
       status: "verified",
@@ -20,6 +56,7 @@ describe("verifySource", () => {
       retracted: false,
       retractionSources: [],
       oa: { isOa: true },
+      licenseStatus: "unknown", // green repository copy: Unpaywall has no license
       answered: { crossref: true, openalex: true, unpaywall: true },
       checkedAt: "2026-01-01T00:00:00.000Z",
       issues: [],
@@ -27,47 +64,73 @@ describe("verifySource", () => {
     expect(check.title).toMatch(/rotator cuff/i);
   });
 
-  it("flags a retraction found by Crossref", async () => {
+  const unverified: [string, Parameters<typeof run>][] = [
+    ["crossref error", ["error", "ok", "ok"]],
+    ["crossref 404", ["notFound", "ok", "ok"]],
+    ["crossref mismatched DOI", ["mismatch", "ok", "ok"]],
+    ["openalex error", ["ok", "error", "ok"]],
+    ["openalex 404", ["ok", "notFound", "ok"]],
+    ["openalex mismatched DOI", ["ok", "mismatch", "ok"]],
+    ["openalex missing is_retracted", ["ok", "missingFlag", "ok"]],
+    ["unpaywall error", ["ok", "ok", "error"]],
+    ["all services 404", ["notFound", "notFound", "notFound"]],
+  ];
+  it.each(unverified)("is unverified: %s", async (_name, args) => {
+    const check = await run(...args);
+    expect(check.status).toBe("unverified");
+    expect(check.issues.length).toBeGreaterThan(0);
+    expect(check.issues.join(" ")).not.toContain("example.org");
+  });
+
+  it("keeps a mismatched record out of the receipt", async () => {
+    const check = await run("mismatch", "ok", "ok");
+    expect(check).toMatchObject({ exists: false, answered: { crossref: false } });
+    expect(check.title).not.toContain("different");
+  });
+
+  it("treats an Unpaywall 404 as unknown license, recorded as an issue, not an error", async () => {
+    const check = await run("ok", "ok", "notFound");
+    expect(check).toMatchObject({ status: "verified", licenseStatus: "unknown", answered: { unpaywall: false } });
+    expect(check.issues.join(" ")).toMatch(/unpaywall has no record/);
+  });
+
+  const flagged: [string, Parameters<typeof run>, string[]][] = [
+    ["crossref retraction", ["retracted", "ok", "ok"], ["crossref"]],
+    ["crossref withdrawal", ["withdrawn", "ok", "ok"], ["crossref"]],
+    ["openalex only", ["ok", "retracted", "ok"], ["openalex"]],
+    ["both, others failing", ["retracted", "retracted", "error"], ["crossref", "openalex"]],
+    ["retracted but openalex 404", ["retracted", "notFound", "notFound"], ["crossref"]],
+  ];
+  it.each(flagged)("flagged wins: %s", async (_name, args, sources) => {
+    const check = await run(...args);
+    expect(check).toMatchObject({ status: "flagged", retracted: true, retractionSources: sources });
+  });
+
+  it("flags a real retracted DOI from the recorded Crossref fixture", async () => {
     const { ctx } = testContext([
       ["api.crossref.org", fixture("crossref-retracted")],
-      ["api.openalex.org", fixture("openalex-work")],
-      ["api.unpaywall.org", new Response("", { status: 404 })],
+      ["api.openalex.org", { ...oa, doi: "https://doi.org/10.1016/s0140-6736(97)11096-0" }],
+      ["api.unpaywall.org", notFound],
     ]);
-    const check = await verifySource(ctx, "10.1016/s0140-6736(97)11096-0");
-    expect(check).toMatchObject({ status: "flagged", retracted: true, retractionSources: ["crossref"] });
+    expect(await verifySource(ctx, "10.1016/S0140-6736(97)11096-0")).toMatchObject({ status: "flagged", retractionSources: ["crossref"] });
   });
 
-  it("flags a retraction found only by OpenAlex", async () => {
-    const oa = { ...fixture<Record<string, unknown>>("openalex-work"), is_retracted: true };
+  it("flags a DOI that is itself a retraction notice", async () => {
+    const notice = { message: { ...crMsg, "update-to": [{ type: "retraction", DOI: "10.1000/orig" }] } };
+    const { ctx } = testContext([["api.crossref.org", notice], ["api.openalex.org", oa], ["api.unpaywall.org", up]]);
+    const check = await verifySource(ctx, DOI);
+    expect(check.status).toBe("flagged");
+    expect(check.issues.join(" ")).toMatch(/retraction notice/);
+  });
+
+  it("never stores the contact email in issues, even for transport errors", async () => {
     const { ctx } = testContext([
-      ["api.crossref.org", fixture("crossref-work")],
+      ["api.crossref.org", () => { throw new Error("boom https://api.crossref.org/x?mailto=test@example.org"); }],
       ["api.openalex.org", oa],
-      ["api.unpaywall.org", fixture("unpaywall")],
-    ]);
-    expect(await verifySource(ctx, DOI)).toMatchObject({ status: "flagged", retractionSources: ["openalex"] });
-  });
-
-  it("never reads a failed service as clean", async () => {
-    const { ctx } = testContext([
-      ["api.crossref.org", new Response("", { status: 400 })],
-      ["api.openalex.org", fixture("openalex-work")],
-      ["api.unpaywall.org", fixture("unpaywall")],
+      ["api.unpaywall.org", () => { throw new Error("boom email=test%40example.org"); }],
     ]);
     const check = await verifySource(ctx, DOI);
-    expect(check.status).toBe("unverified");
-    expect(check.exists).toBe(false);
-    expect(check.issues.join(" ")).toMatch(/crossref failed/);
-  });
-
-  it("reports a missing DOI as unverified", async () => {
-    const nf = () => new Response("Resource not found.", { status: 404 });
-    const { ctx } = testContext([
-      ["api.crossref.org", nf],
-      ["api.openalex.org", nf],
-      ["api.unpaywall.org", nf],
-    ]);
-    const check = await verifySource(ctx, "10.1000/none");
-    expect(check).toMatchObject({ status: "unverified", exists: false, retracted: false });
+    expect(JSON.stringify(check)).not.toContain("example.org");
   });
 
   it("throws on an invalid DOI or a missing contact email", async () => {

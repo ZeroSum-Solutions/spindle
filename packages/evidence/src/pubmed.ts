@@ -1,13 +1,14 @@
 import { z } from "zod";
 import type { EvidenceContext } from "./context";
-import { normalizeDoi } from "./doi";
+import { EvidenceValidationError, sanitize } from "./http";
+import { normalizeDoi, retractionFromPubTypes } from "./doi";
 import type { WorkSummary } from "./types";
 
 const BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 const REVIEW_FILTER = "(review[pt] OR systematic[sb] OR meta-analysis[pt])";
 
 const searchSchema = z.object({
-  esearchresult: z.object({ count: z.string(), idlist: z.array(z.string()) }),
+  esearchresult: z.object({ count: z.string().regex(/^\d+$/), idlist: z.array(z.string().regex(/^\d+$/)) }),
 });
 
 const itemSchema = z.object({
@@ -20,12 +21,13 @@ const itemSchema = z.object({
   articleids: z.array(z.object({ idtype: z.string(), value: z.string() })).default([]),
 });
 
+const unknownPmid = z.object({ uid: z.string(), error: z.string() });
+
 const summarySchema = z.object({ result: z.record(z.string(), z.unknown()) });
 
+/** NCBI asks distributed software to send `tool` and a developer `email`. */
 function params(ctx: EvidenceContext, extra: Record<string, string>): URLSearchParams {
-  const p = new URLSearchParams({ retmode: "json", tool: "spindle", ...extra });
-  const email = ctx.env.SPINDLE_CONTACT_EMAIL?.trim();
-  if (email) p.set("email", email);
+  const p = new URLSearchParams({ retmode: "json", tool: "spindle", email: ctx.requireEmail(), ...extra });
   const key = ctx.env.NCBI_API_KEY?.trim();
   if (key) p.set("api_key", key);
   return p;
@@ -62,6 +64,7 @@ function parseYear(pubdate: string | undefined): number | undefined {
 
 export async function getPubMedSummaries(ctx: EvidenceContext, pmids: string[]): Promise<WorkSummary[]> {
   if (pmids.length === 0) return [];
+  if (!pmids.every((id) => /^\d+$/.test(id))) throw new Error("PMIDs must be numeric strings");
   const p = params(ctx, { db: "pubmed", id: pmids.join(",") });
   const data = await ctx.http.fetchJson(`${BASE}/esummary.fcgi?${p}`, summarySchema, {
     userAgent: ctx.userAgent(),
@@ -69,8 +72,12 @@ export async function getPubMedSummaries(ctx: EvidenceContext, pmids: string[]):
   });
   const out: WorkSummary[] = [];
   for (const id of pmids) {
-    const parsed = itemSchema.safeParse(data.result[id]);
-    if (!parsed.success) continue; // unknown PMIDs come back as an error object
+    const raw = data.result[id];
+    if (unknownPmid.safeParse(raw).success) continue; // NCBI answers unknown PMIDs with { uid, error }
+    const parsed = itemSchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new EvidenceValidationError(`PubMed record ${id} is malformed: ${sanitize(parsed.error.message).slice(0, 300)}`, `esummary:${id}`);
+    }
     const it = parsed.data;
     const doiId = it.articleids.find((a) => a.idtype === "doi")?.value;
     const doi = doiId ? (normalizeDoi(doiId) ?? undefined) : undefined;
@@ -81,7 +88,8 @@ export async function getPubMedSummaries(ctx: EvidenceContext, pmids: string[]):
       title: it.title.replace(/\.$/, ""),
       year: parseYear(it.pubdate),
       journal: it.fulljournalname ?? it.source,
-      isReview: it.pubtype.some((t) => /review|meta-analysis/i.test(t)),
+      isReview: it.pubtype.some((t) => /review|meta-analysis/i.test(t) && !/retract/i.test(t)),
+      ...retractionFromPubTypes(it.pubtype),
       oa: { isOa: it.articleids.some((a) => a.idtype === "pmc") },
     });
   }

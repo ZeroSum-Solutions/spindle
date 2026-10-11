@@ -25,28 +25,33 @@ Environment (see `.env.example`):
 
 ## APIs
 
-| Client | Endpoint | Auth | Limit we apply | Terms |
+| Client | Endpoint | Auth | Limits we apply | Data license and terms |
 |---|---|---|---|---|
-| `searchPubMed`, `getPubMedSummaries` | NCBI E-utilities | none; `NCBI_API_KEY` optional | 340 ms between calls (3/s); 110 ms with a key | Metadata is public. Abstracts may be copyrighted: do not republish them. [NCBI policies](https://www.ncbi.nlm.nih.gov/home/about/policies/) |
-| `searchEuropePmc`, `getEuropePmcByDoi` | Europe PMC REST | none | 100 ms | Metadata is free. Full text and abstracts follow each article's license (returned in `oa.license`). |
-| `searchOpenAlex`, `getOpenAlexByDoi` | OpenAlex works | none; `mailto` for the polite pool | 100 ms | Data is CC0. |
-| `getCrossrefWork` | Crossref REST | none; email in User-Agent | 100 ms | Metadata is free to reuse. Include a contact in the User-Agent. |
-| `getUnpaywall` | Unpaywall v2 | `email` query param | 100 ms (limit is 100k/day) | Data is CC0. Respect the daily limit. |
-| `getSemanticScholarByDoi` | Semantic Scholar Graph | `x-api-key` optional | 1000 ms (1/s) | [API license](https://www.semanticscholar.org/product/api/license): attribute, no bulk redistribution. TLDRs are model output. |
-| `lookupAnatomyByUberon` | Wikidata SPARQL | none; User-Agent with contact | 250 ms | Data is CC0. [User-Agent policy](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy). Keep queries small. |
-| `listWgerExercises` | wger `/api/v2/exerciseinfo/` | none | 200 ms | Most exercises are CC BY-SA 4.0. Keep `license` and `licenseAuthor` with any copy, and credit wger. |
+| `searchPubMed`, `getPubMedSummaries` | NCBI E-utilities | `tool` + `email` always sent; `NCBI_API_KEY` optional | 3 req/s (10 with a key) | Metadata is public. Abstracts may be copyrighted: do not republish. [NCBI policies](https://www.ncbi.nlm.nih.gov/home/about/policies/) |
+| `searchEuropePmc`, `getEuropePmcByDoi` | Europe PMC REST | none | 10 req/s | Metadata is free to query. Abstracts and full text follow each article's license (see `oa.license`); do not republish. [Terms](https://europepmc.org/help) |
+| `searchOpenAlex`, `getOpenAlexByDoi` | OpenAlex works | `mailto` | 10 req/s; OpenAlex now meters usage by budget, so keep batches small | Data is CC0. [Docs](https://help.openalex.org/api/authentication/) |
+| `getCrossrefWork` | Crossref REST | email in User-Agent | max 3 in flight (polite pool) | Bibliographic metadata is free to reuse; no blanket license is stated for every field. [Limits](https://www.crossref.org/blog/announcing-changes-to-rest-api-rate-limits/) |
+| `getUnpaywall` | Unpaywall v2 | `email` query param | 10 req/s and 90,000 per UTC day per process (limit is 100,000/day) | Check [Unpaywall terms](https://unpaywall.org/api) before storing more than license and OA flags. |
+| `getSemanticScholarByDoi` | Semantic Scholar Graph | `x-api-key` optional | 1 req/s | [API license](https://api.semanticscholar.org/license/) restricts redistribution and requires attribution; TLDRs are model output. Review before commercial use. |
+| `lookupAnatomyByUberon` | Wikidata SPARQL | User-Agent with contact | max 5 in flight | Wikidata data is CC0; Uberon itself is CC BY 4.0 and the Terminologia Anatomica identifiers are only references. [User-Agent policy](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy) |
+| `listWgerExercises` | wger `/api/v2/exerciseinfo/` | none | 5 req/s | Most exercises are CC BY-SA 4.0. Keep `license` and `licenseAuthor` with any copy. |
+
+Retries: 429 and 5xx are retried up to 3 times. A `Retry-After` is honored in full up to 60 s and pauses every queued request to that host; a longer pause fails with `EvidenceBudgetError`.
 
 ## Verification receipt
 
 `verifySource(ctx, doi)` combines Crossref (exists, title, retraction notices), OpenAlex (`is_retracted`) and Unpaywall (license) into one `SourceCheck`:
 
-- `verified`: Crossref and OpenAlex answered, DOI exists, no retraction found.
-- `flagged`: a retraction was found, or the DOI is itself a retraction notice.
-- `unverified`: a service failed or the DOI was not found. A failure is never reported as clean; see `issues`.
+- `verified`: Crossref and OpenAlex each returned a record for exactly the requested DOI, OpenAlex gave an explicit `is_retracted`, and no service (Unpaywall included) errored.
+- `flagged`: a matching record says retracted or withdrawn, or the DOI is itself a retraction notice. Always wins.
+- `unverified`: anything else. A failed or mismatched service is never clean; see `issues`. A DOI Unpaywall does not know gives `licenseStatus: "unknown"` plus an issue, not an error.
+
+Issues are sanitized: no contact email or key is ever stored.
 
 ## Tests and fixtures
 
 `pnpm test` (repo root) runs the unit tests against recorded JSON in `src/__fixtures__/`. CI never calls the network.
 
-- Re-record fixtures by hand: `SPINDLE_CONTACT_EMAIL=you@example.org pnpm --filter @spindle/evidence record`. The script trims payloads to the fields the clients read and cuts abstracts to 300 characters.
+- Fixtures hold metadata only. Abstract and TLDR fields are synthetic (`SYNTHETIC ABSTRACT FOR TESTS`).
+- Re-record fixtures by hand: `SPINDLE_CONTACT_EMAIL=you@example.org pnpm --filter @spindle/evidence record`. The script trims payloads to the fields the clients read and replaces abstracts and TLDRs with synthetic placeholder text, so no publisher or model prose is redistributed.
 - Live check: `SPINDLE_CONTACT_EMAIL=you@example.org pnpm --filter @spindle/evidence smoke` prints one line per API.

@@ -23,7 +23,15 @@ export class EvidenceValidationError extends Error {
   }
 }
 
-/** Minimum gap between calls, per host. Conservative on purpose. */
+/** Thrown when a provider asks for a longer pause than we allow, or a daily budget is spent. */
+export class EvidenceBudgetError extends EvidenceHttpError {
+  constructor(message: string, status: number | null, url: string) {
+    super(message, status, url);
+    this.name = "EvidenceBudgetError";
+  }
+}
+
+/** Minimum gap between call starts, per host. Conservative on purpose. */
 export const DEFAULT_INTERVALS_MS: Readonly<Record<string, number>> = {
   "eutils.ncbi.nlm.nih.gov": 340, // 3 req/s without an API key
   "api.crossref.org": 100,
@@ -35,11 +43,27 @@ export const DEFAULT_INTERVALS_MS: Readonly<Record<string, number>> = {
   "wger.de": 200,
 };
 
+/** Maximum in-flight requests per host. Crossref's polite pool allows 3; WDQS allows 5 per IP. */
+export const DEFAULT_CONCURRENCY: Readonly<Record<string, number>> = {
+  "api.crossref.org": 3,
+  "query.wikidata.org": 5,
+};
+const FALLBACK_CONCURRENCY = 2;
+
+/** Requests per UTC day, per host, counted in-process (retries included). Unpaywall allows 100,000. */
+export const DEFAULT_DAILY_LIMITS: Readonly<Record<string, number>> = {
+  "api.unpaywall.org": 90_000,
+};
+
+export const MAX_RETRY_AFTER_MS = 60_000;
+
 export interface HttpOptions {
   fetch?: FetchLike;
   timeoutMs?: number;
   maxRetries?: number;
   intervalsMs?: Readonly<Record<string, number>>;
+  concurrency?: Readonly<Record<string, number>>;
+  dailyLimits?: Readonly<Record<string, number>>;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
 }
@@ -62,20 +86,49 @@ export interface Http {
   fetchJson<S extends z.ZodType>(url: string, schema: S, opts: RequestOptions): Promise<z.output<S>>;
 }
 
-const MAX_RETRY_AFTER_MS = 30_000;
+const SECRET_PARAM = /([?&;\s"'(](?:api_key|apikey|key|token|access_token|email|mailto)=)[^&\s"')]*/gi;
+const EMAIL_ADDRESS = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g;
 
-/** Hide secrets that travel in query strings before a URL reaches an error message. */
-export function redactUrl(url: string): string {
-  return url.replace(/([?&](?:api_key|apikey|key)=)[^&]*/gi, "$1***");
+/** Remove secrets and contact details from any text that may reach an error, log or receipt. */
+export function sanitize(text: string): string {
+  return text
+    .replace(SECRET_PARAM, "$1***")
+    .replace(/%40/gi, "@")
+    .replace(EMAIL_ADDRESS, "<email>");
 }
 
+export const redactUrl = sanitize;
+
+/** Milliseconds to wait, uncapped. Null when the header is absent or unreadable. */
 export function parseRetryAfter(value: string | null, nowMs: number): number | null {
   if (!value) return null;
   const secs = Number(value);
-  if (Number.isFinite(secs)) return Math.min(Math.max(secs, 0) * 1000, MAX_RETRY_AFTER_MS);
+  if (Number.isFinite(secs)) return Math.max(secs, 0) * 1000;
   const date = Date.parse(value);
   if (Number.isNaN(date)) return null;
-  return Math.min(Math.max(date - nowMs, 0), MAX_RETRY_AFTER_MS);
+  return Math.max(date - nowMs, 0);
+}
+
+// Daily counters are shared by every context in the process.
+const dailyUsed = new Map<string, number>();
+export function resetDailyBudgets(): void {
+  dailyUsed.clear();
+}
+
+class Semaphore {
+  private active = 0;
+  private waiting: (() => void)[] = [];
+  constructor(private readonly max: number) {}
+  async acquire(): Promise<() => void> {
+    if (this.active >= this.max) await new Promise<void>((r) => this.waiting.push(r));
+    else this.active++;
+    // A released slot is handed straight to the next waiter, so `active` stays put.
+    return () => {
+      const next = this.waiting.shift();
+      if (next) next();
+      else this.active--;
+    };
+  }
 }
 
 export function createHttp(options: HttpOptions = {}): Http {
@@ -83,70 +136,118 @@ export function createHttp(options: HttpOptions = {}): Http {
   const timeoutMs = options.timeoutMs ?? 20_000;
   const maxRetries = options.maxRetries ?? 3;
   const intervals = options.intervalsMs ?? DEFAULT_INTERVALS_MS;
+  const concurrency = options.concurrency ?? DEFAULT_CONCURRENCY;
+  const dailyLimits = options.dailyLimits ?? DEFAULT_DAILY_LIMITS;
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const now = options.now ?? (() => Date.now());
   const nextSlot = new Map<string, number>();
+  const semaphores = new Map<string, Semaphore>();
 
-  async function acquire(host: string, override?: number): Promise<void> {
+  function semaphore(host: string): Semaphore {
+    let s = semaphores.get(host);
+    if (!s) semaphores.set(host, (s = new Semaphore(concurrency[host] ?? FALLBACK_CONCURRENCY)));
+    return s;
+  }
+
+  async function acquireSlot(host: string, override?: number): Promise<void> {
     const interval = override ?? intervals[host] ?? 0;
-    if (interval <= 0) return;
     // Reserve the slot synchronously so concurrent callers queue up in order.
     const slot = Math.max(now(), nextSlot.get(host) ?? 0);
-    nextSlot.set(host, slot + interval);
+    nextSlot.set(host, slot + Math.max(interval, 0));
     const wait = slot - now();
     if (wait > 0) await sleep(wait);
   }
 
-  async function fetchJson(url: string, schema: z.ZodType, opts: RequestOptions): Promise<unknown> {
-    const safeUrl = redactUrl(url);
+  function pauseHost(host: string, ms: number): void {
+    nextSlot.set(host, Math.max(nextSlot.get(host) ?? 0, now() + ms));
+  }
+
+  function countDaily(host: string, safeUrl: string): void {
+    const limit = dailyLimits[host];
+    if (limit === undefined) return;
+    const key = `${host}|${new Date(now()).toISOString().slice(0, 10)}`;
+    const used = (dailyUsed.get(key) ?? 0) + 1;
+    if (used > limit) {
+      throw new EvidenceBudgetError(`Daily request budget of ${limit} for ${host} is spent`, null, safeUrl);
+    }
+    dailyUsed.set(key, used);
+  }
+
+  type Outcome = { done: true; value: unknown } | { done: false; error: EvidenceHttpError };
+
+  async function attemptOnce(
+    url: string,
+    safeUrl: string,
+    schema: z.ZodType,
+    opts: RequestOptions,
+    attempt: number,
+  ): Promise<Outcome> {
     const host = new URL(url).host;
-    let lastError: EvidenceHttpError | null = null;
-
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      await acquire(host, opts.minIntervalMs);
-      let res: Response;
-      try {
-        res = await doFetch(url, {
-          headers: { Accept: "application/json", "User-Agent": opts.userAgent, ...opts.headers },
-          signal: AbortSignal.timeout(timeoutMs),
-        });
-      } catch (err) {
-        lastError = new EvidenceHttpError(
-          `Network error or timeout for ${safeUrl}: ${err instanceof Error ? err.message : String(err)}`,
-          null,
-          safeUrl,
-        );
-        if (attempt < maxRetries) {
-          await sleep(500 * 2 ** attempt);
-          continue;
-        }
-        throw lastError;
-      }
-
-      if (res.ok) {
-        let body: unknown;
-        try {
-          body = await res.json();
-        } catch {
-          throw new EvidenceValidationError(`Response from ${safeUrl} is not valid JSON`, safeUrl);
-        }
-        const parsed = schema.safeParse(body);
-        if (!parsed.success) {
-          throw new EvidenceValidationError(
-            `Response from ${safeUrl} failed validation: ${parsed.error.message.slice(0, 500)}`,
+    const backoff = 500 * 2 ** attempt;
+    await acquireSlot(host, opts.minIntervalMs);
+    countDaily(host, safeUrl);
+    let body: unknown;
+    try {
+      const res = await doFetch(url, {
+        headers: { Accept: "application/json", "User-Agent": opts.userAgent, ...opts.headers },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (!res.ok) {
+        await res.body?.cancel().catch(() => undefined);
+        if (opts.nullStatuses?.includes(res.status)) return { done: true, value: null };
+        const error = new EvidenceHttpError(`HTTP ${res.status} from ${safeUrl}`, res.status, safeUrl);
+        if (res.status !== 429 && res.status < 500) throw error;
+        const hinted = parseRetryAfter(res.headers.get("retry-after"), now());
+        if (hinted !== null && hinted > MAX_RETRY_AFTER_MS) {
+          throw new EvidenceBudgetError(
+            `HTTP ${res.status} from ${safeUrl}: provider asked for a ${Math.round(hinted / 1000)} s pause (limit ${MAX_RETRY_AFTER_MS / 1000} s); not retrying`,
+            res.status,
             safeUrl,
           );
         }
-        return parsed.data;
+        const delayMs = hinted ?? backoff;
+        pauseHost(host, delayMs); // everything queued on this host honors the pause too
+        return { done: false, error };
       }
+      const text = await res.text(); // body timeouts land in the catch below and are retried
+      try {
+        body = JSON.parse(text);
+      } catch {
+        throw new EvidenceValidationError(`Response from ${safeUrl} is not valid JSON`, safeUrl);
+      }
+    } catch (err) {
+      if (err instanceof EvidenceHttpError || err instanceof EvidenceValidationError) throw err;
+      const message = sanitize(err instanceof Error ? err.message : String(err));
+      pauseHost(host, backoff);
+      return {
+        done: false,
+        error: new EvidenceHttpError(`Network error or timeout for ${safeUrl}: ${message}`, null, safeUrl),
+      };
+    }
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) {
+      throw new EvidenceValidationError(
+        `Response from ${safeUrl} failed validation: ${sanitize(parsed.error.message).slice(0, 500)}`,
+        safeUrl,
+      );
+    }
+    return { done: true, value: parsed.data };
+  }
 
-      if (opts.nullStatuses?.includes(res.status)) return null;
-
-      lastError = new EvidenceHttpError(`HTTP ${res.status} from ${safeUrl}`, res.status, safeUrl);
-      const retryable = res.status === 429 || res.status >= 500;
-      if (!retryable || attempt >= maxRetries) throw lastError;
-      const hinted = parseRetryAfter(res.headers.get("retry-after"), now());
-      await sleep(hinted ?? Math.min(500 * 2 ** attempt, MAX_RETRY_AFTER_MS));
+  async function fetchJson(url: string, schema: z.ZodType, opts: RequestOptions): Promise<unknown> {
+    const safeUrl = sanitize(url);
+    const sem = semaphore(new URL(url).host);
+    let lastError: EvidenceHttpError | null = null;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const release = await sem.acquire();
+      let outcome: Outcome;
+      try {
+        outcome = await attemptOnce(url, safeUrl, schema, opts, attempt);
+      } finally {
+        release();
+      }
+      if (outcome.done) return outcome.value;
+      lastError = outcome.error;
     }
     throw lastError ?? new EvidenceHttpError(`Request failed for ${safeUrl}`, null, safeUrl);
   }

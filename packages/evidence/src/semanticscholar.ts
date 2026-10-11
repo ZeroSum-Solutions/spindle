@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { EvidenceContext } from "./context";
-import { encodeDoiPath } from "./doi";
+import { encodeDoiPath, requireDoi } from "./doi";
 
 const FIELDS = "title,year,tldr,citationCount,isOpenAccess";
 
@@ -28,7 +28,7 @@ export async function getSemanticScholarByDoi(
   doi: string,
 ): Promise<SemanticScholarPaper | null> {
   const key = ctx.env.S2_API_KEY?.trim();
-  const url = `https://api.semanticscholar.org/graph/v1/paper/DOI:${encodeDoiPath(doi)}?fields=${FIELDS}`;
+  const url = `https://api.semanticscholar.org/graph/v1/paper/DOI:${encodeDoiPath(requireDoi(doi))}?fields=${FIELDS}`;
   const data = await ctx.http.fetchJson(url, schema, {
     userAgent: ctx.userAgent(),
     headers: key ? { "x-api-key": key } : undefined,

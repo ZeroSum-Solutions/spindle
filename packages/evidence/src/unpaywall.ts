@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { EvidenceContext } from "./context";
-import { encodeDoiPath } from "./doi";
+import { encodeDoiPath, requireDoi } from "./doi";
 import type { OaInfo } from "./types";
 
 const schema = z.object({
@@ -27,7 +27,7 @@ export interface UnpaywallResult extends OaInfo {
 
 /** Returns null when Unpaywall does not know the DOI. */
 export async function getUnpaywall(ctx: EvidenceContext, doi: string): Promise<UnpaywallResult | null> {
-  const url = `https://api.unpaywall.org/v2/${encodeDoiPath(doi)}?email=${encodeURIComponent(ctx.requireEmail())}`;
+  const url = `https://api.unpaywall.org/v2/${encodeDoiPath(requireDoi(doi))}?email=${encodeURIComponent(ctx.requireEmail())}`;
   const data = await ctx.http.fetchJson(url, schema, { userAgent: ctx.userAgent(), nullStatuses: [404] });
   if (!data) return null;
   const loc = data.best_oa_location;

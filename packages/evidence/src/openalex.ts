@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { EvidenceContext } from "./context";
-import { encodeDoiPath, normalizeDoi } from "./doi";
+import { encodeDoiPath, normalizeDoi, requireDoi } from "./doi";
 import type { WorkSummary } from "./types";
 
 const BASE = "https://api.openalex.org/works";
@@ -78,7 +78,7 @@ export async function searchOpenAlex(
 
 export async function getOpenAlexByDoi(ctx: EvidenceContext, doi: string): Promise<OpenAlexWork | null> {
   const p = new URLSearchParams({ select: SELECT, mailto: ctx.requireEmail() });
-  const url = `${BASE}/doi:${encodeDoiPath(doi)}?${p}`;
+  const url = `${BASE}/doi:${encodeDoiPath(requireDoi(doi))}?${p}`;
   const data = await ctx.http.fetchJson(url, workSchema, { userAgent: ctx.userAgent(), nullStatuses: [404] });
   return data ? normalize(data) : null;
 }

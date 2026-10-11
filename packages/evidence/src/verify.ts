@@ -1,11 +1,10 @@
 import type { EvidenceContext } from "./context";
-import { getCrossrefWork, type CrossrefWork } from "./crossref";
-import { requireDoi } from "./doi";
-import { getOpenAlexByDoi, type OpenAlexWork } from "./openalex";
+import { getCrossrefWork } from "./crossref";
+import { normalizeDoi, requireDoi } from "./doi";
+import { sanitize } from "./http";
+import { getOpenAlexByDoi } from "./openalex";
 import type { OaInfo, SourceCheck } from "./types";
-import { getUnpaywall, type UnpaywallResult } from "./unpaywall";
-
-const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+import { getUnpaywall } from "./unpaywall";
 
 type Settled<T> = { ok: true; value: T | null } | { ok: false; error: string };
 
@@ -13,60 +12,87 @@ async function settle<T>(p: Promise<T | null>): Promise<Settled<T>> {
   try {
     return { ok: true, value: await p };
   } catch (e) {
-    return { ok: false, error: errMsg(e) };
+    // Stored issues never carry the contact email or keys.
+    return { ok: false, error: sanitize(e instanceof Error ? e.message : String(e)) };
   }
 }
 
+/** Keep a record only if its DOI equals the requested one; otherwise note why it was dropped. */
+function matching<T extends { doi?: string | undefined }>(
+  name: string,
+  wanted: string,
+  res: Settled<T>,
+  issues: string[],
+): T | null {
+  if (!res.ok) {
+    issues.push(`${name} failed: ${res.error}`);
+    return null;
+  }
+  if (!res.value) {
+    issues.push(`${name} has no record for this DOI`);
+    return null;
+  }
+  const got = res.value.doi ? normalizeDoi(res.value.doi) : null;
+  if (got !== wanted) {
+    issues.push(`${name} returned a different DOI (${got ?? "none"}); record ignored`);
+    return null;
+  }
+  return res.value;
+}
+
 /**
- * Verification receipt for one DOI: does it exist (Crossref), is it retracted
- * (Crossref notices + OpenAlex flag), and what is its open-access license (Unpaywall).
- * A failed service never reads as "clean": it adds an issue and lowers the status.
+ * Verification receipt for one DOI.
+ *  - `flagged`: a matching record says retracted/withdrawn, or the DOI is a retraction notice. Always wins.
+ *  - `verified`: Crossref AND OpenAlex returned a record for exactly this DOI, OpenAlex reported an explicit
+ *    `is_retracted`, and no service errored (Unpaywall included).
+ *  - `unverified`: anything else. A failed or mismatched service never reads as clean; see `issues`.
+ * A DOI Unpaywall does not know (404) is not an error: the license is "unknown" and an issue is recorded.
  */
 export async function verifySource(ctx: EvidenceContext, rawDoi: string): Promise<SourceCheck> {
   const doi = requireDoi(rawDoi);
   ctx.requireEmail(); // fail loudly, not as three network errors
-  const [cr, oa, up] = await Promise.all([
-    settle<CrossrefWork>(getCrossrefWork(ctx, doi)),
-    settle<OpenAlexWork>(getOpenAlexByDoi(ctx, doi)),
-    settle<UnpaywallResult>(getUnpaywall(ctx, doi)),
+  const [crRes, oaRes, upRes] = await Promise.all([
+    settle(getCrossrefWork(ctx, doi)),
+    settle(getOpenAlexByDoi(ctx, doi)),
+    settle(getUnpaywall(ctx, doi)),
   ]);
 
   const issues: string[] = [];
-  const retractionSources: string[] = [];
-  if (!cr.ok) issues.push(`crossref failed: ${cr.error}`);
-  else if (!cr.value) issues.push("crossref has no record for this DOI");
-  if (!oa.ok) issues.push(`openalex failed: ${oa.error}`);
-  else if (!oa.value) issues.push("openalex has no record for this DOI");
-  if (!up.ok) issues.push(`unpaywall failed: ${up.error}`);
-
-  const crossref = cr.ok ? cr.value : null;
-  const openalex = oa.ok ? oa.value : null;
-  const unpaywall = up.ok ? up.value : null;
-
-  if (crossref?.isRetracted) retractionSources.push("crossref");
-  if (openalex?.isRetracted) retractionSources.push("openalex");
+  const crossref = matching("crossref", doi, crRes, issues);
+  const openalex = matching("openalex", doi, oaRes, issues);
+  const unpaywall = matching("unpaywall", doi, upRes, issues);
+  if (openalex && typeof openalex.isRetracted !== "boolean") {
+    issues.push("openalex did not report is_retracted");
+  }
   if (crossref?.isRetractionNotice) issues.push("this DOI is a retraction notice, not the retracted work");
 
+  const retractionSources: string[] = [];
+  if (crossref?.isRetracted) retractionSources.push("crossref");
+  if (openalex?.isRetracted === true) retractionSources.push("openalex");
+  const retracted = retractionSources.length > 0;
+
   const license = unpaywall?.license ?? openalex?.oa.license;
-  const oaInfo: OaInfo = {
+  const url = unpaywall?.url ?? openalex?.oa.url;
+  const oa: OaInfo = {
     isOa: unpaywall?.isOa ?? openalex?.oa.isOa ?? false,
     ...(license ? { license } : {}),
-    ...((unpaywall?.url ?? openalex?.oa.url) ? { url: unpaywall?.url ?? openalex?.oa.url } : {}),
+    ...(url ? { url } : {}),
   };
 
-  const retracted = retractionSources.length > 0;
-  const exists = crossref !== null;
-  const status = retracted || crossref?.isRetractionNotice ? "flagged" : exists && cr.ok && oa.ok ? "verified" : "unverified";
+  const noErrors = crRes.ok && oaRes.ok && upRes.ok;
+  const complete = crossref !== null && openalex !== null && typeof openalex.isRetracted === "boolean";
+  const status = retracted || crossref?.isRetractionNotice ? "flagged" : complete && noErrors ? "verified" : "unverified";
 
   return {
     doi,
     checkedAt: ctx.now().toISOString(),
     status,
-    exists,
+    exists: crossref !== null,
     title: crossref?.title || openalex?.title,
     retracted,
     retractionSources,
-    oa: oaInfo,
+    oa,
+    licenseStatus: license ? "known" : "unknown",
     answered: { crossref: crossref !== null, openalex: openalex !== null, unpaywall: unpaywall !== null },
     issues,
   };

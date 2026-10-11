@@ -1,7 +1,7 @@
 /**
  * Records small trimmed fixtures from the live APIs into src/__fixtures__/.
  * Run by hand: SPINDLE_CONTACT_EMAIL=you@example.org pnpm --filter @spindle/evidence record
- * Trimming keeps only fields the clients read; abstracts are cut to 300 characters.
+ * Trimming keeps only fields the clients read; abstracts and TLDRs are replaced by synthetic text.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -20,6 +20,17 @@ const capture = async (url: string, init?: RequestInit): Promise<Response> => {
   if (res.ok) captured.push({ url, body: (await res.clone().json()) as Json });
   return res;
 };
+/** Run one client call; return the body of exactly the request it made. Fails on null results. */
+async function rec<T>(call: () => Promise<T>): Promise<{ result: NonNullable<T>; body: Json }> {
+  captured.length = 0;
+  const result = await call();
+  if (result === null || result === undefined) throw new Error("lookup returned nothing; refusing to save a stale payload");
+  const hit = captured[captured.length - 1];
+  if (!hit) throw new Error("no successful response captured");
+  return { result: result as NonNullable<T>, body: hit.body };
+}
+const SYNTH_ABSTRACT = "SYNTHETIC ABSTRACT FOR TESTS";
+const SYNTH_TLDR = "SYNTHETIC TLDR FOR TESTS";
 const ctx = createContext({ fetch: capture });
 const { searchPubMed, getPubMedSummaries } = await import("../src/pubmed");
 const { searchEuropePmc } = await import("../src/europepmc");
@@ -36,12 +47,11 @@ const save = (name: string, body: unknown): void => {
   writeFileSync(join(dir, `${name}.json`), `${JSON.stringify(body, null, 2)}\n`);
   console.log("saved", name);
 };
-const last = (): Json => captured[captured.length - 1]!.body;
 
-const s = await searchPubMed(ctx, "rotator cuff exercise", { max: 2 });
-save("pubmed-search", last());
-await getPubMedSummaries(ctx, s.pmids.slice(0, 2));
-const sum = last().result as Json;
+const s = await rec(() => searchPubMed(ctx, "rotator cuff exercise", { max: 2 }));
+save("pubmed-search", s.body);
+const sumRes = await rec(() => getPubMedSummaries(ctx, s.result.pmids.slice(0, 2)));
+const sum = sumRes.body.result as Json;
 save("pubmed-summary", {
   result: Object.fromEntries(
     Object.entries(sum).map(([k, v]) =>
@@ -50,39 +60,32 @@ save("pubmed-summary", {
   ),
 });
 
-await searchEuropePmc(ctx, `DOI:"${DOI}"`, { max: 1 });
-const ep = last();
+const ep = (await rec(() => searchEuropePmc(ctx, `DOI:"${DOI}"`, { max: 1 }))).body;
 const epr = (ep.resultList as { result: Json[] }).result.map((r) => ({
   ...pick(r, ["id", "pmid", "doi", "title", "pubYear", "isOpenAccess", "license", "citedByCount", "journalInfo", "pubTypeList"]),
-  abstractText: cut(r.abstractText),
+  abstractText: SYNTH_ABSTRACT, // never redistribute real abstracts
 }));
 save("europepmc-search", { hitCount: ep.hitCount, resultList: { result: epr } });
 
-await searchOpenAlex(ctx, "rotator cuff exercise", { max: 2, filter: { type: "review", from_publication_date: "2018-01-01" } });
-save("openalex-search", last());
-await getOpenAlexByDoi(ctx, DOI);
-save("openalex-work", last());
+save("openalex-search", (await rec(() => searchOpenAlex(ctx, "rotator cuff exercise", { max: 2, filter: { type: "review", from_publication_date: "2018-01-01" } }))).body);
+save("openalex-work", (await rec(() => getOpenAlexByDoi(ctx, DOI))).body);
 
 const cr = async (doi: string, name: string): Promise<void> => {
-  await getCrossrefWork(ctx, doi);
-  const m = last().message as Json;
+  const m = (await rec(() => getCrossrefWork(ctx, doi))).body.message as Json;
   save(name, { message: pick(m, ["DOI", "title", "container-title", "type", "issued", "relation", "update-to", "updated-by"]) });
 };
 await cr(DOI, "crossref-work");
 await cr(RETRACTED_DOI, "crossref-retracted");
 
-await getUnpaywall(ctx, DOI);
-const up = last();
+const up = (await rec(() => getUnpaywall(ctx, DOI))).body;
 save("unpaywall", {
   ...pick(up, ["doi", "is_oa", "oa_status"]),
-  best_oa_location: pick(up.best_oa_location as Json, ["license", "url", "version", "host_type"]),
+  best_oa_location: up.best_oa_location ? pick(up.best_oa_location as Json, ["license", "url", "version", "host_type"]) : null,
 });
-await getSemanticScholarByDoi(ctx, DOI);
-save("semanticscholar", pick(last(), ["paperId", "title", "year", "citationCount", "isOpenAccess", "tldr"]));
-await lookupAnatomyByUberon(ctx, ["UBERON:0001103"]);
-save("wikidata", last());
-await listWgerExercises(ctx, { limit: 2 });
-const w = last() as { count: number; results: Json[] };
+const s2 = (await rec(() => getSemanticScholarByDoi(ctx, DOI))).body;
+save("semanticscholar", { ...pick(s2, ["paperId", "title", "year", "citationCount", "isOpenAccess"]), tldr: { text: SYNTH_TLDR } });
+save("wikidata", (await rec(() => lookupAnatomyByUberon(ctx, ["UBERON:0001103"]))).body);
+const w = (await rec(() => listWgerExercises(ctx, { limit: 2 }))).body as { count: number; results: Json[] };
 save("wger", {
   count: w.count,
   results: w.results.map((r) => ({

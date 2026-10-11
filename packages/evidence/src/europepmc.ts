@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { EvidenceContext } from "./context";
-import { normalizeDoi, stripTags, truncate } from "./doi";
+import { normalizeDoi, requireDoi, retractionFromPubTypes, stripTags, truncate } from "./doi";
 import type { WorkSummary } from "./types";
 
 const BASE = "https://www.ebi.ac.uk/europepmc/webservices/rest/search";
@@ -10,7 +10,7 @@ const resultSchema = z.object({
   pmid: z.string().optional(),
   doi: z.string().optional(),
   title: z.string(),
-  pubYear: z.string().optional(),
+  pubYear: z.string().regex(/^\d{4}$/).optional(),
   abstractText: z.string().optional(),
   isOpenAccess: z.string().optional(),
   license: z.string().optional(),
@@ -55,7 +55,8 @@ export async function searchEuropePmc(
       title: stripTags(r.title).replace(/\.$/, ""),
       year: r.pubYear ? Number(r.pubYear) : undefined,
       journal: r.journalInfo?.journal?.title,
-      isReview: types.some((t) => /review|meta-analysis/i.test(t)),
+      isReview: types.some((t) => /review|meta-analysis/i.test(t) && !/retract/i.test(t)),
+      ...retractionFromPubTypes(types),
       citedByCount: r.citedByCount,
       oa: { isOa: r.isOpenAccess === "Y", license: r.license },
       abstract: r.abstractText ? truncate(stripTags(r.abstractText), maxChars) : undefined,
@@ -65,6 +66,8 @@ export async function searchEuropePmc(
 }
 
 export async function getEuropePmcByDoi(ctx: EvidenceContext, doi: string): Promise<EuropePmcWork | null> {
-  const { works } = await searchEuropePmc(ctx, `DOI:"${doi}"`, { max: 1 });
-  return works[0] ?? null;
+  const clean = requireDoi(doi);
+  const { works } = await searchEuropePmc(ctx, `DOI:"${clean.replace(/["\\]/g, "")}"`, { max: 1 });
+  const hit = works[0];
+  return hit && hit.doi === clean ? hit : null;
 }

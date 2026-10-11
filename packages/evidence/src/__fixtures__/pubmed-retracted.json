@@ -1,0 +1,45 @@
+{
+  "result": {
+    "uids": [
+      "1",
+      "2"
+    ],
+    "1": {
+      "uid": "1",
+      "title": "Synthetic retracted paper.",
+      "pubdate": "2015 Jan",
+      "fulljournalname": "Synthetic Journal",
+      "source": "Synth J",
+      "pubtype": [
+        "Journal Article",
+        "Retracted Publication"
+      ],
+      "articleids": [
+        {
+          "idtype": "pubmed",
+          "value": "1"
+        },
+        {
+          "idtype": "doi",
+          "value": "10.1000/synthetic.1"
+        }
+      ]
+    },
+    "2": {
+      "uid": "2",
+      "title": "Retraction notice: synthetic paper.",
+      "pubdate": "2016 Feb",
+      "fulljournalname": "Synthetic Journal",
+      "source": "Synth J",
+      "pubtype": [
+        "Retraction of Publication"
+      ],
+      "articleids": [
+        {
+          "idtype": "pubmed",
+          "value": "2"
+        }
+      ]
+    }
+  }
+}

@@ -13,6 +13,8 @@ export interface WorkSummary {
   journal?: string;
   isReview?: boolean;
   isRetracted?: boolean;
+  /** The record is a notice that retracts another work. */
+  isRetractionNotice?: boolean;
   citedByCount?: number;
   oa: OaInfo;
   source: "pubmed" | "europepmc" | "openalex";
@@ -30,6 +32,8 @@ export interface SourceCheck {
   retracted: boolean;
   retractionSources: string[];
   oa: OaInfo;
+  /** `unknown` when Unpaywall had no license, no record, or failed. */
+  licenseStatus: "known" | "unknown";
   /** Which services answered. A false entry means the call failed or found nothing. */
   answered: { crossref: boolean; openalex: boolean; unpaywall: boolean };
   issues: string[];

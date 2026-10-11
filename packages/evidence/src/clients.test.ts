@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getCrossrefWork } from "./crossref";
 import { normalizeDoi } from "./doi";
-import { getEuropePmcByDoi } from "./europepmc";
+import { getEuropePmcByDoi, searchEuropePmc } from "./europepmc";
 import { getOpenAlexByDoi, searchOpenAlex } from "./openalex";
 import { getPubMedSummaries, searchPubMed } from "./pubmed";
 import { getSemanticScholarByDoi } from "./semanticscholar";
@@ -16,6 +16,9 @@ describe("doi helpers", () => {
   it("normalizes URLs and rejects junk", () => {
     expect(normalizeDoi("https://doi.org/10.1177/ABC")).toBe("10.1177/abc");
     expect(normalizeDoi("doi: 10.1177/abc")).toBe("10.1177/abc");
+    expect(normalizeDoi("https://doi.org/10.1002/(sici)1097?utm=1#frag")).toBe("10.1002/(sici)1097");
+    expect(normalizeDoi("https://doi.org/10.1016%2Fj.x.2020.01.001")).toBe("10.1016/j.x.2020.01.001");
+    expect(normalizeDoi("https://example.org/10.1177/abc")).toBeNull();
     expect(normalizeDoi("not a doi")).toBeNull();
   });
 });
@@ -35,9 +38,34 @@ describe("PubMed", () => {
   });
 
   it("adds the API key only when set", async () => {
-    const { ctx, calls } = testContext([["esearch.fcgi", fixture("pubmed-search")]], { NCBI_API_KEY: "k123" });
+    const { ctx, calls } = testContext([["esearch.fcgi", fixture("pubmed-search")]], {
+      NCBI_API_KEY: "k123",
+      SPINDLE_CONTACT_EMAIL: "t@example.org",
+    });
     await searchPubMed(ctx, "x");
     expect(calls[0]?.url).toContain("api_key=k123");
+    expect(calls[0]?.url).toContain("tool=spindle");
+    expect(calls[0]?.url).toContain("email=t%40example.org");
+  });
+
+  it("requires tool and email", async () => {
+    const { ctx } = testContext([], {});
+    await expect(searchPubMed(ctx, "x")).rejects.toThrow(/SPINDLE_CONTACT_EMAIL/);
+  });
+
+  it("maps retraction publication types and tells notices apart", async () => {
+    const { ctx } = testContext([["esummary.fcgi", fixture("pubmed-retracted")]]);
+    const [paper, notice] = await getPubMedSummaries(ctx, ["1", "2"]);
+    expect(paper).toMatchObject({ isRetracted: true, isRetractionNotice: false, doi: "10.1000/synthetic.1" });
+    expect(notice).toMatchObject({ isRetracted: false, isRetractionNotice: true });
+  });
+
+  it("skips explicit unknown PMIDs but throws on malformed records", async () => {
+    const unknown = { result: { uids: ["9"], "9": { uid: "9", error: "cannot get document summary" } } };
+    expect(await getPubMedSummaries(testContext([["esummary.fcgi", unknown]]).ctx, ["9"])).toEqual([]);
+    const bad = { result: { uids: ["9"], "9": { uid: "9" } } };
+    await expect(getPubMedSummaries(testContext([["esummary.fcgi", bad]]).ctx, ["9"])).rejects.toThrow(/malformed/);
+    await expect(getPubMedSummaries(testContext([]).ctx, ["9; drop"])).rejects.toThrow(/numeric/);
   });
 });
 
@@ -48,6 +76,20 @@ describe("Europe PMC", () => {
     expect(w).toMatchObject({ source: "europepmc", doi: DOI });
     expect(typeof w?.oa.isOa).toBe("boolean");
     expect(w?.abstract?.length ?? 0).toBeLessThanOrEqual(600);
+  });
+});
+
+describe("Europe PMC retractions", () => {
+  it("maps retraction publication types", async () => {
+    const { ctx } = testContext([["europepmc", fixture("europepmc-retracted")]]);
+    const { works } = await searchEuropePmc(ctx, "x");
+    expect(works[0]).toMatchObject({ isRetracted: true, isRetractionNotice: false });
+    expect(works[1]).toMatchObject({ isRetracted: false, isRetractionNotice: true });
+  });
+
+  it("ignores a hit whose DOI differs from the one requested", async () => {
+    const { ctx } = testContext([["europepmc", fixture("europepmc-retracted")]]);
+    expect(await getEuropePmcByDoi(ctx, "10.1000/other")).toBeNull();
   });
 });
 
@@ -98,6 +140,23 @@ describe("Crossref", () => {
     ]);
     expect(await getCrossrefWork(ctx, "10.1000/orig")).toMatchObject({ isRetracted: true, retractionNotices: ["10.1000/notice"] });
     expect(await getCrossrefWork(ctx, "10.1000/notice")).toMatchObject({ isRetracted: false, isRetractionNotice: true });
+  });
+
+  it("detects withdrawals and anchored title markers, keeping the kind", async () => {
+    const w = testContext([["api.crossref.org", fixture("crossref-withdrawn")]]);
+    expect(await getCrossrefWork(w.ctx, "10.1000/synthetic.w")).toMatchObject({
+      isRetracted: true,
+      retractionKind: "withdrawal",
+      retractionNotices: ["10.1000/synthetic.wn"],
+    });
+    const t = testContext([["api.crossref.org", fixture("crossref-title-marker")]]);
+    expect(await getCrossrefWork(t.ctx, "10.1000/synthetic.t")).toMatchObject({
+      isRetracted: true,
+      retractionKind: "retraction",
+      retractionEvidence: ["title:retraction"],
+    });
+    const mention = testContext([["api.crossref.org", { message: { DOI: "10.1000/m", title: ["Why retracted papers keep being cited"] } }]]);
+    expect(await getCrossrefWork(mention.ctx, "10.1000/m")).toMatchObject({ isRetracted: false });
   });
 
   it("returns null for an unknown DOI", async () => {
