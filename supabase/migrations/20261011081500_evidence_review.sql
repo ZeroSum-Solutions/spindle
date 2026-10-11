@@ -342,9 +342,8 @@ begin
   if p_layer = 'method' and support = 'science' then
     perform private.jfail(p_path, 'method content is practice-based');
   end if;
-  if p_layer = 'base' and kind = 'quiz' and support <> 'science' then
-    perform private.jfail(p_path, 'a base-layer quiz explanation must bind claims');
-  end if;
+  -- Phase 3: a base lesson may hold a claim-free practice quiz as an ungraded discussion
+  -- exercise; only science quizzes are graded (private.graded_questions).
   return jsonb_build_object('kind', kind, 'content', content, 'support', support, 'claimIds', to_jsonb(claim_ids));
 end;
 $$;
@@ -505,11 +504,17 @@ $$;
 
 -- The claim lifecycle ------------------------------------------------------------------
 
-/** An approval is valid for 24 months at most, whatever expiry an older row carries. */
+/**
+ * An approval is valid for 24 months at most from both its recording and its
+ * model review, whatever expiry the row carries.
+ */
 create function private.approval_expiry(p_review public.claim_reviews)
 returns timestamptz
-language sql immutable set search_path = ''
-as $$ select least(p_review.expires_at, p_review.created_at + interval '24 months') $$;
+language sql stable security definer set search_path = ''
+as $$
+  select least(p_review.expires_at, p_review.created_at + interval '24 months',
+    (select r.reviewed_at + interval '24 months' from public.review_runs r where r.id = p_review.run_id))
+$$;
 
 /**
  * 'approved', or why a claim cannot be cited in a new publish: retracted,
@@ -605,6 +610,22 @@ returns text
 language sql stable security definer set search_path = ''
 as $$
   select coalesce((select status from public.practice_media_status where media_id = p_media order by seq desc limit 1), 'active')
+$$;
+
+/**
+ * Serializes every mutation of one clip (status, checks, metadata): the row
+ * lock is taken first, and the status read after it sees any committed
+ * retirement. Read committed, so later statements see the winner's writes.
+ */
+create function private.lock_media(p_media uuid)
+returns void
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  perform private.require_read_committed();
+  perform 1 from public.practice_media where id = p_media for update;
+  if not found then raise exception 'no such media' using errcode = 'P0002'; end if;
+end;
 $$;
 
 /** 'ok', or why a registry clip cannot go into a new publish. */
@@ -777,12 +798,19 @@ declare
   hash text;
   latest public.curriculum_versions%rowtype;
   vid uuid;
+  graded bigint;
 begin
   perform private.lock_publishing(false);
   select * into c from public.courses where id = p_course for update;
   if not found then raise exception 'no such course' using errcode = 'P0002'; end if;
   if not exists (select 1 from public.lessons where course_id = p_course) then
     raise exception 'publish gate: the course has no lessons' using errcode = 'P0001';
+  end if;
+  -- A learner submits every graded question at once (private.normalize_answers takes at most 1000).
+  graded := (select count(*) from public.lesson_blocks lb join public.lessons l on l.id = lb.lesson_id
+             where l.course_id = p_course and lb.kind = 'quiz' and lb.support = 'science');
+  if graded > 1000 then
+    raise exception 'publish gate: course % has % graded questions; the limit is 1000', p_course, graded using errcode = 'P0001';
   end if;
 
   for b in
@@ -822,9 +850,6 @@ begin
     if c.layer = 'method' and (b.support = 'science' or cardinality(claim_set) > 0) then
       raise exception 'publish gate: lesson % is gym method content, which is practice-based', b.lesson_id
         using errcode = 'P0001';
-    end if;
-    if c.layer = 'base' and b.kind = 'quiz' and b.support <> 'science' then
-      raise exception 'publish gate: lesson % has a base-layer quiz without claims', b.lesson_id using errcode = 'P0001';
     end if;
     if b.support = 'practice-based' then
       if cardinality(claim_set) > 0 then
@@ -874,8 +899,9 @@ begin
   snap := private.course_snapshot(p_course);
   hash := private.sha256(snap);
   select * into latest from public.curriculum_versions where course_id = p_course order by version_number desc limit 1;
-  -- A tree last published under the phase-2 rules gets a new phase-3 version.
-  if found and latest.content_hash = hash and latest.rules = 'phase3' then
+  -- Global content last published under the phase-2 rules gets a new phase-3 version.
+  -- Gym method courses stay idempotent whatever rules their latest version used.
+  if found and latest.content_hash = hash and (latest.rules = 'phase3' or c.org_id is not null) then
     perform private.audit(p_actor, 'publish_unchanged', c.org_id, latest.id);
     return latest.id;
   end if;
@@ -1055,6 +1081,9 @@ begin
     perform private.jfail('review.expiresAt', 'only approvals expire');
   end if;
   if p_review ? 'run' then run := private.record_run(p_actor, p_review -> 'run', 'review.run'); end if;
+  if decision = 'approved' and expires > (select reviewed_at + interval '24 months' from public.review_runs where id = run) then
+    perform private.jfail('review.expiresAt', 'must be at most 24 months after the model review');
+  end if;
   -- Claims are immutable, but the reviewer must still have seen this exact claim.
   if expected <> private.claim_hash(p_claim) then
     raise exception 'stale review: claim % does not match the reviewed hash', p_claim using errcode = 'P0001';
@@ -1295,9 +1324,7 @@ declare
   cid uuid;
 begin
   perform private.require_publisher(p_actor);
-  if not exists (select 1 from public.practice_media where id = p_media) then
-    raise exception 'no such media' using errcode = 'P0002';
-  end if;
+  perform private.lock_media(p_media);
   if private.media_status(p_media) = 'retired' then
     raise exception 'media % is retired', p_media using errcode = 'P0001';
   end if;
@@ -1329,9 +1356,7 @@ declare
   sid uuid;
 begin
   perform private.require_publisher(p_actor);
-  if not exists (select 1 from public.practice_media where id = p_media) then
-    raise exception 'no such media' using errcode = 'P0002';
-  end if;
+  perform private.lock_media(p_media);
   perform private.jobject(p_status, 'status', array['status', 'reason'], array['status', 'reason']);
   status := private.jenum(p_status -> 'status', 'status.status', array['active', 'disabled', 'retired']);
   if private.media_status(p_media) = 'retired' then
@@ -1355,9 +1380,7 @@ declare
   fetched timestamptz;
 begin
   perform private.require_publisher(p_actor);
-  if not exists (select 1 from public.practice_media where id = p_media) then
-    raise exception 'no such media' using errcode = 'P0002';
-  end if;
+  perform private.lock_media(p_media);
   if private.media_status(p_media) = 'retired' then
     raise exception 'media % is retired', p_media using errcode = 'P0001';
   end if;
@@ -1415,9 +1438,11 @@ end;
 $$;
 
 /**
- * Playback state of the registry clips a version embeds: playable or disabled
- * (disabled and retired clips). Provider title, channel and availability are
- * returned only while fresh (fetched within 30 days).
+ * Playback state of the registry clips a version embeds. Playable only while
+ * the clip is active and its latest embed and segment checks passed within 90
+ * days (the same rule as a new publish); otherwise disabled. Provider title,
+ * channel and availability are returned only for a playable clip and only
+ * while fresh (fetched within 30 days).
  */
 create function public.version_media(p_version uuid)
 returns table (media_id uuid, state text, title text, channel text, available boolean)
@@ -1428,12 +1453,12 @@ declare
 begin
   return query
     select m.id,
-      case when private.media_status(m.id) = 'active' then 'playable' else 'disabled' end,
+      case when private.media_publishable(m.id) = 'ok' then 'playable' else 'disabled' end,
       md.title, md.channel, md.available
     from public.practice_media m
     left join public.practice_media_metadata md
       on md.media_id = m.id and md.fetched_at > clock_timestamp() - interval '30 days'
-         and private.media_status(m.id) = 'active'
+         and private.media_publishable(m.id) = 'ok'
     where m.id in (select (x #>> '{}')::uuid
                    from jsonb_path_query(v.snapshot, '$.parts[*].lessons[*].blocks[*] ? (@.kind == "video").content.mediaId') x)
     order by m.id;

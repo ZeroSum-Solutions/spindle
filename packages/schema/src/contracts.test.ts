@@ -31,10 +31,12 @@ describe("video blocks", () => {
     expect(() => lessonBlockSchema.parse({ kind: "video", content: { ...video, provider: "vimeo" } })).toThrow();
   });
 
-  it("keep YouTube out of plain media", () => {
+  it("recognize YouTube-family URLs, and still parse legacy snapshots that hold them", () => {
     for (const url of ["https://www.youtube.com/watch?v=AbCdEfGhIj0", "https://youtu.be/AbCdEfGhIj0", "https://www.youtube-nocookie.com/embed/x", "https://i.ytimg.com/vi/x/0.jpg", "https://M.YOUTUBE.COM/x"]) {
       expect(isVideoHostUrl(url), url).toBe(true);
-      expect(mediaAssetSchema.safeParse({ kind: "video", src: url, alt: "x", caption: "", provenanceId: "p1" }).success, url).toBe(false);
+      // Snapshot parsing stays lenient (a phase-2 version must stay readable); new authoring is
+      // refused by validateCatalog and the database, and the player renders such media unavailable.
+      expect(mediaAssetSchema.safeParse({ kind: "video", src: url, alt: "x", caption: "", provenanceId: "p1" }).success, url).toBe(true);
     }
     for (const url of ["https://notyoutube.com/x", "https://example.org/youtube.com", "/media/youtube.png"]) expect(isVideoHostUrl(url), url).toBe(false);
   });

@@ -273,9 +273,9 @@ select pg_temp.reset_role();
 
 -- 21-32: input validation at the JSON boundary --------------------------------------
 select pg_temp.as_service();
-select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.quiz('Practice quiz.', 'practice-based', '{}')))$$,
-  '22023', 'invalid course.parts[0].lessons[0].blocks[0]: a base-layer quiz explanation must bind claims',
-  'a base-layer quiz must bind claims');
+-- ADR 0007 (LEAD ruling on Sol R03): a base lesson may hold an ungraded, claim-free practice quiz.
+select lives_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.quiz('Practice quiz.', 'practice-based', '{}')))$$,
+  'a base-layer practice quiz without claims saves (ungraded discussion)');
 select throws_ok($$select public.publisher_save_course_draft('00000000-0000-0000-0000-0000000000c1', '[]')$$,
   '22023', 'invalid course: must be an object', 'a course must be a JSON object');
 select throws_ok($$select public.publisher_save_course_draft('00000000-0000-0000-0000-0000000000c1',
