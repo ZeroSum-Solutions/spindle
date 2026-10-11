@@ -96,7 +96,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 **Sections**
 1. *What it is.* [P] Mobility (range you can reach) and stability (control of that range) as two coaching questions, not opposites.
 2. *Active vs passive.* [P] Range you can reach yourself versus range someone else can move you through. A difference is a reason to look closer, not a prescription; this lesson draws no training conclusion from it. [!] A new or substantial loss of active movement that has no clear explanation (the client cannot lift the arm themselves, even if you can move it for them) is an urgent referral, never something to train (SAFETY §3, §4).
-3. *Posture.* [S] A systematic review found moderate evidence of no difference in thoracic kyphosis (how rounded the upper back is) between people with and without shoulder pain. The claim is limited to thoracic posture and to association; it says nothing about rounded shoulders or about cause. Candidate evidence: systematic review of thoracic posture and shoulder pain, range and function (2016). The block must not describe posture as damage.
+3. *Posture.* [S] A systematic review found moderate evidence of no significant difference in thoracic kyphosis (how rounded the upper back is) between people with and without shoulder pain. A non-significant result does not prove the groups are the same, the included studies varied in quality, and one high-risk-of-bias study found more kyphosis with pain. The claim is limited to thoracic posture and to association; it says nothing about rounded shoulders or about cause. Candidate evidence: systematic review of thoracic posture and shoulder pain, range and function (2016). The block must not describe posture as damage.
 4. *Upright posture and overhead reach.* [S] In single-session studies, people reach more maximum shoulder range in an upright posture than in a slouched one, with or without shoulder pain; whether that matters over time is unclear. Candidate evidence: the same 2016 systematic review. If no claim is approved, the section is removed (no downgrade).
 5. *How to see it.* [P] Overhead reach against a wall, standing back-to-wall arm raise, and a supine reach: compare sides and compare active with passive.
 6. *What to do.* [P] For a long-standing, familiar, painless restriction with no warning sign: train in the range the client can control, change one thing at a time, and re-check. Anything new, unexplained or painful goes to SAFETY §3 and §4 first.
@@ -104,9 +104,9 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 8. [P] Contested models (for example fascial lines or rib-position stories) as clearly labelled practice context with a limited-evidence note, if used at all.
 
 **Graded quiz candidates**
-- What did a systematic review find when it compared upper-back rounding (thoracic kyphosis) in people with and without shoulder pain? (No difference, with moderate evidence; it does not show cause) [§3]
+- What did a systematic review find when it compared upper-back rounding (thoracic kyphosis) in people with and without shoulder pain? (No significant difference, with moderate evidence; that does not prove the groups are the same, and it does not show cause) [§3]
 
-**Scenario (ungraded):** A client cannot reach overhead on either side, but you can lift their arms higher passively with no pain. Which way do you go first? (Control work in the range; re-check.) Variant: stiffness for months with night pain, getting worse (routine referral).
+**Scenario (ungraded):** A client cannot reach overhead on either side; with permission you can lift the arms higher, and nothing hurts. What do you do first? (First ask about onset and check the warning signs: is it new, did anything happen, is there pain, numbness, weakness, night pain or worsening? Anything new, unexplained or painful goes to SAFETY §3 and §4. Only for a familiar, long-standing, painless restriction with no warning sign: train in the range the client controls, change one thing, and re-check in a later session. The gap between active and passive range does not decide the plan.) Variant: stiffness for months with pain at night, getting worse (routine referral now, because it is getting worse).
 
 **Video slots:** C2: shoulder stability progression from easy to hard; C3: mobility and strength framing (practice context only).
 
@@ -158,7 +158,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - Know when a "corrective" should be a referral instead.
 
 **Sections**
-1. *What research supports.* [S] For subacromial shoulder pain (one specific condition, diagnosed by a clinician), exercise therapy is a first-line treatment, and surgery to decompress the space did not outperform a placebo procedure in a large trial. Candidate evidence: BESS care pathway; randomised trial (2018). Wording stays within the population studied. That exercise therapy is planned and delivered by clinicians; the lesson says plainly that a trainer's loading is not the same thing and is not a treatment.
+1. *What research supports.* [S] For subacromial shoulder pain (one specific condition, diagnosed by a clinician), exercise therapy is a first-line treatment, and surgery to decompress the space did not outperform a placebo procedure in a large trial. Candidate evidence: BESS care pathway; randomised trial (2018). Wording stays within the population studied, and the claim says nothing about who delivers the exercise (BESS also describes initial self-management). Separately, as **Spindle policy** and not as a science claim: a trainer's loading is not treatment for a diagnosed condition, and a client with diagnosed subacromial pain trains within the treating clinician's plan (SAFETY §2).
 2. *What the trials compared.* [S] For rotator cuff related shoulder pain, a 2020 systematic review compared each approach with placebo or no treatment, not with each other: progressive resisted exercise showed an uncertain clinical benefit, non-progressive exercise no significant benefit, and the certainty of the evidence was low. The block reports those comparisons and that uncertainty and ranks nothing. Candidate evidence: Naunton et al. 2020, Clinical Rehabilitation (PMID 32571081). If no claim is approved, the section is removed (no downgrade).
 3. *Scapular exercise.* [S] Candidate claim on exercises with high serratus anterior and lower trapezius activity relative to upper trapezius. Candidate evidence: EMG-based reviews of scapular exercise. Keep EMG claims modest: activity is not strength gain, and no exercise is called best.
 4. *Activation as practice.* [P] What activation drills are for in a session: rehearsal, attention, warm-up. What they are not: a fix.
@@ -167,7 +167,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 7. [!] "Correctives" never replace referral: anything on SAFETY §3 means stop; persistent or worsening pain means routine referral.
 
 **Graded quiz candidates**
-- For subacromial shoulder pain diagnosed by a clinician, what does UK specialist guidance give as a first-line treatment? (Exercise therapy, planned and delivered by clinicians) [§1]
+- For subacromial shoulder pain diagnosed by a clinician, what does UK specialist guidance give as a first-line treatment? (Exercise therapy) [§1]
 - Does higher EMG activity in an exercise mean it builds more strength? (Not necessarily) [§3]
 
 **Scenario (ungraded):** A client wants to "activate" for 20 minutes before every session. What do you keep, and what do you move into the main session?
@@ -217,7 +217,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 **Sections**
 1. *What it is.* [S] Phases of the throw (wind-up, cocking, acceleration, deceleration, follow-through) and the large forces at the shoulder during arm cocking and deceleration. Candidate evidence: biomechanics study of pitching kinetics (1995).
-2. *Adaptations.* [S] Throwers often show more external and less internal rotation in the throwing arm; whether these range differences predict injury is uncertain: a 2018 meta-analysis of overhead athletes found that no range measure reached statistical significance for predicting shoulder or elbow injury, although results leaned toward more injury with internal rotation loss. Candidate evidence: Keller et al. 2018, Sports Health (systematic review and meta-analysis, PMID 29381423, open in PMC); Wilk et al. 2011 (a case series in professional pitchers, level of evidence 4, PMID 21131681) only as a bounded historical example. Wording stays within the population studied.
+2. *Adaptations and injury risk.* [S] Throwers often show more external and less internal rotation in the throwing arm. Whether range predicts injury is uncertain and depends on the sport. A 2018 meta-analysis of overhead athletes found that no range measure reached statistical significance for predicting shoulder or elbow injury, though results leaned toward more injury with internal rotation loss. A 2020 meta-analysis of prospective cohorts found that too little extra external rotation in the throwing arm was associated with injury in professional baseball pitchers (pooled from three studies), suggested that range screening may not identify risk in handball, softball, volleyball or tennis players, and asked for caution because studies were few and varied. A 2025 systematic review across overhead sports listed range of motion among several risk factors, alongside reduced strength, previous pain or injury and training load, and noted that studies define injury inconsistently. The block presents this as current uncertainty, not as a screening rule. Candidate evidence: Pozzi et al. 2020, Br J Sports Med (systematic review and meta-analysis of prospective cohorts, PMID 31937577, doi:10.1136/bjsports-2019-100698, CC BY); Salamh et al. 2025, Int J Sports Phys Ther 20(3) (systematic review, doi:10.26603/001c.129462, CC BY-NC 4.0); Keller et al. 2018, Sports Health (PMID 29381423); Wilk et al. 2011 (a case series in professional pitchers, level of evidence 4, PMID 21131681) only as a bounded historical example.
 3. *Why it matters.* [P] Do not "correct" a normal thrower's adaptation; compare total rotation between sides and over time.
 4. *How to see it.* [P] Measure rotation the same way each time; note change across a season.
 5. *What to do.* [P] Strength for the cuff and scapular muscles, trunk and hip rotation work, deceleration work; workload is the coach's and clinician's decision.
@@ -249,13 +249,13 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 2. [!] *Emergency.* Criteria and actions (SAFETY §4).
 3. [!] *Urgent.* Criteria and actions (SAFETY §4).
 4. [!] *Routine.* Criteria and actions (SAFETY §4).
-5. [S] For subacromial shoulder pain, BESS guidance reports that most people improve within about three months with simple care and clinician-led exercise therapy. Candidate evidence: BESS care pathway (2025). The claim stays within that population; it keeps routine referral calm and is never used to delay an urgent or emergency referral.
+5. [S] For subacromial shoulder pain, BESS guidance reports that most symptoms settle within about three months with initial care, which includes self-management and exercise. Candidate evidence: BESS care pathway (2025). The claim stays within that population; it keeps routine referral calm and is never used to delay an urgent or emergency referral.
 6. *Excluded populations.* [!] SAFETY §2, with what to do instead.
 7. *The conversation.* [P] Scripts: what to say, what not to say, and how to keep the client moving with the rest of the session.
 8. *Working with a clinician's plan.* [P] Ask for the plan in writing; do not progress it on your own.
 
 **Graded quiz candidates**
-- For subacromial shoulder pain, what does BESS guidance say about how most people do over about three months? (Most improve with simple care and clinician-led exercise therapy) [§5]
+- For subacromial shoulder pain, what does BESS guidance say about how most people do over about three months? (Most symptoms settle within about three months with initial care) [§5]
 
 **Scenario (ungraded), adverse cases:** one per tier plus two "continue" cases, drawn from SAFETY §3 and §4, including arm pain with chest tightness (emergency) and a lump around the shoulder (urgent).
 

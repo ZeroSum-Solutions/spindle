@@ -450,6 +450,18 @@ test.describe.serial("learner flow", () => {
       cap.retract(capSource);
 
       const h1 = (page: Page) => page.getByRole("heading", { level: 1 });
+      /** The overview shows this version number and exactly these lessons, in order. */
+      const expectOverview = async (page: Page, version: string, lessons: string[]) => {
+        await expect(h1(page)).toHaveText("Synthetic capture course");
+        await expect(page.locator("main header").first()).toContainText(version);
+        await expect(page.getByTestId("lesson-list").getByTestId("lesson-title")).toHaveText(lessons);
+      };
+      /** The player shows this lesson, its position and the version it belongs to. */
+      const expectPlayer = async (page: Page, title: string, position: string, version: string) => {
+        await expect(h1(page)).toHaveText(title);
+        await expect(page.locator("article header")).toContainText(position);
+        await expect(page.locator("article header")).toContainText(version);
+      };
       const row = (page: Page, title: string) => page.getByRole("listitem").filter({ has: page.getByText(title, { exact: true }) });
       const shots: { name: string; path: string; check: (page: Page) => Promise<void> }[] = [
         {
@@ -458,6 +470,7 @@ test.describe.serial("learner flow", () => {
           check: async (page) => {
             await expect(h1(page)).toHaveText("Your courses");
             await expect(page.getByTestId("course-row")).toHaveCount(1);
+            await expect(page.getByTestId("course-row")).toContainText("v3");
             await expect(page.getByRole("link", { name: /Resume lesson/ })).toHaveAttribute("href", learn(gym, a3, "lesson-4"));
           },
         },
@@ -465,7 +478,7 @@ test.describe.serial("learner flow", () => {
           name: "overview-v2",
           path: learn(gym, a2),
           check: async (page) => {
-            await expect(h1(page)).toHaveText("Synthetic capture course");
+            await expectOverview(page, "v2", ["Synthetic lesson one", "Synthetic lesson two", "Synthetic lesson four"]);
             await expect(row(page, "Synthetic lesson one")).toContainText("Credited");
             await expect(page.getByText("A source cited in this version was retracted after it was published")).toBeVisible();
           },
@@ -474,7 +487,7 @@ test.describe.serial("learner flow", () => {
           name: "overview-v3",
           path: learn(gym, a3),
           check: async (page) => {
-            await expect(h1(page)).toHaveText("Synthetic capture course");
+            await expectOverview(page, "v3", ["Synthetic lesson one", "Synthetic lesson four"]);
             await expect(row(page, "Synthetic lesson one")).toContainText("Credited");
           },
         },
@@ -482,7 +495,7 @@ test.describe.serial("learner flow", () => {
           name: "player-l1-v2",
           path: learn(gym, a2, "lesson-one"),
           check: async (page) => {
-            await expect(h1(page)).toHaveText("Synthetic lesson one");
+            await expectPlayer(page, "Synthetic lesson one", "Lesson 1 of 3", "v2");
             await expect(page.locator('[data-block="paragraph"][data-support="science"]').getByText("Source retracted")).toBeVisible();
           },
         },
@@ -490,7 +503,7 @@ test.describe.serial("learner flow", () => {
           name: "player-l2-v2",
           path: learn(gym, a2, "lesson-2"),
           check: async (page) => {
-            await expect(h1(page)).toHaveText("Synthetic lesson two");
+            await expectPlayer(page, "Synthetic lesson two", "Lesson 2 of 3", "v2");
             await expect(page.getByRole("region", { name: "Lesson completion" })).toBeVisible();
           },
         },
@@ -519,7 +532,7 @@ test.describe.serial("learner flow", () => {
           if (label === "desktop" && !reduced) {
             // Keyboard: the first focus stop is visible; then complete a lesson and capture the confirmation.
             await page.goto(learn(gym, a2, "lesson-2"));
-            await expect(h1(page)).toHaveText("Synthetic lesson two");
+            await expectPlayer(page, "Synthetic lesson two", "Lesson 2 of 3", "v2");
             await page.keyboard.press("Tab");
             await page.screenshot({ path: `${dir}/desktop-focus-first.png` });
             await page.getByRole("button", { name: "Mark lesson complete" }).focus();
