@@ -171,3 +171,29 @@ describe("reviewed diagram blocks (Sol R16)", () => {
     expect(html).not.toContain("Sternoclavicular joint");
   });
 });
+
+describe("a support run that starts with a reviewed diagram", () => {
+  // Bug on main (#23): a reviewed diagram carries support, so it opens a run, but it rendered as a
+  // plain figure with no label, and the practice paragraph after it then carried none either.
+  const diagram: LessonBlock = {
+    kind: "diagram",
+    content: { diagramId: "screen-start-positions", alt: "Synthetic alt.", caption: "Synthetic caption.", legend: [{ key: "screen-1", label: "Synthetic.", text: "" }] },
+    support: "practice-based",
+    claimIds: [],
+  };
+  const paragraph: LessonBlock = { kind: "paragraph", content: "Synthetic practice paragraph.", support: "practice-based", claimIds: [] };
+
+  it("shows the run's Practice-based label, on the diagram that opens it", () => {
+    const html = render([diagram, paragraph]);
+    expect(html.match(/>Practice-based</g)).toHaveLength(1);
+    const sections = html.split("<section ").slice(1);
+    expect(sections[0]).toMatch(/^data-block="diagram" data-support="practice-based"/);
+    expect(sections[0]).toContain(">Practice-based<");
+    expect(sections[1]).toMatch(/^data-block="paragraph" data-support="practice-based"/);
+  });
+
+  it("a paragraph after a run-ending heading shows its own label again", () => {
+    const html = render([diagram, { kind: "heading", content: "Synthetic heading" }, paragraph]);
+    expect(html.match(/>Practice-based</g)).toHaveLength(2);
+  });
+});
