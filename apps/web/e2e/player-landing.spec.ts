@@ -36,7 +36,7 @@ test.describe("signed-out landing", () => {
       await page.keyboard.press("Tab");
       return link.evaluate((el) => [document.activeElement === el, getComputedStyle(el).outlineColor, getComputedStyle(el).outlineStyle]);
     };
-    expect(await ringAfterTab('header a:has-text("Sign in")')).toEqual([true, "rgb(36, 83, 212)", "solid"]);
+    expect(await ringAfterTab('header a:has-text("Sign in")')).toEqual([true, "rgb(200, 25, 95)", "solid"]);
     expect(await ringAfterTab('section[aria-labelledby="closing-title"] a')).toEqual([true, "rgb(255, 255, 255)", "solid"]);
 
     await page.getByRole("main").getByRole("link", { name: "Sign in" }).first().click();

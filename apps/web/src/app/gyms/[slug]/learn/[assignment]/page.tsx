@@ -51,7 +51,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
             <LayerLabel layer={view.layer} />
             <VersionTag n={view.versionNumber} />
           </p>
-          <h1 className="text-heading font-medium">{view.title}</h1>
+          <h1 className="text-heading">{view.title}</h1>
           {view.subtitle ? <p className="text-reading text-text-muted">{view.subtitle}</p> : null}
           <div className="flex flex-col gap-2">
             <ProgressText done={view.done} total={view.total} />
@@ -68,7 +68,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
         {view.next ? (
           <Link
             href={`${base}/${view.next.slug}`}
-            className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover"
+            className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover"
           >
             {view.done === 0 ? "Start course" : "Resume lesson"}
             <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />

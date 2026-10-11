@@ -7,7 +7,7 @@ const dto = {
   revision: 4,
   name: "Andrew Fitness",
   nameAdmitted: true,
-  brand: { mark: { kind: "text" }, colors: { accent: "#506e4b", onAccent: "#ffffff", band: "#0b3d2e" }, font: "geist" },
+  brand: { mark: { kind: "text" }, colors: { accent: "#1f4e8c", onAccent: "#ffffff", accentDark: "#7ab8ff", onAccentDark: "#0b0d12", band: "#0b3d2e" }, font: "geist" },
   texts: { headline: "Lift well for life" },
 };
 const card = {
@@ -29,6 +29,12 @@ describe("MemberBrandDto", () => {
   it("parses the member read, with no brand yet or with one", () => {
     expect(parseMemberBrandDto(dto)).toEqual(dto);
     expect(parseMemberBrandDto({ ...dto, brand: null, name: "Your gym", nameAdmitted: false, texts: {} }).brand).toBeNull();
+  });
+  it("parses a brand saved before Lab (no dark pair), so the page can fall back instead of failing (Sol R2 on #51)", () => {
+    const legacy = { ...dto, brand: { ...dto.brand, colors: { accent: "#506e4b", onAccent: "#ffffff", band: "#0b3d2e" } } };
+    expect(parseMemberBrandDto(legacy).brand?.colors).toEqual(legacy.brand.colors);
+    // Saving still needs both pairs.
+    expect(orgBrandInputSchema.safeParse({ mark: { kind: "text" }, colors: { accent: "#506e4b", onAccent: "#ffffff" }, font: "geist" }).success).toBe(false);
   });
   it.each([
     ["a logo mark", { brand: { ...dto.brand, mark: { kind: "logo" } } }],

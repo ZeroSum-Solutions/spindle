@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Coaches, exampleSwatches } from "@/components/landing/coaches";
 import { SPINDLE } from "@/lib/brand";
 import { tenantFontClass } from "@/lib/theme/fonts";
-import { OXBLOOD, SAGE } from "@/lib/theme/preview-brands";
+import { OXBLOOD, HARBOR } from "@/lib/theme/preview-brands";
 
 export const metadata: Metadata = {
   title: "For coaches and gyms: Spindle",
@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 
 export default function CoachesPage() {
   // The two made-up example brands, through the validator; never tenant data.
-  return <Coaches brand={SPINDLE} swatches={exampleSwatches([OXBLOOD, SAGE], tenantFontClass)} />;
+  return <Coaches brand={SPINDLE} swatches={exampleSwatches([OXBLOOD, HARBOR], tenantFontClass)} />;
 }

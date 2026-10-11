@@ -1,12 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Locator, type Page } from "@playwright/test";
 import { brandTokens } from "@spindle/engine";
+import { PILATES_COLORS, STRENGTH_COLORS } from "../../src/lib/theme/preview-catalog";
 
 // Shared by the P4-A2 catalog specs (default views and real browser zoom).
 
 export const rgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
-export const STRENGTH = brandTokens({ accent: "#7a1b26", onAccent: "#ffffff", band: "#17232b" });
-export const PILATES = brandTokens({ accent: "#2f6b57", onAccent: "#ffffff", band: "#e8efe6" });
+// The catalog specs run in Lab Light (Playwright's default colour scheme); theme.spec.ts covers Lab Dark.
+export const STRENGTH = brandTokens(STRENGTH_COLORS, "light");
+export const PILATES = brandTokens(PILATES_COLORS, "light");
 export const SCENES = [
   { id: "strength", colors: STRENGTH },
   { id: "pilates", colors: PILATES },
@@ -14,8 +16,9 @@ export const SCENES = [
   { id: "long-name", colors: PILATES },
 ] as const;
 
-/** Fixed Atlas colours any scene may draw (DESIGN.md › Colors); the brand's own come from brandTokens. */
-export const ATLAS_FIXED = ["#f6f8fb", "#ffffff", "#edf1f5", "#17232b", "#52616d", "#2c3c47", "#d8e0e7", "#758491", "#0b6b50", "#eaf5f0", "#8a4b10", "#fff3e6"];
+// Spindle's fixed Lab Light palette (DESIGN.md › Colors): canvas, surface and on-ink white, muted panel, ink and text, muted text,
+// ink hover, border, control, and the evidence colours. The variable keeps its historical name.
+export const ATLAS_FIXED = ["#f4f5f7", "#ffffff", "#ebedf1", "#12151c", "#4a5160", "#2a2f3a", "#d7dbe2", "#737a89", "#0b6b50", "#e6f4ee", "#8a4b10", "#fff1e0"];
 
 export const VIEWS = [
   { label: "320", width: 320, height: 800, scale: 1 },
@@ -75,9 +78,14 @@ export async function noOverflow(page: Page, what: string) {
   }
 }
 
-/** Every Tab stop in a scene, in order: header links, the ink action, then one stop per card. */
+/** Every Tab stop in a scene, in order: header links, the header's theme toggle, the ink action, then one stop per card. */
 export async function tabStops(root: Locator): Promise<Locator[]> {
-  return [...(await root.locator("header a").all()), root.locator("[data-catalog-action]"), ...(await root.locator("a[data-course-card]").all())];
+  return [
+    ...(await root.locator("header a").all()),
+    root.locator("header [data-theme-toggle]"),
+    root.locator("[data-catalog-action]"),
+    ...(await root.locator("a[data-course-card]").all()),
+  ];
 }
 
 /** Walks the scene's keyboard path and checks each ring: colour, size, contrast, and not clipped by any ancestor. */

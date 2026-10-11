@@ -55,7 +55,7 @@ async function Gym({ params, searchParams }: PageProps<"/gyms/[slug]">) {
 
       <Link
         href={`/gyms/${org.slug}/learn`}
-        className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover"
+        className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover"
       >
         Your courses
       </Link>

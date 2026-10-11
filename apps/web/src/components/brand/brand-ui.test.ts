@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { createElement, type ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { ATLAS, BASE_ATTRIBUTION, brandTokens, contrast } from "@spindle/engine";
+import { BASE_ATTRIBUTION, PALETTE, brandTokens, contrast, themedBrandTokens } from "@spindle/engine";
 import { BaseSeal } from "./base-seal";
 import { BrandHeader } from "./brand-header";
 import { CatalogHero } from "./catalog-hero";
@@ -10,14 +10,14 @@ import { CoachNote } from "./coach-note";
 import { CourseCard } from "./course-card";
 import { CourseCover } from "./course-cover";
 import { ModalityChip } from "./modality-chip";
-import { COVER_PATTERNS, memberColors, methodDefaultCover, NEUTRAL_COVER, TENANT_TEXT_FALLBACKS, type CourseCardView, type MemberBrandView } from "./view";
+import { brandScopeVars, COVER_PATTERNS, memberColors, methodDefaultCover, NEUTRAL_COVER, TENANT_TEXT_FALLBACKS, type CourseCardView, type MemberBrandView } from "./view";
 
 const html = (el: ReactElement) => renderToStaticMarkup(el);
 const text = (markup: string) => markup.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 const decode = (s: string) => s.replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
 
-const STRENGTH_BRAND = { mark: { kind: "text" }, colors: { accent: "#7a1b26", onAccent: "#ffffff", band: "#17232b" }, font: "barlow-condensed" } as const;
-const COLORS = brandTokens(STRENGTH_BRAND.colors);
+const STRENGTH_BRAND = { mark: { kind: "text" }, colors: { accent: "#7a1b26", onAccent: "#ffffff", accentDark: "#f2877e", onAccentDark: "#0b0d12", band: "#17232b" }, font: "barlow-condensed" } as const;
+const COLORS = themedBrandTokens(STRENGTH_BRAND.colors);
 const BRAND: MemberBrandView = { name: "Example Strength Club", font: "barlow-condensed", colors: COLORS };
 const PENDING: MemberBrandView = { ...BRAND, name: null };
 const FONT = "var(--font-tenant-barlow)";
@@ -35,45 +35,51 @@ const course = (over: Partial<CourseCardView>): CourseCardView => ({
 });
 
 describe("member colours come from the engine (no local colour maths)", () => {
-  it("are brandTokens for a brand validateOrgBrand accepts", () => {
+  it("are brandTokens in both themes for a brand validateOrgBrand accepts", () => {
     expect(memberColors(STRENGTH_BRAND)).toEqual(COLORS);
   });
 
-  it("refuse a band whose header passes but whose chip text on the tint fails (#888888, Sol R1 on #42)", () => {
-    const grey = { ...STRENGTH_BRAND, colors: { ...STRENGTH_BRAND.colors, band: "#888888" } };
-    const t = brandTokens(grey.colors);
+  it("refuse a band whose header passes but whose chip text on the tint fails (#5e5e5e, after Sol R1 on #42)", () => {
+    const grey = { ...STRENGTH_BRAND, colors: { ...STRENGTH_BRAND.colors, band: "#5e5e5e" } };
+    const t = brandTokens(grey.colors, "light");
     expect(contrast(t.onBand, t.band)).toBeGreaterThanOrEqual(4.5);
     expect(contrast(t.onBand, t.bandTint)).toBeLessThan(4.5);
     expect(memberColors(grey)).toBeNull();
   });
 
-  it("refuse a band where neither ink nor white reaches 4.5:1", () => {
-    expect(memberColors({ ...STRENGTH_BRAND, colors: { ...STRENGTH_BRAND.colors, band: "#777777" } })).toBeNull();
+  it("refuse a band where neither light nor graphite ink reaches 4.5:1", () => {
+    expect(memberColors({ ...STRENGTH_BRAND, colors: { ...STRENGTH_BRAND.colors, band: "#707070" } })).toBeNull();
   });
 });
 
-describe("fixed Atlas pairs the brand components draw (DESIGN.md › Colors, checked tenant contrast)", () => {
-  // Fixed pairs only: a change to the Atlas tokens must not silently break one.
+describe("fixed Lab pairs the brand components draw, in both themes (DESIGN.md › Colors, checked tenant contrast)", () => {
+  // Fixed pairs only: a change to the Lab tokens must not silently break one.
   const css = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
-  const token = (name: string) => css.match(new RegExp(`--color-${name}:\\s*(#[0-9a-fA-F]{6})`))![1]!.toLowerCase();
-  const ink = token("ink"), inkHover = token("ink-hover"), control = token("control");
-  it.each([
-    ["ink action text", "#ffffff", ink, 4.5],
-    ["ink action text, hover", "#ffffff", inkHover, 4.5],
-    ["card title on surface", ATLAS.text, ATLAS.surface, 4.5],
-    ["card chip on surface-muted", ATLAS.text, ATLAS.surfaceMuted, 4.5],
-    ["card meta on surface", ATLAS.textMuted, ATLAS.surface, 4.5],
-    ["card meta on surface-muted", ATLAS.textMuted, ATLAS.surfaceMuted, 4.5],
-    ["card hover edge", control, ATLAS.surface, 3],
-    ["coach note body", ATLAS.text, ATLAS.surface, 4.5],
-    ["coach note caption", ATLAS.textMuted, ATLAS.surface, 4.5],
-    ["practice chip", ATLAS.practice, ATLAS.practiceSoft, 4.5],
-    ["practice rule", ATLAS.practice, ATLAS.surface, 3],
-    ["seal text on surface", ATLAS.textMuted, ATLAS.surface, 4.5],
-    ["seal text on canvas", ATLAS.textMuted, ATLAS.canvas, 4.5],
-  ] as const)("%s meets its minimum", (_, fg, bg, min) => {
-    expect(contrast(fg, bg)).toBeGreaterThanOrEqual(min);
-  });
+  const token = (name: string) => {
+    const m = css.match(new RegExp(`--color-${name}:\\s*light-dark\\((#[0-9a-fA-F]{6}),\\s*(#[0-9a-fA-F]{6})\\)`))!;
+    return { light: m[1]!.toLowerCase(), dark: m[2]!.toLowerCase() };
+  };
+  const [ink, inkHover, onInk, control] = ["ink", "ink-hover", "on-ink", "control"].map(token);
+  for (const theme of ["light", "dark"] as const) {
+    const P = PALETTE[theme];
+    it.each([
+      ["ink action text", onInk![theme], ink![theme], 4.5],
+      ["ink action text, hover", onInk![theme], inkHover![theme], 4.5],
+      ["card title on surface", P.text, P.surface, 4.5],
+      ["card chip on surface-muted", P.text, P.surfaceMuted, 4.5],
+      ["card meta on surface", P.textMuted, P.surface, 4.5],
+      ["card meta on surface-muted", P.textMuted, P.surfaceMuted, 4.5],
+      ["card hover edge", control![theme], P.surface, 3],
+      ["coach note body", P.text, P.surface, 4.5],
+      ["coach note caption", P.textMuted, P.surface, 4.5],
+      ["practice chip", P.practice, P.practiceSoft, 4.5],
+      ["practice rule", P.practice, P.surface, 3],
+      ["seal text on surface", P.textMuted, P.surface, 4.5],
+      ["seal text on canvas", P.textMuted, P.canvas, 4.5],
+    ] as const)(`${theme}: %s meets its minimum`, (_, fg, bg, min) => {
+      expect(contrast(fg, bg)).toBeGreaterThanOrEqual(min);
+    });
+  }
 });
 
 describe("BrandHeader", () => {
@@ -145,15 +151,16 @@ describe("CourseCard", () => {
     for (const layer of ["base", "modality"] as const) {
       const out = html(createElement(CourseCard, { course: course({ layer }), colors: COLORS, fontFamily: FONT }));
       expect(out, layer).toContain(`data-pattern="${NEUTRAL_COVER.pattern}"`);
-      expect(out, layer).toContain(NEUTRAL_COVER.background);
+      expect(out, layer).toContain(`--cover-bg-light:${NEUTRAL_COVER.background.light}`);
     }
   });
 
   it("draws a method course without a cover as diagonal in the accent", () => {
-    expect(methodDefaultCover(COLORS)).toEqual({ pattern: "diagonal", background: COLORS.accent, foreground: COLORS.onAccent });
+    expect(methodDefaultCover(COLORS)).toEqual({ pattern: "diagonal", background: { light: COLORS.light.accent, dark: COLORS.dark.accent }, foreground: { light: COLORS.light.onAccent, dark: COLORS.dark.onAccent } });
     const out = html(createElement(CourseCard, { course: course({ cover: undefined }), colors: COLORS, fontFamily: FONT }));
     expect(out).toContain('data-pattern="diagonal"');
-    expect(out).toContain(`fill="${COLORS.accent}"`);
+    expect(out).toContain(`--cover-bg-light:${COLORS.light.accent}`);
+    expect(out).toContain(`--cover-bg-dark:${COLORS.dark.accent}`);
   });
 
   it("takes its heading level from the section it sits in", () => {
@@ -178,7 +185,8 @@ describe("CourseCover", () => {
     const out = html(createElement(CourseCover, { cover: { pattern, background: "#2f6b57", foreground: "#ffffff" } }));
     expect(out).toMatch(/^<svg[^>]*aria-hidden="true"/);
     expect(out).toContain(`data-pattern="${pattern}"`);
-    expect(out).toContain('fill="#2f6b57"');
+    expect(out).toContain("--cover-bg-light:#2f6b57");
+    expect(out).toContain("--cover-bg-dark:#2f6b57");
     expect(out).not.toMatch(/<text|<title|<desc/);
     if (pattern !== "solid") expect(out).toMatch(/<(path|circle)/);
     // Drawn faintly: the foreground at 18% (spec rev4 §2).
@@ -205,7 +213,7 @@ describe("BaseSeal and ModalityChip", () => {
   it("the seal is the fixed attribution beside the Spindle symbol", () => {
     const out = html(createElement(BaseSeal));
     expect(text(out)).toBe(BASE_ATTRIBUTION);
-    expect(out).toContain("/brand/spindle-symbol.svg");
+    expect(out).toContain("/brand/spindle-symbol-small.svg");
   });
 
   it("a youth tag reads as coaching education, and chips are not interactive", () => {
@@ -214,5 +222,26 @@ describe("BaseSeal and ModalityChip", () => {
     expect(out).not.toMatch(/<a |<button/);
     expect(html(createElement(ModalityChip, { tag: "yoga", on: "surface" }))).toContain("bg-surface-muted");
     expect(out).toContain("bg-band-tint");
+  });
+});
+
+describe("runtime brand styles work without native light-dark() (Sol R2 on #51)", () => {
+  const css = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
+  it("brandScopeVars emits literal hex per theme only", () => {
+    const vars = brandScopeVars(memberColors(STRENGTH_BRAND)!);
+    expect(Object.values(vars).every((v) => /^#[0-9a-f]{6}$/.test(v))).toBe(true);
+    expect(vars["--brand-accent-light"]).toBe("#7a1b26");
+    expect(vars["--brand-band-dark"]).toBe("#17232b");
+  });
+  it("covers carry their colours as literal hex variables, never an inline light-dark()", () => {
+    const out = html(createElement(CourseCard, { course: course({ cover: undefined }), colors: COLORS, fontFamily: FONT }));
+    expect(out).not.toContain("light-dark(");
+    expect(out).toContain("--cover-bg-light:#7a1b26");
+  });
+  it("the stylesheet maps the scoped variables onto the tokens and the focus ring", () => {
+    for (const token of ["--color-brand", "--color-brand-hover", "--color-brand-soft", "--color-on-brand", "--color-band", "--color-on-band", "--color-band-tint", "--color-band-edge"]) {
+      expect(css, token).toMatch(new RegExp(`\\[data-brand-scope\\][^}]*${token}: light-dark\\(`, "s"));
+    }
+    expect(css).toMatch(/\[data-brand-scope\][^}]*--focus-ring: var\(--color-brand\)/s);
   });
 });

@@ -407,6 +407,18 @@ export class PlayerWorld {
     sql(`begin; ${asUser(owner.id)} select public.save_org_brand(${lit(org.id)}, ${lit(JSON.stringify(brand))}::jsonb); commit;`);
   }
 
+  /**
+   * Test only: stores a brand row as it was saved before Lab (no dark accent pair), bypassing
+   * save_org_brand, which would now refuse it. Models a gym whose brand predates the migration.
+   */
+  legacyBrand(org: { id: string }, owner: Actor, brand: Json): void {
+    sql(`begin; select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+      insert into private.org_brand (org_id, brand, updated_by) values (${lit(org.id)}, ${lit(JSON.stringify(brand))}::jsonb, ${lit(owner.id)})
+        on conflict (org_id) do update set brand = excluded.brand;
+      select private.bump_brand_revision(${lit(org.id)});
+      commit;`);
+  }
+
   /** P4-A2: an author saves a held text through save_tenant_text; it stays pending until admitted. Returns the text id. */
   saveText(org: { id: string }, author: Actor, slot: string, courseId: string | null, text: string): string {
     return sql(`begin; ${asUser(author.id)} select public.save_tenant_text(${lit(org.id)}, ${lit(slot)}, ${courseId ? lit(courseId) : "null"}, ${lit(text)}); commit;`)

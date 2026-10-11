@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { brandTokens } from "@spindle/engine";
+import { themedBrandTokens } from "@spindle/engine";
 import type { MemberBrandDto } from "@spindle/schema";
 import { brandFromDto, cardSummary, catalogAction, catalogCards, shownCourseTitle, versionTexts, type CatalogAssignment } from "./adapt";
 import { TENANT_TEXT_FALLBACKS } from "./view";
@@ -10,13 +10,13 @@ const DTO: MemberBrandDto = {
   revision: 3,
   name: "Example Strength Club",
   nameAdmitted: true,
-  brand: { mark: { kind: "text" }, colors: { accent: "#7a1b26", onAccent: "#ffffff", band: "#17232b" }, font: "barlow-condensed" },
+  brand: { mark: { kind: "text" }, colors: { accent: "#7a1b26", onAccent: "#ffffff", accentDark: "#f2877e", onAccentDark: "#0b0d12", band: "#17232b" }, font: "barlow-condensed" },
   texts: { headline: "Lift well. Coach better.", tagline: "Our method for teaching the barbell.", coachName: "Coach A. Example" },
 };
 describe("brandFromDto", () => {
   it("maps a saved brand with admitted texts; colours only through memberColors", () => {
     const out = brandFromDto(DTO)!;
-    expect(out.brand).toEqual({ name: "Example Strength Club", font: "barlow-condensed", colors: brandTokens(DTO.brand!.colors) });
+    expect(out.brand).toEqual({ name: "Example Strength Club", font: "barlow-condensed", colors: themedBrandTokens({ ...DTO.brand!.colors, accentDark: "#f2877e", onAccentDark: "#0b0d12" }) });
     expect(out.hero).toEqual({ headline: "Lift well. Coach better.", tagline: "Our method for teaching the barbell.", modalities: [] });
   });
 

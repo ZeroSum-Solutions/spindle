@@ -27,6 +27,8 @@ export interface BlockContext {
   versionId?: string;
   /** Whether this version has a graded quiz (phase-3 rules). Without one, science quiz blocks stay ungraded self-checks. */
   gradedQuiz?: boolean;
+  /** Prefixes element names when one page shows the same lesson twice (the design kit's theme panes). */
+  idPrefix?: string;
 }
 
 type SupportedBlock = Extract<LessonViewBlock, { support: unknown }>;
@@ -131,13 +133,13 @@ function Supported({ block, index, ctx, showLabel }: { block: SupportedBlock; in
       {withdrawn ? (
         <p className="text-label text-text-muted">The research claim behind this statement was withdrawn after publishing, so it is no longer presented as science.</p>
       ) : null}
-      <BlockBody block={block} index={index} quizHref={ctx.quizHref} graded={ctx.gradedQuiz === true} />
+      <BlockBody block={block} index={index} quizHref={ctx.quizHref} graded={ctx.gradedQuiz === true} idPrefix={ctx.idPrefix ?? ""} />
       {science && block.claimIds.length > 0 ? <ClaimDisclosure claimIds={block.claimIds} claims={ctx.claims} flagged={ctx.flagged} /> : null}
     </section>
   );
 }
 
-function BlockBody({ block, index, quizHref, graded }: { block: SupportedBlock; index: number; quizHref?: string; graded: boolean }) {
+function BlockBody({ block, index, quizHref, graded, idPrefix }: { block: SupportedBlock; index: number; quizHref?: string; graded: boolean; idPrefix: string }) {
   switch (block.kind) {
     case "paragraph":
       return <p className="whitespace-pre-line">{block.content}</p>;
@@ -175,7 +177,7 @@ function BlockBody({ block, index, quizHref, graded }: { block: SupportedBlock; 
           </p>
         </div>
       ) : (
-        <QuizSelfCheck id={`q${index}`} {...block.content} />
+        <QuizSelfCheck id={`${idPrefix}q${index}`} {...block.content} />
       );
   }
 }

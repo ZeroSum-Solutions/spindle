@@ -57,7 +57,7 @@ export function CatalogHero({
         <a
           data-catalog-action
           href={action.href}
-          className="inline-flex min-h-12 items-center gap-2 rounded-control bg-ink px-5 font-medium text-white transition-colors duration-[var(--duration-feedback)] hover:bg-ink-hover"
+          className="inline-flex min-h-12 items-center gap-2 rounded-control bg-ink px-5 font-medium text-on-ink transition-colors duration-[var(--duration-feedback)] hover:bg-ink-hover"
         >
           {action.label}
           <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />

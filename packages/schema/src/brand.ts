@@ -69,11 +69,15 @@ export const tenantBrandSchema = z.strictObject({
   mark: z.discriminatedUnion("kind", [z.strictObject({ kind: z.literal("text") }), logoSchema]),
   /** The small overridable token set: literal colours only. */
   colors: z.strictObject({
-    /** Links, the current-lesson marker, selected controls, the focus ring and the text mark. */
+    /** Light theme: links, the current-lesson marker, selected controls, the focus ring and the text mark. */
     accent: hex,
-    /** Text and icons on an accent-filled control. */
+    /** Light theme: text and icons on an accent-filled control. */
     onAccent: hex,
-    /** P4-A2: the header band and catalog hero. Absent means the Atlas surface. Text on it is ink or white, whichever reads better. */
+    /** Dark theme accent. One colour cannot be link text on both white and graphite, so a gym sets one per theme. */
+    accentDark: hex,
+    /** Dark theme: text and icons on the dark accent fill. */
+    onAccentDark: hex,
+    /** P4-A2: the header band and catalog hero, the same in both themes. Absent means the theme's canvas. Text on it is light or graphite ink, whichever reads better. */
     band: hex.optional(),
   }),
   font: z.enum(Object.keys(BRAND_FONTS) as [BrandFont, ...BrandFont[]]),
@@ -83,13 +87,13 @@ export type TenantBrand = z.infer<typeof tenantBrandSchema>;
 // P4-A2 (spec revisions 3 to 4a) ---------------------------------------------------------------
 
 /**
- * A gym's stored brand, as save_org_brand accepts it: the text mark, literal colours (with the
- * optional header band) and one bundled font. No name (it is the held tenant text brand_name) and
+ * A gym's stored brand, as save_org_brand accepts it: the text mark, literal colours (an accent pair
+ * per theme and the optional header band) and one bundled font. No name (it is the held tenant text brand_name) and
  * no logo (P4-A3).
  */
 export const orgBrandInputSchema = z.strictObject({
   mark: z.strictObject({ kind: z.literal("text") }),
-  colors: z.strictObject({ accent: hex, onAccent: hex, band: hex.optional() }),
+  colors: z.strictObject({ accent: hex, onAccent: hex, accentDark: hex, onAccentDark: hex, band: hex.optional() }),
   font: z.enum(Object.keys(BRAND_FONTS) as [BrandFont, ...BrandFont[]]),
 });
 export type OrgBrandInput = z.infer<typeof orgBrandInputSchema>;
@@ -110,7 +114,9 @@ export const memberBrandDtoSchema = z.strictObject({
   brand: z
     .strictObject({
       mark: z.strictObject({ kind: z.literal("text") }),
-      colors: z.strictObject({ accent: lowerHex, onAccent: lowerHex, band: lowerHex.optional() }),
+      // The read shape also accepts a brand saved before Lab (no dark pair), so the page can fall back to
+      // the unbranded look: validateOrgBrand requires both pairs and refuses it (Sol R2 on #51).
+      colors: z.strictObject({ accent: lowerHex, onAccent: lowerHex, accentDark: lowerHex.optional(), onAccentDark: lowerHex.optional(), band: lowerHex.optional() }),
       font: z.enum(Object.keys(BRAND_FONTS) as [BrandFont, ...BrandFont[]]),
     })
     .nullable(),

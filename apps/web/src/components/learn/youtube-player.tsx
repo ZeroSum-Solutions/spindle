@@ -160,11 +160,11 @@ export function YouTubePlayer({
   return (
     <div
       data-video="facade"
-      className="flex min-h-[200px] w-full flex-col justify-end gap-3 rounded-card bg-ink p-4 text-white [--focus-ring:var(--color-white)] sm:aspect-video md:p-6"
+      className="flex min-h-[200px] w-full flex-col justify-end gap-3 rounded-card bg-media p-4 text-on-media [--focus-ring:var(--color-on-media)] sm:aspect-video md:p-6"
     >
       <div className="flex flex-col gap-1">
         <p className="text-base font-medium">{video.title}</p>
-        <p className="text-label text-white/80">
+        <p className="text-label text-on-media/80">
           {video.channel} · <span className="font-mono text-code">{segmentLabel(video)}</span>
         </p>
       </div>
@@ -182,23 +182,23 @@ export function YouTubePlayer({
           setSrc(embedSrc(video, window.location.origin));
         }}
         aria-describedby={noticeId}
-        className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-white px-5 font-medium text-ink transition-colors duration-[var(--duration-feedback)] hover:bg-surface-muted"
+        className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-on-media px-5 font-medium text-media transition-colors duration-[var(--duration-feedback)] hover:bg-on-media/85"
       >
         <Play aria-hidden strokeWidth={1.75} className="size-4" />
         {state === "loading" ? "Checking…" : "Play video"}
         <span className="sr-only">: {video.title}</span>
       </button>
-      <p id={noticeId} data-video="notice" className="text-label text-white/80">
+      <p id={noticeId} data-video="notice" className="text-label text-on-media/80">
         Plays from YouTube. Pressing play loads YouTube&apos;s player, which may collect data and store information on your device. See Google&apos;s{" "}
-        <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-white underline underline-offset-2">
+        <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-on-media underline underline-offset-2">
           privacy policy
         </a>{" "}
         and YouTube&apos;s{" "}
-        <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" className="text-white underline underline-offset-2">
+        <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" className="text-on-media underline underline-offset-2">
           terms
         </a>
         . How Spindle handles this:{" "}
-        <a href="/privacy" className="text-white underline underline-offset-2">
+        <a href="/privacy" className="text-on-media underline underline-offset-2">
           Spindle&apos;s privacy page
         </a>
         .

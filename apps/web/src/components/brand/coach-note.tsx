@@ -6,7 +6,7 @@ export const COACH_NOTE_CAPTION = "Coach's note. Based on coaching practice, not
 /**
  * A coach's welcome note on a Gym method course, above the lesson list: the admitted text, the
  * display name frozen at publish, the fixed Practice-based label and a fixed caption. No photo, no
- * role. Geist throughout: the brand font never sets body text.
+ * role. Spindle's faces throughout (IBM Plex Sans): the brand font never sets body text.
  */
 export function CoachNote({ note }: { note: CoachNoteView }) {
   const from = `Note from ${noteFrom(note)}`;

@@ -27,6 +27,8 @@ export function CatalogPreviewScene({ scene }: { scene: CatalogScene }) {
         data-catalog-preview={scene.id}
         className={`${font.className} overflow-hidden rounded-card border border-border bg-canvas`}
         style={brandScopeVars(scene.brand.colors) as CSSProperties}
+        data-brand-scope=""
+        data-brand-band=""
       >
         <BrandHeader brand={scene.brand} fontFamily={font.family} links={scene.links} />
         <CatalogHero brand={scene.brand} hero={scene.hero} fontFamily={font.family} action={scene.action} headingLevel={2} />

@@ -8,7 +8,7 @@ const render = (brand: Brand) => renderToStaticMarkup(createElement(Landing, { b
 
 describe("Landing", () => {
   it("renders an alternate brand everywhere the brand appears, with its own wordmark proportions", () => {
-    const acme: Brand = { name: "Acme Strength", wordmark: { onLight: "/acme/ink.svg", onInk: "/acme/white.svg", width: 160, height: 64 } };
+    const acme: Brand = { name: "Acme Strength", wordmark: { onLight: "/acme/ink.svg", onDark: "/acme/white.svg", width: 160, height: 64 } };
     const html = render(acme);
     expect(html).toContain("Acme Strength teaches personal trainers");
     expect(html).toContain("Acme Strength never diagnoses.");
@@ -41,8 +41,8 @@ describe("Landing", () => {
     expect(html).toContain("In development");
   });
 
-  it("gives the action on the dark section a light focus outline", () => {
+  it("gives the action on the ink section an on-ink focus outline, which inverts with the theme", () => {
     // The global ring is unlayered CSS, so a utility class cannot recolour it; the section sets the ring's custom property.
-    expect(render(SPINDLE)).toMatch(/<section aria-labelledby="closing-title" class="[^"]*\[--focus-ring:var\(--color-white\)\]/);
+    expect(render(SPINDLE)).toMatch(/<section aria-labelledby="closing-title" class="[^"]*\[--focus-ring:var\(--color-on-ink\)\]/);
   });
 });
