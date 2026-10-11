@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(234);
+select plan(238);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -1104,9 +1104,27 @@ select results_eq(format($$select question_id, chosen, answer_index, correct fro
   'after a pass the learner gets each answer and explanation back');
 select is((select count(*) from public.quiz_attempt_review((select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f2'))
   where explanation = 'Synthetic explanation.'), 5::bigint, 'the post-pass review carries the explanations');
+-- Only the attempt's own learner may review it (Sol R1 PR22-02); the real attempt id is kept
+-- before switching users, because RLS hides it from them (PR22-04).
+select pg_temp.reset_role();
+select pg_temp.keep('f2_attempt', (select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f2'));
+select isnt(pg_temp.id('f2_attempt'), null, 'the passing attempt under test exists');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
-select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, (select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f2')),
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, pg_temp.id('f2_attempt')),
   'P0002', 'no such attempt', 'another learner cannot review someone else''s attempt');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, pg_temp.id('f2_attempt')),
+  'P0002', 'no such attempt', 'the gym owner cannot read a learner''s answer review');
+select pg_temp.reset_role();
+update public.memberships set role = 'lead' where org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and user_id = '00000000-0000-0000-0000-0000000000a4';
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, pg_temp.id('f2_attempt')),
+  'P0002', 'no such attempt', 'a gym lead cannot read a learner''s answer review');
+select pg_temp.reset_role();
+update public.memberships set role = 'trainer' where org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and user_id = '00000000-0000-0000-0000-0000000000a4';
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000b1');
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, pg_temp.id('f2_attempt')),
+  'P0002', 'no such attempt', 'another gym''s owner cannot read it either');
 select throws_ok($$select private.graded_questions('{}')$$, '42501', null, 'learners cannot call the private grading helper');
 select pg_temp.as_service();
 select ok((select snapshot #>> '{parts,0,lessons,0,blocks,1,content,answerIndex}' = '1' from public.curriculum_versions where id = pg_temp.id('q_v1')),

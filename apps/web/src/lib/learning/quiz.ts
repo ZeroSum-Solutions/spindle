@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { PASS_PERCENT, quizAnswersSchema, type ModuleStatus, type QuizAnswer, type QuizAttemptResult } from "@spindle/schema";
-import { scoreAttempt, type GradedQuestion } from "@spindle/engine";
+import { PASS_PERCENT, quizAnswersSchema, type ModuleStatus, type QuizAnswer, type QuizAttemptResult, type QuizReviewRow } from "@spindle/schema";
+import type { LearnerQuestion } from "@spindle/engine";
 
 // Graded module quiz, app side (ADR 0007). The database scores every attempt and works
 // out completion; this module only reads the form, maps errors to plain words, and
@@ -14,7 +14,7 @@ export interface QuizQuestionView {
   options: string[];
 }
 
-export function questionViews(questions: readonly GradedQuestion[], lessonTitles: ReadonlyMap<string, string>): QuizQuestionView[] {
+export function questionViews(questions: readonly LearnerQuestion[], lessonTitles: ReadonlyMap<string, string>): QuizQuestionView[] {
   return questions.map((q) => ({ questionId: q.questionId, lessonTitle: lessonTitles.get(q.lessonId) ?? "", prompt: q.prompt, options: [...q.options] }));
 }
 
@@ -35,8 +35,10 @@ export type QuizState =
       correct: number;
       total: number;
       passed: boolean;
-      /** Per-question feedback, or null when the app's explanation does not match the server's score. */
+      /** Per-question feedback from the server's post-pass review, or null when there is none or it does not match the score. */
       feedback: { questionId: string; correct: boolean; explanation: string }[] | null;
+      /** True for a failed attempt: answers and explanations open only after a pass (T21). */
+      reviewLocked: boolean;
     };
 
 const submissionSchema = z.strictObject({ attemptKey: z.uuid(), answers: quizAnswersSchema });
@@ -44,7 +46,7 @@ const submissionSchema = z.strictObject({ attemptKey: z.uuid(), answers: quizAns
 export const MISSING_ANSWERS = "Answer every question before you submit.";
 
 /** Reads one answer per graded question from the form. Anything missing, extra or malformed is refused. */
-export function readSubmission(form: FormData, questions: readonly GradedQuestion[]): { attemptKey: string; answers: QuizAnswer[] } | { error: string } {
+export function readSubmission(form: FormData, questions: readonly Pick<LearnerQuestion, "questionId" | "options">[]): { attemptKey: string; answers: QuizAnswer[] } | { error: string } {
   const answers: QuizAnswer[] = [];
   for (const q of questions) {
     const raw = form.get(fieldName(q.questionId));
@@ -85,22 +87,16 @@ export function classifySubmitError(error: { code?: string; message?: string } |
 }
 
 /**
- * The server's result, with per-question feedback from the engine. The server's
- * numbers always win: if the engine's count disagrees, feedback is withheld rather
- * than shown next to a score it does not explain.
+ * The server's result. A failed attempt shows the score only (T21). A pass shows per-question
+ * feedback from the server's own review (quiz_attempt_review); if that review does not match the
+ * server's score, feedback is withheld rather than shown next to a score it does not explain.
  */
-export function resultState(result: QuizAttemptResult, questions: readonly GradedQuestion[], answers: readonly QuizAnswer[]): Extract<QuizState, { status: "result" }> {
+export function resultState(result: QuizAttemptResult, review: readonly QuizReviewRow[] | null): Extract<QuizState, { status: "result" }> {
   let feedback: Extract<QuizState, { status: "result" }>["feedback"] = null;
-  try {
-    const scored = scoreAttempt(questions, answers);
-    if (scored.correct === result.correct && scored.total === result.total) {
-      const byId = new Map(questions.map((q) => [q.questionId, q]));
-      feedback = scored.results.map((r) => ({ questionId: r.questionId, correct: r.correct, explanation: byId.get(r.questionId)!.explanation }));
-    }
-  } catch {
-    feedback = null;
+  if (result.passed && review && review.length === result.total && review.filter((r) => r.correct).length === result.correct) {
+    feedback = review.map((r) => ({ questionId: r.questionId, correct: r.correct, explanation: r.explanation }));
   }
-  return { status: "result", attemptId: result.attemptId, correct: result.correct, total: result.total, passed: result.passed, feedback };
+  return { status: "result", attemptId: result.attemptId, correct: result.correct, total: result.total, passed: result.passed, feedback, reviewLocked: !result.passed };
 }
 
 /** Fewest correct answers that pass, for a quiz of `total` questions. */

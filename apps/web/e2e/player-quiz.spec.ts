@@ -58,6 +58,11 @@ test.describe.serial("graded module quiz", () => {
   test("a failed attempt, then a pass: the server scores both and says what a pass needs", async ({ browser }) => {
     const page = await signIn(browser, actors.learner!, quizPath());
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Module quiz");
+    // The quiz lists its questions from the learner projection, prompts and options only (Sol R1 PR22-01).
+    await expect(page.locator("fieldset[data-question]")).toHaveCount(2);
+    await expect(page.locator(`fieldset[data-question="${QID(0)}"]`)).toContainText(Q1.prompt);
+    await expect(page.locator(`fieldset[data-question="${QID(1)}"]`)).toContainText(Q2.prompt);
+    await expect(page.getByLabel("Synthetic two C", { exact: true })).toBeVisible();
     await expect(page.getByTestId("module-status")).toContainText("Quiz not taken yet: 2 questions, 2 correct to pass.");
     // The answer key never reaches the page before submitting: not in the HTML, and not in the
     // RSC payloads a navigation fetches, for the quiz page and for lessons with graded questions.
@@ -77,8 +82,9 @@ test.describe.serial("graded module quiz", () => {
     await expect(result).toContainText("Not passed yet.");
     await expect(result).toContainText("You got 1 of 2 correct.");
     await expect(result).toContainText("You need 2 to pass.");
-    await expect(page.locator(`fieldset[data-question="${QID(0)}"]`)).toContainText("Correct. Synthetic explanation one.");
-    await expect(page.locator(`fieldset[data-question="${QID(1)}"]`)).toContainText("Not quite. Synthetic explanation two.");
+    // T21: a failed attempt shows the score only; answers and explanations open after a pass.
+    await expect(result).toContainText("Answers and explanations open once you pass.");
+    expect(await page.content()).not.toContain("Synthetic explanation");
 
     await result.getByRole("button", { name: "Try again" }).click();
     await expect(page.getByLabel("Synthetic two C", { exact: true })).not.toBeChecked();
@@ -86,6 +92,8 @@ test.describe.serial("graded module quiz", () => {
     await page.getByRole("button", { name: "Submit answers" }).click();
     await expect(page.getByTestId("quiz-result")).toContainText("Passed.");
     await expect(page.getByTestId("quiz-result")).toContainText("You got 2 of 2 correct.");
+    await expect(page.locator(`fieldset[data-question="${QID(0)}"]`)).toContainText("Correct. Synthetic explanation one.");
+    await expect(page.locator(`fieldset[data-question="${QID(1)}"]`)).toContainText("Correct. Synthetic explanation two.");
     expect(attempts("learner")).toBe("2");
     expect(sql(`select bool_or(passed)::text from public.quiz_attempts where user_id = '${actors.learner!.id}'`)).toBe("true");
   });
