@@ -58,7 +58,7 @@ interface AssignmentRow {
   version: VersionRow & { course_id: string };
 }
 
-const ASSIGNMENT_SELECT = "id, curriculum_versions!inner(id, course_id, version_number, layer, org_id, snapshot)";
+const ASSIGNMENT_SELECT = "id, curriculum_versions!inner(id, course_id, version_number, layer, org_id, snapshot, rules, question_set_hash)";
 
 function toAssignment(row: { id: string; curriculum_versions: unknown }): AssignmentRow {
   return { id: row.id, version: row.curriculum_versions as AssignmentRow["version"] };

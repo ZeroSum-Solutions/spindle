@@ -1,3 +1,4 @@
+import { moduleQuizHref } from "@/lib/learning/quiz";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowRight } from "lucide-react";
@@ -6,6 +7,9 @@ import { LearnShell, LoadingNote, VersionUnavailable } from "@/components/learn/
 import { learnerGym, myAssignment } from "@/lib/learning/load";
 import { groupByPart } from "@/lib/learning/view";
 import { VersionNotice } from "@/components/learn/version-notice";
+import { ModuleStatusCard } from "@/components/learn/module-status";
+import { gradedQuestions } from "@spindle/engine";
+import { loadModuleStatus } from "@/lib/learning/quiz-server";
 
 export default function CoursePage(props: PageProps<"/gyms/[slug]/learn/[assignment]">) {
   return (
@@ -36,6 +40,8 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
   const { view } = detail;
   const base = `/gyms/${ctx.org.slug}/learn/${detail.assignmentId}`;
   const parts = groupByPart(view.lessons);
+  const hasQuiz = detail.version.gradedQuiz && gradedQuestions(detail.version.course).length > 0;
+  const status = await loadModuleStatus(ctx, detail.assignmentId);
 
   return (
     <LearnShell gym={ctx.org.name} back={back}>
@@ -59,7 +65,6 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
           </IntegrityAlert>
         ) : null}
 
-
         {view.next ? (
           <Link
             href={`${base}/${view.next.slug}`}
@@ -71,6 +76,8 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
         ) : (
           <p className="rounded-card bg-surface-muted p-4 font-medium">You completed every lesson in v{view.versionNumber}.</p>
         )}
+
+        <ModuleStatusCard status={status} quizHref={hasQuiz ? moduleQuizHref(base) : null} />
 
         {view.delta ? <VersionNotice delta={view.delta} versionNumber={view.versionNumber} credited={view.lessons.some((l) => l.state === "credited")} /> : null}
 
