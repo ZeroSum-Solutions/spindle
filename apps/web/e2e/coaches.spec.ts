@@ -19,7 +19,7 @@ async function expectCoaches(page: Page) {
   // Two theme swatches rendered by the validator, each passing every check.
   const swatches = page.locator("[data-theme-swatch]");
   await expect(swatches).toHaveCount(2);
-  for (const s of await swatches.all()) await expect(s).toContainText(/(\d+) of \1 contrast checks pass/);
+  for (const s of await swatches.all()) await expect(s).toContainText(/(\d+) of \1 checks pass in light and dark/);
 }
 
 test.describe("coaches page", () => {
