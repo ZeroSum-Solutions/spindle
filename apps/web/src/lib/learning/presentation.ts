@@ -5,8 +5,8 @@ import type { LessonView } from "./view";
 
 /**
  * Which supported blocks show their support label. Consecutive blocks with the same
- * support form one run and are labelled once, at its start; a heading, image or
- * diagram ends the run. Every block keeps its support in data and in its margin rule.
+ * support form one run and are labelled once, at its start; a heading, an image or a
+ * legacy diagram (no support) ends the run, while a reviewed diagram joins or starts one. Every block keeps its support in data and in its margin rule.
  * `runKey` lets the caller split runs further, e.g. a withdrawn science block starts its own.
  */
 export function supportLabelPlan(blocks: readonly LessonViewBlock[], runKey: (block: Extract<LessonViewBlock, { support: unknown }>) => string = (block) => block.support): boolean[] {

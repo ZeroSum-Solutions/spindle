@@ -49,15 +49,20 @@ export function placeMarkers(spec: DrawingSpec, legend: readonly LegendItem[]): 
   return legend.flatMap((item, i) => (Object.hasOwn(spec.anchors, item.key) ? [{ ...spec.anchors[item.key]!, n: i + 1, key: item.key }] : []));
 }
 
-/** A drawing with its markers. The SVG's accessible name is the block's alt text. */
-export function Drawing({ spec, alt, legend }: { spec: DrawingSpec; alt: string; legend: readonly LegendItem[] }) {
+/**
+ * A drawing with its markers. The SVG carries a title and a description (DESIGN.md, STYLE.md), both
+ * from the reviewed block: the title is the caption (the alt text when there is no caption) and the
+ * description is the alt text. The drawing itself has no words.
+ */
+export function Drawing({ spec, alt, caption, legend }: { spec: DrawingSpec; alt: string; caption?: string; legend: readonly LegendItem[] }) {
   const id = useId();
   const { width, height } = spec.view;
   const markers = placeMarkers(spec, legend);
   return (
     <div className="relative">
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby={`${id}-t`} className="h-auto w-full text-ink">
-        <title id={`${id}-t`}>{alt}</title>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby={`${id}-t`} aria-describedby={`${id}-d`} className="h-auto w-full text-ink">
+        <title id={`${id}-t`}>{caption?.trim() ? caption : alt}</title>
+        <desc id={`${id}-d`}>{alt}</desc>
         <spec.Art />
         {markers.map(({ key, leader }) =>
           leader ? <line key={key} x1={leader.from.x} y1={leader.from.y} x2={leader.to.x} y2={leader.to.y} data-leader={key} {...STROKE} /> : null,

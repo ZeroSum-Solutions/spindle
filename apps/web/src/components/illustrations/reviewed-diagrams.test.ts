@@ -15,12 +15,14 @@ const markerRadius = (spec: DrawingSpec) => 14 * (spec.view.width / 256);
 
 describe("reviewed diagrams: geometry in code, words from the lesson", () => {
   it.each(entries)("%s draws no words of its own", (_, spec) => {
-    const html = renderToStaticMarkup(createElement(Drawing, { spec, alt: "Synthetic alt", legend: [] }));
+    const html = renderToStaticMarkup(createElement(Drawing, { spec, alt: "Synthetic alt", caption: "Synthetic caption", legend: [] }));
     expect(html).toContain('role="img"');
-    expect(html).toMatch(/<title id="[^"]+">Synthetic alt<\/title>/);
-    // Apart from the title, the drawing has no text at all: no <text>, no <desc>, no markers without a legend.
-    const withoutTitle = html.replace(/<title[^>]*>[^<]*<\/title>/, "");
-    expect(withoutTitle).not.toMatch(/<text|<desc|data-marker/);
+    // Title and description come from the block: the caption names it, the alt describes it.
+    expect(html).toMatch(/<title id="[^"]+">Synthetic caption<\/title>/);
+    expect(html).toMatch(/<desc id="[^"]+">Synthetic alt<\/desc>/);
+    // Apart from those, the drawing has no text at all: no <text>, no second <desc>, no markers without a legend.
+    const withoutTitle = html.replace(/<title[^>]*>[^<]*<\/title>/, "").replace(/<desc[^>]*>[^<]*<\/desc>/, "");
+    expect(withoutTitle).not.toMatch(/<text|<desc|<title|data-marker/);
     expect(withoutTitle.replace(/<[^>]*>/g, "")).toBe("");
     // Drawn, not embedded, in the house stroke.
     expect(html).not.toMatch(/<image|href="http|url\(http/);
@@ -94,6 +96,12 @@ describe("reviewed diagrams: geometry in code, words from the lesson", () => {
     const html = renderToStaticMarkup(createElement(Drawing, { spec, alt: "Synthetic alt", legend: [] }));
     expect([...html.matchAll(/data-muscle="([^"]+)"/g)].map((m) => m[1]).sort()).toEqual([...muscles].sort());
   });
+});
+
+it("names a drawing by its alt text when the block has no caption", () => {
+  const html = renderToStaticMarkup(createElement(Drawing, { spec: DRAWINGS["shoulder-cuff"]!, alt: "Synthetic alt", caption: " ", legend: [] }));
+  expect(html).toMatch(/<title id="[^"]+">Synthetic alt<\/title>/);
+  expect(html).toMatch(/aria-labelledby="[^"]+-t" aria-describedby="[^"]+-d"/);
 });
 
 describe("cuff leaders end inside what they name", () => {

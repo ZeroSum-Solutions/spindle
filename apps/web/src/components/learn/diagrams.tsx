@@ -46,7 +46,7 @@ export function ReviewedDiagram({ content, nested = false }: { content: Reviewed
       <div className="flex flex-col gap-3 rounded-card bg-surface-muted p-4 md:p-6">
         {spec ? (
           <div className="mx-auto w-full max-w-[34rem]">
-            <Drawing spec={spec} alt={content.alt} legend={content.legend} />
+            <Drawing spec={spec} alt={content.alt} caption={content.caption} legend={content.legend} />
           </div>
         ) : (
           <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-card border border-dashed border-control p-6 text-center text-text-muted">
