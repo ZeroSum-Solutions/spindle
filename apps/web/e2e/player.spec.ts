@@ -194,8 +194,10 @@ test.describe.serial("learner flow", () => {
     await expect(p.locator('[data-block="callout"]').getByText("Practice-based", { exact: true })).toHaveCount(0);
     await expect(p.locator('[data-block="checklist"]').getByText("Practice-based", { exact: true })).toHaveCount(0);
     await expect(p.locator('[data-block="quiz"][data-support="practice-based"]').getByText("Practice-based", { exact: true })).toHaveCount(1);
-    await expect(p.locator("article section[data-support]").getByText("Practice-based", { exact: true })).toHaveCount(2);
-    await expect(p.locator('article section[data-support="practice-based"]')).toHaveCount(4);
+    // The practice-based diagram after the image opens its own run, so it carries its own label (R16).
+    await expect(p.locator('section[data-block="diagram"][data-support="practice-based"]').getByText("Practice-based", { exact: true })).toHaveCount(1);
+    await expect(p.locator("article section[data-support]").getByText("Practice-based", { exact: true })).toHaveCount(3);
+    await expect(p.locator('article section[data-support="practice-based"]')).toHaveCount(5);
     await expect(p.locator('[data-block="callout"]')).toContainText("Synthetic callout.");
     await expect(p.locator('[data-block="checklist"] li')).toHaveCount(2);
     await expect(p.locator('[data-block="diagram"]')).toContainText("This diagram is not available yet.");
