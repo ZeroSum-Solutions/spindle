@@ -92,6 +92,15 @@ const CONTENT_SCHEMAS: Partial<Record<ItemKind, z.ZodType>> = {
   course: z.looseObject({ title: z.string().min(1), parts: z.array(z.unknown()) }),
   block: z.strictObject({ lessonId: uuid, ordinal: z.number().int().min(1), block: z.looseObject({ kind: z.string().min(1) }), claims: claimView }),
   lesson: z.strictObject({ lesson: z.looseObject({ id: z.string().min(1), blocks: z.array(z.unknown()) }), claims: claimView }),
+  segment: z.strictObject({
+    registry: z.strictObject({ mediaId: uuid, videoId: z.string().regex(/^[A-Za-z0-9_-]{11}$/), startSeconds: z.number().int().min(0), endSeconds: z.number().int().min(1), rationale: z.string().min(1) }),
+    description: z.strictObject({ spoken: z.array(z.unknown()), visual: z.array(z.unknown()).min(1) }),
+    describer: z.strictObject({
+      run: z.strictObject({ model: z.string().min(1), session: z.string().min(1), packetDigest: z.string().regex(HASH), reviewedAt: z.string().min(1) }),
+      costUsd: z.number().min(0),
+    }),
+    lessons: z.array(z.unknown()).min(1),
+  }),
 };
 
 /** The stored-packet boundary: every field, so a hand-edited or truncated packet fails before review or recording. */
