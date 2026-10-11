@@ -42,6 +42,24 @@ describe("validateTheme", () => {
     expect(result.problems.join("\n")).toMatch(/Selected control \(selected\)/);
   });
 
+  it("decides on the unrounded ratio: 4.4997:1 is a fail, never rounded up to 4.5 (TH-01)", () => {
+    expect(contrast("#84B7A0", "#7A1F2B")).toBeLessThan(4.5);
+    expect(contrast("#84B7A0", "#7A1F2B")).toBeGreaterThan(4.499);
+    const result = validateTheme({ ...OXBLOOD, onAccent: "#84B7A0" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      const selected = result.checks.find((c) => c.role === "Selected control" && c.state === "selected")!;
+      expect(selected.pass).toBe(false);
+      // Shown values round down, so a failing ratio never reads as the minimum.
+      expect(result.problems.join("\n")).toMatch(/Selected control \(selected\): 4\.49:1, needs 4\.5:1/);
+    }
+  });
+
+  it("checks error text on the panel it is rendered on (TH-02)", () => {
+    const error = contrastChecks(OXBLOOD).find((c) => c.state === "error" && c.foreground === FIXED.danger)!;
+    expect(error.background).toBe(FIXED.dangerSoft);
+  });
+
   it("refuses on-accent text that is unreadable on the accent", () => {
     const result = validateTheme({ ...OXBLOOD, onAccent: "#5A1A20" });
     expect(result.ok).toBe(false);
@@ -106,5 +124,13 @@ describe("themeStyle", () => {
     expect(FIXED.science).toBe("#0B6B50");
     expect(FIXED.practice).toBe("#8A4B10");
     expect(BASE_ATTRIBUTION).toBe("Base curriculum by Spindle, cited");
+  });
+});
+
+describe("brand preview rendering", () => {
+  it("draws no themed text through opacity, so the colour checked is the colour shown (TH-02)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync(new URL("../../app/design/brand-preview.tsx", import.meta.url), "utf8");
+    expect(source).not.toMatch(/\bopacity-\d+/);
   });
 });
