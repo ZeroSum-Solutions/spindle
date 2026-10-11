@@ -26,6 +26,8 @@ describe("member reads fail closed", () => {
   ] as const)("%s: a malformed response is refused with a generic error and no tenant text", async (_, read, data) => {
     const err = await read(ctx({ data, error: null })).catch((e: Error) => e);
     expect(err).toBeInstanceOf(Error);
+    // A fixed message, never the parser's diagnostics (Sol R2 on #45).
+    expect((err as Error).message).toMatch(/^Could not load this (gym's brand|course's texts)\.$/);
     expect(String(err)).not.toContain("Example Pilates Studio");
   });
 });

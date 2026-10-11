@@ -58,7 +58,7 @@ export interface CatalogAssignment {
 export function catalogCards(
   courses: readonly { latest: CatalogAssignment; earlier: readonly CatalogAssignment[] }[],
   base: string,
-): { card: CourseCardView; earlier: { href: string; label: string }[] }[] {
+): { card: CourseCardView | null; unavailable?: { versionNumber: number }; earlier: { href: string; label: string }[] }[] {
   return courses.flatMap(({ latest, earlier }) => {
     if (!latest.available || !latest.view || !latest.card) return [];
     const facts = latest.card;
@@ -84,4 +84,9 @@ export function catalogAction(courses: readonly { latest: CatalogAssignment }[],
   if (!open) return undefined;
   const started = courses.some((c) => (c.latest.view?.done ?? 0) > 0);
   return { label: started ? "Continue where you left off" : "Start your first course", href: `${base}/${open.id}/${open.view!.next!.slug}` };
+}
+
+/** A card's summary: the published subtitle for Spindle's courses; only an admitted blurb for gym courses. */
+export function cardSummary(_layer: CourseCardView["layer"], _subtitle: string, _blurb: string | null): string | null {
+  return null;
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { brandTokens } from "@spindle/engine";
 import type { MemberBrandDto } from "@spindle/schema";
-import { brandFromDto, catalogAction, catalogCards, shownCourseTitle, versionTexts, type CatalogAssignment } from "./adapt";
+import { brandFromDto, cardSummary, catalogAction, catalogCards, shownCourseTitle, versionTexts, type CatalogAssignment } from "./adapt";
 import { TENANT_TEXT_FALLBACKS } from "./view";
 
 const ORG = "00000000-0000-4000-8000-0000000000a1";
@@ -83,8 +83,17 @@ describe("catalogCards (Sol R1 on #45)", () => {
     expect(entry!.earlier).toEqual([{ href: "/gyms/x/learn/a1", label: "Version 1" }]);
   });
 
-  it("leaves out a course whose newest assigned version cannot be displayed", () => {
-    expect(catalogCards([{ latest: { id: "a9", versionNumber: 1, available: false }, earlier: [] }], "/b")).toEqual([]);
+  it("keeps a course whose newest assigned version cannot be displayed, as unavailable, with its earlier versions (Sol R2 on #45)", () => {
+    const [entry] = catalogCards([{ latest: { id: "a9", versionNumber: 2, available: false }, earlier: [assignment("a1", 1, "Squat v1")] }], "/b");
+    expect(entry!.card).toBeNull();
+    expect(entry!.unavailable).toEqual({ versionNumber: 2 });
+    expect(entry!.earlier).toEqual([{ href: "/b/a1", label: "Version 1" }]);
+  });
+
+  it("continues the course the member actually started, even when a fresh course comes first (Sol R2 on #45)", () => {
+    const fresh = assignment("a1", 1, "Fresh");
+    const started = assignment("a2", 1, "Started", { view: { title: "Started", layer: "method", done: 1, next: { slug: "second" } } });
+    expect(catalogAction([{ latest: fresh }, { latest: started }], "/b")).toEqual({ label: "Continue where you left off", href: "/b/a2/second" });
   });
 
   it("acts on progress: start when nothing is started, continue when something is, nothing when all is done", () => {
@@ -94,5 +103,15 @@ describe("catalogCards (Sol R1 on #45)", () => {
     expect(catalogAction([{ latest: fresh }], "/b")).toEqual({ label: "Start your first course", href: "/b/a1/first" });
     expect(catalogAction([{ latest: started }], "/b")).toEqual({ label: "Continue where you left off", href: "/b/a1/second" });
     expect(catalogAction([{ latest: done }, { latest: { ...fresh, id: "a2", view: { ...fresh.view!, done: 1, next: null } } }], "/b")).toBeUndefined();
+  });
+});
+
+describe("cardSummary (Sol R2 on #45)", () => {
+  it("uses the published subtitle for Spindle's courses and only the admitted blurb for gym courses", () => {
+    expect(cardSummary("base", "How the shoulder works.", null)).toBe("How the shoulder works.");
+    expect(cardSummary("modality", "Range and control.", "ignored")).toBe("Range and control.");
+    expect(cardSummary("base", "", null)).toBeNull();
+    expect(cardSummary("method", "A draft subtitle", null)).toBeNull();
+    expect(cardSummary("method", "A draft subtitle", "Admitted blurb")).toBe("Admitted blurb");
   });
 });

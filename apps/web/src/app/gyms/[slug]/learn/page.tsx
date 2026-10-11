@@ -105,8 +105,8 @@ function BrandedCatalog({
 }) {
   const { brand, hero } = branded;
   const font = tenantFontClass(brand.font);
-  const of = (layer: CourseCardView["layer"]) => entries.filter((e) => e.card.layer === layer).map((e) => e.card);
-  const earlier = new Map(entries.map((e) => [e.card.id, e.earlier]));
+  const of = (layer: CourseCardView["layer"]) => entries.flatMap((e) => (e.card && e.card.layer === layer ? [e.card] : []));
+  const earlier = new Map(entries.flatMap((e) => (e.card ? [[e.card.id, e.earlier] as const] : [])));
   return (
     <div className={`${font.className} flex flex-1 flex-col bg-canvas`} style={brandScopeVars(brand.colors) as CSSProperties}>
       <BrandHeader
