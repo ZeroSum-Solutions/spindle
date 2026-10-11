@@ -33,7 +33,7 @@ function lessonOne(w: PlayerWorld = world, set: CourseIds = ids, claim: string =
       { kind: "callout", content: { label: "Synthetic note", text: "Synthetic callout." }, support: "practice-based", claimIds: [] },
       { kind: "checklist", content: ["Synthetic step one", "Synthetic step two"], support: "practice-based", claimIds: [] },
       { kind: "image", content: { kind: "image", src: `/media/content/${w.run}/absent.png`, alt: "Synthetic absent figure", caption: "Synthetic caption", provenanceId: "synthetic" } },
-      { kind: "diagram", content: { diagramId: "synthetic-diagram", caption: "Synthetic diagram caption" } },
+      { kind: "diagram", content: { diagramId: "synthetic-diagram", alt: "Synthetic diagram", caption: "Synthetic diagram caption", legend: [] }, support: "practice-based", claimIds: [] },
       {
         kind: "quiz",
         content: { prompt: "Synthetic question?", options: ["Synthetic A", "Synthetic B"], answerIndex: 1, explanation: "Synthetic explanation." },
@@ -141,7 +141,6 @@ test.describe.serial("learner flow", () => {
         blocks: [practice("Synthetic house cue.")],
         media: [
           { kind: "image", src: `/media/org/${gymA.id}/${world.run}/figure.png`, alt: "Synthetic gym figure", caption: "", provenanceId: "synthetic" },
-          { kind: "video", src: `/media/org/${gymA.id}/${world.run}/clip-mp4`, alt: "Synthetic gym clip", caption: "", provenanceId: "synthetic" },
         ],
       },
     ]));
@@ -329,9 +328,9 @@ test.describe.serial("learner flow", () => {
     expect((await b.request.get(`/media/org/${gymA.id}/${world.run}/missing.png`)).status()).toBe(404);
     expect((await b.request.get(`/media/content/..%2F${world.run}/figure.png`)).status()).toBe(404);
 
-    // Stored video: the member gets a redirect to a signed Storage URL that lives at most
-    // 60 s and serves byte ranges; another gym's member gets the same 404 as anything else.
-    await expect(p.locator('video[aria-label="Synthetic gym clip"] source')).toHaveAttribute("src", `/media/org/${gymA.id}/${world.run}/clip-mp4`);
+    // Stored video bytes: lessons cannot embed a plain video (registry-only, Sol R1 PR23-01), but the
+    // media route still serves a gym's stored file: the member gets a redirect to a signed Storage URL
+    // that lives at most 60 s and serves byte ranges; another gym's member gets the same 404.
     const clip = `/media/org/${gymA.id}/${world.run}/clip-mp4`;
     const redirect = await p.request.get(clip, { maxRedirects: 0 });
     expect(redirect.status()).toBe(302);

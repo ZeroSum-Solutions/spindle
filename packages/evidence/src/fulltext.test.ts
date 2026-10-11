@@ -172,4 +172,12 @@ describe("Sol R1 on #31", () => {
     const t = jatsSections(table('<tr><td rowspan="1" colspan="&#49;">A</td><td>x</td><td>10</td></tr>')).find((x) => x.locator === "Table: Table 9")!;
     expect(t.unsupported).toBeUndefined();
   });
+
+  it("PR31-R3-01: refuses a table with more than one header row", () => {
+    const xml = `<article><body><sec><title>S</title><p>x</p></sec></body><floats-group><table-wrap><label>Table 7</label><table>
+      <thead><tr><th>Placebo</th><th>Treatment</th></tr><tr><th>Events</th><th>Events</th></tr></thead>
+      <tbody><tr><td>10</td><td>20</td></tr></tbody></table></table-wrap></floats-group></article>`;
+    expect(() => selectSections(jatsSections(xml), ["Table 7"], "cc-by")).toThrow(/plain grid/);
+  });
 });
+

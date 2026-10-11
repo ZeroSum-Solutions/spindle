@@ -42,13 +42,33 @@ export interface VideoSegment {
   caption: string;
 }
 
+/** One labelled part of a diagram. `key` names the drawing's anchor; the text is reviewed teaching text. */
+export interface DiagramLegendItem {
+  key: string;
+  label: string;
+  text: string;
+}
+
+/**
+ * A diagram's reviewable content (Sol R16): everything a learner reads lives here and is hashed with the
+ * lesson. Code supplies only the drawing geometry, keyed by diagramId, with no explanatory text.
+ */
+export interface DiagramContent {
+  diagramId: string;
+  alt: string;
+  caption: string;
+  legend: DiagramLegendItem[];
+}
+
 export type LessonBlock =
   | { kind: "heading"; content: string }
   | ({ kind: "paragraph"; content: string } & Supported)
   | ({ kind: "callout"; content: { label: string; text: string } } & Supported)
   | { kind: "image"; content: MediaAsset }
   | ({ kind: "checklist"; content: string[] } & Supported)
+  /** Legacy diagram (before R16): readable in old snapshots, refused in new authoring and at publish. */
   | { kind: "diagram"; content: { diagramId: string; caption: string } }
+  | ({ kind: "diagram"; content: DiagramContent } & Supported)
   | ({
       kind: "quiz";
       content: { prompt: string; options: string[]; answerIndex: number; explanation: string };
@@ -61,7 +81,7 @@ export interface LessonResource {
   type: "worksheet" | "reference" | "transcript";
 }
 
-export interface Lesson {
+export interface Lesson<B = LessonBlock> {
   id: string;
   slug: string;
   title: string;
@@ -71,20 +91,20 @@ export interface Lesson {
   objectives: string[];
   /** Uberon anatomy ids, e.g. "UBERON:0001467" (shoulder). */
   anatomyIds: string[];
-  blocks: LessonBlock[];
+  blocks: B[];
   media: MediaAsset[];
   resources: LessonResource[];
 }
 
-export interface CoursePart {
+export interface CoursePart<B = LessonBlock> {
   id: string;
   ordinal: number;
   title: string;
   summary: string;
-  lessons: Lesson[];
+  lessons: Lesson<B>[];
 }
 
-export interface Course {
+export interface Course<B = LessonBlock> {
   id: string;
   slug: string;
   layer: CurriculumLayer;
@@ -93,7 +113,7 @@ export interface Course {
   description: string;
   level: CourseLevel;
   outcomes: string[];
-  parts: CoursePart[];
+  parts: CoursePart<B>[];
 }
 
 export interface Catalog {
@@ -108,3 +128,27 @@ export interface AssetProvenance {
   creator: string;
   rights: string;
 }
+
+/** A graded (science) quiz as learners receive it: no answer key or explanation (ADR 0007, learner_snapshot). */
+export interface RedactedGradedQuiz {
+  kind: "quiz";
+  content: { prompt: string; options: string[] };
+  support: "science";
+  claimIds: string[];
+}
+
+/** Blocks a learner sees: every block kind, with graded quizzes redacted. Practice self-checks keep their answers. */
+export type LearnerLessonBlock = LessonBlock | RedactedGradedQuiz;
+export type LearnerCourse = Course<LearnerLessonBlock>;
+
+/** A graded question as a lesson page shows it: the prompt only; it is answered in the module quiz. */
+export interface GradedPromptBlock {
+  kind: "quiz";
+  content: { prompt: string };
+  support: "science";
+  claimIds: string[];
+}
+
+/** Blocks the lesson pages render: every authored block except that graded quizzes are prompt-only. */
+export type LessonViewBlock = LessonBlock | GradedPromptBlock;
+export type LessonViewCourse = Course<LessonViewBlock>;

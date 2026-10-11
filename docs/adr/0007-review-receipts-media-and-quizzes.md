@@ -39,6 +39,17 @@
   - The cost comes from the response's `totalTokenCount`: the prompt at the input price, and the rest at the output price, rounded up. Without a total, the cost is unknown. A call is settled once; an identical retry is accepted, while a conflicting or orphan settlement is refused (R2 PR20-02, PR20-12).
   - `version_media` reports a playable clip as `review: 'model-described'`. No human has checked it until the D-08 launch review, and the player must not claim otherwise.
 
+- **Storage-only lesson media (P18-06).** An image block's `src`, and every lesson media `src`, must be a stored file: `/media/content/...` for any course, or `/media/org/<the course's own gym id>/...` for gym content. Video comes only from registry video blocks: a plain video asset (in lesson media or an image block) is refused at authoring, on every database write (moving a row to another gym included) and at publish; resource links are unaffected.
+  - Triggers on `lesson_blocks` and `lessons` refuse anything else for every writer (`private.media_src_ok`).
+  - The publish gate refuses rows saved before the rule.
+  - `validateCatalog` applies the same rule to authored content (`storedMediaOwner`).
+  - Snapshot parsing stays lenient, and the player shows non-storage media as unavailable.
+
+- **Diagram text is reviewed content (Sol R16).** A diagram block is `{kind: "diagram", content: {diagramId, alt, caption, legend: [{key, label, text}]}, support, claimIds}`.
+  - All text a learner reads lives in the lesson data and is hashed and reviewed. A science diagram binds claims and needs a binding review, like a paragraph.
+  - Code supplies only the drawing geometry keyed by `diagramId` (legend `key`s name its anchors), with no explanatory text.
+  - The legacy `{diagramId, caption}` form still parses for old snapshots, but new authoring (`validate_block`, `validateCatalog`) and the publish gate refuse it.
+
 ## Why
 - Sol's plan review found that a recorder could stamp a verdict onto newer content, and that changed practice guidance could publish with no review (P3-04, P3-05). Both were reproduced on the phase-2 schema before this change. Content-addressed receipts with an atomic compare close both.
 - D-08 makes model review the build-time gate for base content. Gyms author their own method content, so the tenant path stays as it was.
@@ -51,5 +62,10 @@
 - Every phase-2 fixture now records synthetic receipts through the same RPCs (`model: "synthetic-fixture"`). CI never calls a model and has no approval shortcut.
 - Editing a lesson, including only its practice text or its clip, needs a fresh lesson review before the next publish.
 - Phase-2 approvals and binding reviews without a run no longer satisfy the gate. They need a receipted review before the content republishes.
-- **Accepted phase-3 risk (LEAD ruling on Sol S04):** the published snapshot contains each quiz's `answerIndex`, and signed-in readers of the version can see it. Server scoring stops forged scores, not a learner who reads the answer key. The phase-3 pilot is synthetic with no stakes. Follow-up before launch: a learner-redacted quiz projection, with answer keys kept in server-only storage.
+- **Answer keys stay server-side (T21; closes the phase-3 risk accepted on Sol S04).**
+  - Learners read published versions through `curriculum_versions.learner_snapshot`, a stored generated projection of `snapshot` (`private.redact_snapshot`) in which every graded (science) quiz keeps only its prompt and options. Practice self-checks keep their answers.
+  - The `authenticated` role has column-level SELECT on everything except `snapshot`. The raw snapshot stays readable by the service role (publisher tooling) and by SECURITY DEFINER functions, so `submit_quiz_attempt` still scores against the full stored version.
+  - Explanations and answers come back through `quiz_attempt_review(attempt)`, which opens only for a passing attempt. With unlimited retries, per-question feedback after a failed attempt would leak the key; before a pass, learners see their score only.
+  - `parseLearnerCourse` parses the projection and refuses a graded quiz that still carries its key.
+  - Remaining, accepted: the score of each attempt can still be used to infer answers by changing one answer at a time.
 - Retraction rechecks before every publish, and the monthly recheck, run in the review harness (phase 3, milestone 2). The database records their results through the existing retraction RPC and claim reviews.

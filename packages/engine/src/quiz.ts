@@ -2,7 +2,7 @@
 // authority: it scores attempts from the assigned immutable version and works
 // out module completion. The app uses these to explain results, never to
 // decide them.
-import { PASS_PERCENT, type ClaimIntegrityState, type Course, type QuizAnswer } from "@spindle/schema";
+import { PASS_PERCENT, type ClaimIntegrityState, type Course, type LearnerCourse, type QuizAnswer } from "@spindle/schema";
 import { instantMicros } from "./version";
 
 export interface GradedQuestion {
@@ -24,6 +24,32 @@ export function gradedQuestions(course: Course): GradedQuestion[] {
         if (block.kind !== "quiz" || block.support !== "science") return [];
         n += 1;
         return [{ questionId: `${lesson.id}:q${n}`, lessonId: lesson.id, ...block.content }];
+      });
+    }),
+  );
+}
+
+/** A graded question as a learner may see it before passing: prompt and options, no answer key. */
+export interface LearnerQuestion {
+  questionId: string;
+  lessonId: string;
+  prompt: string;
+  options: string[];
+}
+
+/**
+ * The graded questions of a learner projection (learner_snapshot), numbered exactly as the
+ * database numbers them: the n-th science quiz block in a lesson is '<lesson id>:q<n>'.
+ * Works on redacted quizzes, so the quiz page needs no answer key (Sol R1 PR22-01).
+ */
+export function learnerQuestions(course: LearnerCourse | Course): LearnerQuestion[] {
+  return course.parts.flatMap((part) =>
+    part.lessons.flatMap((lesson) => {
+      let n = 0;
+      return lesson.blocks.flatMap((block) => {
+        if (block.kind !== "quiz" || block.support !== "science") return [];
+        n += 1;
+        return [{ questionId: `${lesson.id}:q${n}`, lessonId: lesson.id, prompt: block.content.prompt, options: [...block.content.options] }];
       });
     }),
   );

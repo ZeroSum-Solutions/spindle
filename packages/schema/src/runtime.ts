@@ -2,7 +2,7 @@
 // API bodies). They check shape only: whether a cited claim is approved and
 // relevant is the publish gate's job (validateCatalog and the database receipt).
 import { z } from "zod";
-import type { Catalog, Course, Lesson, LessonBlock, MediaAsset, VideoSegment } from "./types";
+import type { Catalog, Course, LearnerCourse, LearnerLessonBlock, Lesson, LessonBlock, LessonViewBlock, LessonViewCourse, MediaAsset, RedactedGradedQuiz, VideoSegment } from "./types";
 
 export class ContentParseError extends Error {
   constructor(
@@ -98,7 +98,6 @@ const blockVariants = z.discriminatedUnion("kind", [
   }),
   z.strictObject({ kind: z.literal("image"), content: mediaAssetSchema }),
   z.strictObject({ kind: z.literal("checklist"), content: z.array(requiredText).min(1).max(100), ...supported }),
-  z.strictObject({ kind: z.literal("diagram"), content: z.strictObject({ diagramId: idSchema, caption: text }) }),
   z.strictObject({
     kind: z.literal("quiz"),
     content: z
@@ -114,7 +113,22 @@ const blockVariants = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("video"), content: videoSegmentSchema }),
 ]);
 
-export const lessonBlockSchema = blockVariants.superRefine((block, ctx) => {
+/** Legacy diagram block (before R16): parses so historical snapshots stay readable; validateCatalog refuses it. */
+const legacyDiagramSchema = z.strictObject({ kind: z.literal("diagram"), content: z.strictObject({ diagramId: idSchema, caption: text }) });
+
+/** The reviewable diagram block (R16): alt, caption and legend text live in the lesson and are hashed and reviewed. */
+const diagramSchema = z.strictObject({
+  kind: z.literal("diagram"),
+  content: z.strictObject({
+    diagramId: idSchema,
+    alt: requiredText.max(500),
+    caption: text.max(1000),
+    legend: z.array(z.strictObject({ key: idSchema, label: requiredText.max(100), text: text.max(1000) })).max(20),
+  }),
+  ...supported,
+});
+
+export const lessonBlockSchema = z.union([blockVariants, diagramSchema, legacyDiagramSchema]).superRefine((block, ctx) => {
   if (!("support" in block)) return;
   const { support, claimIds } = block;
   if (new Set(claimIds).size !== claimIds.length) {
@@ -134,49 +148,75 @@ export const lessonBlockSchema = blockVariants.superRefine((block, ctx) => {
  */
 export const RESERVED_LESSON_SLUGS: readonly string[] = ["quiz"];
 
-export const lessonSchema = z.strictObject({
-  id: idSchema,
-  slug: slugSchema,
-  title: requiredText,
-  summary: text,
-  durationMinutes: z.number().int().min(0).max(600),
-  format: z.enum(["article", "video", "diagram", "practice", "quiz"]),
-  objectives: z.array(requiredText).max(50),
-  anatomyIds: z.array(z.string().regex(/^UBERON:\d{7}$/, "must be an Uberon id")).max(50),
-  blocks: z.array(lessonBlockSchema).max(500),
-  media: z.array(mediaAssetSchema).max(100),
-  resources: z
-    .array(
-      z.strictObject({
-        label: requiredText,
-        href: safeUrl,
-        type: z.enum(["worksheet", "reference", "transcript"]),
-      }),
-    )
-    .max(50),
-}) satisfies z.ZodType<Lesson>;
+function lessonSchemaFor<B extends z.ZodType>(block: B) {
+  return z.strictObject({
+    id: idSchema,
+    slug: slugSchema,
+    title: requiredText,
+    summary: text,
+    durationMinutes: z.number().int().min(0).max(600),
+    format: z.enum(["article", "video", "diagram", "practice", "quiz"]),
+    objectives: z.array(requiredText).max(50),
+    anatomyIds: z.array(z.string().regex(/^UBERON:\d{7}$/, "must be an Uberon id")).max(50),
+    blocks: z.array(block).max(500),
+    media: z.array(mediaAssetSchema).max(100),
+    resources: z
+      .array(
+        z.strictObject({
+          label: requiredText,
+          href: safeUrl,
+          type: z.enum(["worksheet", "reference", "transcript"]),
+        }),
+      )
+      .max(50),
+  });
+}
 
-export const courseSchema = z.strictObject({
-  id: idSchema,
-  slug: slugSchema,
-  layer: z.enum(["base", "modality", "method"]),
-  title: requiredText,
-  subtitle: text,
-  description: text,
-  level: z.enum(["foundation", "intermediate", "advanced"]),
-  outcomes: z.array(requiredText).max(50),
-  parts: z
-    .array(
-      z.strictObject({
-        id: idSchema,
-        ordinal: z.number().int().min(1),
-        title: requiredText,
-        summary: text,
-        lessons: z.array(lessonSchema).max(200),
-      }),
-    )
-    .max(100),
-}) satisfies z.ZodType<Course>;
+function courseSchemaFor<L extends z.ZodType>(lesson: L) {
+  return z.strictObject({
+    id: idSchema,
+    slug: slugSchema,
+    layer: z.enum(["base", "modality", "method"]),
+    title: requiredText,
+    subtitle: text,
+    description: text,
+    level: z.enum(["foundation", "intermediate", "advanced"]),
+    outcomes: z.array(requiredText).max(50),
+    parts: z
+      .array(
+        z.strictObject({
+          id: idSchema,
+          ordinal: z.number().int().min(1),
+          title: requiredText,
+          summary: text,
+          lessons: z.array(lesson).max(200),
+        }),
+      )
+      .max(100),
+  });
+}
+
+export const lessonSchema = lessonSchemaFor(lessonBlockSchema) satisfies z.ZodType<Lesson>;
+export const courseSchema = courseSchemaFor(lessonSchema) satisfies z.ZodType<Course>;
+
+/** A graded quiz as learners receive it (learner_snapshot): prompt and options, no answer key or explanation. */
+const redactedQuizSchema = z.strictObject({
+  kind: z.literal("quiz"),
+  content: z.strictObject({ prompt: requiredText, options: z.array(requiredText).min(2).max(10) }),
+  support: z.literal("science"),
+  claimIds: z.array(idSchema).min(1).max(50),
+}) satisfies z.ZodType<RedactedGradedQuiz>;
+
+/**
+ * Blocks in a learner projection. A graded quiz must arrive redacted: one that still carries its answer
+ * key is refused, so a leak through a wrong read path fails loudly instead of rendering the key.
+ */
+export const learnerBlockSchema = z.union([
+  lessonBlockSchema.refine((b) => !(b.kind === "quiz" && b.support === "science"), "a graded quiz must arrive without its answer key"),
+  redactedQuizSchema,
+]) satisfies z.ZodType<LearnerLessonBlock>;
+
+export const learnerCourseSchema = courseSchemaFor(lessonSchemaFor(learnerBlockSchema)) satisfies z.ZodType<LearnerCourse>;
 
 export const catalogSchema = z.strictObject({
   version: requiredText,
@@ -186,3 +226,40 @@ export const catalogSchema = z.strictObject({
 /** Shape-checks a catalog. Run validateCatalog afterwards for ids, provenance and claim approval. */
 export const parseCatalog = (value: unknown): Catalog => parseWith(catalogSchema, "catalog", value);
 export const parseCourse = (value: unknown): Course => parseWith(courseSchema, "course", value);
+/** Parses curriculum_versions.learner_snapshot, the only snapshot learners can read (ADR 0007). */
+export const parseLearnerCourse = (value: unknown): LearnerCourse => parseWith(learnerCourseSchema, "learner course", value);
+
+/**
+ * The course as the lesson pages render it. A graded (science) quiz becomes a prompt-only block: no
+ * options, answer key or explanation; it is answered on the module quiz page. Practice self-checks
+ * stay whole.
+ */
+export function lessonViewCourse(course: LearnerCourse): LessonViewCourse {
+  return {
+    ...course,
+    parts: course.parts.map((part) => ({
+      ...part,
+      lessons: part.lessons.map((lesson) => ({
+        ...lesson,
+        blocks: lesson.blocks.map((b): LessonViewBlock =>
+          b.kind === "quiz" && b.support === "science" ? { kind: "quiz", support: "science", claimIds: [...b.claimIds], content: { prompt: b.content.prompt } } : (b as LessonBlock),
+        ),
+      })),
+    })),
+  };
+}
+
+const STORED_CONTENT = /^\/media\/content\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/;
+const STORED_ORG = /^\/media\/org\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/;
+
+/**
+ * Whose stored file a media src is (P18-06): global media under /media/content/, or one gym's under
+ * /media/org/<gym id>/. Null for anything else (external URLs, other site paths, dot segments).
+ * The database applies the same rule to new authoring and at publish.
+ */
+export function storedMediaOwner(src: string): { area: "content" } | { area: "org"; orgId: string } | null {
+  if (src.split("/").some((seg) => seg === "." || seg === "..")) return null;
+  if (STORED_CONTENT.test(src)) return { area: "content" };
+  const m = STORED_ORG.exec(src);
+  return m ? { area: "org", orgId: m[1]! } : null;
+}

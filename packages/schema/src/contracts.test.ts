@@ -12,6 +12,9 @@ import {
   lessonSchema,
   RESERVED_LESSON_SLUGS,
   mediaAssetSchema,
+  parseCourse,
+  lessonViewCourse,
+  parseLearnerCourse,
   parseModuleStatus,
   parseQuizAttemptResult,
   parseVersionIntegrity,
@@ -107,5 +110,59 @@ describe("review receipt bodies", () => {
     expect(blockReviewInputSchema.safeParse({ verdict: "supported", expectedHash: HASH, claimIds: [UUID], run }).success).toBe(true);
     expect(blockReviewInputSchema.safeParse({ verdict: "supported", expectedHash: HASH, claimIds: [UUID] }).success).toBe(false);
     expect(blockReviewInputSchema.safeParse({ verdict: "supported", expectedHash: HASH, claimIds: [UUID], run: { ...run, model: "GPT 6" } }).success).toBe(false);
+  });
+});
+
+describe("learner projection (ADR 0007, T21)", () => {
+  const quiz = (support: "science" | "practice-based", redacted: boolean) => ({
+    kind: "quiz",
+    support,
+    claimIds: support === "science" ? [UUID] : [],
+    content: redacted ? { prompt: "Q?", options: ["A", "B"] } : { prompt: "Q?", options: ["A", "B"], answerIndex: 1, explanation: "B." },
+  });
+  const course = (blocks: unknown[]) => ({
+    id: "c", slug: "c", layer: "base", title: "C", subtitle: "", description: "", level: "foundation", outcomes: [],
+    parts: [{ id: "p", ordinal: 1, title: "P", summary: "", lessons: [{ id: "l", slug: "l", title: "L", summary: "", durationMinutes: 5, format: "article", objectives: [], anatomyIds: [], blocks, media: [], resources: [] }] }],
+  });
+
+  it("parses a redacted graded quiz and a full practice self-check", () => {
+    const parsed = parseLearnerCourse(course([quiz("science", true), quiz("practice-based", false)]));
+    expect(parsed.parts[0]!.lessons[0]!.blocks).toHaveLength(2);
+  });
+
+  it("keeps practice self-checks and turns graded quizzes into prompt-only blocks for the lesson view (no options, key or explanation)", () => {
+    const view = lessonViewCourse(parseLearnerCourse(course([quiz("science", true), quiz("practice-based", false), { kind: "heading", content: "H" }])));
+    const blocks = view.parts[0]!.lessons[0]!.blocks;
+    expect(blocks.map((b) => [b.kind, "support" in b ? b.support : null])).toEqual([["quiz", "science"], ["quiz", "practice-based"], ["heading", null]]);
+    expect(blocks[0]!.content).toEqual({ prompt: expect.any(String) });
+    expect(JSON.stringify(blocks[0])).not.toMatch(/answerIndex|explanation|options/);
+  });
+
+  it("refuses a graded quiz that still carries its answer key, and the authoring parser refuses a redacted one", () => {
+    expect(() => parseLearnerCourse(course([quiz("science", false)]))).toThrow(ContentParseError);
+    expect(() => parseCourse(course([quiz("science", true)]))).toThrow(ContentParseError);
+  });
+});
+
+describe("diagram blocks carry reviewable text (Sol R16)", () => {
+  const diagram = {
+    kind: "diagram",
+    support: "science",
+    claimIds: [UUID],
+    content: { diagramId: "shoulder.rhythm", alt: "The shoulder blade rotating upward.", caption: "Scapular upward rotation",
+      legend: [{ key: "scapula", label: "Shoulder blade", text: "Rotates upward as the arm rises." }] },
+  };
+
+  it("parses the reviewable diagram block and still reads a legacy one", () => {
+    expect(lessonBlockSchema.parse(diagram)).toEqual(diagram);
+    expect(lessonBlockSchema.safeParse({ kind: "diagram", content: { diagramId: "d1", caption: "" } }).success).toBe(true);
+  });
+
+  it("refuses a diagram with missing text, loose legend items or no claims for science", () => {
+    expect(lessonBlockSchema.safeParse({ ...diagram, content: { ...diagram.content, alt: "" } }).success).toBe(false);
+    expect(lessonBlockSchema.safeParse({ ...diagram, content: { ...diagram.content, legend: [{ key: "a b", label: "x", text: "y" }] } }).success).toBe(false);
+    expect(lessonBlockSchema.safeParse({ ...diagram, content: { ...diagram.content, legend: [{ key: "a", label: "x", text: "y", colour: "red" }] } }).success).toBe(false);
+    expect(lessonBlockSchema.safeParse({ ...diagram, claimIds: [] }).success).toBe(false);
+    expect(lessonBlockSchema.safeParse({ ...diagram, support: "practice-based" }).success).toBe(false);
   });
 });

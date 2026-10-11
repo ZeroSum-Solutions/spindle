@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(230);
+select plan(276);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -296,18 +296,23 @@ select pg_temp.keep('s_v5', pg_temp.publish('71000000-0000-4000-8000-00000000000
 select ok((select rules = 'phase3' and version_number = 5 from public.curriculum_versions where id = pg_temp.id('s_v5')),
   'republishing a tree whose latest version is phase-2 makes a new phase-3 version');
 select pg_temp.reset_role();
+-- A row saved before the storage-only rule (P18-06): written around its trigger.
+alter table public.lesson_blocks disable trigger lesson_blocks_media_storage;
 insert into public.lesson_blocks (lesson_id, org_id, ordinal, kind, support, content, content_hash)
 select '71000000-0000-4000-8000-000000000011', null, 9, 'image', null, c, private.block_hash('image', c)
 from (select jsonb_build_object('kind', 'image', 'src', 'https://www.youtube.com/watch?v=AbCdEfGhIj0', 'alt', 'x', 'caption', '',
   'provenanceId', 'p1') as c) t;
+alter table public.lesson_blocks enable trigger lesson_blocks_media_storage;
 select pg_temp.as_service();
 select throws_ok($$select pg_temp.publish('71000000-0000-4000-8000-000000000000')$$, 'P0001',
   'publish gate: lesson 71000000-0000-4000-8000-000000000011 has media on a video host; use a registry video block',
   'media saved around the validator cannot smuggle YouTube in');
 select pg_temp.reset_role();
 delete from public.lesson_blocks where lesson_id = '71000000-0000-4000-8000-000000000011' and ordinal = 9;
+alter table public.lessons disable trigger lessons_media_storage;
 update public.lessons set media = jsonb_build_array(jsonb_build_object('kind', 'video', 'src', 'https://youtu.be/AbCdEfGhIj0',
   'alt', 'x', 'caption', '', 'provenanceId', 'p1')) where id = '71000000-0000-4000-8000-000000000011';
+alter table public.lessons enable trigger lessons_media_storage;
 select pg_temp.as_service();
 select throws_ok($$select pg_temp.publish('71000000-0000-4000-8000-000000000000')$$, 'P0001',
   'publish gate: course 71000000-0000-4000-8000-000000000000 has lesson media on a video host; use a registry video block',
@@ -1070,6 +1075,63 @@ select pg_temp.reset_role();
 select throws_ok($$update public.lessons set slug = 'quiz' where id = '7c000000-0000-4000-8000-000000000011'$$,
   '22023', 'invalid course: the lesson slug "quiz" is reserved', 'not even the table owner can write the reserved slug');
 
+-- 9d. Answer keys never reach learners (ADR 0007, closes the accepted S04 risk) ---------------------
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
+select throws_ok(format($$select snapshot from public.curriculum_versions where id = %L$$, pg_temp.id('q_v1')), '42501', null,
+  'a learner cannot select the raw snapshot column');
+select throws_ok($$select * from public.curriculum_versions$$, '42501', null, 'a learner cannot select * (it includes the raw snapshot)');
+select is((select count(*) from jsonb_path_query((select learner_snapshot from public.curriculum_versions where id = pg_temp.id('q_v1')),
+  '$.parts[*].lessons[*].blocks[*] ? (@.kind == "quiz" && @.support == "science").content.answerIndex')), 0::bigint,
+  'the learner projection carries no answer index for a graded quiz');
+select is((select count(*) from jsonb_path_query((select learner_snapshot from public.curriculum_versions where id = pg_temp.id('q_v1')),
+  '$.parts[*].lessons[*].blocks[*] ? (@.kind == "quiz" && @.support == "science").content.explanation')), 0::bigint,
+  'the learner projection carries no explanation for a graded quiz');
+select is((select count(*) from jsonb_path_query((select learner_snapshot from public.curriculum_versions where id = pg_temp.id('q_v1')),
+  '$.parts[*].lessons[*].blocks[*] ? (@.kind == "quiz").content.prompt')), 5::bigint, 'learners still get every question and its options');
+select pg_temp.reset_role();
+select is((select learner_snapshot #> '{parts,0,lessons,0,blocks,1,content}' from public.curriculum_versions where id = pg_temp.id('mixed_v1')),
+  (select snapshot #> '{parts,0,lessons,0,blocks,1,content}' from public.curriculum_versions where id = pg_temp.id('mixed_v1')),
+  'a practice self-check keeps its answer and explanation') ;
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, (select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f4')),
+  'P0001', 'the answer review opens after a passing attempt', 'a failed attempt reveals no answers');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format($$select question_id, chosen, answer_index, correct from public.quiz_attempt_review(%L) order by question_id$$,
+  (select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f2')),
+  $$values ('79000000-0000-4000-8000-000000000011:q1'::text, 1, 1, true), ('79000000-0000-4000-8000-000000000011:q2', 1, 1, true),
+    ('79000000-0000-4000-8000-000000000012:q1', 1, 1, true), ('79000000-0000-4000-8000-000000000012:q2', 1, 1, true),
+    ('79000000-0000-4000-8000-000000000012:q3', 0, 1, false)$$,
+  'after a pass the learner gets each answer and explanation back');
+select is((select count(*) from public.quiz_attempt_review((select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f2'))
+  where explanation = 'Synthetic explanation.'), 5::bigint, 'the post-pass review carries the explanations');
+-- Only the attempt's own learner may review it (Sol R1 PR22-02); the real attempt id is kept
+-- before switching users, because RLS hides it from them (PR22-04).
+select pg_temp.reset_role();
+select pg_temp.keep('f2_attempt', (select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f2'));
+select isnt(pg_temp.id('f2_attempt'), null, 'the passing attempt under test exists');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, pg_temp.id('f2_attempt')),
+  'P0002', 'no such attempt', 'another learner cannot review someone else''s attempt');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, pg_temp.id('f2_attempt')),
+  'P0002', 'no such attempt', 'the gym owner cannot read a learner''s answer review');
+select pg_temp.reset_role();
+update public.memberships set role = 'lead' where org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and user_id = '00000000-0000-0000-0000-0000000000a4';
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, pg_temp.id('f2_attempt')),
+  'P0002', 'no such attempt', 'a gym lead cannot read a learner''s answer review');
+select pg_temp.reset_role();
+update public.memberships set role = 'trainer' where org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and user_id = '00000000-0000-0000-0000-0000000000a4';
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000b1');
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, pg_temp.id('f2_attempt')),
+  'P0002', 'no such attempt', 'another gym''s owner cannot read it either');
+select throws_ok($$select private.graded_questions('{}')$$, '42501', null, 'learners cannot call the private grading helper');
+select pg_temp.as_service();
+select ok((select snapshot #>> '{parts,0,lessons,0,blocks,1,content,answerIndex}' = '1' from public.curriculum_versions where id = pg_temp.id('q_v1')),
+  'the publisher path still reads the full snapshot');
+select pg_temp.reset_role();
+select is((select learner_snapshot from public.curriculum_versions where id = pg_temp.id('m_v1')),
+  (select snapshot from public.curriculum_versions where id = pg_temp.id('m_v1')), 'a gym method projection equals its snapshot (practice only)');
 -- 9e. Publishing after a retraction recheck is bound to the sources that were rechecked (Sol N01) -----
 select pg_temp.as_service();
 create function pg_temp.cited(cid uuid) returns jsonb language sql as $$
@@ -1100,6 +1162,167 @@ select throws_ok($$select public.publisher_publish_course_checked(pg_temp.pat(),
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000c2');
 select throws_ok($$select public.publisher_publish_course_checked(pg_temp.pat(), '7f200000-0000-4000-8000-000000000000', '[]')$$, '42501', null,
   'a signed-in user cannot call the checked publish');
+select pg_temp.reset_role();
+
+-- 9f. Media must be a stored file of the content's owner (P18-06) -----------------------------------
+create function pg_temp.img(src text) returns jsonb language sql as $$
+  select jsonb_build_object('kind', 'image', 'content', jsonb_build_object('kind', 'image', 'src', src, 'alt', 'x', 'caption', '', 'provenanceId', 'p1'))
+$$;
+create function pg_temp.with_media(src text) returns jsonb language sql as $$
+  select jsonb_set(pg_temp.lesson('8a400000-0000-4000-8000-000000000011', 'stored', jsonb_build_array(pg_temp.prac('x'))),
+    '{media}', jsonb_build_array(jsonb_build_object('kind', 'video', 'src', src, 'alt', 'x', 'caption', '', 'provenanceId', 'p1')))
+$$;
+select pg_temp.as_service();
+select throws_ok($$select pg_temp.save(pg_temp.course('8a400000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8a400000-0000-4000-8000-000000000011', 'stored', jsonb_build_array(pg_temp.img('https://cdn.example.org/cuff.png'))))))$$,
+  '22023', 'invalid course: media must be a stored file under /media/content/ or the gym''s own /media/org/<gym id>/ (got https://cdn.example.org/cuff.png)',
+  'global content cannot use an external image');
+select throws_ok(format($$select pg_temp.save(pg_temp.course('8a400000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8a400000-0000-4000-8000-000000000011', 'stored', jsonb_build_array(pg_temp.img('/media/org/%s/cuff.png'))))))$$, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+  '22023', null, 'global content cannot use a gym''s media');
+select throws_ok($$select pg_temp.save(pg_temp.course('8a400000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.with_media('https://cdn.example.org/clip.mp4'))))$$, '22023', null, 'global lesson media cannot be an external video');
+-- Video is registry-only, even as a stored file (Sol R1 PR23-01).
+select throws_ok($$select pg_temp.save(pg_temp.course('8a400000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.with_media('/media/content/clip.mp4'))))$$, '22023',
+  'invalid course: a plain video asset is not allowed; use a registry video block (got /media/content/clip.mp4)',
+  'stored lesson media cannot be a plain video');
+select throws_ok($$select pg_temp.save(pg_temp.course('8a400000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8a400000-0000-4000-8000-000000000011', 'stored', jsonb_build_array(jsonb_build_object('kind', 'image', 'content',
+    jsonb_build_object('kind', 'video', 'src', '/media/content/clip.mp4', 'alt', 'x', 'caption', '', 'provenanceId', 'p1')))))))$$, '22023',
+  'invalid course: a plain video asset is not allowed; use a registry video block (got /media/content/clip.mp4)',
+  'an image block cannot carry a stored video');
+create function pg_temp.stored_lesson() returns jsonb language sql as $$
+  select jsonb_set(pg_temp.lesson('8a400000-0000-4000-8000-000000000011', 'stored', jsonb_build_array(pg_temp.img('/media/content/shoulder/cuff.png'))),
+    '{resources}', '[{"label": "Watch", "href": "https://www.youtube.com/watch?v=AbCdEfGhIj0", "type": "reference"}]')
+$$;
+select lives_ok($$select pg_temp.save(pg_temp.course('8a400000-0000-4000-8000-000000000000', 'base', jsonb_build_array(pg_temp.stored_lesson())))$$,
+  'global content uses stored global media, and resource links stay unrestricted');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+create function pg_temp.gym_course(src text) returns jsonb language sql as $$
+  select pg_temp.course('8b500000-0000-4000-8000-000000000000', 'method', jsonb_build_array(
+    pg_temp.lesson('8b500000-0000-4000-8000-000000000011', 'gym-stored', jsonb_build_array(pg_temp.img(src)))))
+$$;
+select throws_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.gym_course('https://cdn.example.org/house.png'))$$,
+  '22023', null, 'a gym cannot use an external image');
+select throws_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.gym_course('/media/org/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/x.png'))$$,
+  '22023', null, 'a gym cannot use another gym''s media');
+select lives_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.gym_course('/media/org/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/house.png'))$$,
+  'a gym uses its own stored media');
+-- Moving a row to another gym re-checks its media (Sol R1 PR23-02). The trigger fires before the
+-- foreign keys, so its own error shows the check ran on an org_id-only update.
+select pg_temp.reset_role();
+select throws_ok($$update public.lesson_blocks set org_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+  where lesson_id = '8b500000-0000-4000-8000-000000000011' and kind = 'image'$$, '22023',
+  'invalid course: media must be a stored file under /media/content/ or the gym''s own /media/org/<gym id>/ (got /media/org/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/house.png)',
+  'a block moved to another gym keeps no foreign gym media, even for the table owner');
+update public.lessons set media = jsonb_build_array(jsonb_build_object('kind', 'image', 'src', '/media/org/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/l.png', 'alt', 'x', 'caption', '', 'provenanceId', 'p1'))
+where id = '8b500000-0000-4000-8000-000000000011';
+select throws_ok($$update public.lessons set org_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' where id = '8b500000-0000-4000-8000-000000000011'$$, '22023',
+  'invalid course: media must be a stored file under /media/content/ or the gym''s own /media/org/<gym id>/ (got /media/org/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/l.png)',
+  'a lesson moved to another gym keeps no foreign gym media, even for the table owner');
+update public.lessons set media = '[]'::jsonb where id = '8b500000-0000-4000-8000-000000000011';
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select lives_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.gym_course('/media/content/shared.png'))$$,
+  'a gym may use stored global media');
+-- Rows written before this rule: the publish gate refuses them.
+select pg_temp.reset_role();
+alter table public.lesson_blocks disable trigger lesson_blocks_media_storage;
+update public.lesson_blocks set content = jsonb_set(content, '{src}', '"https://cdn.example.org/legacy.png"')
+where lesson_id = '8b500000-0000-4000-8000-000000000011' and kind = 'image';
+alter table public.lesson_blocks enable trigger lesson_blocks_media_storage;
+update public.lesson_blocks set content_hash = private.block_hash(kind, content) where lesson_id = '8b500000-0000-4000-8000-000000000011';
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select throws_ok($$select public.publish_course('8b500000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 8b500000-0000-4000-8000-000000000011 has media that is not a stored file of its owner',
+  'a legacy external image cannot publish in gym content');
+select pg_temp.reset_role();
+alter table public.lessons disable trigger lessons_media_storage;
+update public.lessons set media = jsonb_build_array(jsonb_build_object('kind', 'video', 'src', 'https://cdn.example.org/legacy.mp4', 'alt', 'x', 'caption', '', 'provenanceId', 'p1'))
+where id = '8a400000-0000-4000-8000-000000000011';
+alter table public.lessons enable trigger lessons_media_storage;
+select pg_temp.as_service();
+select pg_temp.review_all('8a400000-0000-4000-8000-000000000000', 'stored');
+select throws_ok($$select pg_temp.publish('8a400000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: course 8a400000-0000-4000-8000-000000000000 has lesson media that is not a stored file of its owner',
+  'legacy external lesson media cannot publish in global content');
+-- A stored plain video saved before the rule cannot publish either (Sol R1 PR23-01).
+select pg_temp.reset_role();
+alter table public.lessons disable trigger lessons_media_storage;
+update public.lessons set media = jsonb_build_array(jsonb_build_object('kind', 'video', 'src', '/media/content/legacy.mp4', 'alt', 'x', 'caption', '', 'provenanceId', 'p1'))
+where id = '8a400000-0000-4000-8000-000000000011';
+alter table public.lessons enable trigger lessons_media_storage;
+select pg_temp.as_service();
+select pg_temp.review_all('8a400000-0000-4000-8000-000000000000', 'stored-video');
+select throws_ok($$select pg_temp.publish('8a400000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: course 8a400000-0000-4000-8000-000000000000 has a plain video asset; use a registry video block',
+  'a legacy stored plain video cannot publish');
+select pg_temp.reset_role();
+
+-- 9g. Diagram teaching text lives in the reviewed lesson data (Sol R16) -------------------------------
+create function pg_temp.diagram(support text, claims uuid[], legend jsonb default null) returns jsonb language sql as $$
+  select jsonb_build_object('kind', 'diagram', 'support', support, 'claimIds', to_jsonb(claims), 'content', jsonb_build_object(
+    'diagramId', 'shoulder.rhythm', 'alt', 'The shoulder blade rotating upward as the arm rises.', 'caption', 'Scapular upward rotation',
+    'legend', coalesce(legend, '[{"key": "scapula", "label": "Shoulder blade", "text": "Rotates upward as the arm rises."}]'::jsonb)))
+$$;
+select pg_temp.as_service();
+select throws_ok($$select pg_temp.save(pg_temp.course('8c600000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8c600000-0000-4000-8000-000000000011', 'diagram', jsonb_build_array(jsonb_build_object('kind', 'diagram', 'content',
+    jsonb_build_object('diagramId', 'shoulder.rhythm', 'caption', 'x')))))))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0].support: is required', 'a diagram must say how its teaching text is supported');
+select throws_ok($$select pg_temp.save(pg_temp.course('8c600000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8c600000-0000-4000-8000-000000000011', 'diagram', jsonb_build_array(pg_temp.diagram('practice-based', '{}',
+    '[{"key": "scapula", "label": "x", "text": "y", "colour": "red"}]'))))))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0].content.legend[0]: unknown key colour', 'legend items are strict');
+select throws_ok($$select pg_temp.save(pg_temp.course('8c600000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8c600000-0000-4000-8000-000000000011', 'diagram', jsonb_build_array(pg_temp.diagram('practice-based', '{}',
+    '[{"key": "two words", "label": "x", "text": "y"}]'))))))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0].content.legend[0].key: must be a plain identifier', 'legend keys are plain identifiers');
+select lives_ok($$select pg_temp.save(pg_temp.course('8c600000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8c600000-0000-4000-8000-000000000011', 'diagram', jsonb_build_array(pg_temp.diagram('science', array[pg_temp.id('c_ok')]))))))$$,
+  'a science diagram with its text and claim saves');
+select throws_ok($$select pg_temp.publish('8c600000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 8c600000-0000-4000-8000-000000000011 has a diagram block with no supporting binding review for its exact content and claims',
+  'a science diagram needs a binding review of its exact text');
+select pg_temp.review_all('8c600000-0000-4000-8000-000000000000', 'diagram');
+select lives_ok($$select pg_temp.keep('dg_v1', pg_temp.publish('8c600000-0000-4000-8000-000000000000'))$$, 'once reviewed, the diagram publishes');
+select pg_temp.reset_role();
+select is((select snapshot #> '{parts,0,lessons,0,blocks,0,content,legend,0,text}' from public.curriculum_versions where id = pg_temp.id('dg_v1')),
+  '"Rotates upward as the arm rises."'::jsonb, 'the legend text is frozen in the snapshot, so the lesson hash covers it');
+select is((select count(*) from public.version_claims where version_id = pg_temp.id('dg_v1')), 1::bigint, 'the diagram''s claim is cited by the version');
+-- Editing only the legend text changes the hashes, so the old reviews no longer count (Sol R1 PR23-03).
+select pg_temp.as_service();
+select pg_temp.save(pg_temp.course('8c600000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8c600000-0000-4000-8000-000000000011', 'diagram', jsonb_build_array(pg_temp.diagram('science', array[pg_temp.id('c_ok')],
+    '[{"key": "scapula", "label": "Shoulder blade", "text": "Tilts backward as the arm rises."}]'))))));
+select throws_ok($$select pg_temp.publish('8c600000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 8c600000-0000-4000-8000-000000000011 has a diagram block with no supporting binding review for its exact content and claims',
+  'a legend edit needs a fresh binding review before it can publish');
+select pg_temp.review_all('8c600000-0000-4000-8000-000000000000', 'diagram-legend-edit');
+select lives_ok($$select pg_temp.keep('dg_v2', pg_temp.publish('8c600000-0000-4000-8000-000000000000'))$$, 'after fresh reviews the edited legend publishes');
+select pg_temp.reset_role();
+select isnt((select content_hash from public.curriculum_versions where id = pg_temp.id('dg_v2')),
+  (select content_hash from public.curriculum_versions where id = pg_temp.id('dg_v1')), 'the edited legend made a new version hash');
+-- A diagram row saved before the rule (no support, no text) cannot publish.
+alter table public.lesson_blocks disable trigger user;
+alter table public.lesson_blocks drop constraint lesson_blocks_check;
+update public.lesson_blocks set support = null, content = '{"diagramId": "shoulder.rhythm", "caption": "x"}'::jsonb
+where lesson_id = '8c600000-0000-4000-8000-000000000011' and kind = 'diagram';
+delete from public.block_claims where block_id in (select id from public.lesson_blocks where lesson_id = '8c600000-0000-4000-8000-000000000011');
+update public.lesson_blocks set content_hash = private.block_hash(kind, content) where lesson_id = '8c600000-0000-4000-8000-000000000011';
+alter table public.lesson_blocks add constraint lesson_blocks_check check ((support is null) = (kind in ('heading', 'image', 'video'))) not valid;
+alter table public.lesson_blocks enable trigger user;
+select pg_temp.as_service();
+select throws_ok($$select pg_temp.publish('8c600000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 8c600000-0000-4000-8000-000000000011 has a diagram without reviewable text (alt, caption, legend and support)',
+  'a legacy diagram row cannot publish');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select throws_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.course('8d700000-0000-4000-8000-000000000000', 'method',
+  jsonb_build_array(pg_temp.lesson('8d700000-0000-4000-8000-000000000011', 'gym-diagram', jsonb_build_array(pg_temp.diagram('science', array[pg_temp.id('c_ok')]))))))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0]: method content is practice-based', 'gym diagrams are practice-based');
+select lives_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.course('8d700000-0000-4000-8000-000000000000', 'method',
+  jsonb_build_array(pg_temp.lesson('8d700000-0000-4000-8000-000000000011', 'gym-diagram', jsonb_build_array(pg_temp.diagram('practice-based', '{}'))))))$$,
+  'a gym saves a practice-based diagram with its text');
 select pg_temp.reset_role();
 
 -- 10. Privileges and hygiene -------------------------------------------------------------------
