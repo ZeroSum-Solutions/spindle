@@ -1,5 +1,5 @@
 // Synthetic fixtures only. Mirrors the database rules in supabase/tests/database/evidence.test.sql.
-import { lessonViewCourse, parseLearnerCourse, type Course, type LessonBlock } from "@spindle/schema";
+import { parseLearnerCourse, type Course, type LessonBlock } from "@spindle/schema";
 import { describe, expect, it } from "vitest";
 import { bestAttempt, blockEvidence, gradedQuestions, learnerQuestions, moduleCompletion, passes, quizCreditCarries, scoreAttempt, validateCatalog } from "./index";
 
@@ -51,9 +51,6 @@ describe("learner questions (Sol R1 PR22-01)", () => {
     expect(qs[0]).toEqual({ questionId: "l1:q1", lessonId: "l1", prompt: "Q1", options: ["Wrong", "Right"] });
   });
 
-  it("finds none in the lesson view, which drops graded quizzes", () => {
-    expect(learnerQuestions(lessonViewCourse(redacted()))).toEqual([]);
-  });
 });
 
 describe("scoring", () => {

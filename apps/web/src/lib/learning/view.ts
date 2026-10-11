@@ -9,6 +9,7 @@ import {
   type Course,
   type CurriculumLayer,
   type LearnerCourse,
+  type LessonViewCourse,
   type Lesson,
   type LessonCompletion,
   type VersionManifest,
@@ -22,7 +23,7 @@ export interface PublishedVersion {
   /** Null for global (base/modality) content; the gym id for method content. */
   orgId: string | null;
   /** Lesson pages: graded quizzes removed (they live on the module quiz page). */
-  course: Course;
+  course: LessonViewCourse;
   /** The learner projection as stored: graded quizzes with prompts and options, no keys. For the quiz page (Sol R1 PR22-01). */
   learnerCourse: LearnerCourse;
   manifest: VersionManifest;
@@ -73,7 +74,7 @@ const LAYERS: readonly CurriculumLayer[] = ["base", "modality", "method"];
  * partially.
  */
 export function publishedVersion(row: VersionRow, manifestRows: readonly ManifestRow[]): PublishedVersion {
-  let course: Course;
+  let course: LessonViewCourse;
   let learnerCourse: LearnerCourse;
   let manifest: VersionManifest;
   try {
@@ -123,7 +124,7 @@ export function completionsFrom(rows: readonly CompletionRow[]): LessonCompletio
   );
 }
 
-export function lessonsOf(course: Course): Lesson[] {
+export function lessonsOf<B>(course: Course<B>): Lesson<B>[] {
   return course.parts.flatMap((part) => part.lessons);
 }
 
