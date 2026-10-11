@@ -3,12 +3,26 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AppHeader } from "@/components/ui";
 
-/** Learner frame: header with gym context, a back link, then the page. */
-export function LearnShell({ gym, back, children }: { gym?: string; back?: { href: string; label: string }; children: ReactNode }) {
+/** Centered content widths: a 768px column for lists and overviews; outline plus reading column for the player. */
+const FRAME = { column: "max-w-3xl", reading: "max-w-[46rem] lg:max-w-[63rem]" } as const;
+
+/** Learner frame: header with gym context, then a centered column with a back link and the page. */
+export function LearnShell({
+  gym,
+  back,
+  frame = "column",
+  children,
+}: {
+  gym?: string;
+  back?: { href: string; label: string };
+  frame?: keyof typeof FRAME;
+  children: ReactNode;
+}) {
   return (
     <>
       <AppHeader context={gym} />
-      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-6 px-4 py-8 md:px-8 md:py-12">
+      <main className="flex w-full flex-1 flex-col px-4 py-8 md:px-8 md:py-12">
+        <div data-frame={frame} className={`mx-auto flex w-full flex-col gap-6 ${FRAME[frame]}`}>
         {back ? (
           <Link href={back.href} className="-ml-1 inline-flex min-h-11 items-center gap-1.5 self-start px-1 text-label text-brand hover:text-brand-hover">
             <ArrowLeft aria-hidden strokeWidth={1.75} className="size-4" />
@@ -16,6 +30,7 @@ export function LearnShell({ gym, back, children }: { gym?: string; back?: { hre
           </Link>
         ) : null}
         {children}
+        </div>
       </main>
     </>
   );

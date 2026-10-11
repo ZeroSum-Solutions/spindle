@@ -33,7 +33,7 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
 
   return (
     <LearnShell gym={ctx.org.name} back={{ href: `/gyms/${ctx.org.slug}`, label: ctx.org.name }}>
-      <div className="flex max-w-3xl flex-col gap-6">
+      <div data-layout="column" className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <h1 className="text-heading font-medium">Your courses</h1>
       {items.length === 0 ? (
         <p className="rounded-card border border-border bg-surface p-6 text-text-muted">Nothing is assigned to you in this gym yet.</p>
