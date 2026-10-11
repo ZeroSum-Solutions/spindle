@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { ExternalLink, ImageOff, TriangleAlert } from "lucide-react";
+import { ExternalLink, TriangleAlert } from "lucide-react";
 import type { ClaimIntegrityState, LessonResource, LessonViewBlock, MediaAsset, MediaAvailability } from "@spindle/schema";
 import { evidenceView, type EvidenceView } from "../../lib/learning/evidence";
 import type { ClaimView } from "../../lib/learning/load";
 import { renderableMediaUrl, resolveContentUrl } from "../../lib/learning/media";
 import { ClaimDisclosure } from "./claim-disclosure";
-import { DiagramFigure, diagramFor } from "./diagrams";
+import { LegacyDiagram, ReviewedDiagram } from "./diagrams";
 import { SupportLabel } from "./labels";
 import { MediaImage, MediaUnavailable, MediaVideo } from "./media-image";
 import { QuizSelfCheck } from "./quiz-self-check";
@@ -66,26 +66,10 @@ function Block({ block, index, ctx, showLabel }: { block: LessonViewBlock; index
       return <h2 className="pt-2 text-xl font-medium tracking-tight text-text">{block.content}</h2>;
     case "image":
       return <Figure asset={block.content} orgId={ctx.orgId} />;
-    case "diagram": {
-      const entry = diagramFor(block.content.diagramId);
-      if (entry) {
-        return (
-          <figure data-block="diagram" data-diagram="available" className="flex flex-col gap-2">
-            <DiagramFigure entry={entry} />
-            {block.content.caption ? <figcaption className="text-label text-text-muted">{block.content.caption}</figcaption> : null}
-          </figure>
-        );
-      }
-      return (
-        <figure data-block="diagram" className="flex flex-col gap-2">
-          <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-card border border-dashed border-control bg-surface-muted p-6 text-center text-text-muted">
-            <ImageOff aria-hidden strokeWidth={1.75} className="size-6" />
-            <p className="text-label">This diagram is not available yet.</p>
-          </div>
-          {block.content.caption ? <figcaption className="text-label text-text-muted">{block.content.caption}</figcaption> : null}
-        </figure>
-      );
-    }
+    case "diagram":
+      // A reviewed diagram (Sol R16) carries support and claims like a paragraph; an older
+      // {diagramId, caption} block from a historical snapshot renders as it was, without a legend.
+      return "support" in block ? <Supported block={block} index={index} ctx={ctx} showLabel={showLabel} /> : <LegacyDiagram content={block.content} />;
     case "video":
       return <YouTubeSegment segment={block.content} availability={ctx.media?.get(block.content.mediaId)} versionId={ctx.versionId} />;
     default:
@@ -172,6 +156,8 @@ function BlockBody({ block, index, quizHref, graded }: { block: SupportedBlock; 
           ))}
         </ul>
       );
+    case "diagram":
+      return <ReviewedDiagram content={block.content} nested />;
     case "quiz":
       // A graded question arrives prompt-only (lessonViewCourse): no options, key or explanation.
       // The lesson shows the prompt and points to the module quiz. Practice quizzes stay whole,

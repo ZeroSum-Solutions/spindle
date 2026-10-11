@@ -171,8 +171,38 @@
         "kind": "diagram",
         "content": {
           "diagramId": "shoulder-warm-up",
-          "caption": "Planned diagram, not available yet: the four warm-up positions."
-        }
+          "alt": "Four schematic figures: standing with the back against a wall; seen from the front with the right elbow at the side and the forearm turned out against a band; reaching both arms forward; pressing one arm overhead with a light weight.",
+          "caption": "A short warm-up, in order. Schematic, not to scale.",
+          "legend": [
+            {
+              "key": "position",
+              "label": "Position.",
+              "text": "The stance or support of the first lift."
+            },
+            {
+              "key": "rotation",
+              "label": "Light rotation.",
+              "text": "Elbow at the side, forearm out and back."
+            },
+            {
+              "key": "band",
+              "label": "Light band.",
+              "text": "Anchored on the other side."
+            },
+            {
+              "key": "shoulder-blades",
+              "label": "Shoulder blade control.",
+              "text": "Reach forward, then overhead along a wall."
+            },
+            {
+              "key": "first-pattern",
+              "label": "First pattern.",
+              "text": "The session's first press or pull, with a light load."
+            }
+          ]
+        },
+        "support": "practice-based",
+        "claimIds": []
       },
       {
         "kind": "checklist",
