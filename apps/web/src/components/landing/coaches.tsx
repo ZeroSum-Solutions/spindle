@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { LayerLabel, SupportLabel } from "../learn/labels";
 import type { Brand } from "../../lib/brand";
-import { BASE_ATTRIBUTION, themeStyle, type ContrastCheck, type TenantTheme } from "../../lib/theme/tenant-theme";
+import { BASE_ATTRIBUTION, themeStyle, validateTheme, type ContrastCheck, type TenantTheme } from "../../lib/theme/tenant-theme";
 import { Section, SectionHead, SIGN_IN, SiteFooter, SiteHeader, Wordmark } from "./landing";
 
 // Signed-out page for coaches and gyms. Honest copy only: no statistics, testimonials, coach
@@ -60,6 +60,17 @@ export interface ThemeSwatch {
   checks: ContrastCheck[];
   /** The tenant font's class and family, resolved by the page (next/font). */
   font: { className: string; family: string };
+}
+
+/**
+ * The example swatches for the page: each brand goes through the real validator, and a brand it
+ * refuses is left out rather than shown. `fontFor` resolves the bundled font (next/font in the app).
+ */
+export function exampleSwatches(brands: readonly unknown[], fontFor: (font: TenantTheme["font"]) => ThemeSwatch["font"]): ThemeSwatch[] {
+  return brands.flatMap((brand) => {
+    const result = validateTheme(brand);
+    return result.ok ? [{ theme: result.theme, checks: result.checks, font: fontFor(result.theme.font) }] : [];
+  });
 }
 
 export function Coaches({ brand, swatches }: { brand: Brand; swatches: ThemeSwatch[] }) {
@@ -175,14 +186,14 @@ function Method() {
         A method course is your gym&apos;s own course, assigned beside the base. Every passage in it is labelled practice-based, so a trainer can
         always tell your coaching from the cited science underneath, and nobody mistakes experience for a citation.
       </SectionHead>
-      <ol className="grid grid-cols-1 gap-px overflow-hidden rounded-card border border-border bg-border md:grid-cols-3">
+      <ol className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {[
           { label: <SupportLabel support="practice-based" />, title: "Labelled as practice", text: "Cues, set-ups and progressions read as coaching experience, in words as well as colour." },
           { label: <LayerLabel layer="method" />, title: "A separate course", text: "Your course has its own versions, so changing your method never rewrites the base." },
-          { label: <SupportLabel support="science" />, title: "Science stays cited", text: "Anything stated as science lives in the base, bound to a reviewed claim." },
+          { label: <SupportLabel support="science" />, title: "Science stays cited", text: "Science passages bind reviewed claims; your method stays practice-based." },
         ].map((item, i) => (
-          <li key={item.title} className="flex flex-col gap-3 bg-surface p-5 md:p-6">
-            <span aria-hidden className="font-mono text-code text-text-muted">
+          <li key={item.title} className="flex flex-col gap-3 rounded-card bg-surface-muted p-5 md:p-6">
+            <span aria-hidden data-allow-number className="font-mono text-code text-text-muted">
               {String(i + 1).padStart(2, "0")}
             </span>
             <span>{item.label}</span>
@@ -227,7 +238,7 @@ function Capabilities({ brand }: { brand: Brand }) {
       <ol className="flex flex-col divide-y divide-border border-y border-border">
         {CAPABILITIES.map((c, i) => (
           <li key={c.title} data-capability className="grid grid-cols-1 gap-3 py-5 md:grid-cols-[3rem_minmax(0,16rem)_minmax(0,1fr)] md:gap-6 md:py-6">
-            <span aria-hidden className="font-mono text-code text-text-muted">
+            <span aria-hidden data-allow-number className="font-mono text-code text-text-muted">
               {String(i + 1).padStart(2, "0")}
             </span>
             <span className="flex flex-col items-start gap-2">
@@ -276,14 +287,14 @@ function Swatch({ swatch }: { swatch: ThemeSwatch }) {
               <div key={r.label} className="flex items-center gap-2">
                 {r.sample}
                 <dt className="text-text-muted">{r.label}</dt>
-                <dd className="ml-auto font-mono text-code text-text">{r.value}</dd>
+                <dd data-allow-number className="ml-auto font-mono text-code text-text">{r.value}</dd>
               </div>
             ))}
           </dl>
         </div>
         <p className="border-t border-border bg-surface px-4 py-2 text-label text-text-muted">{BASE_ATTRIBUTION}</p>
       </div>
-      <figcaption className="text-label text-text-muted">
+      <figcaption data-allow-number className="text-label text-text-muted">
         {passing} of {checks.length} contrast checks pass WCAG 2.2 AA, in every state.
       </figcaption>
     </figure>
@@ -323,7 +334,7 @@ function Closing({ brand }: { brand: Brand }) {
           Start with your gym.
         </h2>
         <p className="max-w-[52ch] text-reading text-white/80">
-          Sign in to start a gym and invite your trainers, or to join the gym that invited you. We email you a 6-digit code; the same step creates
+          Sign in to start a gym and invite your trainers, or to join the gym that invited you. We email you a <span data-allow-number>6-digit</span> code; the same step creates
           your account.
         </p>
         <Link

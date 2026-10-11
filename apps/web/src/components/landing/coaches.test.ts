@@ -3,14 +3,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { SPINDLE } from "../../lib/brand";
 import { LIGHT_SAGE, OXBLOOD, SAGE } from "../../lib/theme/preview-brands";
-import { validateTheme } from "../../lib/theme/tenant-theme";
-import { CAPABILITIES, COACH_MODALITIES, Coaches, type ThemeSwatch } from "./coaches";
+import { CAPABILITIES, COACH_MODALITIES, Coaches, exampleSwatches } from "./coaches";
+import { copyProblems } from "./honesty";
 
-const swatch = (b: unknown): ThemeSwatch[] => {
-  const r = validateTheme(b);
-  return r.ok ? [{ theme: r.theme, checks: r.checks, font: { className: "", family: "inherit" } }] : [];
-};
-const html = renderToStaticMarkup(createElement(Coaches, { brand: SPINDLE, swatches: [...swatch(OXBLOOD), ...swatch(SAGE)] }));
+const html = renderToStaticMarkup(createElement(Coaches, { brand: SPINDLE, swatches: exampleSwatches([OXBLOOD, SAGE], () => ({ className: "", family: "inherit" })) }));
 const text = html.replace(/<[^>]+>/g, " ");
 
 describe("Coaches page", () => {
@@ -24,21 +20,38 @@ describe("Coaches page", () => {
     for (const m of modalities) expect(m.split("</li>")[0]).toContain(">Planned<");
   });
 
-  it("makes no claims it cannot show: no statistics, testimonials, dates or launch promises", () => {
-    // Digits only appear as list numbering, the WCAG version, the 6-digit code, hex colours and check counts.
-    // The footer's licence versions (AGPL-3.0, CC BY-SA 4.0) are shared with the landing page.
-    const body = html.slice(0, html.indexOf("<footer")).replace(/<[^>]+>/g, " ");
-    const digits = body.match(/\b\d[\d,.%]*\b/g) ?? [];
-    for (const d of digits) expect(["01", "02", "03", "04", "05", "2.2", "6", "12", "13"]).toContain(d);
-    expect(text).not.toMatch(/testimonial|trusted by|\bcoming soon\b|\b20\d\d\b|guarantee/i);
-    // Example brands are labelled as made up; no real gym or coach name appears.
+  it("makes no claims it cannot show: the guard finds nothing in the page's main content", () => {
+    const main = html.slice(html.indexOf("<main"), html.indexOf("</main>"));
+    expect(copyProblems(main)).toEqual([]);
     expect(text).toContain("made-up example brands");
   });
 
-  it("renders each swatch from the validator, with its real pass count, and never a refused theme", () => {
+  it.each([
+    "Reviewed by a licensed PT before every release.",
+    "13 gyms use Spindle every week.",
+    "Gyms trust Spindle.",
+    "Eric Cressey recommends Spindle for arm care.",
+    "“It changed how my trainers learn,” says a coach.",
+    "Course authoring is coming soon.",
+    "Launching in spring 2027.",
+    "Results guaranteed.",
+    "Trusted by strength coaches.",
+  ])("the guard rejects forbidden copy: %s", (copy) => {
+    expect(copyProblems(`<main><p>${copy}</p></main>`)).not.toEqual([]);
+  });
+
+  it("the guard allows numbers only where they are marked", () => {
+    expect(copyProblems('<main><span data-allow-number>01</span><p>Plain words.</p></main>')).toEqual([]);
+    expect(copyProblems("<main><p>Plain words, 12 times.</p></main>")).not.toEqual([]);
+  });
+
+  it("builds the swatches through the real validator and leaves out a refused theme", () => {
+    const font = () => ({ className: "", family: "inherit" });
+    const built = exampleSwatches([OXBLOOD, LIGHT_SAGE, SAGE], font);
+    expect(built.map((s) => s.theme.name)).toEqual([OXBLOOD.name, SAGE.name]);
+    expect(built.every((s) => s.checks.length > 0 && s.checks.every((c) => c.pass))).toBe(true);
     expect(html.match(/data-theme-swatch=/g)).toHaveLength(2);
     expect(text).toMatch(/13 of 13 contrast checks pass WCAG 2\.2 AA/);
-    expect(swatch(LIGHT_SAGE)).toHaveLength(0);
     expect(text).toContain("Base curriculum by Spindle, cited");
   });
 

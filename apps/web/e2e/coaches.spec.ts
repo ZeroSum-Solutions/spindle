@@ -37,24 +37,37 @@ test.describe("coaches page", () => {
     }
   });
 
-  test("every link and control is reachable by keyboard with a visible focus ring", async ({ page }) => {
+  test("every visible link and control is reached by Tab, one by one, with a real focus ring", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/coaches");
-    const focusable = await page.locator("a[href], button").count();
+    // Tag every visible focusable element, so each is tracked on its own even when two share a URL.
+    const total = await page.evaluate(() => {
+      const els = [...document.querySelectorAll<HTMLElement>("a[href], button, summary, [tabindex]:not([tabindex='-1'])")].filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden";
+      });
+      els.forEach((el, i) => el.setAttribute("data-tab-id", String(i)));
+      return els.length;
+    });
+    expect(total).toBeGreaterThan(3);
     const seen = new Set<string>();
-    for (let i = 0; i < focusable + 2; i++) {
+    for (let i = 0; i < total + 3 && seen.size < total; i++) {
       await page.keyboard.press("Tab");
       const info = await page.evaluate(() => {
         const el = document.activeElement as HTMLElement | null;
         if (!el || el === document.body) return null;
         const style = getComputedStyle(el);
-        return { key: `${el.tagName}:${el.getAttribute("href") ?? el.textContent}`, outline: style.outlineStyle };
+        const onInk = Boolean(el.closest('section[aria-labelledby="coaches-closing-title"]'));
+        return { id: el.getAttribute("data-tab-id"), name: el.textContent?.trim().slice(0, 40), style: style.outlineStyle, width: parseFloat(style.outlineWidth), color: style.outlineColor, onInk };
       });
-      if (!info) continue;
-      expect(info.outline, info.key).toBe("solid");
-      seen.add(info.key);
+      if (!info?.id) continue;
+      expect(info.style, info.name).toBe("solid");
+      expect(info.width, info.name).toBeGreaterThanOrEqual(3);
+      // Cobalt on light surfaces; white on the closing ink band (DESIGN.md › Accessibility).
+      expect(info.color, info.name).toBe(info.onInk ? "rgb(255, 255, 255)" : "rgb(36, 83, 212)");
+      seen.add(info.id);
     }
-    expect([...seen].some((k) => k.includes("/sign-in"))).toBe(true);
+    expect(seen.size, "every visible focusable element is reached by Tab").toBe(total);
   });
 
   test("the landing page links to it from the header and the footer", async ({ page }) => {
