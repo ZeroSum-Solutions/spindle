@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useReducer, useRef, useState } from "react";
 import { ExternalLink, Play, VideoOff } from "lucide-react";
+import { REVOCATION_INTERVAL_MS, watchRevocation } from "../../lib/video/revocation";
 import { createIframeApiLoader, type YTNamespace } from "../../lib/video/iframe-api";
 import { boundedRecheck, embedSrc, IFRAME_API_URL, RECHECK_TIMEOUT_MS, nextPlayerState, PRIVACY_URL, READY_TIMEOUT_MS, segmentLabel, TERMS_URL, watchUrl } from "../../lib/video/youtube";
 
@@ -39,13 +40,15 @@ export function YouTubePlayer({
   recheck,
   readyTimeoutMs = READY_TIMEOUT_MS,
   recheckTimeoutMs = RECHECK_TIMEOUT_MS,
+  revocationIntervalMs = REVOCATION_INTERVAL_MS,
 }: {
   video: PlayerClip;
   gone?: boolean;
-  /** Asks the registry, at the moment of play, whether the clip may still play. Missing or failing: nothing loads. */
+  /** Asks the registry whether the clip may still play: at play, then every minute and on return to the page while mounted. Missing or failing: nothing loads, or playback stops. */
   recheck: (() => Promise<boolean>) | undefined;
   readyTimeoutMs?: number;
   recheckTimeoutMs?: number;
+  revocationIntervalMs?: number;
 }) {
   // A clip the provider already reports as unavailable starts in that state; nothing is offered to load.
   const [state, dispatch] = useReducer(nextPlayerState, gone ? "unavailable" : "idle");
@@ -83,6 +86,22 @@ export function YouTubePlayer({
       window.clearTimeout(timer);
     };
   }, [src, readyTimeoutMs]);
+
+  // While the player is mounted (loading or playing), keep asking the registry. A disabled or
+  // expired clip, a failed check or a timeout removes the iframe and shows the blocked state.
+  const mounted = src !== null && (state === "loading" || state === "ready");
+  useEffect(() => {
+    if (!mounted) return;
+    return watchRevocation({
+      recheck,
+      timeoutMs: recheckTimeoutMs,
+      intervalMs: revocationIntervalMs,
+      onRevoke: () => {
+        dispatch("blocked");
+        setSrc(null);
+      },
+    });
+  }, [mounted, recheck, recheckTimeoutMs, revocationIntervalMs]);
 
   if (state === "blocked") {
     return (

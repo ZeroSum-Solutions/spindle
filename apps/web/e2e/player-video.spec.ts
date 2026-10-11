@@ -12,11 +12,13 @@ import { learnPath, signIn } from "./helpers/sign-in";
 const world = new PlayerWorld();
 const media = new PracticeMedia(world);
 let playableId: string;
+let revokeId: string;
 const actors: Record<string, Actor> = {};
 let gym: { id: string; slug: string };
 let assignment: string;
 
 const CLIP = { videoId: "abcDEF12_-9", startSeconds: 30, endSeconds: 95, rationale: "Synthetic rationale: shows the set-up." };
+const REVOKE = { videoId: "revOKE12_-3", startSeconds: 10, endSeconds: 40, rationale: "Synthetic rationale: switched off while playing." };
 const OFF = { videoId: "zyxWVU98_-7", startSeconds: 0, endSeconds: 20, rationale: "Synthetic rationale: switched off after publishing." };
 const LESSON = "clips";
 
@@ -43,7 +45,8 @@ async function stubYouTube(page: Page, outcome: "ready" | "error" | "silent" | "
   );
 }
 
-const clip = (page: Page, state: "playable" | "off") => page.locator(`[data-block="video"][data-clip="${state}"]`);
+const clip = (page: Page, state: "playable" | "off") =>
+  page.locator(`[data-block="video"][data-clip="${state}"]`).filter({ hasText: state === "playable" ? CLIP.rationale : OFF.rationale });
 
 test.describe.serial("click-to-load registry clips", () => {
   test.beforeAll(async () => {
@@ -57,10 +60,11 @@ test.describe.serial("click-to-load registry clips", () => {
     world.join(gym, actors.vowner!, actors.vlearner!);
     playableId = media.playable(CLIP, { title: "Synthetic clip title", channel: "Synthetic channel", available: true });
     const playable = playableId;
+    revokeId = media.playable(REVOKE, { title: "Synthetic revoke clip", channel: "Synthetic channel", available: true });
     const off = media.playable(OFF, { title: "Synthetic off clip", channel: "Synthetic channel", available: true });
     const version = world.publishGlobal(
       courseJson(randomUUID(), randomUUID(), "base", "Synthetic video course", [
-        { id: randomUUID(), slug: LESSON, title: "Synthetic clips", blocks: [practice("Synthetic text."), media.block(playable, CLIP), media.block(off, OFF)] },
+        { id: randomUUID(), slug: LESSON, title: "Synthetic clips", blocks: [practice("Synthetic text."), media.block(playable, CLIP), media.block(off, OFF), media.block(revokeId, REVOKE)] },
       ]),
     );
     // Disabling takes effect at once, without a new version.
@@ -175,6 +179,21 @@ test.describe.serial("click-to-load registry clips", () => {
     expect(box.width).toBeGreaterThanOrEqual(200);
     expect(box.height).toBeGreaterThanOrEqual(200);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  });
+
+  test("a playing clip that is switched off stops at once: the mounted player rechecks the registry", async ({ browser }) => {
+    const path = learnPath(gym, assignment, LESSON);
+    const page = await signIn(browser, actors.vlearner!, path);
+    await stubYouTube(page, "ready");
+    await page.reload();
+    const revoking = page.locator('[data-block="video"]').filter({ hasText: REVOKE.rationale });
+    await revoking.getByRole("button", { name: /Play video/ }).click();
+    await expect(revoking.locator('iframe[data-video="player"]')).toBeVisible();
+    media.disable(revokeId);
+    // The player rechecks every minute and whenever the page becomes visible again; trigger the latter.
+    await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+    await expect(revoking.locator('[data-video="blocked"]')).toContainText("This video can't be played right now.");
+    await expect(revoking.locator("iframe")).toHaveCount(0);
   });
 
   // Last: it disables the playable clip for the rest of the run.

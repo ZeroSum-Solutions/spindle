@@ -74,7 +74,8 @@ export function clipLabels(availability: MediaAvailability | undefined): { title
 }
 
 // Player states. Nothing from YouTube exists in "idle". "blocked": the registry no longer
-// allows the clip when play was pressed, so nothing loads. Both end states are final for this mount.
+// allows the clip, at play or while it is loading or playing; the player is removed. Both end
+// states are final for this mount.
 export type PlayerState = "idle" | "loading" | "ready" | "unavailable" | "blocked";
 export type PlayerEvent = "activate" | "ready" | "error" | "timeout" | "script-failed" | "blocked";
 
@@ -87,7 +88,8 @@ export function nextPlayerState(state: PlayerState, event: PlayerEvent): PlayerS
       if (event === "blocked") return "blocked";
       return event === "error" || event === "timeout" || event === "script-failed" ? "unavailable" : state;
     case "ready":
-      // A late timeout cannot undo a player that already reported ready.
+      // A late timeout cannot undo a player that already reported ready, but a revoked clip stops at once.
+      if (event === "blocked") return "blocked";
       return event === "error" ? "unavailable" : state;
     case "unavailable":
     case "blocked":
