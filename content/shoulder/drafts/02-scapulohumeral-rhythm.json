@@ -12,7 +12,7 @@
   "claimSlots": [
     {
       "slot": "claim-slot:l2-scapular-motions",
-      "statement": "During humeral elevation the scapula upwardly rotates, tilts posteriorly and externally rotates on the thorax.",
+      "statement": "During humeral elevation the scapula upwardly rotates and tilts posteriorly; its internal or external rotation on the thorax varies with the plane of elevation and through the range.",
       "candidateSources": [
         {
           "kind": "paper",
@@ -26,7 +26,8 @@
           "doi": "10.1067/mse.2001.112954",
           "pmid": "11408911"
         }
-      ]
+      ],
+      "note": "Ludewig and Reynolds 2009 is open in PMC (PMC2730194)."
     },
     {
       "slot": "claim-slot:l2-shared-ratio",
@@ -92,7 +93,7 @@
     },
     {
       "prompt": "Same client, but the shoulder aches more with each rep.",
-      "goodAnswer": "Stop that movement; do not progress; if it persists or worsens over 2 weeks, routine referral; urgent if any urgent sign appears.",
+      "goodAnswer": "Stop shoulder loading for this session. If the pain is getting worse, routine referral now; if it has not improved after 2 weeks, routine referral then; urgent or emergency if any of those signs appear.",
       "safety": "SAFETY.md sections 3 and 4"
     }
   ],
@@ -104,7 +105,7 @@
     "durationMinutes": 12,
     "format": "article",
     "objectives": [
-      "Describe how the shoulder blade moves when the arm is raised.",
+      "Describe the shoulder blade movements that happen consistently when the arm is raised, and the one that varies.",
       "Explain that raising the arm is shared between the ball-and-socket joint and the shoulder blade, and that the share varies.",
       "Name the muscles that rotate the shoulder blade upward.",
       "Watch a client raise their arms and describe what you see in plain words."
@@ -127,7 +128,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "When the arm is raised, the shoulder blade does not stay still. It rotates upward, so the socket turns to face more toward the ceiling. It tilts backward at the top, and it turns outward around the ribcage.",
+        "content": "When the arm is raised, the shoulder blade does not stay still. It rotates upward, so the socket turns to face more toward the ceiling, and it tilts backward at the top. How much it also turns around the ribcage, inward or outward, depends on the direction the arm is raised and how high it goes.",
         "support": "science",
         "claimIds": [
           "claim-slot:l2-scapular-motions"
@@ -203,7 +204,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "Stop the drill if pain comes on or rises during the raise, if the client feels pins and needles or numbness, or if they cannot lift the arm. Refer (see \"When to refer out\"). What you saw is a note for training, not a finding: this check never clears anyone and never names an injury."
+          "text": "Stop the drill, and stop shoulder loading for the rest of the session, if pain comes on or rises during the raise. If that pain is getting worse over the following days, refer to a GP or physiotherapist now; if it has not improved after 2 weeks, refer then. Pins and needles that do not go away, or a new inability to lift the arm themselves: an urgent GP appointment or NHS 111 today. After a fall or impact, an arm they cannot move: emergency services now. What you saw is a note for training, not a finding: this check never clears anyone and never names an injury."
         },
         "support": "practice-based",
         "claimIds": []
@@ -231,14 +232,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "Which set of shoulder blade movements happens as the arm is raised overhead?",
+          "prompt": "Which two shoulder blade movements happen consistently as the arm is raised overhead?",
           "options": [
-            "Upward rotation, backward tilt and outward turning",
-            "Downward rotation, forward tilt and inward turning",
-            "No movement: the shoulder blade stays still"
+            "Upward rotation and backward tilt",
+            "Downward rotation and forward tilt",
+            "None: the shoulder blade stays still"
           ],
           "answerIndex": 0,
-          "explanation": "As the arm rises, the shoulder blade rotates upward, tilts backward and turns outward."
+          "explanation": "As the arm rises, the shoulder blade rotates upward and tilts backward. Its turning around the ribcage varies with the direction and height of the raise."
         },
         "support": "science",
         "claimIds": [

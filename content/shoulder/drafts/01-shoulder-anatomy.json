@@ -44,7 +44,7 @@
           "pmid": "19194022"
         }
       ],
-      "note": "If no open source states this directly, drop the second sentence and keep the block practice-based."
+      "note": "If no open source states this directly, the second sentence is removed. It is never kept under a practice-based label."
     },
     {
       "slot": "claim-slot:l1-shallow-socket",
@@ -290,7 +290,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "This lesson tells you where things are and what they do. It does not tell you what is wrong. If a client points to a painful spot, describe where it is and how it behaves; never name an injury. If the pain started after a fall or an impact, if pins and needles do not go away, or if the client cannot lift the arm, stop and refer (see \"When to refer out\")."
+          "text": "This lesson tells you where things are and what they do. It does not tell you what is wrong. If a client points to a painful spot, describe where it is and how it behaves; never name an injury. Stop shoulder work for the session and refer when a warning sign appears. After a fall or impact, an arm the client cannot move or a shoulder that looks out of place: emergency services now. Other new pain after an injury, pins and needles that do not go away, or a new inability to lift the arm themselves: an urgent GP appointment or NHS 111 today. See \"When to refer out\"."
         },
         "support": "practice-based",
         "claimIds": []
