@@ -36,8 +36,14 @@ describe("Coaches page", () => {
     "Launching in spring 2027.",
     "Results guaranteed.",
     "Trusted by strength coaches.",
+    "greg nuckols recommends Spindle.",
   ])("the guard rejects forbidden copy: %s", (copy) => {
     expect(copyProblems(`<main><p>${copy}</p></main>`)).not.toEqual([]);
+  });
+
+  it("a number-exempt element is still checked for forbidden wording", () => {
+    expect(copyProblems("<main><figcaption data-allow-number>13 of 13 checks pass. Reviewed by a licensed PT.</figcaption></main>")).not.toEqual([]);
+    expect(copyProblems("<main><span data-allow-number>01 Eric Cressey recommends it</span></main>")).not.toEqual([]);
   });
 
   it("the guard allows numbers only where they are marked", () => {

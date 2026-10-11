@@ -24,14 +24,16 @@ const BANNED: { rule: string; pattern: RegExp }[] = [
  */
 export function copyProblems(html: string): string[] {
   const withoutComments = html.replace(/<!--[\s\S]*?-->/g, "");
-  const scrubbed = withoutComments.replace(/<(\w+)\b[^>]*\bdata-allow-number\b[^>]*>[\s\S]*?<\/\1>/g, " ");
-  const text = scrubbed.replace(/<[^>]+>/g, " ").replace(/&[a-z#0-9]+;/gi, (e) => (e === "&#x27;" || e === "&#39;" ? "'" : " "));
+  const toText = (markup: string) => markup.replace(/<[^>]+>/g, " ").replace(/&[a-z#0-9]+;/gi, (e) => (e === "&#x27;" || e === "&#39;" ? "'" : " "));
+  // Marked elements are exempt from the number check only; every wording rule reads all the prose.
+  const text = toText(withoutComments);
+  const unmarked = toText(withoutComments.replace(/<(\w+)\b[^>]*\bdata-allow-number\b[^>]*>[\s\S]*?<\/\1>/g, " "));
   const problems: string[] = [];
-  for (const m of text.matchAll(/[^.\s]*\d[^.\s]*/g)) problems.push(`number outside an allowed element: "${m[0]}"`);
+  for (const m of unmarked.matchAll(/[^.\s]*\d[^.\s]*/g)) problems.push(`number outside an allowed element: "${m[0]}"`);
   for (const { rule, pattern } of BANNED) {
     const m = text.match(pattern);
     if (m) problems.push(`${rule}: "${m[0]}"`);
   }
-  for (const name of NAMED_COACHES) if (new RegExp(`\\b${name}\\b`).test(text)) problems.push(`named coach: "${name}"`);
+  for (const name of NAMED_COACHES) if (new RegExp(`\\b${name}\\b`, "i").test(text)) problems.push(`named coach: "${name}"`);
   return problems;
 }

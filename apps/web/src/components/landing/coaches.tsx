@@ -42,7 +42,7 @@ export const CAPABILITIES = [
   {
     title: "Your own video",
     text: "Upload technique demos and attach them to the lesson they belong to.",
-    today: "Today, a lesson can show a reviewed YouTube clip that loads only when someone presses Play.",
+    today: "Today, a lesson can show a YouTube clip that loads only when someone presses Play. A model describes each clip and a second model checks that description; each clip is marked model-described until a person checks it.",
   },
   {
     title: "Certification tracks",
