@@ -65,29 +65,58 @@ language sql as $$
     'parts', jsonb_build_array(jsonb_build_object('id', left(cid, 34) || 'f1', 'ordinal', 1, 'title', 'Part one',
       'summary', '', 'lessons', lessons)))
 $$;
+-- Synthetic review receipts (ADR 0007): the same RPCs a model review uses, with
+-- a fixture run and the hashes and claim sets the database reports. No model is called.
+create function pg_temp.run() returns jsonb language sql as $$
+  select '{"model": "synthetic-fixture", "session": "ci-content", "packetDigest": "0000000000000000000000000000000000000000000000000000000000000001", "reviewedAt": "2026-10-01T00:00:00Z"}'::jsonb
+$$;
+create function pg_temp.review_lessons(cid uuid) returns void language plpgsql as $$
+declare
+  l jsonb;
+begin
+  for l in select * from jsonb_array_elements(public.publisher_review_targets('00000000-0000-0000-0000-0000000000c1', cid) -> 'lessons') loop
+    perform public.publisher_review_lesson('00000000-0000-0000-0000-0000000000c1', (l ->> 'lessonId')::uuid,
+      jsonb_build_object('verdict', 'clean', 'expectedHash', l -> 'hash', 'claimIds', l -> 'claimIds',
+        'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', pg_temp.run()));
+  end loop;
+  perform public.publisher_review_course('00000000-0000-0000-0000-0000000000c1', cid, jsonb_build_object('verdict', 'clean',
+    'expectedHash', public.publisher_review_targets('00000000-0000-0000-0000-0000000000c1', cid) -> 'course' -> 'hash',
+    'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', pg_temp.run()));
+end;
+$$;
 create function pg_temp.review_course(cid uuid, verdict text) returns void language plpgsql as $$
 declare
-  b uuid;
+  l jsonb;
+  b jsonb;
 begin
-  for b in select lb.id from public.lesson_blocks lb join public.lessons l on l.id = lb.lesson_id
-           where l.course_id = cid and lb.support = 'science' loop
-    perform public.publisher_review_block('00000000-0000-0000-0000-0000000000c1', b, jsonb_build_object('verdict', verdict));
+  for l in select * from jsonb_array_elements(public.publisher_review_targets('00000000-0000-0000-0000-0000000000c1', cid) -> 'lessons') loop
+    for b in select * from jsonb_array_elements(l -> 'blocks') loop
+      if b ->> 'support' = 'science' and jsonb_array_length(b -> 'claimIds') > 0 then
+        perform public.publisher_review_block('00000000-0000-0000-0000-0000000000c1', (b ->> 'blockId')::uuid,
+          jsonb_build_object('verdict', verdict, 'expectedHash', b -> 'hash', 'claimIds', b -> 'claimIds', 'run', pg_temp.run()));
+      end if;
+    end loop;
   end loop;
+  if verdict = 'supported' then perform pg_temp.review_lessons(cid); end if;
 end;
 $$;
 create function pg_temp.receipt(faithfulness text) returns jsonb language sql as $$
   select jsonb_build_object('existenceCheckedAt', '2026-10-01T00:00:00Z', 'faithfulness', faithfulness,
     'retractionCheckedAt', '2026-10-01T00:00:00Z')
 $$;
+create function pg_temp.claim_hash(claim uuid) returns text language sql as $$
+  select public.publisher_claim_target('00000000-0000-0000-0000-0000000000c1', claim) ->> 'hash'
+$$;
 create function pg_temp.approve(claim uuid) returns uuid language sql as $$
   select public.publisher_review_claim('00000000-0000-0000-0000-0000000000c1', claim,
     jsonb_build_object('decision', 'approved', 'expiresAt', to_char(now() + interval '1 year', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
-      'receipt', pg_temp.receipt('faithful')))
+      'expectedHash', pg_temp.claim_hash(claim), 'receipt', pg_temp.receipt('faithful'), 'run', pg_temp.run()))
 $$;
 
 create function pg_temp.approve_until(claim uuid, expires text) returns uuid language sql as $$
   select public.publisher_review_claim('00000000-0000-0000-0000-0000000000c1', claim,
-    jsonb_build_object('decision', 'approved', 'expiresAt', expires, 'receipt', pg_temp.receipt('faithful')))
+    jsonb_build_object('decision', 'approved', 'expiresAt', expires, 'expectedHash', pg_temp.claim_hash(claim),
+      'receipt', pg_temp.receipt('faithful'), 'run', pg_temp.run()))
 $$;
 
 -- Evidence through the publisher path (service role, named publisher actor).
@@ -113,7 +142,8 @@ select pg_temp.approve(pg_temp.id('c_other'));
 select pg_temp.approve(pg_temp.id('c_ret'));
 select pg_temp.approve(pg_temp.id('c_rej'));
 select public.publisher_review_claim('00000000-0000-0000-0000-0000000000c1', pg_temp.id('c_rej'),
-  jsonb_build_object('decision', 'rejected', 'receipt', pg_temp.receipt('unfaithful')));
+  jsonb_build_object('decision', 'rejected', 'expectedHash', pg_temp.claim_hash(pg_temp.id('c_rej')),
+    'receipt', pg_temp.receipt('unfaithful')));
 select pg_temp.reset_role();
 -- Approvals cannot be backdated through the API, so the expired one is inserted directly.
 insert into public.claim_reviews (claim_id, decision, expires_at, receipt, reviewer)
@@ -217,7 +247,8 @@ select throws_ok('select pg_temp.publish_n()', 'P0001',
 
 -- The gate does not trust the draft writer: rows written around the validator still fail.
 select pg_temp.save_n(jsonb_build_array(pg_temp.sci('The rotator cuff is four muscles.', array[pg_temp.id('c_ok')])));
-select lives_ok('select pg_temp.publish_n()', 'the reviewed sentence and claim publish in another course');
+select pg_temp.review_lessons('62000000-0000-4000-8000-000000000000');
+select lives_ok('select pg_temp.publish_n()', 'the reviewed sentence and claim publish in another course (with its own lesson receipt)');
 select pg_temp.reset_role();
 update public.lesson_blocks set content = '"The rotator cuff is five muscles."'
 where lesson_id = '62000000-0000-4000-8000-000000000011';
@@ -242,9 +273,9 @@ select pg_temp.reset_role();
 
 -- 21-32: input validation at the JSON boundary --------------------------------------
 select pg_temp.as_service();
-select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.quiz('Practice quiz.', 'practice-based', '{}')))$$,
-  '22023', 'invalid course.parts[0].lessons[0].blocks[0]: a base-layer quiz explanation must bind claims',
-  'a base-layer quiz must bind claims');
+-- ADR 0007 (LEAD ruling on Sol R03): a base lesson may hold an ungraded, claim-free practice quiz.
+select lives_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.quiz('Practice quiz.', 'practice-based', '{}')))$$,
+  'a base-layer practice quiz without claims saves (ungraded discussion)');
 select throws_ok($$select public.publisher_save_course_draft('00000000-0000-0000-0000-0000000000c1', '[]')$$,
   '22023', 'invalid course: must be an object', 'a course must be a JSON object');
 select throws_ok($$select public.publisher_save_course_draft('00000000-0000-0000-0000-0000000000c1',
@@ -327,16 +358,19 @@ select throws_ok($$select public.publisher_add_claim('00000000-0000-0000-0000-00
   '{"statement": "x", "evidenceLevel": "x", "population": "x"}')$$,
   '22023', 'invalid claim.sourceIds: is required', 'a claim needs sources');
 select throws_ok(format($$select public.publisher_review_claim('00000000-0000-0000-0000-0000000000c1', %L,
-  jsonb_build_object('decision', 'approved', 'expiresAt', '2027-01-01T00:00:00Z', 'receipt', pg_temp.receipt('unfaithful')))$$,
+  jsonb_build_object('decision', 'approved', 'expiresAt', '2027-01-01T00:00:00Z', 'receipt', pg_temp.receipt('unfaithful'),
+    'expectedHash', pg_temp.claim_hash(%1$L), 'run', pg_temp.run()))$$,
   pg_temp.id('c_unrev')),
   '22023', 'invalid review.receipt.faithfulness: an approval needs a faithful claim', 'an unfaithful claim cannot be approved');
 select throws_ok(format($$select public.publisher_review_claim('00000000-0000-0000-0000-0000000000c1', %L,
-  jsonb_build_object('decision', 'approved', 'expiresAt', '2020-01-01T00:00:00Z', 'receipt', pg_temp.receipt('faithful')))$$,
+  jsonb_build_object('decision', 'approved', 'expiresAt', '2020-01-01T00:00:00Z', 'receipt', pg_temp.receipt('faithful'),
+    'expectedHash', pg_temp.claim_hash(%1$L), 'run', pg_temp.run()))$$,
   pg_temp.id('c_unrev')),
   '22023', 'invalid review.expiresAt: must be in the future', 'an approval must expire in the future');
 select pg_temp.keep('c_long', pg_temp.claim('Synthetic claim with a long review cycle.', pg_temp.id('s3')));
-select lives_ok($$select pg_temp.approve_until(pg_temp.id('c_long'), '2040-01-01T00:00:00Z')$$,
-  'an approval may run longer than five years (no unrequested ceiling)');
+-- ADR 0007 replaces "no ceiling" with the plan's 24-month approval validity.
+select throws_ok($$select pg_temp.approve_until(pg_temp.id('c_long'), '2040-01-01T00:00:00Z')$$,
+  '22023', 'invalid review.expiresAt: must be at most 24 months away', 'an approval lasts at most 24 months (ADR 0007)');
 -- Source citation metadata depends on the kind (plan v3 section 4).
 select throws_ok($$select public.publisher_add_source('00000000-0000-0000-0000-0000000000c1',
   '{"kind": "textbook", "title": "x", "url": "https://example.org/book", "license": "x"}')$$,
@@ -562,6 +596,8 @@ select results_eq($$select * from pg_temp.alice_v2_credit() as t (lesson_id uuid
 select pg_temp.as_service();
 select public.publisher_save_course_draft('00000000-0000-0000-0000-0000000000c1',
   pg_temp.g_tree('The scapula rotates upward as the arm rises.', false, 'Synthetic course, revised'));
+-- Only the course title changed: the lesson receipts still match; the course text needs its own.
+select pg_temp.review_lessons('61000000-0000-4000-8000-000000000000');
 select pg_temp.keep('g_v3', public.publisher_publish_course('00000000-0000-0000-0000-0000000000c1', '61000000-0000-4000-8000-000000000000'));
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
 select pg_temp.keep('tess_v3', public.assign_version('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.id('g_v3'), '00000000-0000-0000-0000-0000000000a3'));
@@ -693,7 +729,7 @@ select is((select count(*) from information_schema.routine_privileges
   'no grant exposes content functions to anon or PUBLIC');
 select is((select array_agg(distinct action order by action) from private.content_audit
   where actor = '00000000-0000-0000-0000-0000000000c1'),
-  array['add_claim', 'add_source', 'publish', 'publish_unchanged', 'record_retraction', 'review_block', 'review_claim', 'save_draft'],
+  array['add_claim', 'add_source', 'publish', 'publish_unchanged', 'record_retraction', 'review_block', 'review_claim', 'review_course', 'review_lesson', 'save_draft'],
   'every kind of publisher action is audited under the named actor');
 select ok(exists (select 1 from private.content_audit where actor = '00000000-0000-0000-0000-0000000000a2' and action = 'publish'
   and org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 'a gym publish is audited under the lead');

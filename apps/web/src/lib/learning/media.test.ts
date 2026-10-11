@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isVideoType, resolveContentUrl, SERVABLE_MEDIA, storageObjectFor } from "./media";
+import { isVideoType, resolveContentUrl, resolveMediaUrl, SERVABLE_MEDIA, storageObjectFor } from "./media";
 
 const GYM = "00000000-0000-4000-8000-000000000500";
 const OTHER = "00000000-0000-4000-8000-000000000501";
@@ -48,6 +48,28 @@ describe("resolveContentUrl", () => {
       expect(resolveContentUrl(src, { orgId: GYM })).toEqual({ kind: "unavailable" });
     },
   );
+});
+
+describe("legacy video-host media (ADR 0007)", () => {
+  it.each(["https://i.ytimg.com/vi/AbCdEfGhIj0/0.jpg", "https://www.youtube.com/watch?v=AbCdEfGhIj0", "https://youtu.be/AbCdEfGhIj0", "https://www.youtube-nocookie.com/embed/x"])(
+    "renders %s as unavailable media, so nothing loads from YouTube",
+    (src) => {
+      expect(resolveMediaUrl(src, { orgId: null })).toEqual({ kind: "unavailable" });
+    },
+  );
+
+  it("keeps a YouTube resource link as an ordinary external link (a click, not a load)", () => {
+    expect(resolveContentUrl("https://www.youtube.com/watch?v=AbCdEfGhIj0", { orgId: null })).toEqual({
+      kind: "external",
+      url: "https://www.youtube.com/watch?v=AbCdEfGhIj0",
+    });
+  });
+
+  it("resolves ordinary media exactly as content links", () => {
+    for (const src of ["https://cdn.example.org/a.png", "/media/content/a.png", "/elsewhere/a.png"]) {
+      expect(resolveMediaUrl(src, { orgId: null })).toEqual(resolveContentUrl(src, { orgId: null }));
+    }
+  });
 });
 
 describe("SERVABLE_MEDIA", () => {
