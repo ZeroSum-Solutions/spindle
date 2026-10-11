@@ -83,18 +83,22 @@ async function colours(el: Locator, prop: "color" | "outlineColor" = "color") {
   }, prop);
 }
 
-/** Every brand utility the preview uses. A build whose stylesheet lacks one draws that part in Atlas colours. */
-const BRAND_UTILITIES = [".bg-brand{", ".border-brand{", ".text-brand{", ".text-on-brand{", ".hover\\:bg-brand-hover:hover{", ".hover\\:text-brand-hover:hover{"];
+/** Every brand utility the preview uses, as selectors appear in CSS. A build whose stylesheet lacks one draws that part in Atlas colours. */
+const BRAND_UTILITIES = [".bg-brand", ".border-brand", ".text-brand", ".text-on-brand", ".hover\\:bg-brand-hover:hover", ".hover\\:text-brand-hover:hover"];
+/** Matches a selector as a whole rule selector, minified (`.a{`) or not (`.a {`, `.a,`). */
+const ruleFor = (selector: string) => new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*[{,]`);
 
 test.describe("tenant brand preview", () => {
   test("the served stylesheets carry every brand utility the preview uses", async ({ page, request }) => {
-    // A guard against a stale or partial CSS build: the selected control once rendered in body text
-    // on the accent (1.57:1) in a fresh production run, which only a missing .text-on-brand explains.
+    // A guard against a stale or partial CSS build. In one fresh production run the selected control
+    // rendered in body text on the accent (1.57:1); a missing .text-on-brand rule is our hypothesis
+    // for that, not a proven cause. This test makes a recurrence diagnosable.
     await page.goto("/brand-preview");
     const hrefs = await page.locator('link[rel="stylesheet"]').evaluateAll((els) => els.map((el) => (el as HTMLLinkElement).href));
-    expect(hrefs.length).toBeGreaterThan(0);
-    const css = (await Promise.all(hrefs.map(async (href) => (await request.get(href)).text()))).join("\n");
-    for (const rule of BRAND_UTILITIES) expect(css, `stylesheet rule ${rule}`).toContain(rule);
+    const inline = await page.locator("style").allTextContents();
+    expect(hrefs.length + inline.length).toBeGreaterThan(0);
+    const css = [...(await Promise.all(hrefs.map(async (href) => (await request.get(href)).text()))), ...inline].join("\n");
+    for (const selector of BRAND_UTILITIES) expect(css, `stylesheet rule ${selector}`).toMatch(ruleFor(selector));
   });
 
   for (const view of VIEWS) {
