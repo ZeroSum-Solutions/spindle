@@ -1,0 +1,29 @@
+{
+  "message": {
+    "DOI": "10.1000/synthetic.w",
+    "title": [
+      "Synthetic withdrawn preprint"
+    ],
+    "container-title": [
+      "Synthetic Journal"
+    ],
+    "type": "journal-article",
+    "issued": {
+      "date-parts": [
+        [
+          2019,
+          5
+        ]
+      ]
+    },
+    "relation": {},
+    "updated-by": [
+      {
+        "DOI": "10.1000/synthetic.wn",
+        "type": "withdrawal",
+        "label": "Withdrawal",
+        "source": "retraction-watch"
+      }
+    ]
+  }
+}

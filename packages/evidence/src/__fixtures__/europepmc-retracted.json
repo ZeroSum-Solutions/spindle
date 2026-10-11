@@ -1,0 +1,47 @@
+{
+  "hitCount": 2,
+  "resultList": {
+    "result": [
+      {
+        "id": "1",
+        "pmid": "1",
+        "doi": "10.1000/synthetic.1",
+        "title": "Synthetic retracted paper.",
+        "pubYear": "2015",
+        "isOpenAccess": "N",
+        "citedByCount": 3,
+        "journalInfo": {
+          "journal": {
+            "title": "Synthetic Journal"
+          }
+        },
+        "pubTypeList": {
+          "pubType": [
+            "Journal Article",
+            "Retracted Publication"
+          ]
+        },
+        "abstractText": "SYNTHETIC ABSTRACT FOR TESTS"
+      },
+      {
+        "id": "2",
+        "pmid": "2",
+        "doi": "10.1000/synthetic.2",
+        "title": "Retraction notice: synthetic paper.",
+        "pubYear": "2016",
+        "isOpenAccess": "N",
+        "citedByCount": 0,
+        "journalInfo": {
+          "journal": {
+            "title": "Synthetic Journal"
+          }
+        },
+        "pubTypeList": {
+          "pubType": [
+            "Retraction of Publication"
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,229 @@
+{
+  "meta": {
+    "count": 1117,
+    "db_response_time_ms": 47,
+    "page": 1,
+    "per_page": 2,
+    "groups_count": null,
+    "x_query": {
+      "oql": "get works where published since 2018-01-01\n  and full text has (rotator cuff exercise)\n  and type is [review](review)",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "column_id": "from_publication_date",
+            "value": "2018-01-01"
+          },
+          {
+            "column_id": "fulltext.search",
+            "value": "rotator cuff exercise",
+            "operator": "has"
+          },
+          {
+            "column_id": "type",
+            "value": "review"
+          }
+        ]
+      },
+      "url": "/works?filter=from_publication_date:2018-01-01,fulltext.search:rotator cuff exercise,type:review&per_page=2"
+    },
+    "cost_usd": 0.001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W3043046853",
+      "doi": "https://doi.org/10.1016/j.apmr.2020.06.013",
+      "title": "The Efficacy of Higher Versus Lower Dose Exercise in Rotator Cuff Tendinopathy: A Systematic Review of Randomized Controlled Trials",
+      "publication_year": 2020,
+      "type": "review",
+      "is_retracted": false,
+      "cited_by_count": 56,
+      "open_access": {
+        "is_oa": true,
+        "oa_status": "green",
+        "oa_url": "https://e-space.mmu.ac.uk/626200/3/Malliaras%20et%20al%202020_%20high%20vs%20low%20dose%20systematic%20review.pdf",
+        "any_repository_has_fulltext": true
+      },
+      "best_oa_location": {
+        "id": "pmh:oai:e-space.mmu.ac.uk:626200",
+        "doi": null,
+        "is_oa": true,
+        "landing_page_url": "https://e-space.mmu.ac.uk/view/authors/23bdf39eaff02f9eebd0e8ce84cffcc3.html>",
+        "pdf_url": "https://e-space.mmu.ac.uk/626200/3/Malliaras%20et%20al%202020_%20high%20vs%20low%20dose%20systematic%20review.pdf",
+        "source": {
+          "id": "https://openalex.org/S4306401617",
+          "display_name": "e-space (Manchester Metropolitan University)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I11983389",
+          "host_organization_name": "Manchester Metropolitan University",
+          "host_organization_lineage": [
+            "https://openalex.org/I11983389"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": null,
+        "raw_type": "Article"
+      },
+      "primary_location": {
+        "id": "doi:10.1016/j.apmr.2020.06.013",
+        "doi": "https://doi.org/10.1016/j.apmr.2020.06.013",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.1016/j.apmr.2020.06.013",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S110924429",
+          "display_name": "Archives of Physical Medicine and Rehabilitation",
+          "issn_l": "0003-9993",
+          "issn": [
+            "0003-9993",
+            "1532-821X"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "listed_in": [
+            "cwts-core",
+            "doyens",
+            "jufo-3",
+            "ki-jl-2",
+            "medline",
+            "norway-2"
+          ],
+          "host_organization": "https://openalex.org/P4310320990",
+          "host_organization_name": "Elsevier BV",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320990"
+          ],
+          "host_organization_lineage_names": [
+            "Elsevier BV"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Archives of Physical Medicine and Rehabilitation",
+        "raw_type": "journal-article"
+      },
+      "ids": {
+        "openalex": "https://openalex.org/W3043046853",
+        "doi": "https://doi.org/10.1016/j.apmr.2020.06.013",
+        "mag": "3043046853",
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/32682937"
+      }
+    },
+    {
+      "id": "https://openalex.org/W3138277308",
+      "doi": "https://doi.org/10.3390/diagnostics11030529",
+      "title": "Exercise-Based Muscle Development Programmes and Their Effectiveness in the Functional Recovery of Rotator Cuff Tendinopathy: A Systematic Review",
+      "publication_year": 2021,
+      "type": "review",
+      "is_retracted": false,
+      "cited_by_count": 36,
+      "open_access": {
+        "is_oa": true,
+        "oa_status": "gold",
+        "oa_url": "https://www.mdpi.com/2075-4418/11/3/529/pdf?version=1616120950",
+        "any_repository_has_fulltext": true
+      },
+      "best_oa_location": {
+        "id": "doi:10.3390/diagnostics11030529",
+        "doi": "https://doi.org/10.3390/diagnostics11030529",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.3390/diagnostics11030529",
+        "pdf_url": "https://www.mdpi.com/2075-4418/11/3/529/pdf?version=1616120950",
+        "source": {
+          "id": "https://openalex.org/S4210172076",
+          "display_name": "Diagnostics",
+          "issn_l": "2075-4418",
+          "issn": [
+            "2075-4418"
+          ],
+          "is_oa": true,
+          "is_in_doaj": true,
+          "is_core": true,
+          "listed_in": [
+            "cwts-core",
+            "doaj",
+            "norway-1"
+          ],
+          "host_organization": "https://openalex.org/P4310310987",
+          "host_organization_name": "Multidisciplinary Digital Publishing Institute",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310310987"
+          ],
+          "host_organization_lineage_names": [
+            "Multidisciplinary Digital Publishing Institute"
+          ],
+          "type": "journal"
+        },
+        "license": "cc-by",
+        "license_id": "https://openalex.org/licenses/cc-by",
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Diagnostics",
+        "raw_type": "journal-article"
+      },
+      "primary_location": {
+        "id": "doi:10.3390/diagnostics11030529",
+        "doi": "https://doi.org/10.3390/diagnostics11030529",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.3390/diagnostics11030529",
+        "pdf_url": "https://www.mdpi.com/2075-4418/11/3/529/pdf?version=1616120950",
+        "source": {
+          "id": "https://openalex.org/S4210172076",
+          "display_name": "Diagnostics",
+          "issn_l": "2075-4418",
+          "issn": [
+            "2075-4418"
+          ],
+          "is_oa": true,
+          "is_in_doaj": true,
+          "is_core": true,
+          "listed_in": [
+            "cwts-core",
+            "doaj",
+            "norway-1"
+          ],
+          "host_organization": "https://openalex.org/P4310310987",
+          "host_organization_name": "Multidisciplinary Digital Publishing Institute",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310310987"
+          ],
+          "host_organization_lineage_names": [
+            "Multidisciplinary Digital Publishing Institute"
+          ],
+          "type": "journal"
+        },
+        "license": "cc-by",
+        "license_id": "https://openalex.org/licenses/cc-by",
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Diagnostics",
+        "raw_type": "journal-article"
+      },
+      "ids": {
+        "openalex": "https://openalex.org/W3138277308",
+        "doi": "https://doi.org/10.3390/diagnostics11030529",
+        "mag": "3138277308",
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/33809604"
+      }
+    }
+  ],
+  "group_by": []
+}

@@ -1,0 +1,41 @@
+{
+  "hitCount": 1,
+  "resultList": {
+    "result": [
+      {
+        "id": "32571081",
+        "pmid": "32571081",
+        "doi": "10.1177/0269215520934147",
+        "title": "Effectiveness of progressive and resisted and non-progressive or non-resisted exercise in rotator cuff related shoulder pain: a systematic review and meta-analysis of randomized controlled trials.",
+        "pubYear": "2020",
+        "isOpenAccess": "N",
+        "citedByCount": 55,
+        "journalInfo": {
+          "issue": "9",
+          "volume": "34",
+          "journalIssueId": 2989452,
+          "dateOfPublication": "2020 Sep",
+          "monthOfPublication": 9,
+          "yearOfPublication": 2020,
+          "journal": {
+            "medlineAbbreviation": "Clin Rehabil",
+            "title": "Clinical rehabilitation",
+            "essn": "1477-0873",
+            "issn": "0269-2155",
+            "nlmid": "8802181",
+            "isoabbreviation": "Clin Rehabil"
+          },
+          "printPublicationDate": "2020-09-01"
+        },
+        "pubTypeList": {
+          "pubType": [
+            "Meta-Analysis",
+            "Systematic Review",
+            "Journal Article"
+          ]
+        },
+        "abstractText": "SYNTHETIC ABSTRACT FOR TESTS"
+      }
+    ]
+  }
+}

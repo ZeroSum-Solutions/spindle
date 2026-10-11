@@ -1,0 +1,117 @@
+{
+  "count": 920,
+  "results": [
+    {
+      "id": 9,
+      "uuid": "1b020b3a-3732-4c7e-92fd-a0cec90ed69b",
+      "category": {
+        "id": 10,
+        "name": "Abs"
+      },
+      "muscles": [
+        {
+          "id": 11,
+          "name": "Biceps femoris",
+          "name_en": "Hamstrings",
+          "is_front": false,
+          "image_url_main": "https://wger.de/static/images/muscles/main/muscle-11.54ef31755917.svg",
+          "image_url_secondary": "https://wger.de/static/images/muscles/secondary/muscle-11.a2bc76fe157a.svg"
+        },
+        {
+          "id": 8,
+          "name": "Gluteus maximus",
+          "name_en": "Glutes",
+          "is_front": false,
+          "image_url_main": "https://wger.de/static/images/muscles/main/muscle-8.fbdfb46f3bc0.svg",
+          "image_url_secondary": "https://wger.de/static/images/muscles/secondary/muscle-8.605e4e1a0277.svg"
+        }
+      ],
+      "muscles_secondary": [
+        {
+          "id": 10,
+          "name": "Quadriceps femoris",
+          "name_en": "Quads",
+          "is_front": true,
+          "image_url_main": "https://wger.de/static/images/muscles/main/muscle-10.b1445ea1acf6.svg",
+          "image_url_secondary": "https://wger.de/static/images/muscles/secondary/muscle-10.55e36d852778.svg"
+        },
+        {
+          "id": 6,
+          "name": "Rectus abdominis",
+          "name_en": "Abs",
+          "is_front": true,
+          "image_url_main": "https://wger.de/static/images/muscles/main/muscle-6.592f938fa8c7.svg",
+          "image_url_secondary": "https://wger.de/static/images/muscles/secondary/muscle-6.370f77c2860e.svg"
+        }
+      ],
+      "equipment": [
+        {
+          "id": 10,
+          "name": "Kettlebell"
+        }
+      ],
+      "license": {
+        "id": 2,
+        "full_name": "Creative Commons Attribution Share Alike 4",
+        "short_name": "CC-BY-SA 4",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/deed.en"
+      },
+      "license_author": "deusinvictus",
+      "translations": [
+        {
+          "name": "2 Handed Kettlebell Swing",
+          "language": 2
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "uuid": "53906cd1-61f1-4d56-ac60-e4fcc5824861",
+      "category": {
+        "id": 9,
+        "name": "Legs"
+      },
+      "muscles": [
+        {
+          "id": 8,
+          "name": "Gluteus maximus",
+          "name_en": "Glutes",
+          "is_front": false,
+          "image_url_main": "https://wger.de/static/images/muscles/main/muscle-8.fbdfb46f3bc0.svg",
+          "image_url_secondary": "https://wger.de/static/images/muscles/secondary/muscle-8.605e4e1a0277.svg"
+        }
+      ],
+      "muscles_secondary": [],
+      "equipment": [],
+      "license": {
+        "id": 1,
+        "full_name": " Creative Commons Attribution Share Alike 3",
+        "short_name": "CC-BY-SA 3",
+        "url": "https://creativecommons.org/licenses/by-sa/3.0/deed.en"
+      },
+      "license_author": "flori",
+      "translations": [
+        {
+          "name": "Adduction de hanche assise",
+          "language": 12
+        },
+        {
+          "name": "Adduktoren-Maschine",
+          "language": 1
+        },
+        {
+          "name": "Aducción de Cadera en Máquina",
+          "language": 4
+        },
+        {
+          "name": "Seated Hip Adduction",
+          "language": 2
+        },
+        {
+          "name": "Зведення ніг у тренажері",
+          "language": 15
+        }
+      ]
+    }
+  ]
+}

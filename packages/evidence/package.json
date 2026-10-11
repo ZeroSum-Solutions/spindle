@@ -1,0 +1,15 @@
+{
+  "name": "@spindle/evidence",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "smoke": "tsx scripts/smoke.ts",
+    "record": "tsx scripts/record-fixtures.ts"
+  },
+  "dependencies": { "zod": "^4" },
+  "devDependencies": { "@types/node": "^24", "tsx": "^4" }
+}
