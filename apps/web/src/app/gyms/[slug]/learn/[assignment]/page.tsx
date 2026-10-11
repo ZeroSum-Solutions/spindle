@@ -39,7 +39,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
 
   return (
     <LearnShell gym={ctx.org.name} back={back}>
-      <div className="flex max-w-3xl flex-col gap-6">
+      <div data-layout="column" className="mx-auto flex w-full max-w-3xl flex-col gap-6">
         <header className="flex flex-col gap-3">
           <p className="flex flex-wrap items-center gap-2">
             <LayerLabel layer={view.layer} />
