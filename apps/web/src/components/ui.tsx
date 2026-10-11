@@ -2,17 +2,25 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { TriangleAlert } from "lucide-react";
 
-/** The app header: wordmark home link, plus optional gym context on the right. */
-export function AppHeader({ context }: { context?: ReactNode }) {
+/**
+ * The app header: wordmark home link, plus optional gym context on the right. `frame`
+ * is the page's content frame, so the wordmark lines up with the content below it.
+ * The 64px bar leaves room above the 44px link for the 3px focus ring and its 4px offset.
+ */
+export function AppHeader({ context, frame = "max-w-[1440px]" }: { context?: ReactNode; frame?: string }) {
   return (
-    <header className="border-b border-border bg-surface">
-      <div className="mx-auto flex min-h-14 w-full max-w-[1440px] items-center justify-between gap-4 px-4 md:px-8">
-        <Link href="/gyms" className="-mx-1 inline-flex min-h-11 items-center px-1" aria-label="Spindle, your gyms">
+    <header className="border-b border-border bg-surface px-4 md:px-8">
+      <div className={`mx-auto flex min-h-16 w-full items-center justify-between gap-4 ${frame}`}>
+        <Link href="/gyms" className="-mx-1 inline-flex min-h-11 shrink-0 items-center px-1" aria-label="Spindle, your gyms">
           {/* The full wordmark is never narrower than 120px, so the d cut stays legible. */}
           {/* eslint-disable-next-line @next/next/no-img-element -- a static SVG gains nothing from the optimizer */}
-          <img src="/brand/spindle-wordmark-ink.svg" alt="" width={120} height={33} className="h-[33px] w-[120px]" />
+          <img src="/brand/spindle-wordmark-ink.svg" alt="" width={120} height={33} className="h-[33px] w-[120px] max-w-none" />
         </Link>
-        {context ? <div className="min-w-0 truncate text-label text-text-muted">{context}</div> : null}
+        {context ? (
+          <div data-header-context title={typeof context === "string" ? context : undefined} className="min-w-0 flex-1 truncate text-right text-label text-text-muted">
+            {context}
+          </div>
+        ) : null}
       </div>
     </header>
   );
@@ -21,7 +29,8 @@ export function AppHeader({ context }: { context?: ReactNode }) {
 export function Page({ title, children }: { title: string; children: ReactNode }) {
   return (
     <>
-      <AppHeader />
+      {/* The header frame matches the main column's content box (36rem less its 1rem padding each side). */}
+      <AppHeader frame="max-w-[34rem]" />
       <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-12">
         <h1 className="text-heading font-medium text-text">{title}</h1>
         {children}

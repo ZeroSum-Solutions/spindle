@@ -33,6 +33,12 @@ typography:
     fontWeight: 500
     lineHeight: 1.08
     letterSpacing: -0.04em
+  heading-lesson:
+    fontFamily: Geist
+    fontSize: 2.5rem
+    fontWeight: 500
+    lineHeight: 1.1
+    letterSpacing: -0.035em
   heading:
     fontFamily: Geist
     fontSize: 2rem
@@ -151,7 +157,7 @@ Spindle teaches personal trainers how the body works, and every science claim is
 
 ## Typography
 
-Geist for everything readable, Geist Mono only for identifiers and versions (`v2`, lesson numbers, DOIs). Both load through `next/font`, which self-hosts them (SIL OFL; licences in `docs/design/spindle/assets/`). Lesson text is 18px/1.65 at most 68ch. Labels are 14px; source details that a learner must read stay at 16px. Headings: 32px desktop, 28px mobile. Sentence case everywhere, including callout labels.
+Geist for everything readable, Geist Mono only for identifiers and versions (`v2`, lesson numbers, DOIs). Both load through `next/font`, which self-hosts them (SIL OFL; licences in `docs/design/spindle/assets/`). Lesson text is 18px/1.65 at most 68ch. Labels are 14px; source details that a learner must read stay at 16px. Headings: 32px desktop, 28px mobile. **Lesson titles use their own step, `heading-lesson`: 40px/1.1 from 768px, 28px/1.15 below** (token `--text-heading-lesson`; added 2026-10-11 after the design audit, so the lesson opener has presence). Sentence case everywhere, including callout labels.
 
 ## Layout
 
@@ -162,10 +168,15 @@ Geist for everything readable, Geist Mono only for identifiers and versions (`v2
 - One column below 768px, 16px gutters. No horizontal scrolling at 320px (asserted in `e2e/player.spec.ts`).
 - The course list leads with a single "Resume lesson" action, taken from the newest assigned version of each course. Older versions of a course stay reachable from its row.
 - Curriculum layer (Base, Modality, Gym method) labels a course. Science or practice-based labels a block. They are separate axes and never stand in for each other.
+- **Support runs.** Back-to-back blocks with the same support share one label at the start of the run; a heading, image or diagram ends the run. From 1024px every supported block also carries a 2px rule in the left margin, `science` green or `practice` brown, so support stays visible without repeating the chip. Words and colour both remain.
+- **Header frame.** The app header's inner frame is the page's content frame (`LearnShell` frame, or the form column on sign-in), so the wordmark lines up with the content. The bar is 64px tall so the focus ring never touches the window edge. A gym name beside the wordmark truncates (full name in its title); it never overlaps the mark.
+- **Lesson navigation.** Below 768px, previous is a small link above a full-width 48px "Next lesson" button that names the lesson; from 768px they share a row.
+- **Completion card.** Once a lesson is done the card says it once ("Lesson complete · v2 · 11 Oct 2026", or "Credited · v3 · from your completion on … in v1") and holds the one ink action: the next lesson, or back to the course.
+- **Course overview.** "Resume lesson" comes before the version notice. The notice is a compact list (Pencil, Plus, Minus beside the words Changed, Added, Removed) with one muted line of explanation.
 
 ## Elevation & Depth
 
-Flat: surfaces and 1px borders, no shadows on cards or buttons. No glow, glass or gradient behind lesson text.
+Flat: surfaces and 1px borders, no shadows on cards or buttons. No glow, glass or gradient behind lesson text. **Bordered cards are for things you interact with** (course rows, claim disclosures, quizzes, completion, the outline disclosure). Explanations and lists that are only read (the support legend, the version notice, diagram panels, completed-course notes) are `surface-muted` panels; resources and objectives are open sections between rules.
 
 ## Shapes
 
@@ -199,6 +210,13 @@ Do show what changed between assigned versions. Do say "unavailable" rather than
 Do not use streaks, leaderboards or confetti. Do not animate lesson text, hijack scrolling or loop anything inside a lesson. Do not show "saved" before the server confirms it. Do not add a motion library for an effect CSS or SVG can do. Do not commit third-party screenshots, logos or component source.
 
 ## Brand
+
+**Tenant brand (planned, phase 4).** A gym or coach-creator brand will replace Spindle's in four jobs only: the header mark, links, the current-lesson marker and the focus ring, through three tokens (`tenant-mark`, `tenant-accent`, `tenant-on-accent`). They are checked when uploaded (4.5:1 for links, 3:1 for the focus ring, darkened automatically if they fail). Science, practice, caution and danger colours are never brandable. Not built yet; the landing page already renders from a `Brand` object.
+
+**Cut 03 motif.** The d cut leans 12 degrees from vertical (horizontal run = 0.2126 x height). It recurs as the slanted tick that leads landing section headings (`.cut-tick`), the leading edge of the current-lesson marker (`.cut-marker`), and the sheets of the layer-stack drawing. Never on lesson text.
+
+**Illustrations.** Original line art drawn as inline SVG from simple geometry, never traced: 1.75px strokes at any size (`vector-effect: non-scaling-stroke`), round caps and joins, ink lines, `control` grey for context structures, dashed lines for structures behind others, and one `brand-soft` fill on the structure under discussion. Every drawing has a `<title>`, a `<desc>` and a text legend, and says "Schematic, not to scale". Any text a reader must read (marker numbers, notes) is HTML at the 14px label size over or beside the drawing, never SVG text that shrinks with it; SVG text is kept for large labels that stay at least 16px at 320px. Laterality follows the subject: the shoulder complex is the subject's left shoulder seen from the front. Diagrams are placed by id (`components/learn/diagrams.tsx`); unknown ids show the "not available yet" state. Provenance is in `docs/design/spindle/asset-provenance.json`.
+
 
 The wordmark is the lowercase Cut 03 mark: a diagonal cut through the **d** ascender, a **solid l**, and a cut through the **i** dot. Never move the cut to the l, stretch, outline or decorate the mark.
 

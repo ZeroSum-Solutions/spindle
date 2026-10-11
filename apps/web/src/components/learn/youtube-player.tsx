@@ -2,8 +2,8 @@
 
 import { useEffect, useId, useReducer, useRef, useState } from "react";
 import { ExternalLink, Play, VideoOff } from "lucide-react";
-import { createIframeApiLoader, type YTNamespace } from "@/lib/video/iframe-api";
-import { embedSrc, IFRAME_API_URL, nextPlayerState, PRIVACY_URL, READY_TIMEOUT_MS, segmentLabel, TERMS_URL, watchUrl } from "@/lib/video/youtube";
+import { createIframeApiLoader, type YTNamespace } from "../../lib/video/iframe-api";
+import { embedSrc, IFRAME_API_URL, nextPlayerState, PRIVACY_URL, READY_TIMEOUT_MS, segmentLabel, TERMS_URL, watchUrl } from "../../lib/video/youtube";
 
 /** The frozen segment plus the label the facade shows. */
 export interface PlayerClip {

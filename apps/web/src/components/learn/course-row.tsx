@@ -13,15 +13,19 @@ export function CourseRow({ item, base, earlier = [], moduleComplete = null }: {
     <div className="flex flex-col">
       <LatestRow item={item} base={base} moduleComplete={moduleComplete} />
       {earlier.length > 0 ? (
-        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-4 text-label text-text-muted md:px-6">
-          <span>Earlier versions:</span>
-          {earlier.map((e) => (
-            <Link key={e.id} href={`${base}/${e.id}`} className="inline-flex min-h-11 items-center text-brand underline underline-offset-4 hover:text-brand-hover">
-              v{e.versionNumber}
-              {e.available ? ` · ${e.view.done} of ${e.view.total} done` : " · unavailable"}
-            </Link>
-          ))}
-        </p>
+        <div className="flex flex-col gap-2 px-4 pb-4 md:px-6">
+          <p className="text-label text-text-muted">Earlier versions</p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1">
+            {earlier.map((e) => (
+              <li key={e.id}>
+                <Link href={`${base}/${e.id}`} className="inline-flex min-h-11 items-center whitespace-nowrap text-label text-brand underline underline-offset-4 hover:text-brand-hover">
+                  v{e.versionNumber}
+                  {e.available ? ` · ${e.view.done} of ${e.view.total} done` : " · unavailable"}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
     </div>
   );

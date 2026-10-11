@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { LessonBlocks, LessonMedia, LessonResources } from "@/components/learn/blocks";
 import { CompleteLesson } from "@/components/learn/complete-lesson";
 import { IntegrityAlert, LayerLabel, LessonStateDetail, SupportLegend, VersionTag } from "@/components/learn/labels";
+import { receiptLine } from "@/lib/learning/presentation";
 import { LessonOutline } from "@/components/learn/outline";
 import { LearnShell, LoadingNote, VersionUnavailable } from "@/components/learn/shell";
 import { completeLesson, type CompleteState, type LessonRoute } from "@/lib/learning/complete";
@@ -74,7 +75,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
                 Lesson {index + 1} of {lessons.length} · {state.partTitle}
               </span>
             </p>
-            <h1 id="lesson-title" className="text-heading font-medium text-text">
+            <h1 id="lesson-title" className="text-heading-lesson font-medium text-text">
               {lesson.title}
             </h1>
             <p className="text-label text-text-muted">
@@ -96,7 +97,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
           ) : null}
 
           {lesson.objectives.length > 0 ? (
-            <section className="rounded-card border border-border bg-surface p-4">
+            <section className="border-t border-border pt-4">
               <h2 className="text-label font-medium text-text-muted">In this lesson you will</h2>
               <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-base">
                 {lesson.objectives.map((o, i) => (
@@ -116,11 +117,10 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
             <CompleteLesson
               complete={completeAction({ gym: ctx.org.slug, assignmentId: detail.assignmentId, lessonId: lesson.id })}
               done={done}
+              next={next ? { href: `${courseHref}/${next.slug}`, label: `Next: ${next.title}` } : { href: courseHref, label: "Back to the course" }}
               receipt={
                 done ? (
-                  <>
-                    <span className="font-medium">{state.state === "done" ? "Completed." : "Credited."}</span> <LessonStateDetail lesson={state} />
-                  </>
+                  <ReceiptText line={receiptLine(state, view.versionNumber)} />
                 ) : state.state === "updated" ? (
                   <LessonStateDetail lesson={state} />
                 ) : null
@@ -128,25 +128,29 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
             />
           </section>
 
-          <nav aria-label="Lesson navigation" className="flex flex-wrap justify-between gap-3 text-base">
+          {/* Phones: previous is a small link, next the one full-width way forward. From 768px they share a row. */}
+          <nav aria-label="Lesson navigation" className="flex flex-col gap-3 text-base md:flex-row md:items-center md:justify-between">
             {prev ? (
-              <Link href={`${courseHref}/${prev.slug}`} className="inline-flex min-h-11 items-center gap-1.5 text-brand hover:text-brand-hover">
-                <ArrowLeft aria-hidden strokeWidth={1.75} className="size-4" />
+              <Link href={`${courseHref}/${prev.slug}`} className="inline-flex min-h-11 items-center gap-1.5 self-start text-label text-brand hover:text-brand-hover md:self-center">
+                <ArrowLeft aria-hidden strokeWidth={1.75} className="size-4 shrink-0" />
                 <span>
                   <span className="sr-only">Previous lesson: </span>
                   {prev.title}
                 </span>
               </Link>
             ) : (
-              <span />
+              <span className="hidden md:block" />
             )}
             {next ? (
-              <Link href={`${courseHref}/${next.slug}`} className="inline-flex min-h-11 items-center gap-1.5 text-brand hover:text-brand-hover">
-                <span>
-                  <span className="sr-only">Next lesson: </span>
+              <Link
+                href={`${courseHref}/${next.slug}`}
+                className="flex min-h-12 w-full flex-col justify-center rounded-control border border-control bg-surface px-4 py-2 hover:bg-surface-muted md:w-auto md:max-w-[60%] md:items-end md:text-right"
+              >
+                <span className="text-label text-text-muted">Next lesson</span>
+                <span data-next-title className="inline-flex items-center gap-1.5 font-medium text-text">
                   {next.title}
+                  <ArrowRight aria-hidden strokeWidth={1.75} className="size-4 shrink-0" />
                 </span>
-                <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />
               </Link>
             ) : (
               <Link href={courseHref} className="inline-flex min-h-11 items-center gap-1.5 text-brand hover:text-brand-hover">
@@ -170,4 +174,13 @@ function completeAction(route: LessonRoute) {
     "use server";
     return completeLesson(route);
   };
+}
+
+function ReceiptText({ line }: { line: { lead: string; detail: string } | null }) {
+  if (!line) return null;
+  return (
+    <>
+      <span className="font-medium">{line.lead}</span> <span className="text-text-muted">· {line.detail}</span>
+    </>
+  );
 }

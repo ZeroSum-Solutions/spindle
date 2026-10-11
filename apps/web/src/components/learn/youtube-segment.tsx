@@ -1,8 +1,7 @@
 import type { MediaAvailability, VideoSegment } from "@spindle/schema";
-import { SupportLabel } from "@/components/learn/labels";
-import { YouTubePlayer } from "@/components/learn/youtube-player";
-import { clipPlayableNow } from "@/lib/learning/version-media";
-import { clipLabels, clipState } from "@/lib/video/youtube";
+import { clipLabels, clipState } from "../../lib/video/youtube";
+import { SupportLabel } from "./labels";
+import { YouTubePlayer } from "./youtube-player";
 
 /**
  * An optional coaching clip from the practice-media registry. Always practice-based (a
@@ -29,7 +28,10 @@ export function YouTubeSegment({
   // Bound on the server: the client can call it but cannot change which version or clip it asks about.
   async function recheckClip(): Promise<boolean> {
     "use server";
-    return versionId ? clipPlayableNow(versionId, mediaId) : false;
+    if (!versionId) return false;
+    // Loaded on call so this component imports no server-only module and renders in unit tests.
+    const { clipPlayableNow } = await import("../../lib/learning/version-media");
+    return clipPlayableNow(versionId, mediaId);
   }
   const { title, channel } = clipLabels(availability);
   return (
