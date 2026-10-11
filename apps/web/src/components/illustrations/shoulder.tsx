@@ -1,50 +1,34 @@
-import { useId, type ReactNode } from "react";
+import { ACCENT_FILL, CONTEXT, P, STROKE, SURFACE_FILL, type DrawingSpec } from "./primitives";
 
 // Original schematic line art (Spindle, AI-assisted, CC BY-SA 4.0; provenance in
-// docs/design/spindle/asset-provenance.json). Drawn from simple geometry, not traced
-// from any atlas. Lucide-style strokes: 1.75px at any size, round caps and joins, ink
-// lines, one accent fill on the structure the lesson is about. Not to scale.
+// docs/design/spindle/asset-provenance.json). Drawn from simple geometry, not traced from
+// any atlas. Lucide-style strokes, ink lines, one accent fill on the structure the lesson is
+// about. Not to scale. Geometry and named anchors only: alt text, caption and legend come
+// from the lesson's diagram block (Sol R16).
 
-const STROKE = { fill: "none", stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round", vectorEffect: "non-scaling-stroke" } as const;
-const CONTEXT = { ...STROKE, stroke: "var(--color-control)" } as const;
 const BEHIND = { ...STROKE, strokeDasharray: "4 5" } as const;
 
-function Svg({ title, desc, viewBox, children }: { title: string; desc: string; viewBox: string; children: ReactNode }) {
-  const id = useId();
-  return (
-    <svg viewBox={viewBox} role="img" aria-labelledby={`${id}-t ${id}-d`} className="h-auto w-full text-ink">
-      <title id={`${id}-t`}>{title}</title>
-      <desc id={`${id}-d`}>{desc}</desc>
-      {children}
-    </svg>
-  );
-}
+const SHOULDER_VIEW = { width: 440, height: 340 } as const;
 
-/**
- * Numbered markers, in drawing coordinates. They render as HTML over the drawing, so the
- * numbers stay at the 14px label size at every width instead of shrinking with the SVG.
- */
-export const SHOULDER_MARKERS = [
-  { n: 1, x: 100, y: 84 },
-  { n: 2, x: 290, y: 76 },
-  // Marker 3 sits in clear space right of the humerus, with a leader line to the ball, so it
-  // never covers the socket it labels.
-  { n: 3, x: 414, y: 118 },
-  { n: 4, x: 250, y: 250 },
-] as const;
-const SHOULDER_VIEW = { width: 440, height: 340 };
 /** Key structures, in drawing units, for the marker clearance test. */
-export const SHOULDER_GEOMETRY = { view: SHOULDER_VIEW, glenoidMid: { x: 313, y: 133 }, ball: { x: 344, y: 133, r: 26 }, leader3: { from: { x: 402, y: 121 }, to: { x: 370, y: 128 } } } as const;
+export const SHOULDER_GEOMETRY = {
+  view: SHOULDER_VIEW,
+  glenoidMid: { x: 313, y: 133 },
+  ball: { x: 344, y: 133, r: 26 },
+  leader3: { from: { x: 402, y: 121 }, to: { x: 370, y: 128 } },
+} as const;
 
-/** The shoulder complex, left shoulder from the front (the subject's left): four numbered places, the ball and socket highlighted. */
-export function ShoulderComplex() {
+const SHOULDER_ANCHORS = {
+  sternoclavicular: P(100, 84),
+  acromioclavicular: P(290, 76),
+  // Clear space right of the humerus, with a leader line to the ball, so the marker never covers the socket it labels.
+  glenohumeral: { x: 414, y: 118, leader: SHOULDER_GEOMETRY.leader3 },
+  scapula: P(250, 250),
+} as const;
+
+function ShoulderComplexArt() {
   return (
-    <div className="relative">
-    <Svg
-      viewBox={`0 0 ${SHOULDER_VIEW.width} ${SHOULDER_VIEW.height}`}
-      title="The shoulder complex, left shoulder seen from the front"
-      desc="Schematic line drawing. The collarbone runs from the breastbone to the top of the shoulder blade. The ball at the top of the upper arm bone sits against a shallow socket on the shoulder blade, which lies behind the ribs. Numbers mark the sternoclavicular joint (1), the acromioclavicular joint (2), the glenohumeral ball-and-socket joint (3, highlighted) and the shoulder blade, which lies behind the ribs (4)."
-    >
+    <g>
       {/* Ribs and breastbone, for context. */}
       <path d="M66 70 h26 q7 0 7 7 v74 q0 9 -9 11 h-22 q-9 -2 -9 -11 v-74 q0 -7 7 -7 z" {...CONTEXT} />
       <path d="M100 132 C 160 124 214 142 252 182" {...CONTEXT} />
@@ -61,32 +45,29 @@ export function ShoulderComplex() {
       <path d="M288 66 C 318 56 354 64 374 90 C 362 96 332 92 292 86" {...STROKE} />
       {/* Coracoid: the small hook below the collarbone. */}
       <path d="M262 104 C 276 102 290 108 294 120 C 288 126 278 122 270 116" {...STROKE} />
-      {/* Leader from marker 3 to the ball and socket. */}
-      <line x1={SHOULDER_GEOMETRY.leader3.from.x} y1={SHOULDER_GEOMETRY.leader3.from.y} x2={SHOULDER_GEOMETRY.leader3.to.x} y2={SHOULDER_GEOMETRY.leader3.to.y} data-leader="3" {...STROKE} />
       {/* Socket (glenoid): shallow, facing the ball. */}
       <path d="M320 108 C 311 122 311 144 320 158" {...STROKE} />
       {/* Upper arm bone: the ball (highlighted) and the shaft. */}
-      <circle cx={344} cy={133} r={26} {...STROKE} style={{ fill: "var(--color-brand-soft)" }} />
+      <circle cx={344} cy={133} r={26} {...STROKE} style={ACCENT_FILL} />
       <path d="M330 155 C 334 190 336 240 336 324" {...STROKE} />
       <path d="M368 143 C 370 160 366 190 362 230 C 360 260 360 290 362 324" {...STROKE} />
-    </Svg>
-      {SHOULDER_MARKERS.map(({ n, x, y }) => (
-        <span
-          key={n}
-          aria-hidden
-          data-marker={n}
-          style={{ left: `${(x / SHOULDER_VIEW.width) * 100}%`, top: `${(y / SHOULDER_VIEW.height) * 100}%` }}
-          className="absolute flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[1.75px] border-ink bg-surface font-mono text-label font-medium text-ink"
-        >
-          {n}
-        </span>
-      ))}
-    </div>
+    </g>
   );
 }
 
+/** Lesson 1: the shoulder complex, left shoulder from the front (the subject's left). */
+export const SHOULDER_COMPLEX: DrawingSpec = { view: SHOULDER_VIEW, anchors: SHOULDER_ANCHORS, Art: ShoulderComplexArt };
+
 const SCAPULA = "M0 0 L-58 -16 L-40 112 Z";
 const SPINE = "M-4 -6 L-56 -2";
+const SCAPULA_VIEW = { width: 480, height: 290 } as const;
+
+/** Panel markers sit below each shoulder blade, clear of its lower tip. */
+const SCAPULA_ANCHORS = {
+  "arm-by-side": P(80, 266),
+  "arm-level": P(250, 266),
+  "arm-overhead": P(440, 266),
+} as const;
 
 function ScapulaPanel({ x, rotate, arm }: { x: number; rotate: number; arm: number }) {
   // Pivot at the socket (0,0); the arm leaves the socket at `arm` degrees (0 = straight out, 90 = down).
@@ -95,28 +76,26 @@ function ScapulaPanel({ x, rotate, arm }: { x: number; rotate: number; arm: numb
   return (
     <g transform={`translate(${x} 116)`}>
       <g transform={`rotate(${rotate})`}>
-        <path d={SCAPULA} {...STROKE} style={{ fill: "var(--color-brand-soft)" }} />
+        <path d={SCAPULA} {...STROKE} style={ACCENT_FILL} />
         <path d={SPINE} {...STROKE} />
       </g>
       <line x1={0} y1={0} x2={ex} y2={ey} {...STROKE} />
-      <circle cx={0} cy={0} r={7} {...STROKE} style={{ fill: "var(--color-surface)" }} />
+      <circle cx={0} cy={0} r={7} {...STROKE} style={SURFACE_FILL} />
     </g>
   );
 }
 
-/** Scapular upward rotation at three arm positions, right shoulder blade from behind. */
-export function ScapulaUpwardRotation() {
+function ScapulaUpwardRotationArt() {
   return (
-    <Svg
-      viewBox="0 0 480 250"
-      title="The shoulder blade rotates upward as the arm rises"
-      desc="Three schematic drawings of a right shoulder blade seen from behind. With the arm by the side the shoulder blade sits upright. With the arm level with the shoulder it has rotated upward a little, and with the arm overhead it has rotated upward further, its lower tip swinging out toward the arm. Angles are illustrative."
-    >
+    <g>
       {/* Midline of the back, for reference. */}
       <path d="M14 10 V 240" {...CONTEXT} strokeDasharray="2 6" />
       <ScapulaPanel x={100} rotate={0} arm={90} />
       <ScapulaPanel x={250} rotate={-18} arm={0} />
       <ScapulaPanel x={410} rotate={-42} arm={-76} />
-    </Svg>
+    </g>
   );
 }
+
+/** Lesson 2: a right shoulder blade from behind at three arm positions; angles illustrative. */
+export const SCAPULA_UPWARD_ROTATION: DrawingSpec = { view: SCAPULA_VIEW, anchors: SCAPULA_ANCHORS, Art: ScapulaUpwardRotationArt };

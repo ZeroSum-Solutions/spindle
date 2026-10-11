@@ -1,89 +1,26 @@
-import type { ReactNode } from "react";
 import { ImageOff } from "lucide-react";
-import { Drawing, type DrawingSpec, type LegendItem } from "../illustrations/primitives";
+import type { DiagramContent } from "@spindle/schema";
+import { Drawing, type DrawingSpec } from "../illustrations/primitives";
+import { SCAPULA_UPWARD_ROTATION, SHOULDER_COMPLEX } from "../illustrations/shoulder";
 import { SHOULDER_CUFF } from "../illustrations/shoulder-cuff";
 import { REACH_SCREENS, SHOULDER_WARM_UP } from "../illustrations/shoulder-movement";
 import { PRESS_PULL_OVERHEAD, ROTATION_RECORD_POSITION, SCREEN_POSITIONS } from "../illustrations/shoulder-practice";
-import { ScapulaUpwardRotation, ShoulderComplex } from "../illustrations/shoulder";
 
-// Original diagrams a lesson can place by id (a `diagram` block's diagramId). Each is an
-// inline SVG with its own title and description, plus a text legend so nothing is
-// carried by the drawing alone. Unknown ids render the "not available yet" state.
-
-export interface DiagramEntry {
-  drawing: () => ReactNode;
-  /** Numbered keys for markers in the drawing, or panel labels in order. */
-  legend: { kind: "numbered" | "panels"; items: string[] };
-}
-
-export const DIAGRAMS: Readonly<Record<string, DiagramEntry>> = {
-  "shoulder-complex-front": {
-    drawing: () => <ShoulderComplex />,
-    legend: {
-      kind: "numbered",
-      items: [
-        "Sternoclavicular joint: the collarbone meets the breastbone.",
-        "Acromioclavicular joint: the collarbone meets the top of the shoulder blade.",
-        "Glenohumeral joint: the ball and socket (highlighted).",
-        "The shoulder blade, which lies behind the ribs (dashed).",
-      ],
-    },
-  },
-  "scapula-upward-rotation": {
-    drawing: () => <ScapulaUpwardRotation />,
-    legend: { kind: "panels", items: ["Arm by the side", "Arm level with the shoulder", "Arm overhead"] },
-  },
-};
-
-/**
- * The drawing for a diagram id, or undefined. Only the registry's own keys count: an id
- * like "toString" or "constructor" passes the content schema but must not resolve to an
- * inherited property.
- */
-export function diagramFor(id: string): DiagramEntry | undefined {
-  return Object.hasOwn(DIAGRAMS, id) ? DIAGRAMS[id] : undefined;
-}
-
-export function DiagramFigure({ entry }: { entry: DiagramEntry }) {
-  return (
-    <div className="flex flex-col gap-3 rounded-card bg-surface-muted p-4 md:p-6">
-      <div className="mx-auto w-full max-w-[34rem]">{entry.drawing()}</div>
-      {entry.legend.kind === "numbered" ? (
-        <ol className="flex flex-col gap-1 text-label text-text">
-          {entry.legend.items.map((item, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="font-mono text-code text-text-muted">{i + 1}</span>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <ol className="grid grid-cols-3 gap-2 text-center text-label text-text-muted">
-          {entry.legend.items.map((item, i) => (
-            <li key={i}>{item}</li>
-          ))}
-        </ol>
-      )}
-      <p className="text-label text-text-muted">Schematic, not to scale.</p>
-    </div>
-  );
-}
+// Original diagrams a lesson places by id (a diagram block's diagramId). Code holds geometry
+// and named anchors only; every word a learner reads (alt text, caption, legend) comes from
+// the lesson's diagram block, so it is hashed and reviewed with the lesson (Sol R16).
 
 /* ------------------------------------------------------------------------------------- */
 /* Reviewed diagrams (Sol R16): geometry here, every word from the lesson's diagram block. */
 /* ------------------------------------------------------------------------------------- */
 
-/** The reviewed diagram block content (mirrors DiagramContent in @spindle/schema). */
-export interface ReviewedDiagramContent {
-  diagramId: string;
-  alt: string;
-  caption: string;
-  legend: LegendItem[];
-}
+export type ReviewedDiagramContent = DiagramContent;
 
 /** Drawings by diagram id. Geometry and anchor names only; no text a learner reads. */
 export const DRAWINGS: Readonly<Record<string, DrawingSpec>> = {
-  "shoulder-cuff-and-movers": SHOULDER_CUFF,
+  "shoulder-complex-front": SHOULDER_COMPLEX,
+  "scapula-upward-rotation": SCAPULA_UPWARD_ROTATION,
+  "shoulder-cuff": SHOULDER_CUFF,
   "reach-screens": REACH_SCREENS,
   "shoulder-warm-up": SHOULDER_WARM_UP,
   "screen-start-positions": SCREEN_POSITIONS,
@@ -130,6 +67,31 @@ export function ReviewedDiagram({ content }: { content: ReviewedDiagramContent }
           </ol>
         ) : null}
       </div>
+      {content.caption ? <figcaption className="text-label text-text-muted">{content.caption}</figcaption> : null}
+    </figure>
+  );
+}
+
+/**
+ * A diagram block from before R16 ({diagramId, caption}), still readable in old snapshots. It
+ * shows the drawing without markers, because the block carries no legend, and its own caption.
+ */
+export function LegacyDiagram({ content }: { content: { diagramId: string; caption: string } }) {
+  const spec = drawingFor(content.diagramId);
+  return (
+    <figure data-block="diagram" data-diagram={spec ? "available" : undefined} className="flex flex-col gap-2">
+      {spec ? (
+        <div className="rounded-card bg-surface-muted p-4 md:p-6">
+          <div className="mx-auto w-full max-w-[34rem]">
+            <Drawing spec={spec} alt={content.caption || "Diagram"} legend={[]} />
+          </div>
+        </div>
+      ) : (
+        <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-card border border-dashed border-control bg-surface-muted p-6 text-center text-text-muted">
+          <ImageOff aria-hidden strokeWidth={1.75} className="size-6" />
+          <p className="text-label">This diagram is not available yet.</p>
+        </div>
+      )}
       {content.caption ? <figcaption className="text-label text-text-muted">{content.caption}</figcaption> : null}
     </figure>
   );
