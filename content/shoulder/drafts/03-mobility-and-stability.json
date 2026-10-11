@@ -1,0 +1,267 @@
+{
+  "draft": true,
+  "status": "provisional: written before the outline review; not publishable (claim slots are not approved claims)",
+  "module": "shoulder",
+  "lessonNumber": 3,
+  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
+  "reviewNotes": [
+    "Science sections are removed, never relabelled, if their claims are not approved.",
+    "Fascial and rib-position models carry the limited-evidence note STYLE.md requires."
+  ],
+  "claimSlots": [
+    {
+      "slot": "claim-slot:l3-kyphosis-pain",
+      "statement": "A 2016 systematic review found moderate evidence of no significant difference in thoracic kyphosis between people with and without shoulder pain; a non-significant result does not establish equivalence and study quality varied. A 2024 review of cross-sectional studies found conflicting results for thoracic posture. Both concern association, not causation.",
+      "candidateSources": [
+        {
+          "kind": "systematic_review",
+          "citation": "Barrett E, O'Keeffe M, O'Sullivan K, Lewis J, McCreesh K. Is thoracic spine posture associated with shoulder pain, range of motion and function? A systematic review. Man Ther. 2016;26:38-46.",
+          "doi": "10.1016/j.math.2016.07.008",
+          "pmid": "27475532",
+          "rights": "Crown copyright 2016, published by Elsevier; all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
+        },
+        {
+          "kind": "systematic_review",
+          "citation": "Fonseca Fialho HR, Gava V, Fonseca RNS, Kamonseki DH, Barbosa GM. Thinking outside the shoulder: a systematic review and metanalysis of kinetic chain characteristics in non-athletes with shoulder pain. PLoS One. 2024;19(12):e0314909.",
+          "doi": "10.1371/journal.pone.0314909",
+          "pmid": "39652591",
+          "pmcid": "PMC11627437",
+          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Cited and paraphrased only."
+        }
+      ],
+      "note": "Current-evidence check, 2026-10-11: PubMed search for systematic reviews 2017-2026 on thoracic posture or kyphosis and shoulder pain found Fialho 2024 (conflicting thoracic posture findings, very low-quality evidence), consistent with Barrett; no review overturns it."
+    },
+    {
+      "slot": "claim-slot:l3-upright-range",
+      "statement": "In single-session studies gathered by a 2016 systematic review, maximum shoulder range of motion was greater in erect than in slouched postures, in people with and without shoulder pain; long-term relevance is unclear.",
+      "candidateSources": [
+        {
+          "kind": "systematic_review",
+          "citation": "Barrett E, O'Keeffe M, O'Sullivan K, Lewis J, McCreesh K. Is thoracic spine posture associated with shoulder pain, range of motion and function? A systematic review. Man Ther. 2016;26:38-46.",
+          "doi": "10.1016/j.math.2016.07.008",
+          "pmid": "27475532",
+          "rights": "Crown copyright 2016, published by Elsevier; all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
+        }
+      ],
+      "note": "Dated finding; keep the single-session and unclear-relevance qualifiers."
+    }
+  ],
+  "scenarios": [
+    {
+      "prompt": "Both arms stop short overhead; passive range is higher and painless; long-standing; no warning sign.",
+      "goodAnswer": "Ask whether it is new or painful. If long-standing and painless with no warning sign: train in the controlled range, change one thing, re-check in a later session.",
+      "safety": "SAFETY.md sections 1 and 3"
+    },
+    {
+      "prompt": "Since last week, with no injury, the client cannot lift the right arm themselves at all, though you can lift it for them.",
+      "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.",
+      "safety": "SAFETY.md sections 3 and 4"
+    },
+    {
+      "prompt": "Over several weeks, lifting the arm has become very difficult, but the client can still lift it themselves; no other warning sign.",
+      "goodAnswer": "Stop shoulder loading for the session; routine referral to a GP or physiotherapist.",
+      "safety": "SAFETY.md section 4"
+    },
+    {
+      "prompt": "Stiffness for months with pain at night, slowly getting worse.",
+      "goodAnswer": "Stop shoulder loading for the session; routine referral now because it is getting worse.",
+      "safety": "SAFETY.md sections 3 and 4"
+    }
+  ],
+  "lesson": {
+    "id": "shoulder-03-mobility-stability",
+    "slug": "mobility-and-stability",
+    "title": "Mobility and stability: common restrictions",
+    "summary": "A missing range is a question to look into, not a label. Learn to tell range from control, what research says about posture, and when a restriction needs referral instead of training.",
+    "durationMinutes": 12,
+    "format": "article",
+    "objectives": [
+      "Tell active range from passive range, and range from control.",
+      "Recognise the restrictions trainers often see: overhead reach, reaching behind the back, reaching across the body.",
+      "State what reviews found about upper-back posture and shoulder pain, and what they did not show.",
+      "Decide when a restriction is a training question and when it needs referral."
+    ],
+    "anatomyIds": [
+      "UBERON:0001467",
+      "UBERON:0001470",
+      "UBERON:0006849"
+    ],
+    "blocks": [
+      {
+        "kind": "paragraph",
+        "content": "A client cannot get the bar overhead, or one hand stops short behind the back. Before you reach for a stretch, ask: is this new? Then ask how far the shoulder goes, and how well the client controls it there.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Two coaching questions"
+      },
+      {
+        "kind": "paragraph",
+        "content": "In coaching terms, mobility is the range a client can reach, and stability is how well they control that range, especially under load. Ask both questions; the answer to one changes what you do about the other.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Active and passive range"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Active range is how far the client moves the arm on their own. Passive range is how far it goes when someone else moves it, with the client relaxed. A difference between them is a reason to look closer. It is not a prescription, and this lesson draws no training rule from it.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Stop shoulder loading for the rest of the session. A client who can no longer lift or move the arm themselves, even though you could move it for them, with no injury: urgent, an urgent GP appointment or NHS 111 today. It is never something to train. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "What research says about posture"
+      },
+      {
+        "kind": "paragraph",
+        "content": "A 2016 systematic review found moderate evidence of no significant difference in how rounded the upper back is (thoracic kyphosis) between people with and without shoulder pain. A result that is not significant does not prove the two groups are the same, and the studies varied in quality. A 2024 review of cross-sectional studies found conflicting results for thoracic posture. These findings are about association; they do not show that posture causes or prevents shoulder pain.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l3-kyphosis-pain"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "content": "In the single-session studies a 2016 review gathered, people reached more maximum shoulder range when sitting or standing upright than when slouched, with or without shoulder pain. Whether that matters over weeks of training is not known.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l3-upright-range"
+        ]
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Coach note",
+          "text": "Avoid telling clients that their posture is damaging their shoulder; the research above does not show that. You can still use an upright set-up when it helps a lift, as a coaching choice."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Common restrictions you will see"
+      },
+      {
+        "kind": "checklist",
+        "content": [
+          "Overhead reach: the arms stop short of vertical, or the lower back arches to get there.",
+          "Reaching behind the back: one hand stops lower on the spine than the other.",
+          "Reaching across the body: one elbow stops further from the opposite shoulder."
+        ],
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "How to see it"
+      },
+      {
+        "kind": "diagram",
+        "content": {
+          "diagramId": "reach-screens",
+          "caption": "Planned diagram, not available yet: the wall reach, lying reach and active-then-passive check."
+        }
+      },
+      {
+        "kind": "checklist",
+        "content": [
+          "Ask first: is this new, and does it hurt? If it is new, unexplained or painful, go to the stop-and-refer rules before any screen.",
+          "Wall reach: the client stands with their back against a wall, then raises both arms forward and up as far as is comfortable. Note where the hands stop and whether the lower back leaves the wall.",
+          "Lying reach: the client lies on their back with knees bent and raises both arms overhead toward the floor behind them. Compare sides.",
+          "Active then passive, only with permission: after the client raises the arm on their own, support it at the elbow and wrist and see whether it goes further without pain. Never push; stop at the first discomfort.",
+          "Write down what you saw in plain words, for example: \"right hand stops about a hand's width short of the wall overhead.\""
+        ],
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. Pain and stiffness that do not go away, including pain that is worse at night: routine referral. A new inability to lift or move the arm themselves, without an injury: urgent, today. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. This never clears anyone and never names an injury."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "What to do"
+      },
+      {
+        "kind": "paragraph",
+        "content": "For a long-standing, familiar restriction that does not hurt and shows no warning sign: train in the range the client controls, change one thing at a time, and re-check in a later session. Anything new, unexplained or painful goes to the stop-and-refer rules first.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "paragraph",
+        "content": "Some coaching systems explain restrictions with fascial lines or rib position. Evidence for these as explanations of why a shoulder is restricted is limited. Use them, if at all, as coaching language with clients, not as a description of how the body works.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Check your understanding"
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "A 2016 systematic review compared upper-back rounding (thoracic kyphosis) in people with and without shoulder pain. What did it find?",
+          "options": [
+            "People with shoulder pain had much more rounded upper backs",
+            "No significant difference between the groups, with moderate evidence; that does not prove the groups are the same",
+            "Rounding causes shoulder pain"
+          ],
+          "answerIndex": 1,
+          "explanation": "The review found moderate evidence of no significant difference in thoracic kyphosis between people with and without shoulder pain. That does not prove the groups are the same, and it does not show cause either way."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l3-kyphosis-pain"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "In the single-session studies a 2016 review gathered, how did upright posture compare with slouching for maximum shoulder range?",
+          "options": [
+            "More range when upright; whether it matters over time is not known",
+            "Less range when upright",
+            "No difference"
+          ],
+          "answerIndex": 0,
+          "explanation": "People reached more maximum range upright than slouched in single sessions; the long-term relevance is unclear."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l3-upright-range"
+        ]
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Talk it through",
+          "text": "A client cannot reach fully overhead on either side. With permission you can lift both arms higher, and nothing hurts. What do you ask before you plan anything? Now change one thing: since last week, with no injury, the client cannot lift the right arm themselves at all, though you can still lift it for them. What do you do?"
+        },
+        "support": "practice-based",
+        "claimIds": []
+      }
+    ],
+    "media": [],
+    "resources": []
+  }
+}
