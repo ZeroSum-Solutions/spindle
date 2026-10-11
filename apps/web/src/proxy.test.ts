@@ -23,7 +23,16 @@ describe("proxy: the test-only page gate in production", () => {
   ] as const)("answers 404 for %s with the flag off", async (_, path, headers) => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("SPINDLE_PREVIEW_PAGES", "");
-    const res = await proxy(new NextRequest(new URL(path, "http://127.0.0.1:3000"), { headers }));
+    const res = await proxy(new NextRequest(`http://127.0.0.1:3000${path}`, { headers }));
     expect(res.status).toBe(404);
+  });
+
+  it("passes the page through when the test server turns the flag on", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SPINDLE_PREVIEW_PAGES", "1");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:9");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_test");
+    const res = await proxy(new NextRequest("http://127.0.0.1:3000/brand-preview"));
+    expect(res.status).not.toBe(404);
   });
 });

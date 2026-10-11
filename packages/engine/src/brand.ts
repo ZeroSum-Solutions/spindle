@@ -42,7 +42,12 @@ export interface ContrastCheck {
 
 declare const validated: unique symbol;
 /** A brand that came out of validateBrand. Only these can become CSS. */
-export type ValidatedBrand = TenantBrand & { readonly [validated]: true };
+export type ValidatedBrand = Readonly<{
+  name: TenantBrand["name"];
+  mark: Readonly<TenantBrand["mark"]>;
+  colors: Readonly<TenantBrand["colors"]>;
+  font: TenantBrand["font"];
+}> & { readonly [validated]: true };
 export type BrandResult = { ok: true; brand: ValidatedBrand; checks: ContrastCheck[] } | { ok: false; problems: string[]; checks: ContrastCheck[] };
 
 const VALIDATED = new WeakSet<object>();
@@ -105,7 +110,12 @@ export function validateBrand(input: unknown): BrandResult {
   if (failing.length > 0) {
     return { ok: false, problems: failing.map((c) => `${c.role} (${c.state}): ${c.shown}:1, needs ${c.minimum}:1`), checks };
   }
-  const brand = Object.freeze({ ...parsed.data, colors: Object.freeze({ ...parsed.data.colors }) }) as ValidatedBrand;
+  // Deep-frozen: the object that passed the checks is the object that becomes CSS.
+  const brand = Object.freeze({
+    ...parsed.data,
+    mark: Object.freeze({ ...parsed.data.mark }),
+    colors: Object.freeze({ ...parsed.data.colors }),
+  }) as ValidatedBrand;
   VALIDATED.add(brand);
   return { ok: true, brand, checks };
 }

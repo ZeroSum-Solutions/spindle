@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { validateBrand } from "@spindle/engine";
 import { BrandedLearnerPreview } from "@/components/brand/learner-preview";
+import { previewPagesEnabled } from "@/lib/preview-pages";
 import { tenantFontClass } from "@/lib/theme/fonts";
 import { LIGHT_SAGE, OXBLOOD, SAGE } from "@/lib/theme/preview-brands";
 
 // Test-only page (P4-A): two synthetic brands on the real learner components, for Playwright and
-// axe. No database, no sign-in, no tenant data. The proxy answers 404 unless previewPagesEnabled.
+// axe. No database, no sign-in, no tenant data. The proxy answers 404 unless previewPagesEnabled;
+// the page checks the flag again at request time, so it renders nothing if the proxy is bypassed.
 
 export const metadata: Metadata = { title: "Brand preview (test only)", robots: { index: false } };
 
@@ -15,6 +20,16 @@ const PREVIEWS = [
 ] as const;
 
 export default function BrandPreviewPage() {
+  return (
+    <Suspense fallback={null}>
+      <GuardedPreview />
+    </Suspense>
+  );
+}
+
+async function GuardedPreview() {
+  await connection();
+  if (!previewPagesEnabled(process.env)) notFound();
   const refused = validateBrand(LIGHT_SAGE);
   return (
     <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 py-8 md:px-8">
