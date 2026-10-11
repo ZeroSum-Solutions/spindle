@@ -19,6 +19,8 @@ export const BRAND_FIXTURES: readonly FixtureBrand[] = [
   { mark: { kind: "text" }, colors: { accent: "#1F4E8C", onAccent: "#FFFFFF", band: "#F2E8D5" }, font: "geist" },
   { mark: { kind: "text" }, colors: { accent: "#1F4E8C", onAccent: "#FFFFFF", band: "#808080" }, font: "geist" },
   { mark: { kind: "text" }, colors: { accent: "#1F4E8C", onAccent: "#FFFFFF", band: "#767676" }, font: "geist" },
+  // Pressroom: with ink #111111, #777777 is the grey on which neither ink (4.22) nor white (4.48) reaches 4.5:1.
+  { mark: { kind: "text" }, colors: { accent: "#1F4E8C", onAccent: "#FFFFFF", band: "#777777" }, font: "geist" },
 ];
 
 /** The values list org_brand.test.sql must carry between its markers: one row per check, in order. */

@@ -5,14 +5,14 @@ import { contrast, isHex, mix } from "./contrast";
 // colours can take part in, in every state, is computed and must pass WCAG 2.2 AA, or the brand
 // is refused. Pure, so it is unit-tested; the app only renders what this returns.
 
-/** Atlas tokens a brand can never change (DESIGN.md; the same values as globals.css @theme). */
+/** Spindle's fixed tokens a brand can never change (DESIGN.md, Pressroom palette; the same values as globals.css @theme). */
 export const ATLAS = {
-  canvas: "#f6f8fb",
-  surface: "#ffffff",
-  surfaceMuted: "#edf1f5",
-  text: "#17232b",
-  textMuted: "#52616d",
-  ink: "#17232b",
+  canvas: "#f3efe6",
+  surface: "#fffdf8",
+  surfaceMuted: "#eee9de",
+  text: "#111111",
+  textMuted: "#4a463f",
+  ink: "#111111",
   science: "#0b6b50",
   scienceSoft: "#eaf5f0",
   practice: "#8a4b10",
