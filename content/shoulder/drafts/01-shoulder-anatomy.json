@@ -8,7 +8,7 @@
     "Claim status (W1 dry run 2): lesson 1's claims are foundation claims (D-12), kept purely structural: names, parts, attachments and relations. They rest on Frank 2013 (CC BY), admitted as an anatomy reference; its abstract is too thin, so review needs the open-licence full text in the packet (W1's ingest extension). Functional points were removed: the joint's mobility, the cuff being crucial for stability, concavity compression and the muscle actions. No admissible applied source states them, and they are not relabelled as practice.",
     "Anatomy claims rest on Frank 2013 (CC BY), read in full through Europe PMC; Cavanaugh 2024 (CC BY 4.0) is cited only for the rotator cuff grouping; Vijian 2023, Jacinto 2022, Howell 1989 and Lippitt 1993 are no longer cited. OpenStax is not a claim source (its terms forbid ingestion into AI models); it appears only as an optional further-reading link with its CC BY-NC-SA 4.0 licence.",
     "The scapulothoracic statement is restored because Frank 2013 states it; 'most of the force' stays removed. The capsule statement was dropped: no open source read states it.",
-    "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. shoulder-cuff is a planned slot (the four cuff muscles only) and says so."
+    "Diagram shoulder-complex-front is the original drawing in apps/web, on main since PR #17 (08747d7; the subject's left shoulder from the front), so the caption describes an existing figure. Every diagram is a reviewed diagram block (Sol R16): alt, caption and legend live here; the drawings in apps/web carry geometry and anchors only. shoulder-cuff (cuff only) replaces the planned shoulder-cuff-and-movers slot."
   ],
   "claimSlots": [
     {
@@ -170,8 +170,37 @@
         "kind": "diagram",
         "content": {
           "diagramId": "shoulder-complex-front",
-          "caption": "The shoulder complex, left shoulder seen from the front: the three joints, with the shoulder blade lying behind the ribs. Schematic, not to scale."
-        }
+          "alt": "Schematic line drawing of a left shoulder seen from the front. The collarbone runs from the breastbone to the top of the shoulder blade. The rounded head of the upper arm bone sits against a small socket on the shoulder blade, which lies behind the ribs.",
+          "caption": "The shoulder complex, left shoulder seen from the front: the subject's left is on your right. Schematic, not to scale.",
+          "legend": [
+            {
+              "key": "sternoclavicular",
+              "label": "Sternoclavicular joint.",
+              "text": "The collarbone meets the breastbone."
+            },
+            {
+              "key": "acromioclavicular",
+              "label": "Acromioclavicular joint.",
+              "text": "The collarbone meets the acromion, the bony tip at the top of the shoulder blade."
+            },
+            {
+              "key": "glenohumeral",
+              "label": "Glenohumeral joint.",
+              "text": "The upper arm bone meets the socket of the shoulder blade (highlighted)."
+            },
+            {
+              "key": "scapula",
+              "label": "Shoulder blade.",
+              "text": "It lies behind the ribs (dashed), with no bony joint to them."
+            }
+          ]
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l1-bones-joints",
+          "claim-slot:l1-scapulothoracic",
+          "claim-slot:l1-shallow-socket"
+        ]
       },
       {
         "kind": "heading",
@@ -216,8 +245,50 @@
         "kind": "diagram",
         "content": {
           "diagramId": "shoulder-cuff",
-          "caption": "Planned diagram, not available yet: the four rotator cuff muscles, from the front and from behind."
-        }
+          "alt": "Two schematic views of a left shoulder. From the front, subscapularis runs from the shoulder blade to the top of the upper arm bone. From behind, supraspinatus, infraspinatus and teres minor run from the shoulder blade to the top of the upper arm bone.",
+          "caption": "The four rotator cuff muscles, left shoulder from the front and from behind. Schematic, not to scale.",
+          "legend": [
+            {
+              "key": "front-view",
+              "label": "From the front.",
+              "text": "The subject's left is on your right."
+            },
+            {
+              "key": "subscapularis",
+              "label": "Subscapularis.",
+              "text": "From the shoulder blade to the lesser tubercle of the humerus."
+            },
+            {
+              "key": "humeral-head",
+              "label": "Top of the humerus.",
+              "text": "Where the four cuff muscles insert."
+            },
+            {
+              "key": "back-view",
+              "label": "From behind.",
+              "text": "The subject's left is on your left."
+            },
+            {
+              "key": "supraspinatus",
+              "label": "Supraspinatus.",
+              "text": "From the shoulder blade to the greater tubercle of the humerus."
+            },
+            {
+              "key": "infraspinatus",
+              "label": "Infraspinatus.",
+              "text": "From the shoulder blade to the greater tubercle."
+            },
+            {
+              "key": "teres-minor",
+              "label": "Teres minor.",
+              "text": "From the shoulder blade to the greater tubercle."
+            }
+          ]
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l1-cuff"
+        ]
       },
       {
         "kind": "heading",
