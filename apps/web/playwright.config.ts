@@ -8,7 +8,16 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL: "http://127.0.0.1:3100", trace: "retain-on-failure" },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /zoom\.spec\.ts$/ },
+    // 200% zoom of a 1280px window, without viewport emulation: headless Chromium has no zoom control, so
+    // the window itself is what 200% zoom produces (640 CSS px at devicePixelRatio 2).
+    {
+      name: "chromium-zoom-200",
+      testMatch: /zoom\.spec\.ts$/,
+      use: { browserName: "chromium", viewport: null, launchOptions: { args: ["--window-size=640,450", "--force-device-scale-factor=2"] } },
+    },
+  ],
   webServer: {
     // CI tests the production build (NEXT_PUBLIC_* values are inlined at build time).
     // SPINDLE_PREVIEW_PAGES=1 turns on the test-only pages (the brand preview) in the production build.

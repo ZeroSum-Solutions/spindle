@@ -3,7 +3,7 @@ import { LayerLabel } from "../learn/labels";
 import { BaseSeal } from "./base-seal";
 import { CourseCover } from "./course-cover";
 import { ModalityChip } from "./modality-chip";
-import { courseTitle, NEUTRAL_COVER, type BrandColors, type CourseCardView } from "./view";
+import { courseTitle, methodDefaultCover, NEUTRAL_COVER, type BrandColors, type CourseCardView } from "./view";
 
 /**
  * One course in the member catalog. The whole card is one link, named by its title; its focus ring
@@ -11,9 +11,11 @@ import { courseTitle, NEUTRAL_COVER, type BrandColors, type CourseCardView } fro
  * own pattern; Base and Modality courses always draw Spindle's neutral cover. Base cards carry the
  * seal; Modality cards say "Published by Spindle". Support labels stay on blocks, never here.
  */
-export function CourseCard({ course, fontFamily }: { course: CourseCardView; colors: BrandColors; fontFamily: string; headingLevel?: 3 | 4 }) {
+export function CourseCard({ course, colors, fontFamily, headingLevel = 3 }: { course: CourseCardView; colors: BrandColors; fontFamily: string; headingLevel?: 3 | 4 }) {
   const id = useId();
-  const cover = course.layer === "method" && course.cover ? course.cover : NEUTRAL_COVER;
+  const Title = headingLevel === 4 ? "h4" : "h3";
+  // Gym method courses draw their own cover, or the method default; Spindle's courses are always neutral.
+  const cover = course.layer === "method" ? (course.cover ?? methodDefaultCover(colors)) : NEUTRAL_COVER;
   return (
     <a
       data-course-card
@@ -25,9 +27,9 @@ export function CourseCard({ course, fontFamily }: { course: CourseCardView; col
     >
       <CourseCover cover={cover} />
       <div className="flex flex-1 flex-col gap-3 px-5 pb-5 pt-4">
-        <h3 id={`${id}-title`} data-course-title className="text-[20px] font-semibold leading-[1.2] tracking-[-0.01em]" style={{ fontFamily, overflowWrap: "anywhere" }}>
+        <Title id={`${id}-title`} data-course-title className="text-[20px] font-semibold leading-[1.2] tracking-[-0.01em]" style={{ fontFamily, overflowWrap: "anywhere" }}>
           {courseTitle(course)}
-        </h3>
+        </Title>
         {course.blurb ? (
           <p id={`${id}-blurb`} className="text-[16px] leading-[1.5] text-text-muted" style={{ overflowWrap: "anywhere" }}>
             {course.blurb}

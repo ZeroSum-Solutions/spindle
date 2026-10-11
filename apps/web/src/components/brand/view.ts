@@ -87,13 +87,14 @@ export interface CoachNoteView {
  * brand must pass `validateOrgBrand` (every AA pair, including chip text on the band tint), and
  * the colours are `brandTokens`. No colour maths here.
  */
-export function memberColors(_brand: unknown): BrandColors | null {
-  return null;
+export function memberColors(brand: unknown): BrandColors | null {
+  const result = validateOrgBrand(brand);
+  return result.ok ? brandTokens(result.brand.colors) : null;
 }
 
 /** A gym method course with no cover of its own: diagonal in the accent (spec rev4 §2). */
 export function methodDefaultCover(colors: BrandColors): CoverView {
-  return { pattern: "solid", background: colors.accent, foreground: colors.onAccent };
+  return { pattern: "diagonal", background: colors.accent, foreground: colors.onAccent };
 }
 
 /** CSS custom properties for a branded member scene: the accent set plus the band set. */

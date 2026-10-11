@@ -1,13 +1,14 @@
 import type { CoverView } from "./view";
 
 // Spindle-drawn 16:9 covers. Geometry only, from an enum; the colours are the course's two
-// validated literals. Decorative: hidden from assistive technology and free of text.
+// validated literals, the foreground drawn at 18% (spec rev4 §2). Decorative: hidden from
+// assistive technology and free of text.
 
 const W = 320;
 const H = 180;
 
 export function CourseCover({ cover }: { cover: CoverView }) {
-  const line = { stroke: cover.foreground, strokeOpacity: 0.22, strokeWidth: 1.5, fill: "none", vectorEffect: "non-scaling-stroke" } as const;
+  const line = { stroke: cover.foreground, strokeOpacity: 0.18, strokeWidth: 1.5, fill: "none", vectorEffect: "non-scaling-stroke" } as const;
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
@@ -30,7 +31,7 @@ export function CourseCover({ cover }: { cover: CoverView }) {
         </>
       ) : null}
       {cover.pattern === "dots"
-        ? Array.from({ length: 16 * 9 }, (_, i) => <circle key={i} cx={10 + (i % 16) * 20} cy={10 + Math.floor(i / 16) * 20} r={2} fill={cover.foreground} fillOpacity={0.26} />)
+        ? Array.from({ length: 16 * 9 }, (_, i) => <circle key={i} cx={10 + (i % 16) * 20} cy={10 + Math.floor(i / 16) * 20} r={2} fill={cover.foreground} fillOpacity={0.18} />)
         : null}
       {cover.pattern === "rings" ? Array.from({ length: 9 }, (_, i) => <circle key={i} cx={W - 64} cy={H - 36} r={18 + i * 26} {...line} />) : null}
       {cover.pattern === "waves"
