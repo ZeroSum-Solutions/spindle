@@ -35,6 +35,12 @@ const ratio = (a: string, b: string) => {
   return (x! + 0.05) / (y! + 0.05);
 };
 
+/** Opens the preview and waits until the streamed scenes are revealed (the page renders behind Suspense). */
+async function open(page: Page) {
+  await page.goto("/brand-preview");
+  for (const s of SCENES) await expect(scene(page, s.id)).toBeVisible();
+}
+
 async function scrollX(page: Page) {
   return page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 }
@@ -45,7 +51,7 @@ test.describe("P4-A2 brand components", () => {
       test.use({ viewport: { width: view.width, height: view.height }, deviceScaleFactor: view.scale });
 
       test("every scene passes axe AA and reflows without sideways scroll", async ({ page }) => {
-        await page.goto("/brand-preview");
+        await open(page);
         for (const s of SCENES) {
           await expect(scene(page, s.id)).toBeVisible();
           const axe = await new AxeBuilder({ page }).include(`[data-catalog-preview="${s.id}"]`).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
@@ -63,7 +69,7 @@ test.describe("P4-A2 brand components", () => {
 
   test("the header and hero use the band colours, and the 60-character name wraps inside the header", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 800 });
-    await page.goto("/brand-preview");
+    await open(page);
     for (const s of SCENES) {
       const header = scene(page, s.id).locator("header");
       await expect(header).toHaveCSS("background-color", rgb(s.band));
@@ -77,7 +83,7 @@ test.describe("P4-A2 brand components", () => {
   });
 
   test("the pending scene shows the fixed fallbacks and omits pending text", async ({ page }) => {
-    await page.goto("/brand-preview");
+    await open(page);
     const p = scene(page, "pending");
     await expect(p.locator("header [data-brand-name]")).toHaveText("Your gym");
     await expect(p.locator("[data-hero-headline]")).toHaveText("Your gym");
@@ -89,7 +95,7 @@ test.describe("P4-A2 brand components", () => {
   for (const width of [1440, 390]) {
     test(`keyboard path at ${width}: header links, the ink action, then one stop per card, each with a visible ring`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto("/brand-preview");
+      await open(page);
       for (const s of SCENES.filter((x) => x.id !== "long-name")) {
         const root = scene(page, s.id);
         const expected: Locator[] = [
@@ -121,7 +127,7 @@ test.describe("P4-A2 brand components", () => {
 
   test("cards: one link each, hover edge in control grey, Base cards carry the seal, Modality cards say Published by Spindle", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/brand-preview");
+    await open(page);
     const s = scene(page, "strength");
     for (const card of await s.locator("[data-course-card]").all()) await expect(card.locator("a")).toHaveCount(0);
     const base = s.locator('[data-course-card][data-layer="base"]').first();
@@ -133,7 +139,7 @@ test.describe("P4-A2 brand components", () => {
   });
 
   test("the coach note sits on surface with the practice rule, label and caption", async ({ page }) => {
-    await page.goto("/brand-preview");
+    await open(page);
     const note = scene(page, "strength").locator("[data-coach-note]");
     await expect(note).toContainText("Note from Coach A. Example");
     await expect(note).toContainText("Practice-based");

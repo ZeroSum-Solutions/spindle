@@ -16,10 +16,10 @@ export function BrandHeader({ brand, fontFamily, links = [] }: { brand: MemberBr
         </span>
         {shown.length > 0 ? (
           <nav aria-label="Gym">
-            <ul className="-mx-1 flex flex-wrap gap-x-5">
+            <ul className="flex flex-wrap gap-x-6">
               {shown.map((l) => (
                 <li key={l.href}>
-                  <a href={l.href} className="inline-flex min-h-11 items-center px-1 text-label font-medium underline decoration-1 underline-offset-[5px] hover:decoration-2">
+                  <a href={l.href} className="inline-flex min-h-11 items-center text-label font-medium underline decoration-1 underline-offset-[5px] hover:decoration-2">
                     {l.label}
                   </a>
                 </li>

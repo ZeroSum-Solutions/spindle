@@ -126,4 +126,4 @@ export const courseTitle = (course: Pick<CourseCardView, "title">) => course.tit
 export const noteFrom = (note: Pick<CoachNoteView, "displayName">) => note.displayName ?? TENANT_TEXT_FALLBACKS.brandName;
 
 /** Spindle's neutral cover for Base and Modality cards: an ink pattern on surface-muted. */
-export const NEUTRAL_COVER = { pattern: "grid", background: ATLAS.surfaceMuted, foreground: ATLAS.ink } as const satisfies CoverView;
+export const NEUTRAL_COVER = { pattern: "dots", background: ATLAS.surfaceMuted, foreground: ATLAS.ink } as const satisfies CoverView;

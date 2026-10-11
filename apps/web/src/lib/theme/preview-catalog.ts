@@ -44,7 +44,7 @@ const spindleCourses = (scene: string): CourseCardView[] => [
     title: "The shoulder complex",
     blurb: "How the shoulder is built, how it moves, and when to stop and refer.",
     tags: [],
-    meta: "8 lessons · Cited",
+    meta: "8 lessons",
   },
   {
     id: `${scene}-modality`,
