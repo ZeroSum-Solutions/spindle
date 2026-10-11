@@ -37,7 +37,8 @@ alter table public.curriculum_versions
  * The answer review for one attempt: each graded question with the learner's
  * choice, the answer and the explanation. It opens only for a passing attempt,
  * so a learner cannot harvest the key with a throwaway attempt (retries are
- * unlimited). The learner, or the gym's owner or lead.
+ * unlimited). Only the learner who made the attempt may read it: the answer key
+ * is never shown to gym owners or leads (Sol R1 PR22-02).
  */
 create function public.quiz_attempt_review(p_attempt uuid)
 returns table (question_id text, chosen integer, answer_index integer, correct boolean, explanation text)
@@ -49,7 +50,7 @@ declare
 begin
   if uid is null then raise exception 'not signed in' using errcode = '28000'; end if;
   select * into qa from public.quiz_attempts where id = p_attempt;
-  if not found or (qa.user_id <> uid and coalesce(private.role_in(qa.org_id) not in ('owner', 'lead'), true)) then
+  if not found or qa.user_id <> uid then
     raise exception 'no such attempt' using errcode = 'P0002';
   end if;
   if not qa.passed then

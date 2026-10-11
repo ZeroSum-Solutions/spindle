@@ -33,6 +33,19 @@ export const quizAttemptResultSchema = z
   .strictObject({ attempt_id: idSchema, correct: count, total: count.min(1), passed: z.boolean() })
   .transform((r): QuizAttemptResult => ({ attemptId: r.attempt_id, correct: r.correct, total: r.total, passed: r.passed }));
 
+/** One row of the post-pass answer review (quiz_attempt_review): only the attempt's own learner, only after a pass. */
+export interface QuizReviewRow {
+  questionId: string;
+  chosen: number;
+  answerIndex: number;
+  correct: boolean;
+  explanation: string;
+}
+
+export const quizReviewRowSchema = z
+  .strictObject({ question_id: z.string().min(1).max(200), chosen: count, answer_index: count, correct: z.boolean(), explanation: z.string().max(4000) })
+  .transform((r): QuizReviewRow => ({ questionId: r.question_id, chosen: r.chosen, answerIndex: r.answer_index, correct: r.correct, explanation: r.explanation }));
+
 /** Module completion as the server works it out (module_status). */
 export interface ModuleStatus {
   assignmentId: string;
@@ -128,6 +141,7 @@ export const mediaAvailabilitySchema = z
   })
   .transform((r): MediaAvailability => ({ mediaId: r.media_id, state: r.state, review: r.review, title: r.title, channel: r.channel, available: r.available }));
 
+export const parseQuizReview = (value: unknown): QuizReviewRow[] => parseWith(z.array(quizReviewRowSchema).min(1).max(1000), "quiz review", value);
 export const parseQuizAttemptResult = (value: unknown): QuizAttemptResult => {
   const rows = parseWith(z.array(quizAttemptResultSchema).length(1), "quiz attempt result", value);
   return rows[0]!;

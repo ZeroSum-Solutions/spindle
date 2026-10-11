@@ -245,3 +245,15 @@ describe("hasGradedQuiz", () => {
     expect(hasGradedQuiz({ rules: "phase3", question_set_hash: "not-a-hash" })).toBe(false);
   });
 });
+
+describe("graded quizzes in a published version (Sol R1 PR22-01)", () => {
+  it("drops graded quizzes from the lesson view but keeps them, without keys, for the quiz page", async () => {
+    const { learnerQuestions } = await import("@spindle/engine");
+    const graded = { kind: "quiz", content: { prompt: "Synthetic graded?", options: ["A", "B"] }, support: "science", claimIds: [CLAIM] };
+    const v = publishedVersion({ id: V1, version_number: 1, layer: "base", org_id: null, snapshot: course([lesson(L1, "One", [graded as never])]) }, [
+      { lesson_id: L1, ordinal: 1, content_hash: hash("a") },
+    ]);
+    expect(v.course.parts[0]!.lessons[0]!.blocks).toEqual([]);
+    expect(learnerQuestions(v.learnerCourse)).toEqual([{ questionId: `${L1}:q1`, lessonId: L1, prompt: "Synthetic graded?", options: ["A", "B"] }]);
+  });
+});
