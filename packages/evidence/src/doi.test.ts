@@ -80,5 +80,22 @@ describe("stripTags", () => {
       expect(performance.now() - t).toBeLessThan(1000);
     }
   });
+
+  it.each([
+    ["an escaped wrapper", "&lt;i&gt;RETRACTED:&lt;/i&gt; Synthetic review"],
+    ["a wrapper closed before the colon", "<i>RETRACTED</i>: Synthetic review"],
+    ["a double-escaped wrapper", "&amp;lt;b&amp;gt;Withdrawn:&amp;lt;/b&amp;gt; Synthetic review"],
+    ["a namespaced wrapper", "<jats:italic>Retracted:</jats:italic> Synthetic review"],
+  ])("still finds a Crossref retraction marker behind %s (Sol R4 R10)", (_n, raw) => {
+    const work = fixture<{ message: Parameters<typeof normalizeCrossref>[0] }>("crossref-work");
+    const out = normalizeCrossref({ ...work.message, title: [raw], "updated-by": [], relation: {} });
+    expect(out.isRetracted).toBe(true);
+    expect(out.title).toBe(stripTags(raw));
+  });
+
+  it("does not treat a title that only mentions retraction as a marker", () => {
+    const work = fixture<{ message: Parameters<typeof normalizeCrossref>[0] }>("crossref-work");
+    expect(normalizeCrossref({ ...work.message, title: ["<i>Why</i> retracted papers persist"], "updated-by": [], relation: {} }).isRetracted).toBe(false);
+  });
 });
 
