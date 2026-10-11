@@ -128,8 +128,30 @@ async function flaggedClaims(ctx: LearnerGym, versionIds: string[]): Promise<Map
   return byVersion;
 }
 
+/** What a catalog card shows of an assigned version: facts of that exact version (Sol R1 on #45). */
+export interface CardFacts {
+  cover?: { pattern: "solid" | "diagonal" | "grid" | "dots" | "rings" | "waves"; background: string; foreground: string };
+  tags: string[];
+  lessonCount: number;
+  durationMinutes: number;
+  /** The version's live blurb (version_tenant_texts), or null. */
+  blurb: string | null;
+}
+
+function cardFacts(version: PublishedVersion, texts: VersionTexts): CardFacts {
+  const lessons = lessonsOf(version.course);
+  const cover = version.learnerCourse.cover;
+  return {
+    ...(cover ? { cover: { pattern: cover.pattern, background: cover.background, foreground: cover.foreground } } : {}),
+    tags: [...(version.learnerCourse.tags ?? [])],
+    lessonCount: lessons.length,
+    durationMinutes: lessons.reduce((sum, l) => sum + l.durationMinutes, 0),
+    blurb: texts.blurb,
+  };
+}
+
 export type AssignmentSummary =
-  | { id: string; courseId: string; versionNumber: number; available: true; view: CourseView }
+  | { id: string; courseId: string; versionNumber: number; available: true; view: CourseView; card: CardFacts }
   | { id: string; courseId: string; versionNumber: number; available: false };
 
 /** The caller's assignments in the route gym, each with its own version's progress. */
@@ -155,7 +177,8 @@ export async function myAssignments(ctx: LearnerGym): Promise<AssignmentSummary[
     const sameCourse = rows.filter((o) => o.version.course_id === r.version.course_id).map((o) => versions.get(o.version.id));
     const previous = previousVersion(current, sameCourse.filter((v): v is PublishedVersion => Boolean(v)));
     const view = courseView({ current, previous, completions, versionNumbers: numbers, flaggedClaimIds: flags.get(r.version.id) ?? [] });
-    return { ...meta, available: true, view: { ...view, title: shownCourseTitle(view.title, texts.get(r.version.id) ?? NO_VERSION_TEXTS) } };
+    const t = texts.get(r.version.id) ?? NO_VERSION_TEXTS;
+    return { ...meta, available: true, view: { ...view, title: shownCourseTitle(view.title, t) }, card: cardFacts(current, t) };
   });
 }
 

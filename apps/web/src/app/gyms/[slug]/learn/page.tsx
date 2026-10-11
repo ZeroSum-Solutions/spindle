@@ -6,14 +6,13 @@ import { LearnShell, LoadingNote } from "@/components/learn/shell";
 import { learnerGym, myAssignments, type AssignmentSummary } from "@/lib/learning/load";
 import { byCourse } from "@/lib/learning/view";
 import { loadModuleStatus } from "@/lib/learning/quiz-server";
-import { memberBrand, memberCourseCards } from "@/lib/learning/tenant";
-import { brandFromDto, cardFromDto } from "@/components/brand/adapt";
+import { memberBrand } from "@/lib/learning/tenant";
+import { brandFromDto, catalogAction, catalogCards } from "@/components/brand/adapt";
 import { BrandHeader } from "@/components/brand/brand-header";
 import { CatalogHero } from "@/components/brand/catalog-hero";
 import { CourseSection } from "@/components/brand/course-section";
 import { brandScopeVars, type CourseCardView } from "@/components/brand/view";
 import { tenantFontClass } from "@/lib/theme/fonts";
-import type { CourseCardDto } from "@spindle/schema";
 
 export default function LearnPage(props: PageProps<"/gyms/[slug]/learn">) {
   return (
@@ -47,14 +46,8 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
   // P4-A2: a gym with a saved, valid brand gets the branded catalog; otherwise the standard list.
   const branded = brandFromDto(brandDto);
   if (branded) {
-    const cards = await memberCourseCards(ctx);
-    const assignedByCourse = new Map(courses.map((c) => [c.latest.courseId, c.latest.id]));
-    const start = resume
-      ? { label: "Continue where you left off", href: `${base}/${resume.id}/${resume.view.next!.slug}` }
-      : courses[0]
-        ? { label: "Start your first course", href: `${base}/${courses[0].latest.id}` }
-        : undefined;
-    return <BrandedCatalog branded={branded} cards={cards} assignedByCourse={assignedByCourse} base={base} action={start} />;
+    // Cards describe the version they open: each course's newest assigned version (Sol R1 on #45).
+    return <BrandedCatalog branded={branded} entries={catalogCards(courses, base)} base={base} action={catalogAction(courses, base)} />;
   }
 
   return (
@@ -101,24 +94,19 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
  */
 function BrandedCatalog({
   branded,
-  cards,
-  assignedByCourse,
+  entries,
   base,
   action,
 }: {
   branded: NonNullable<ReturnType<typeof brandFromDto>>;
-  cards: CourseCardDto[];
-  assignedByCourse: Map<string, string>;
+  entries: ReturnType<typeof catalogCards>;
   base: string;
   action: { label: string; href: string } | undefined;
 }) {
   const { brand, hero } = branded;
   const font = tenantFontClass(brand.font);
-  const shown = cards.flatMap((c) => {
-    const assignment = assignedByCourse.get(c.courseId);
-    return assignment ? [cardFromDto(c, `${base}/${assignment}`)] : [];
-  });
-  const of = (layer: CourseCardView["layer"]) => shown.filter((c) => c.layer === layer);
+  const of = (layer: CourseCardView["layer"]) => entries.filter((e) => e.card.layer === layer).map((e) => e.card);
+  const earlier = new Map(entries.map((e) => [e.card.id, e.earlier]));
   return (
     <div className={`${font.className} flex flex-1 flex-col bg-canvas`} style={brandScopeVars(brand.colors) as CSSProperties}>
       <BrandHeader
@@ -132,12 +120,12 @@ function BrandedCatalog({
       <main className="flex flex-1 flex-col">
         <CatalogHero brand={brand} hero={hero} fontFamily={font.family} action={action} headingLevel={1} />
         <div className="@container mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-4 pb-12 md:px-8">
-          {shown.length === 0 ? (
-            <p className="rounded-card border border-border bg-surface p-6 text-text-muted">Nothing is assigned to you in this gym yet.</p>
+          {entries.length === 0 ? (
+            <p className="mt-6 rounded-card border border-border bg-surface p-6 text-text-muted">Nothing is assigned to you in this gym yet.</p>
           ) : null}
-          <CourseSection id="catalog-gym" kind="method" title="From your gym" courses={of("method")} colors={brand.colors} fontFamily={font.family} level={2} />
-          <CourseSection id="catalog-base" kind="base" title="Base curriculum" courses={of("base")} colors={brand.colors} fontFamily={font.family} level={2} seal />
-          <CourseSection id="catalog-modality" kind="modality" title="Modality courses" courses={of("modality")} colors={brand.colors} fontFamily={font.family} level={2} />
+          <CourseSection id="catalog-gym" kind="method" title="From your gym" courses={of("method")} colors={brand.colors} fontFamily={font.family} level={2} earlier={earlier} />
+          <CourseSection id="catalog-base" kind="base" title="Base curriculum" courses={of("base")} colors={brand.colors} fontFamily={font.family} level={2} seal earlier={earlier} />
+          <CourseSection id="catalog-modality" kind="modality" title="Modality courses" courses={of("modality")} colors={brand.colors} fontFamily={font.family} level={2} earlier={earlier} />
         </div>
       </main>
     </div>
