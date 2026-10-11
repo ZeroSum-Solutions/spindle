@@ -27,7 +27,7 @@ import { assertPacket, buildSegmentPacket, packetDigest, type ReviewPacket, type
 import { reviewPrompt } from "../src/review/prompt";
 import { codexRunner } from "../src/review/runner";
 import { DESCRIBER_MODEL, describeSegment, estimateMaxCostUsd, type SegmentDescription, type SegmentRef } from "../src/video/describe";
-import { DESCRIBE_INTERVAL_DAYS, reserveCall, settleCall } from "../src/video/ledger";
+import { DESCRIBE_INTERVAL_DAYS, releaseCall, reserveCall, settleCall } from "../src/video/ledger";
 import { args, dir, lit, main, publisherId, serviceValue, sql, writeJson } from "./lib/cli";
 
 type Described = { description: Pick<SegmentDescription, "spoken" | "visual" | "uncertain">; describer: SegmentDescriber };
@@ -96,8 +96,15 @@ main(async () => {
       return 1;
     }
     const described = await describeSegment(seg, { fetch: (u, i) => fetch(u, i), apiKey, now: () => now });
-    settleCall(ledgerPath, reservation, described.costUsd, described.ok, new Date());
-    console.log(described.costUsd === null ? `describer cost unknown; $${reservation.maxUsd.toFixed(6)} stays reserved` : `describer cost $${described.costUsd.toFixed(6)}`);
+    if (!described.ok && described.refused) {
+      // The provider refused before doing any work: release the reservation, so it neither costs
+      // budget nor blocks the clip for 90 days. Nothing is recorded; the clip stays disabled.
+      releaseCall(ledgerPath, reservation, described.status ?? 503, new Date());
+      console.log("the describer refused the call before doing any work; the reservation is released and the clip may be tried again");
+    } else {
+      settleCall(ledgerPath, reservation, described.costUsd, described.ok, new Date());
+      console.log(described.costUsd === null ? `describer cost unknown; $${reservation.maxUsd.toFixed(6)} stays reserved` : `describer cost $${described.costUsd.toFixed(6)}`);
+    }
     if (!described.ok) {
       console.log(`NOT APPROVED (nothing recorded): ${described.error}`);
       return 1;

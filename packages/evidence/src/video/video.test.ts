@@ -11,9 +11,11 @@ import {
   describeSegment,
   descriptionTimesError,
   estimateMaxCostUsd,
+  lastCallAt,
   monthSpendUsd,
   parseLedger,
   parseTimestamp,
+  releaseCall,
   reserveCall,
   settleCall,
   type SegmentRef,
@@ -119,6 +121,22 @@ describe("describer failures that may still cost money (Sol PR20-02, PR20-09)", 
   ])("never echoes the key from the response's %s", async (_n, extra) => {
     const r = await describeSegment(SEG, deps(reply(200, gemini(DESC, extra))));
     expect(JSON.stringify(r)).not.toContain(KEY);
+  });
+});
+
+describe("calls the provider refuses before doing any work (T15: describer HTTP 503)", () => {
+  it.each([429, 500, 503])("marks HTTP %i with no usage as refused, cost zero", async (status) => {
+    const r = await describeSegment(SEG, deps(reply(status, { error: { code: status, message: "The model is overloaded." } })));
+    expect(r).toMatchObject({ ok: false, refused: true, status, costUsd: null });
+  });
+  it("never marks a call refused once the provider reports usage, or on a client error or timeout", async () => {
+    const billed = await describeSegment(SEG, deps(reply(503, gemini(DESC))));
+    expect(billed).toMatchObject({ ok: false });
+    expect(billed.ok ? null : billed.refused).toBeFalsy();
+    for (const fetch of [reply(400, { error: {} }), reply(403, { error: {} }), async () => { throw new Error("timeout"); }]) {
+      const r = await describeSegment(SEG, deps(fetch));
+      expect(r.ok ? null : r.refused).toBeFalsy();
+    }
   });
 });
 
@@ -238,6 +256,28 @@ describe("spend ledger (Sol PR20-01, PR20-02, PR20-03, PR20-05)", () => {
     expect(() => reserveCall(path, req(new Date(NOW.getTime() + 1000)))).toThrow(/one call per clip per 90 days/);
     expect(() => reserveCall(ledger(), req(NOW, { lastDescribedAt: "2026-08-01T00:00:00Z" }))).toThrow(/one call per clip/);
     expect(() => reserveCall(path, req(new Date(NOW.getTime() + 91 * 86_400_000)))).not.toThrow();
+  });
+
+  it("releases a refused call: no charge, and the clip may be sent again at once (T15)", () => {
+    const path = ledger();
+    const r = reserveCall(path, req(NOW, { maxUsd: 1 }));
+    releaseCall(path, r, 503, NOW);
+    const entries = parseLedger(readFileSync(path, "utf8"));
+    expect(monthSpendUsd(entries, "2026-10")).toBe(0);
+    expect(lastCallAt(entries, SEG.mediaId)).toBeNull();
+    expect(() => reserveCall(path, req(new Date(NOW.getTime() + 1000)))).not.toThrow();
+  });
+
+  it("refuses to release a settled call, to settle a released one, or to release an orphan", () => {
+    const path = ledger();
+    const settled = reserveCall(path, req(NOW, { mediaId: "a", maxUsd: 1 }));
+    settleCall(path, settled, null, false, NOW);
+    expect(() => releaseCall(path, settled, 503, NOW)).toThrow(/already settled/);
+    const released = reserveCall(path, req(NOW, { mediaId: "b", maxUsd: 1 }));
+    releaseCall(path, released, 503, NOW);
+    expect(() => settleCall(path, released, 0, false, NOW)).toThrow(/released/);
+    expect(() => releaseCall(path, { ...released, id: "99999999-9999-4999-8999-999999999999" }, 503, NOW)).toThrow(/no reservation/);
+    expect(monthSpendUsd(parseLedger(readFileSync(path, "utf8")), "2026-10")).toBeCloseTo(1);
   });
 
   it("refuses to spend with an unreadable ledger", () => {

@@ -2,13 +2,15 @@
 // an exclusive lock file. Every call is reserved before it is sent, at its upper-bound
 // cost and in the UTC month of the reservation, and settled afterwards. A reservation
 // with no settlement, or settled with an unknown cost, keeps its full upper bound, so an
-// interrupted or unreadable call can never free budget (Sol PR20-01, 02, 03, 05).
+// interrupted or unreadable call can never free budget (Sol PR20-01, 02, 03, 05). A call
+// the provider refused before doing any work (HTTP 429 or 5xx with no usage) is released
+// instead: it costs nothing and does not count toward the 90-day rule (T15).
 import { closeSync, existsSync, fsyncSync, openSync, readFileSync, unlinkSync, writeSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
 export const MONTHLY_CAP_USD = 5;
-/** One describe call per clip per 90 days, whatever came of it. */
+/** One describe call per clip per 90 days, whatever came of it, unless the provider refused it. */
 export const DESCRIBE_INTERVAL_DAYS = 90;
 
 const at = z.iso.datetime({ offset: true });
@@ -29,6 +31,13 @@ const settleSchema = z.strictObject({
   costUsd: z.number().min(0).nullable(),
   ok: z.boolean(),
 });
+/** A reserved call the provider refused before doing any work (HTTP 429 or 5xx, no usage). */
+const releaseSchema = z.strictObject({
+  type: z.literal("release"),
+  id: z.uuid(),
+  at,
+  status: z.number().int().min(400).max(599),
+});
 /** A line from before reservations: one settled call. */
 const legacySchema = z.strictObject({
   at,
@@ -38,9 +47,10 @@ const legacySchema = z.strictObject({
   costUsd: z.number().min(0),
   ok: z.boolean(),
 });
-const entrySchema = z.union([reserveSchema, settleSchema, legacySchema]);
+const entrySchema = z.union([reserveSchema, settleSchema, releaseSchema, legacySchema]);
 export type Reservation = z.output<typeof reserveSchema>;
 export type Settlement = z.output<typeof settleSchema>;
+export type Release = z.output<typeof releaseSchema>;
 export type SpendEntry = z.output<typeof entrySchema>;
 
 /** Every line must parse: an unreadable ledger refuses all spend. */
@@ -55,6 +65,8 @@ export function parseLedger(text: string): SpendEntry[] {
 }
 
 const monthOf = (d: Date) => d.toISOString().slice(0, 7);
+const releasedIds = (entries: readonly SpendEntry[]) =>
+  new Set(entries.flatMap((e) => ("type" in e && e.type === "release" ? [e.id] : [])));
 
 /**
  * Spend charged to a UTC month: the settled cost of each reservation made in it, or its
@@ -68,11 +80,12 @@ export function monthSpendUsd(entries: readonly SpendEntry[], month: string): nu
     const prev = settled.get(e.id);
     settled.set(e.id, prev === null || e.costUsd === null ? null : Math.max(prev ?? 0, e.costUsd));
   }
+  const released = releasedIds(entries);
   let sum = 0;
   for (const e of entries) {
     if (!("type" in e)) {
       if (monthOf(new Date(e.at)) === month) sum += e.costUsd;
-    } else if (e.type === "reserve" && e.month === month) {
+    } else if (e.type === "reserve" && e.month === month && !released.has(e.id)) {
       const cost = settled.get(e.id);
       sum += cost === undefined || cost === null ? e.maxUsd : Math.max(cost, 0);
     }
@@ -82,9 +95,10 @@ export function monthSpendUsd(entries: readonly SpendEntry[], month: string): nu
 
 /** When this clip was last sent to the describer, by the ledger. */
 export function lastCallAt(entries: readonly SpendEntry[], mediaId: string): string | null {
+  const released = releasedIds(entries);
   let last: string | null = null;
   for (const e of entries) {
-    if ((!("type" in e) || e.type === "reserve") && e.mediaId === mediaId && (!last || Date.parse(e.at) > Date.parse(last))) last = e.at;
+    if ((!("type" in e) || (e.type === "reserve" && !released.has(e.id))) && e.mediaId === mediaId && (!last || Date.parse(e.at) > Date.parse(last))) last = e.at;
   }
   return last;
 }
@@ -163,6 +177,7 @@ export function settleCall(ledgerPath: string, r: Reservation, costUsd: number |
   return withLock(ledgerPath, () => {
     const entries = read(ledgerPath);
     if (!entries.some((e) => "type" in e && e.type === "reserve" && e.id === r.id)) throw new Error(`no reservation ${r.id} in the spend ledger`);
+    if (releasedIds(entries).has(r.id)) throw new Error(`reservation ${r.id} was released; a released call cannot be settled`);
     const prior = entries.find((e): e is Settlement => "type" in e && e.type === "settle" && e.id === r.id);
     if (prior) {
       if (prior.costUsd === costUsd && prior.ok === ok) return prior;
@@ -171,5 +186,25 @@ export function settleCall(ledgerPath: string, r: Reservation, costUsd: number |
     const s = settleSchema.parse({ type: "settle", id: r.id, at: now.toISOString(), costUsd, ok });
     appendDurably(ledgerPath, `${JSON.stringify(s)}\n`);
     return s;
+  });
+}
+
+/**
+ * Releases a reservation the provider refused before doing any work (HTTP 429 or 5xx with no
+ * usage, as describeSegment reports it). The call then costs nothing and does not count toward
+ * the 90-day rule. Nothing was described, so nothing is recorded and the clip stays disabled.
+ */
+export function releaseCall(ledgerPath: string, r: Reservation, status: number, now: Date): Release {
+  return withLock(ledgerPath, () => {
+    const entries = read(ledgerPath);
+    if (!entries.some((e) => "type" in e && e.type === "reserve" && e.id === r.id)) throw new Error(`no reservation ${r.id} in the spend ledger`);
+    if (entries.some((e) => "type" in e && e.type === "settle" && e.id === r.id)) {
+      throw new Error(`reservation ${r.id} is already settled; a settled call cannot be released`);
+    }
+    const prior = entries.find((e): e is Release => "type" in e && e.type === "release" && e.id === r.id);
+    if (prior) return prior;
+    const rel = releaseSchema.parse({ type: "release", id: r.id, at: now.toISOString(), status });
+    appendDurably(ledgerPath, `${JSON.stringify(rel)}\n`);
+    return rel;
   });
 }
