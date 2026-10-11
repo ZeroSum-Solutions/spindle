@@ -1,0 +1,112 @@
+// Synthetic fixtures only. Mirrors the database rules in supabase/tests/database/evidence.test.sql.
+import type { Course, LessonBlock } from "@spindle/schema";
+import { describe, expect, it } from "vitest";
+import { bestAttempt, blockEvidence, gradedQuestions, moduleCompletion, passes, quizCreditCarries, scoreAttempt, validateCatalog } from "./index";
+
+const quiz = (prompt: string, support: "science" | "practice-based" = "science"): LessonBlock => ({
+  kind: "quiz",
+  support,
+  claimIds: support === "science" ? ["c1"] : [],
+  content: { prompt, options: ["Wrong", "Right"], answerIndex: 1, explanation: "Synthetic." },
+});
+
+function course(): Course {
+  const lesson = (id: string, blocks: LessonBlock[]) => ({
+    id, slug: id, title: id, summary: "", durationMinutes: 5, format: "article" as const, objectives: [], anatomyIds: [], blocks, media: [], resources: [],
+  });
+  return {
+    id: "c", slug: "c", layer: "base", title: "C", subtitle: "", description: "", level: "foundation", outcomes: [],
+    parts: [
+      { id: "p1", ordinal: 1, title: "P1", summary: "", lessons: [lesson("l1", [{ kind: "heading", content: "H" }, quiz("Q1"), quiz("Practice", "practice-based"), quiz("Q2")])] },
+      { id: "p2", ordinal: 2, title: "P2", summary: "", lessons: [lesson("l2", [quiz("Q3"), quiz("Q4"), quiz("Q5")])] },
+    ],
+  };
+}
+
+const answers = (picks: number[]) =>
+  ["l1:q1", "l1:q2", "l2:q1", "l2:q2", "l2:q3"].map((questionId, i) => ({ questionId, answerIndex: picks[i]! }));
+
+describe("graded questions", () => {
+  it("are the science quiz blocks in course order, with per-lesson ids", () => {
+    expect(gradedQuestions(course()).map((q) => [q.questionId, q.prompt])).toEqual([
+      ["l1:q1", "Q1"], ["l1:q2", "Q2"], ["l2:q1", "Q3"], ["l2:q2", "Q4"], ["l2:q3", "Q5"],
+    ]);
+  });
+});
+
+describe("scoring", () => {
+  const questions = gradedQuestions(course());
+
+  it("passes at exactly 80% and fails below", () => {
+    expect(scoreAttempt(questions, answers([1, 1, 1, 1, 0]))).toMatchObject({ correct: 4, total: 5, passed: true });
+    expect(scoreAttempt(questions, answers([1, 1, 1, 0, 0]))).toMatchObject({ correct: 3, total: 5, passed: false });
+    expect(passes(0, 0)).toBe(false);
+    expect(passes(8, 10)).toBe(true);
+    expect(passes(79, 100)).toBe(false);
+  });
+
+  it("refuses incomplete, duplicate, unknown and out-of-range answers", () => {
+    expect(() => scoreAttempt(questions, answers([1, 1, 1, 1, 1]).slice(0, 4))).toThrow(/every graded question needs exactly one answer/);
+    expect(() => scoreAttempt(questions, [...answers([1, 1, 1, 1, 1]).slice(0, 4), { questionId: "l1:q1", answerIndex: 1 }])).toThrow(/answered twice/);
+    expect(() => scoreAttempt(questions, [...answers([1, 1, 1, 1, 1]).slice(0, 4), { questionId: "l2:q9", answerIndex: 1 }])).toThrow(/not a graded question/);
+    expect(() => scoreAttempt(questions, answers([1, 1, 1, 1, 2]))).toThrow(/outside its options/);
+  });
+});
+
+describe("module completion", () => {
+  const base = { lessonIds: ["l1", "l2"], completedLessonIds: ["l1", "l2"], rules: "phase3" as const, questionSetHash: "a".repeat(64), carriedPass: false };
+  const attempt = (id: string, correct: number, at: string) => ({ id, correct, total: 5, submittedAt: at });
+
+  it("needs every lesson and a passing best attempt", () => {
+    expect(moduleCompletion({ ...base, attempts: [] }).complete).toBe(false);
+    expect(moduleCompletion({ ...base, attempts: [attempt("a", 3, "2026-10-11T00:00:00Z")] }).complete).toBe(false);
+    expect(moduleCompletion({ ...base, attempts: [attempt("a", 4, "2026-10-11T00:00:00Z"), attempt("b", 0, "2026-10-11T00:01:00Z")] })).toEqual({
+      quizRequired: true, quizPassed: true, complete: true,
+    });
+    expect(moduleCompletion({ ...base, completedLessonIds: ["l1"], attempts: [attempt("a", 5, "2026-10-11T00:00:00Z")] }).complete).toBe(false);
+  });
+
+  it("accepts a carried pass and keeps the lessons-only rule before phase 3 or without graded questions", () => {
+    expect(moduleCompletion({ ...base, attempts: [], carriedPass: true }).complete).toBe(true);
+    expect(moduleCompletion({ ...base, rules: "phase2", questionSetHash: null, attempts: [] })).toEqual({ quizRequired: false, quizPassed: false, complete: true });
+    expect(moduleCompletion({ ...base, questionSetHash: null, attempts: [] }).complete).toBe(true);
+    expect(moduleCompletion({ ...base, lessonIds: [], completedLessonIds: [], questionSetHash: null, attempts: [] }).complete).toBe(false);
+  });
+
+  it("picks the best attempt, earliest on a tie", () => {
+    expect(bestAttempt([attempt("b", 4, "2026-10-11T00:01:00Z"), attempt("a", 4, "2026-10-11T00:00:00Z"), attempt("c", 2, "2026-10-10T00:00:00Z")])?.id).toBe("a");
+    expect(bestAttempt([])).toBeNull();
+  });
+
+  it("carries quiz credit only on an unchanged, non-empty question set", () => {
+    expect(quizCreditCarries("a".repeat(64), "a".repeat(64))).toBe(true);
+    expect(quizCreditCarries("a".repeat(64), "b".repeat(64))).toBe(false);
+    expect(quizCreditCarries(null, null)).toBe(false);
+  });
+});
+
+describe("block evidence", () => {
+  const states = new Map([["ok", "current"], ["w", "withdrawn"], ["r", "retracted"], ["e", "recheck_due"]] as const);
+
+  it("drops the Science presentation for a withdrawn or unknown claim and flags the rest", () => {
+    expect(blockEvidence(["ok"], states)).toEqual({ presentsAsScience: true, withdrawn: false, retracted: false, recheckDue: false });
+    expect(blockEvidence(["ok", "w"], states).presentsAsScience).toBe(false);
+    expect(blockEvidence(["missing"], states)).toMatchObject({ presentsAsScience: false, withdrawn: true });
+    expect(blockEvidence(["r", "e"], states)).toEqual({ presentsAsScience: true, withdrawn: false, retracted: true, recheckDue: true });
+    expect(blockEvidence([], states).presentsAsScience).toBe(false);
+  });
+});
+
+describe("registry videos in a catalog", () => {
+  const video: LessonBlock = { kind: "video", content: { mediaId: "m1", provider: "youtube", videoId: "AbCdEfGhIj0", startSeconds: 0, endSeconds: 10, rationale: "x", caption: "" } };
+  const lookups = [{ has: () => true }, { isPublishable: () => true }] as const;
+  const withVideo = (layer: Course["layer"]): Course => {
+    const c = course();
+    return { ...c, layer, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, blocks: [video] }] }] };
+  };
+
+  it("are allowed in global content and refused in gym method content", () => {
+    expect(() => validateCatalog({ version: "t", courses: [withVideo("base")] }, ...lookups)).not.toThrow();
+    expect(() => validateCatalog({ version: "t", courses: [withVideo("method")] }, ...lookups)).toThrow(/cannot embed registry videos/);
+  });
+});

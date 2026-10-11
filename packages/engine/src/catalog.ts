@@ -35,6 +35,10 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
         lessonSlugs.add(lesson.slug);
         for (const block of lesson.blocks) {
           if (block.kind === "image") requireProvenance(provenance, block.content.provenanceId);
+          if (block.kind === "video") {
+            invariant(course.layer !== "method", `${lesson.id} is gym method content and cannot embed registry videos`);
+            invariant(block.content.endSeconds > block.content.startSeconds, `${lesson.id} has a video segment that ends before it starts`);
+          }
           if (block.kind === "quiz") {
             const { options, answerIndex } = block.content;
             invariant(options.length >= 2, `${lesson.id} has a quiz with fewer than two options`);

@@ -2,7 +2,7 @@
 // API bodies). They check shape only: whether a cited claim is approved and
 // relevant is the publish gate's job (validateCatalog and the database receipt).
 import { z } from "zod";
-import type { Catalog, Course, Lesson, LessonBlock, MediaAsset } from "./types";
+import type { Catalog, Course, Lesson, LessonBlock, MediaAsset, VideoSegment } from "./types";
 
 export class ContentParseError extends Error {
   constructor(
@@ -53,13 +53,32 @@ export function isSafeContentUrl(value: string): boolean {
 
 const safeUrl = z.string().refine(isSafeContentUrl, "must be a root-relative path or an https URL");
 
+const VIDEO_HOST = /^https:\/\/(?:[a-z0-9-]+\.)*(?:youtube\.com|youtu\.be|youtube-nocookie\.com|ytimg\.com|googlevideo\.com)(?::\d+)?(?:[/?#]|$)/i;
+
+/** A YouTube-family URL. Never a claim source or plain media: videos come from the practice-media registry (ADR 0007). */
+export function isVideoHostUrl(value: string): boolean {
+  return VIDEO_HOST.test(value);
+}
+
 export const mediaAssetSchema = z.strictObject({
   kind: z.enum(["image", "video", "diagram"]),
-  src: safeUrl,
+  src: safeUrl.refine((src) => !isVideoHostUrl(src), "YouTube media must use a video block from the practice-media registry"),
   alt: requiredText,
   caption: text,
   provenanceId: idSchema,
 }) satisfies z.ZodType<MediaAsset>;
+
+export const videoSegmentSchema = z
+  .strictObject({
+    mediaId: idSchema,
+    provider: z.literal("youtube"),
+    videoId: z.string().regex(/^[A-Za-z0-9_-]{11}$/, "must be a YouTube video id"),
+    startSeconds: z.number().int().min(0).max(86_399),
+    endSeconds: z.number().int().min(1).max(86_400),
+    rationale: requiredText.max(1000),
+    caption: text.max(1000),
+  })
+  .refine((v) => v.endSeconds > v.startSeconds, { message: "must be after startSeconds", path: ["endSeconds"] }) satisfies z.ZodType<VideoSegment>;
 
 /** Shape of an evidence binding. Approval is checked later, against claim records. */
 const supported = {
@@ -90,6 +109,7 @@ const blockVariants = z.discriminatedUnion("kind", [
       .refine((q) => q.answerIndex < q.options.length, { message: "answer is outside the options", path: ["answerIndex"] }),
     ...supported,
   }),
+  z.strictObject({ kind: z.literal("video"), content: videoSegmentSchema }),
 ]);
 
 export const lessonBlockSchema = blockVariants.superRefine((block, ctx) => {

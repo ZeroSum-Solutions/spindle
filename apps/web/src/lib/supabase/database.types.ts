@@ -84,6 +84,7 @@ export type Database = {
           id: string
           notes: string
           reviewer: string
+          run_id: string | null
           seq: number
           verdict: string
         }
@@ -94,6 +95,7 @@ export type Database = {
           id?: string
           notes?: string
           reviewer: string
+          run_id?: string | null
           seq?: never
           verdict: string
         }
@@ -104,10 +106,19 @@ export type Database = {
           id?: string
           notes?: string
           reviewer?: string
+          run_id?: string | null
           seq?: never
           verdict?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "binding_reviews_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "review_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       block_claims: {
         Row: {
@@ -141,6 +152,7 @@ export type Database = {
       }
       claim_reviews: {
         Row: {
+          claim_hash: string | null
           claim_id: string
           created_at: string
           decision: string
@@ -148,9 +160,11 @@ export type Database = {
           id: string
           receipt: Json
           reviewer: string
+          run_id: string | null
           seq: number
         }
         Insert: {
+          claim_hash?: string | null
           claim_id: string
           created_at?: string
           decision: string
@@ -158,9 +172,11 @@ export type Database = {
           id?: string
           receipt: Json
           reviewer: string
+          run_id?: string | null
           seq?: never
         }
         Update: {
+          claim_hash?: string | null
           claim_id?: string
           created_at?: string
           decision?: string
@@ -168,6 +184,7 @@ export type Database = {
           id?: string
           receipt?: Json
           reviewer?: string
+          run_id?: string | null
           seq?: never
         }
         Relationships: [
@@ -176,6 +193,13 @@ export type Database = {
             columns: ["claim_id"]
             isOneToOne: false
             referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_reviews_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "review_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -347,6 +371,8 @@ export type Database = {
           org_id: string | null
           published_at: string
           published_by: string
+          question_set_hash: string | null
+          rules: string
           scope: string
           snapshot: Json
           version_number: number
@@ -359,6 +385,8 @@ export type Database = {
           org_id?: string | null
           published_at?: string
           published_by: string
+          question_set_hash?: string | null
+          rules: string
           scope?: string
           snapshot: Json
           version_number: number
@@ -371,6 +399,8 @@ export type Database = {
           org_id?: string | null
           published_at?: string
           published_by?: string
+          question_set_hash?: string | null
+          rules?: string
           scope?: string
           snapshot?: Json
           version_number?: number
@@ -548,6 +578,62 @@ export type Database = {
           },
         ]
       }
+      lesson_reviews: {
+        Row: {
+          claim_ids: string[]
+          created_at: string
+          findings: Json
+          id: string
+          lesson_hash: string
+          lesson_id: string
+          notes: string
+          originality: string
+          reviewer: string
+          run_id: string | null
+          safety: string
+          seq: number
+          verdict: string
+        }
+        Insert: {
+          claim_ids: string[]
+          created_at?: string
+          findings: Json
+          id?: string
+          lesson_hash: string
+          lesson_id: string
+          notes?: string
+          originality: string
+          reviewer: string
+          run_id?: string | null
+          safety: string
+          seq?: never
+          verdict: string
+        }
+        Update: {
+          claim_ids?: string[]
+          created_at?: string
+          findings?: Json
+          id?: string
+          lesson_hash?: string
+          lesson_id?: string
+          notes?: string
+          originality?: string
+          reviewer?: string
+          run_id?: string | null
+          safety?: string
+          seq?: never
+          verdict?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_reviews_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "review_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           anatomy_ids: Json
@@ -664,6 +750,246 @@ export type Database = {
           id?: string
           name?: string
           slug?: string
+        }
+        Relationships: []
+      }
+      practice_media: {
+        Row: {
+          admitted_at: string
+          admitted_by: string
+          end_seconds: number
+          id: string
+          provider: string
+          rationale: string
+          start_seconds: number
+          video_id: string
+        }
+        Insert: {
+          admitted_at?: string
+          admitted_by: string
+          end_seconds: number
+          id?: string
+          provider: string
+          rationale: string
+          start_seconds: number
+          video_id: string
+        }
+        Update: {
+          admitted_at?: string
+          admitted_by?: string
+          end_seconds?: number
+          id?: string
+          provider?: string
+          rationale?: string
+          start_seconds?: number
+          video_id?: string
+        }
+        Relationships: []
+      }
+      practice_media_checks: {
+        Row: {
+          checked_at: string
+          id: string
+          kind: string
+          media_id: string
+          notes: string
+          outcome: string
+          recorded_at: string
+          recorded_by: string
+          run_id: string | null
+          seq: number
+        }
+        Insert: {
+          checked_at: string
+          id?: string
+          kind: string
+          media_id: string
+          notes?: string
+          outcome: string
+          recorded_at?: string
+          recorded_by: string
+          run_id?: string | null
+          seq?: never
+        }
+        Update: {
+          checked_at?: string
+          id?: string
+          kind?: string
+          media_id?: string
+          notes?: string
+          outcome?: string
+          recorded_at?: string
+          recorded_by?: string
+          run_id?: string | null
+          seq?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_media_checks_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "practice_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practice_media_checks_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "review_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_media_metadata: {
+        Row: {
+          available: boolean
+          channel: string
+          fetched_at: string
+          media_id: string
+          recorded_by: string
+          title: string
+        }
+        Insert: {
+          available: boolean
+          channel: string
+          fetched_at: string
+          media_id: string
+          recorded_by: string
+          title: string
+        }
+        Update: {
+          available?: boolean
+          channel?: string
+          fetched_at?: string
+          media_id?: string
+          recorded_by?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_media_metadata_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: true
+            referencedRelation: "practice_media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_media_status: {
+        Row: {
+          id: string
+          media_id: string
+          reason: string
+          recorded_at: string
+          recorded_by: string
+          seq: number
+          status: string
+        }
+        Insert: {
+          id?: string
+          media_id: string
+          reason: string
+          recorded_at?: string
+          recorded_by: string
+          seq?: never
+          status: string
+        }
+        Update: {
+          id?: string
+          media_id?: string
+          reason?: string
+          recorded_at?: string
+          recorded_by?: string
+          seq?: never
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_media_status_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "practice_media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempts: {
+        Row: {
+          answers: Json
+          attempt_key: string
+          correct: number
+          id: string
+          org_id: string
+          passed: boolean
+          question_set_hash: string
+          submitted_at: string
+          total: number
+          user_id: string
+          version_id: string
+        }
+        Insert: {
+          answers: Json
+          attempt_key: string
+          correct: number
+          id?: string
+          org_id: string
+          passed?: boolean
+          question_set_hash: string
+          submitted_at?: string
+          total: number
+          user_id: string
+          version_id: string
+        }
+        Update: {
+          answers?: Json
+          attempt_key?: string
+          correct?: number
+          id?: string
+          org_id?: string
+          passed?: boolean
+          question_set_hash?: string
+          submitted_at?: string
+          total?: number
+          user_id?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_org_id_version_id_user_id_fkey"
+            columns: ["org_id", "version_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["org_id", "version_id", "user_id"]
+          },
+        ]
+      }
+      review_runs: {
+        Row: {
+          id: string
+          model: string
+          packet_digest: string
+          recorded_at: string
+          recorded_by: string
+          reviewed_at: string
+          session_id: string
+        }
+        Insert: {
+          id?: string
+          model: string
+          packet_digest: string
+          recorded_at?: string
+          recorded_by: string
+          reviewed_at: string
+          session_id: string
+        }
+        Update: {
+          id?: string
+          model?: string
+          packet_digest?: string
+          recorded_at?: string
+          recorded_by?: string
+          reviewed_at?: string
+          session_id?: string
         }
         Relationships: []
       }
@@ -882,6 +1208,24 @@ export type Database = {
         Args: { org_name: string; org_slug: string }
         Returns: string
       }
+      module_status: {
+        Args: { p_assignment: string }
+        Returns: {
+          assignment_id: string
+          best_attempt_id: string
+          best_correct: number
+          best_total: number
+          complete: boolean
+          lessons_completed: number
+          lessons_total: number
+          questions_total: number
+          quiz_carried: boolean
+          quiz_credit_attempt_id: string
+          quiz_passed: boolean
+          quiz_required: boolean
+          version_id: string
+        }[]
+      }
       publish_course: { Args: { p_course: string }; Returns: string }
       publisher_add_claim: {
         Args: { p_actor: string; p_claim: Json }
@@ -891,13 +1235,29 @@ export type Database = {
         Args: { p_actor: string; p_source: Json }
         Returns: string
       }
+      publisher_admit_media: {
+        Args: { p_actor: string; p_media: Json }
+        Returns: string
+      }
+      publisher_claim_target: {
+        Args: { p_actor: string; p_claim: string }
+        Returns: Json
+      }
       publisher_publish_course: {
         Args: { p_actor: string; p_course: string }
+        Returns: string
+      }
+      publisher_record_media_check: {
+        Args: { p_actor: string; p_check: Json; p_media: string }
         Returns: string
       }
       publisher_record_retraction: {
         Args: { p_actor: string; p_notice: Json; p_source: string }
         Returns: number
+      }
+      publisher_refresh_media_metadata: {
+        Args: { p_actor: string; p_media: string; p_metadata: Json }
+        Returns: undefined
       }
       publisher_review_block: {
         Args: { p_actor: string; p_block: string; p_review: Json }
@@ -907,8 +1267,20 @@ export type Database = {
         Args: { p_actor: string; p_claim: string; p_review: Json }
         Returns: string
       }
+      publisher_review_lesson: {
+        Args: { p_actor: string; p_lesson: string; p_review: Json }
+        Returns: string
+      }
+      publisher_review_targets: {
+        Args: { p_actor: string; p_course: string }
+        Returns: Json
+      }
       publisher_save_course_draft: {
         Args: { p_actor: string; p_course: Json }
+        Returns: string
+      }
+      publisher_set_media_status: {
+        Args: { p_actor: string; p_media: string; p_status: Json }
         Returns: string
       }
       remove_member: {
@@ -927,6 +1299,33 @@ export type Database = {
           target_org: string
         }
         Returns: undefined
+      }
+      submit_quiz_attempt: {
+        Args: { p_answers: Json; p_assignment: string; p_attempt_key: string }
+        Returns: {
+          attempt_id: string
+          correct: number
+          passed: boolean
+          total: number
+        }[]
+      }
+      version_integrity: {
+        Args: { p_version: string }
+        Returns: {
+          claim_id: string
+          lesson_id: string
+          state: string
+        }[]
+      }
+      version_media: {
+        Args: { p_version: string }
+        Returns: {
+          available: boolean
+          channel: string
+          media_id: string
+          state: string
+          title: string
+        }[]
       }
     }
     Enums: {

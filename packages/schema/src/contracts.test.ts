@@ -1,0 +1,82 @@
+// Synthetic values only. Phase-3 contracts (ADR 0007): video blocks, the YouTube media rule,
+// learner RPC rows and review receipt bodies.
+import { describe, expect, it } from "vitest";
+import {
+  ContentParseError,
+  blockReviewInputSchema,
+  isVideoHostUrl,
+  lessonBlockSchema,
+  lessonReviewInputSchema,
+  mediaAssetSchema,
+  parseModuleStatus,
+  parseQuizAttemptResult,
+  parseVersionIntegrity,
+  parseVersionMedia,
+  quizAnswersSchema,
+} from "./index";
+
+const UUID = "11111111-1111-4111-8111-111111111111";
+const HASH = "a".repeat(64);
+const video = { mediaId: UUID, provider: "youtube", videoId: "AbCdEfGhIj0", startSeconds: 30, endSeconds: 95, rationale: "Shows the rhythm.", caption: "" };
+const run = { model: "synthetic-fixture", session: "ci-1", packetDigest: HASH, reviewedAt: "2026-10-01T00:00:00Z" };
+
+describe("video blocks", () => {
+  it("accept a registry segment and refuse support, claims or a bad segment", () => {
+    expect(lessonBlockSchema.parse({ kind: "video", content: video })).toEqual({ kind: "video", content: video });
+    expect(() => lessonBlockSchema.parse({ kind: "video", content: video, support: "science", claimIds: [] })).toThrow();
+    expect(() => lessonBlockSchema.parse({ kind: "video", content: { ...video, endSeconds: 30 } })).toThrow(/after startSeconds/);
+    expect(() => lessonBlockSchema.parse({ kind: "video", content: { ...video, videoId: "short" } })).toThrow(/YouTube video id/);
+    expect(() => lessonBlockSchema.parse({ kind: "video", content: { ...video, provider: "vimeo" } })).toThrow();
+  });
+
+  it("keep YouTube out of plain media", () => {
+    for (const url of ["https://www.youtube.com/watch?v=AbCdEfGhIj0", "https://youtu.be/AbCdEfGhIj0", "https://www.youtube-nocookie.com/embed/x", "https://i.ytimg.com/vi/x/0.jpg", "https://M.YOUTUBE.COM/x"]) {
+      expect(isVideoHostUrl(url), url).toBe(true);
+      expect(mediaAssetSchema.safeParse({ kind: "video", src: url, alt: "x", caption: "", provenanceId: "p1" }).success, url).toBe(false);
+    }
+    for (const url of ["https://notyoutube.com/x", "https://example.org/youtube.com", "/media/youtube.png"]) expect(isVideoHostUrl(url), url).toBe(false);
+  });
+});
+
+describe("learner RPC rows", () => {
+  it("parse a quiz result and module status, and refuse extra or missing fields", () => {
+    expect(parseQuizAttemptResult([{ attempt_id: UUID, correct: 4, total: 5, passed: true }])).toEqual({ attemptId: UUID, correct: 4, total: 5, passed: true });
+    expect(() => parseQuizAttemptResult([])).toThrow(ContentParseError);
+    const status = {
+      assignment_id: UUID, version_id: UUID, lessons_total: 2, lessons_completed: 2, quiz_required: true, questions_total: 5,
+      best_attempt_id: null, best_correct: null, best_total: null, quiz_passed: true, quiz_credit_attempt_id: UUID, quiz_carried: true, complete: true,
+    };
+    expect(parseModuleStatus([status])).toMatchObject({ quizCarried: true, complete: true, bestAttemptId: null });
+    expect(() => parseModuleStatus([{ ...status, passed: true }])).toThrow(ContentParseError);
+  });
+
+  it("parse integrity and media rows", () => {
+    expect(parseVersionIntegrity([{ lesson_id: UUID, claim_id: UUID, state: "withdrawn" }])).toEqual([{ lessonId: UUID, claimId: UUID, state: "withdrawn" }]);
+    expect(() => parseVersionIntegrity([{ lesson_id: UUID, claim_id: UUID, state: "rejected" }])).toThrow(ContentParseError);
+    expect(parseVersionMedia([{ media_id: UUID, state: "disabled", title: null, channel: null, available: null }])[0]).toMatchObject({ state: "disabled" });
+  });
+
+  it("refuse a client-side verdict in quiz answers", () => {
+    expect(quizAnswersSchema.safeParse([{ questionId: "l1:q1", answerIndex: 1 }]).success).toBe(true);
+    expect(quizAnswersSchema.safeParse([{ questionId: "l1:q1", answerIndex: 1, passed: true }]).success).toBe(false);
+    expect(quizAnswersSchema.safeParse([]).success).toBe(false);
+  });
+});
+
+describe("review receipt bodies", () => {
+  const clean = { verdict: "clean", expectedHash: HASH, claimIds: [], checks: { safety: "pass", originality: "pass" }, findings: [], run };
+
+  it("allow a clean lesson review only with a run, passing checks and nothing above NIT", () => {
+    expect(lessonReviewInputSchema.safeParse(clean).success).toBe(true);
+    expect(lessonReviewInputSchema.safeParse({ ...clean, run: undefined }).success).toBe(false);
+    expect(lessonReviewInputSchema.safeParse({ ...clean, findings: [{ severity: "WARN", item: "x", note: "x" }] }).success).toBe(false);
+    expect(lessonReviewInputSchema.safeParse({ ...clean, checks: { safety: "fail", originality: "pass" } }).success).toBe(false);
+    expect(lessonReviewInputSchema.safeParse({ ...clean, verdict: "changes_required", run: undefined, findings: [{ severity: "BLOCK", item: "x", note: "x" }] }).success).toBe(true);
+  });
+
+  it("need a run for a supported block and a lowercase model id", () => {
+    expect(blockReviewInputSchema.safeParse({ verdict: "supported", expectedHash: HASH, claimIds: [UUID], run }).success).toBe(true);
+    expect(blockReviewInputSchema.safeParse({ verdict: "supported", expectedHash: HASH, claimIds: [UUID] }).success).toBe(false);
+    expect(blockReviewInputSchema.safeParse({ verdict: "supported", expectedHash: HASH, claimIds: [UUID], run: { ...run, model: "GPT 6" } }).success).toBe(false);
+  });
+});

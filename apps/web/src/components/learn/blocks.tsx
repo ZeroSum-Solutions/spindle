@@ -40,6 +40,9 @@ function Block({ block, index, ctx }: { block: LessonBlock; index: number; ctx: 
           {block.content.caption ? <figcaption className="text-label text-text-muted">{block.content.caption}</figcaption> : null}
         </figure>
       );
+    case "video":
+      // Registry clips get the click-to-load player in P3-B; until then nothing loads or renders.
+      return null;
     default:
       return <Supported block={block} index={index} ctx={ctx} />;
   }
