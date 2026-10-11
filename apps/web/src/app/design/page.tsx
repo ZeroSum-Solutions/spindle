@@ -204,7 +204,7 @@ export default function DesignSpecimen() {
           <div className="lg:sticky lg:top-6 lg:self-start">
             <LessonOutline view={view} base="/design" currentId="l2" />
           </div>
-          <article className="flex max-w-[68ch] flex-col gap-8 text-reading">
+          <article className="flex max-w-[46rem] flex-col gap-8 text-reading">
             <SupportLegend supports={["science", "practice-based"]} />
             <LessonBlocks blocks={blocks} ctx={{ orgId: null, claims, flagged: new Set([FLAGGED]), integrity: SPECIMEN_INTEGRITY }} />
             <LessonMedia media={[]} orgId={null} />
@@ -220,7 +220,7 @@ export default function DesignSpecimen() {
       </Section>
 
       <Section title="Reviewed diagrams (sample text)">
-        <div data-specimen="diagrams" className="mx-auto flex w-full max-w-[68ch] flex-col gap-8">
+        <div data-specimen="diagrams" className="mx-auto flex w-full max-w-[46rem] flex-col gap-8">
           {DIAGRAM_SAMPLES.map((content) => (
             <ReviewedDiagram key={content.diagramId} content={content} />
           ))}
