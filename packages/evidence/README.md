@@ -57,3 +57,24 @@ Issues are sanitized: no contact email or key is ever stored.
 - Fixtures hold metadata only. Abstract and TLDR fields are synthetic (`SYNTHETIC ABSTRACT FOR TESTS`).
 - Re-record fixtures by hand: `SPINDLE_CONTACT_EMAIL=you@example.org pnpm --filter @spindle/evidence record`. The script trims payloads to the fields the clients read and replaces abstracts and TLDRs with synthetic placeholder text, so no publisher or model prose is redistributed.
 - Live check: `SPINDLE_CONTACT_EMAIL=you@example.org pnpm --filter @spindle/evidence smoke` prints one line per API.
+
+## Claim pipeline (phase 3, ADR 0007)
+
+Everything here fails closed. A step that cannot prove its result records nothing, and the database checks every receipt again. No step runs in CI. CI tests the pure parts with stubbed networks and a fake reviewer.
+
+| Script (`pnpm --filter @spindle/evidence exec tsx scripts/<name>.ts`) | Does | Exit |
+|---|---|---|
+| `ingest.ts --pmid <id> \| --doi <doi> [--add-source]` | Builds an `IngestedPaper` from PubMed metadata, the full abstract of the matching PubMed record (Europe PMC's MED copy, else Crossref's deposit) and `verifySource`. It is `ready` only when identifiers match, the abstract is complete, the publication type is a systematic review, meta-analysis or guideline, and the source is verified as not retracted. Unknown is never "not retracted". `--add-source` calls `publisher_add_source`, or reuses the existing source with that DOI and refreshes its private evidence entry. Evidence must match the source's DOI, PMID and kind, both when the packet is built and when receipts are recorded. | 0 ready, 1 blocked |
+| `review.ts --claims <ids> \| --course <id> --safety <SAFETY.md> [--dry-run]` | Builds a bounded packet (`assertPacket`: at most 80 items and 400 KB, evidence checked within 30 days) from `publisher_claim_target` / `publisher_review_targets` and runs the reviewer. The reviewer is `codex exec` with GPT-6.1 Sol at xhigh, given an allowlisted environment with no credentials, an empty working directory, a read-only sandbox, no user config, the packet as fenced data and an output schema. The answer must name every item exactly once with a valid verdict, model, session and packet digest (`parseReviewResult`). Writes packet, prompt and outcome; records nothing. | 0 valid, 1 not approved |
+| `record-review.ts --dir <review dir>` | The trusted step. Checks that the outcome belongs to this exact packet, then records every receipt in one transaction as `SPINDLE_PUBLISHER_ID`. A stale hash anywhere means nothing is recorded. | 0 recorded, 1 refused |
+| `media.ts admit\|recheck\|refresh\|retire` | Practice-media registry upkeep. Admission needs an oEmbed 200 (401/403 means embedding is off; 404 means missing; anything else is an error). A failed recheck records a failed check and disables the clip. Metadata older than 25 days is refreshed; retiring deletes it. | 0 ok, 1 failure or disable |
+| `publish.ts --course <id>` | The founder publishing entry point. It rechecks every source the global course cites with `verifySource` (plan section 7: retraction status is rechecked before every publish) and records any retraction. It refuses while any cited paper is retracted, unknown or has no DOI; textbooks and nomenclature have no retraction status. Only then does it call `publisher_publish_course`. | 0 published, 1 refused |
+| `retraction-recheck.ts [--dry-run]` | Monthly. Runs `verifySource` for every cited DOI source, records retractions (flagging published versions) and reports unknowns. | 0 all verified, 1 otherwise |
+
+Environment:
+- `SPINDLE_DB_URL` must be a loopback database. `:54322` (the shared local stack) is refused unless the lead sets `SPINDLE_ALLOW_SHARED_DB=1` after migration admission.
+- `SPINDLE_PUBLISHER_ID` is a row in `private.content_publishers`.
+- `SPINDLE_EVIDENCE_DIR` and `SPINDLE_REVIEW_DIR` must be absolute paths outside the repository. Abstracts, packets and raw answers are private and copyrighted, and never committed.
+- `SPINDLE_CONTACT_EMAIL` is required, as above.
+
+Video segments: `codex exec` takes text and still images only, and Gemini through the `agy` subscription lane reports no native video input (it can only try page-reading or shell tools, and downloading is not allowed). So no authorized route lets a reviewer see a segment's speech and demonstration. Registry clips stay deferred until a reviewer route is decided (plan section 6).

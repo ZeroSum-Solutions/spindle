@@ -1300,6 +1300,10 @@ export type Database = {
         Args: { p_actor: string; p_course: string }
         Returns: string
       }
+      publisher_publish_course_checked: {
+        Args: { p_actor: string; p_checked: Json; p_course: string }
+        Returns: string
+      }
       publisher_record_media_check: {
         Args: { p_actor: string; p_check: Json; p_media: string }
         Returns: string

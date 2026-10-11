@@ -17,6 +17,8 @@ export interface WorkSummary {
   isRetractionNotice?: boolean;
   citedByCount?: number;
   oa: OaInfo;
+  /** Publication types as the source lists them (PubMed, Europe PMC). */
+  pubTypes?: string[];
   source: "pubmed" | "europepmc" | "openalex";
 }
 
