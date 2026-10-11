@@ -61,7 +61,7 @@ Each feature PR names the acceptance criteria it changes, the tests that assert 
 | Session refresh in the proxy | `apps/web/e2e/tenancy.spec.ts` ("an expiring session") | Forces a refresh by moving only the cookie's `expires_at` into the past; the tokens stay real and unexpired. Proves cookie replacement, refresh-token rotation in `auth.refresh_tokens` and the same signed-in user, not the handling of an expired signed JWT |
 | Media storage isolation | `apps/web/e2e/storage.spec.ts` | Real Storage API calls for own-gym, trainer, cross-gym, global-bucket, visitor and service-role cases. Storage returns a trigger exception as HTTP 500 `database error, code: P0001`; the spec names the guard by replaying the same row change in a rolled-back transaction |
 | Published snapshots parse with the runtime schema | `apps/web/e2e/content-contract.spec.ts` | Publishes synthetic base and method courses through the real RPCs in one rolled-back transaction, checks `parseCourse` leaves each snapshot unchanged, and checks a fixed 37-link corpus against `isSafeContentUrl` |
-| Durable player progress and credit in the browser | Phase 2 PR acceptance receipts | Pending until the learner flow lands |
+| Durable player progress and credit in the browser | `apps/web/e2e/player.spec.ts` | Synthetic publisher, gyms and learners through host `psql` and the real publisher and tenant RPCs; no service key. Covers the assigned list, every block kind, own-gym and cross-gym media, progress across reload and a fresh session, duplicate completion, partial and full credit, root lineage, late completion, two gyms, retraction and the production 404 for `/design`. Cleanup removes the run's rows and asserts none remain |
 
 ## Fixtures and cleanup
 

@@ -11,3 +11,8 @@ Each phase ends with a check that proves it.
 | 4 | Lead authoring of method courses | A lead publishes v1 then v2, and trainers see the "what changed" delta |
 | 5 | Disclosure contract, then cohort ingestion and ranking | Tests prove complementary suppression and differencing protection; undersized cohorts keep the default ranking |
 | 6+ | Spaced review, anatomy viewer, more modules, credentials, MCP server | Each gets its own plan |
+
+## Phase 2 status
+Landed: the content database and publish gate, immutable versions, assignments and progress (PR #8); runtime content schemas and the version-credit engine (PR #7). In review: the learner flow and design system, with its browser tests (`e2e/player.spec.ts`), and the storage and auth verification. Phase 2 is not complete until the combined browser and API proof passes on `main`.
+
+Moved out of phase 2 on purpose: graded, persisted quizzes and the quiz completion rule (phase 3); expiry and rejection notices for learners (needs a learner-readable review state); a resume pointer.
