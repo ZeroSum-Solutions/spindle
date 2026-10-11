@@ -111,7 +111,7 @@ export function SupportLegend({ supports }: { supports: readonly Support[] }) {
   const present = new Set(supports);
   if (present.size === 0) return null;
   return (
-    <dl className="grid grid-cols-1 items-start gap-x-3 gap-y-1 rounded-card border border-border bg-surface p-4 text-label sm:grid-cols-[auto_1fr] sm:items-center sm:gap-y-2">
+    <dl className="grid grid-cols-1 items-start gap-x-3 gap-y-1 rounded-card bg-surface-muted p-4 text-label sm:grid-cols-[auto_1fr] sm:items-center sm:gap-y-2">
       {present.has("science") ? (
         <>
           <dt>

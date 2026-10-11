@@ -1,7 +1,7 @@
 import { ChevronDown, ExternalLink, TriangleAlert } from "lucide-react";
-import type { ClaimView, SourceView } from "@/lib/learning/load";
-import { formatDate } from "@/lib/learning/format";
-import { doiHref } from "@/lib/learning/links";
+import type { ClaimView, SourceView } from "../../lib/learning/load";
+import { formatDate } from "../../lib/learning/format";
+import { doiHref } from "../../lib/learning/links";
 
 const KIND: Record<string, string> = {
   textbook: "Textbook",

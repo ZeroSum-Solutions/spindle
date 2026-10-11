@@ -7,6 +7,7 @@ The design contract is the root [DESIGN.md](../../../DESIGN.md). The app's token
 | (private) | The generated original of the selected wordmark (Cut 03, corrected: d cut, solid l, cut i dot) | Kept privately: it carries the generator's C2PA metadata and no redistribution right is recorded |
 | `assets/r2-logo-03*.svg` | Potrace traces of the original (black, ink, cobalt, white) | Source for `build-brand.py`; the only form of the mark in this repository |
 | `asset-provenance.json` | Generator, model, task ids and prompts for the wordmark | Provenance, not trademark clearance |
+| `asset-provenance.json` › `illustrations` | Original SVG line art: shoulder complex, scapular upward rotation, layer stack | Hand-written geometry, AI-assisted, never traced; CC BY-SA 4.0 |
 | `assets/geist*-OFL.txt` | SIL Open Font License for Geist and Geist Mono | Fonts load through `next/font` |
 | `build-brand.py` | Writes the app's brand SVGs and icon from the trace; prints the raster commands | Run from the repo root |
 | `proposal/` | The revision-2 Atlas proposal as delivered (design notes, components, motion, generated tokens, shadcn adapter) | Historical. Superseded by the root DESIGN.md where they differ |
