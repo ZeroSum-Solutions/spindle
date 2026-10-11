@@ -1,5 +1,5 @@
 // Synthetic fixtures only: no tenant content and no real teaching text.
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ContentParseError, isSafeContentUrl, parseCatalog, parseCourse, parseLessonCompletions, parseVersionManifest } from "./index";
 
 function block(overrides: Record<string, unknown> = {}) {
@@ -110,6 +110,36 @@ describe("content ingress", () => {
     ["https://example.org:65535/a.png"],
   ])("accepts safe url %j", (src) => {
     expect(isSafeContentUrl(src)).toBe(true);
+  });
+
+  describe("host rules that do not depend on the runtime's URL parser", () => {
+    // Node 24.16 rejected https://xn--zz.org but CI's Node 24.21 accepted it. The canonical
+    // guard (the same as the database's link rule) must reject these even when the parser says yes.
+    afterEach(() => vi.restoreAllMocks());
+    const parser = (globalThis as unknown as { URL: { canParse(input: string): boolean } }).URL;
+
+    it.each([
+      ["https://xn--zz.org/a.png"],
+      ["https://XN--zz.org/a.png"],
+      ["https://Xn--ZZ.org/a.png"],
+      ["https://cdn.xn--zz.org/a.png"],
+      ["https://xn--bcher-kva.example/a.png"],
+      ["https://example.xn--p1ai/a.png"],
+      ["https://1.2.3.999/a.png"],
+      ["https://example.123/a.png"],
+    ])("rejects %j even when URL.canParse accepts it", (src) => {
+      const canParse = vi.spyOn(parser, "canParse").mockReturnValue(true);
+      expect(isSafeContentUrl(src)).toBe(false);
+      canParse.mockRestore();
+      expect(parser.canParse).not.toBe(canParse);
+    });
+
+    it.each([["https://xn-zz.org/a.png"], ["https://axn--zz.org/a.png"], ["https://example.org/xn--path.png"]])(
+      "still accepts %j, which has no punycode label",
+      (src) => {
+        expect(isSafeContentUrl(src)).toBe(true);
+      },
+    );
   });
 
   it("rejects an unsafe resource href and an unsafe image block src", () => {

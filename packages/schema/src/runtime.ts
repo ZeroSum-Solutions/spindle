@@ -29,7 +29,7 @@ const requiredText = text.refine((s) => s.trim().length > 0, "must not be blank"
 const RELATIVE_PATH = /^\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/;
 // The host allows no "@", so URLs with credentials fail.
 const HOST_LABEL = "[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?";
-const HTTPS_URL = new RegExp(`^https://${HOST_LABEL}(?:\\.${HOST_LABEL})*(?::(\\d{1,5}))?(?:[/?#].*)?$`);
+const HTTPS_URL = new RegExp(`^https://(${HOST_LABEL}(?:\\.${HOST_LABEL})*)(?::(\\d{1,5}))?(?:[/?#].*)?$`);
 const UNSAFE_CHARS = /[\s\\\u0000-\u001f\u007f]/;
 
 // WHATWG URL is global in Node and browsers, but the ES lib types do not declare it.
@@ -43,8 +43,11 @@ export function isSafeContentUrl(value: string): boolean {
   }
   const match = HTTPS_URL.exec(value);
   if (!match) return false;
-  const port = match[1] === undefined ? 443 : Number(match[1]);
-  // The shape check alone accepts ports out of range and hosts the URL parser rejects (1.2.3.999, xn--zz.org).
+  const labels = match[1]!.split(".");
+  const port = match[2] === undefined ? 443 : Number(match[2]);
+  // The database's link rule, independent of the runtime's URL parser (whose IDNA handling
+  // differs between Node releases): an alphabetic top-level label and no punycode labels.
+  if (!/^[A-Za-z]{2,63}$/.test(labels.at(-1)!) || labels.some((label) => /^xn--/i.test(label))) return false;
   return port >= 1 && port <= 65535 && WhatwgUrl.canParse(value);
 }
 
