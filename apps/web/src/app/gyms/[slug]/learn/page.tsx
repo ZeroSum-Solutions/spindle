@@ -108,7 +108,7 @@ function BrandedCatalog({
   const of = (layer: CourseCardView["layer"]) => entries.flatMap((e) => (e.card && e.card.layer === layer ? [e.card] : []));
   const earlier = new Map(entries.flatMap((e) => (e.card ? [[e.card.id, e.earlier] as const] : [])));
   return (
-    <div className={`${font.className} flex flex-1 flex-col bg-canvas`} style={brandScopeVars(brand.colors) as CSSProperties}>
+    <div className={`${font.className} flex flex-1 flex-col bg-canvas`} style={brandScopeVars(brand.colors) as CSSProperties} data-brand-scope="" data-brand-band="">
       <BrandHeader
         brand={brand}
         fontFamily={font.family}

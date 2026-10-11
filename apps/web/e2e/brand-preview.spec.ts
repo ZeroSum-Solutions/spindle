@@ -101,6 +101,36 @@ test.describe("tenant brand preview", () => {
     for (const selector of BRAND_UTILITIES) expect(css, `stylesheet rule ${selector}`).toMatch(ruleFor(selector));
   });
 
+  test("brand colours and the focus ring resolve through the stylesheet, never an inline light-dark() (Sol R2 on #51)", async ({ page }) => {
+    await page.goto("/brand-preview");
+    for (const brand of BRANDS) {
+      const s = section(page, brand.name);
+      await expect(s).toBeVisible();
+      const scope = s; // The preview section is itself the brand scope.
+      const vars = await scope.evaluate((el) => {
+        const cs = getComputedStyle(el);
+        return { style: el.getAttribute("style") ?? "", brand: cs.getPropertyValue("--color-brand").trim(), ring: cs.getPropertyValue("--focus-ring").trim() };
+      });
+      // Inline: literal hex variables only. A browser without native light-dark() would drop an inline light-dark().
+      expect(vars.style, `${brand.name}: inline style`).not.toContain("light-dark(");
+      expect(vars.style).toMatch(/--brand-accent-light:\s*#[0-9a-f]{6}/);
+      // Resolved to one literal colour on the scope: the lowered stylesheet rule picked the theme's value.
+      expect(vars.brand, `${brand.name}: --color-brand`).toMatch(/^#[0-9a-f]{6}$/);
+      // Keyboard focus is visible on a branded link: the ring is drawn, solid, in the accent.
+      const link = s.locator("a").filter({ visible: true }).first();
+      await link.focus();
+      await page.keyboard.press("Shift+Tab");
+      await page.keyboard.press("Tab");
+      const ring = await page.evaluate(() => {
+        const cs = getComputedStyle(document.activeElement!);
+        return [cs.outlineStyle, cs.outlineWidth, cs.outlineColor];
+      });
+      expect(ring[0], `${brand.name}: ring style`).toBe("solid");
+      expect(ring[1]).toBe("3px");
+      expect(ring[2], `${brand.name}: ring colour`).toBe(brand.accent);
+    }
+  });
+
   for (const view of VIEWS) {
     test(`both brands pass axe AA, reflow without sideways scroll and keep evidence colours at ${view.label}`, async ({ browser }) => {
       const context = await browser.newContext({ viewport: { width: view.width, height: view.height }, deviceScaleFactor: view.scale });

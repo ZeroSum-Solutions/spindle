@@ -2,7 +2,7 @@
 // No real gym, coach or name. Every tenant text here stands for admitted text; the "pending" scene
 // stands for a gym whose held texts are all pending, so the fixed fallbacks show.
 import type { BrandFont } from "@spindle/schema";
-import { memberColors, type BrandColors, type CatalogHeroView, type CoachNoteView, type CourseCardView, type MemberBrandView, type NavLink } from "@/components/brand/view";
+import { memberColors, paint, type BrandColors, type CatalogHeroView, type CoachNoteView, type CourseCardView, type MemberBrandView, type NavLink } from "@/components/brand/view";
 
 export interface CatalogScene {
   id: "strength" | "pilates" | "pending" | "long-name";
@@ -82,7 +82,7 @@ export const CATALOG_SCENES: CatalogScene[] = [
         blurb: "How we set up, cue and progress the squat on our floor.",
         tags: ["strength"],
         meta: "6 lessons",
-        cover: { pattern: "diagonal", background: STRENGTH.band, foreground: STRENGTH.onBand },
+        cover: { pattern: "diagonal", background: paint(STRENGTH, "band"), foreground: paint(STRENGTH, "onBand") },
       },
       {
         id: "strength-program",
@@ -92,7 +92,7 @@ export const CATALOG_SCENES: CatalogScene[] = [
         blurb: "Our weekly template and how we adjust it for each lifter.",
         tags: ["strength", "powerlifting"],
         meta: "4 lessons",
-        cover: { pattern: "grid", background: STRENGTH.accent, foreground: STRENGTH.onAccent },
+        cover: { pattern: "grid", background: paint(STRENGTH, "accent"), foreground: paint(STRENGTH, "onAccent") },
       },
     ],
     baseCourses: baseCourses("strength"),
@@ -115,7 +115,7 @@ export const CATALOG_SCENES: CatalogScene[] = [
         blurb: "The cues we use on the reformer, and when we change them.",
         tags: ["pilates"],
         meta: "5 lessons",
-        cover: { pattern: "waves", background: PILATES.accentSoft, foreground: PILATES.accent },
+        cover: { pattern: "waves", background: paint(PILATES, "accentSoft"), foreground: paint(PILATES, "accent") },
       },
       {
         id: "pilates-breath",
@@ -125,7 +125,7 @@ export const CATALOG_SCENES: CatalogScene[] = [
         blurb: "How we teach breathing before movement.",
         tags: ["pilates", "mobility"],
         meta: "3 lessons",
-        cover: { pattern: "rings", background: PILATES.accent, foreground: PILATES.onAccent },
+        cover: { pattern: "rings", background: paint(PILATES, "accent"), foreground: paint(PILATES, "onAccent") },
       },
       {
         id: "pilates-mat",
@@ -150,8 +150,8 @@ export const CATALOG_SCENES: CatalogScene[] = [
     links: LINKS,
     action: { label: "Start your first course", href: "#start" },
     methodCourses: [
-      { id: "pending-1", href: "#p1", layer: "method", title: null, blurb: null, tags: ["strength"], meta: "6 lessons", cover: { pattern: "solid", background: STRENGTH.band, foreground: STRENGTH.onBand } },
-      { id: "pending-2", href: "#p2", layer: "method", title: null, blurb: null, tags: [], meta: "4 lessons", cover: { pattern: "diagonal", background: STRENGTH.accent, foreground: STRENGTH.onAccent } },
+      { id: "pending-1", href: "#p1", layer: "method", title: null, blurb: null, tags: ["strength"], meta: "6 lessons", cover: { pattern: "solid", background: paint(STRENGTH, "band"), foreground: paint(STRENGTH, "onBand") } },
+      { id: "pending-2", href: "#p2", layer: "method", title: null, blurb: null, tags: [], meta: "4 lessons", cover: { pattern: "diagonal", background: paint(STRENGTH, "accent"), foreground: paint(STRENGTH, "onAccent") } },
     ],
     baseCourses: baseCourses("pending"),
     modalityCourses: modalityCourses("pending"),
@@ -173,7 +173,7 @@ export const CATALOG_SCENES: CatalogScene[] = [
         blurb: "What our coaches learn about growth, load and referral.",
         tags: ["youth"],
         meta: "4 lessons",
-        cover: { pattern: "waves", background: PILATES.accentSoft, foreground: PILATES.accent },
+        cover: { pattern: "waves", background: paint(PILATES, "accentSoft"), foreground: paint(PILATES, "accent") },
       },
     ],
     baseCourses: [],

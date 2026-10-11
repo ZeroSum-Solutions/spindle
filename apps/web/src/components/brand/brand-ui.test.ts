@@ -10,14 +10,14 @@ import { CoachNote } from "./coach-note";
 import { CourseCard } from "./course-card";
 import { CourseCover } from "./course-cover";
 import { ModalityChip } from "./modality-chip";
-import { COVER_PATTERNS, memberColors, methodDefaultCover, NEUTRAL_COVER, TENANT_TEXT_FALLBACKS, themedColors, type CourseCardView, type MemberBrandView } from "./view";
+import { brandScopeVars, COVER_PATTERNS, memberColors, methodDefaultCover, NEUTRAL_COVER, TENANT_TEXT_FALLBACKS, type CourseCardView, type MemberBrandView } from "./view";
 
 const html = (el: ReactElement) => renderToStaticMarkup(el);
 const text = (markup: string) => markup.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 const decode = (s: string) => s.replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
 
 const STRENGTH_BRAND = { mark: { kind: "text" }, colors: { accent: "#7a1b26", onAccent: "#ffffff", accentDark: "#f2877e", onAccentDark: "#0b0d12", band: "#17232b" }, font: "barlow-condensed" } as const;
-const COLORS = themedColors(themedBrandTokens(STRENGTH_BRAND.colors));
+const COLORS = themedBrandTokens(STRENGTH_BRAND.colors);
 const BRAND: MemberBrandView = { name: "Example Strength Club", font: "barlow-condensed", colors: COLORS };
 const PENDING: MemberBrandView = { ...BRAND, name: null };
 const FONT = "var(--font-tenant-barlow)";
@@ -35,7 +35,7 @@ const course = (over: Partial<CourseCardView>): CourseCardView => ({
 });
 
 describe("member colours come from the engine (no local colour maths)", () => {
-  it("are brandTokens in both themes, as light-dark() values, for a brand validateOrgBrand accepts", () => {
+  it("are brandTokens in both themes for a brand validateOrgBrand accepts", () => {
     expect(memberColors(STRENGTH_BRAND)).toEqual(COLORS);
   });
 
@@ -151,15 +151,16 @@ describe("CourseCard", () => {
     for (const layer of ["base", "modality"] as const) {
       const out = html(createElement(CourseCard, { course: course({ layer }), colors: COLORS, fontFamily: FONT }));
       expect(out, layer).toContain(`data-pattern="${NEUTRAL_COVER.pattern}"`);
-      expect(out, layer).toContain(NEUTRAL_COVER.background);
+      expect(out, layer).toContain(`--cover-bg-light:${NEUTRAL_COVER.background.light}`);
     }
   });
 
   it("draws a method course without a cover as diagonal in the accent", () => {
-    expect(methodDefaultCover(COLORS)).toEqual({ pattern: "diagonal", background: COLORS.accent, foreground: COLORS.onAccent });
+    expect(methodDefaultCover(COLORS)).toEqual({ pattern: "diagonal", background: { light: COLORS.light.accent, dark: COLORS.dark.accent }, foreground: { light: COLORS.light.onAccent, dark: COLORS.dark.onAccent } });
     const out = html(createElement(CourseCard, { course: course({ cover: undefined }), colors: COLORS, fontFamily: FONT }));
     expect(out).toContain('data-pattern="diagonal"');
-    expect(out).toContain(`fill:${COLORS.accent}`);
+    expect(out).toContain(`--cover-bg-light:${COLORS.light.accent}`);
+    expect(out).toContain(`--cover-bg-dark:${COLORS.dark.accent}`);
   });
 
   it("takes its heading level from the section it sits in", () => {
@@ -184,7 +185,8 @@ describe("CourseCover", () => {
     const out = html(createElement(CourseCover, { cover: { pattern, background: "#2f6b57", foreground: "#ffffff" } }));
     expect(out).toMatch(/^<svg[^>]*aria-hidden="true"/);
     expect(out).toContain(`data-pattern="${pattern}"`);
-    expect(out).toContain("fill:#2f6b57");
+    expect(out).toContain("--cover-bg-light:#2f6b57");
+    expect(out).toContain("--cover-bg-dark:#2f6b57");
     expect(out).not.toMatch(/<text|<title|<desc/);
     if (pattern !== "solid") expect(out).toMatch(/<(path|circle)/);
     // Drawn faintly: the foreground at 18% (spec rev4 §2).
@@ -220,5 +222,26 @@ describe("BaseSeal and ModalityChip", () => {
     expect(out).not.toMatch(/<a |<button/);
     expect(html(createElement(ModalityChip, { tag: "yoga", on: "surface" }))).toContain("bg-surface-muted");
     expect(out).toContain("bg-band-tint");
+  });
+});
+
+describe("runtime brand styles work without native light-dark() (Sol R2 on #51)", () => {
+  const css = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
+  it("brandScopeVars emits literal hex per theme only", () => {
+    const vars = brandScopeVars(memberColors(STRENGTH_BRAND)!);
+    expect(Object.values(vars).every((v) => /^#[0-9a-f]{6}$/.test(v))).toBe(true);
+    expect(vars["--brand-accent-light"]).toBe("#7a1b26");
+    expect(vars["--brand-band-dark"]).toBe("#17232b");
+  });
+  it("covers carry their colours as literal hex variables, never an inline light-dark()", () => {
+    const out = html(createElement(CourseCard, { course: course({ cover: undefined }), colors: COLORS, fontFamily: FONT }));
+    expect(out).not.toContain("light-dark(");
+    expect(out).toContain("--cover-bg-light:#7a1b26");
+  });
+  it("the stylesheet maps the scoped variables onto the tokens and the focus ring", () => {
+    for (const token of ["--color-brand", "--color-brand-hover", "--color-brand-soft", "--color-on-brand", "--color-band", "--color-on-band", "--color-band-tint", "--color-band-edge"]) {
+      expect(css, token).toMatch(new RegExp(`\\[data-brand-scope\\][^}]*${token}: light-dark\\(`, "s"));
+    }
+    expect(css).toMatch(/\[data-brand-scope\][^}]*--focus-ring: var\(--color-brand\)/s);
   });
 });

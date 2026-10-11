@@ -270,7 +270,7 @@ function Swatch({ swatch }: { swatch: ThemeSwatch }) {
   ];
   return (
     <figure data-theme-swatch={brand.name} className="flex min-w-0 flex-col gap-3">
-      <div style={brandToCssVars(brand) as CSSProperties} className={`${font.className} flex flex-col overflow-hidden rounded-card border border-border bg-canvas`}>
+      <div style={brandToCssVars(brand) as CSSProperties} data-brand-scope="" className={`${font.className} flex flex-col overflow-hidden rounded-card border border-border bg-canvas`}>
         <div className="flex min-h-14 items-center border-b border-border bg-surface px-4">
           <span style={{ fontFamily: font.family }} className="truncate text-xl font-semibold tracking-tight text-brand">
             {brand.name}

@@ -332,6 +332,32 @@
   --color-stop: light-dark(#ff6b5f, #d92d20);
 }
 
+/*
+ * Runtime brand and cover colours (Sol R2 on #51). Gym colours arrive as literal hex per theme on the
+ * scoping element (data-brand-scope, set with brandToCssVars or brandScopeVars); these rules pick the
+ * theme's value through the build's light-dark() lowering, so they work in browsers without native
+ * light-dark(), and the focus ring follows the brand. Nothing but validated hex is ever inline.
+ */
+[data-brand-scope] {
+  --color-brand: light-dark(var(--brand-accent-light), var(--brand-accent-dark));
+  --color-brand-hover: light-dark(var(--brand-accent-hover-light), var(--brand-accent-hover-dark));
+  --color-brand-soft: light-dark(var(--brand-accent-soft-light), var(--brand-accent-soft-dark));
+  --color-on-brand: light-dark(var(--brand-on-accent-light), var(--brand-on-accent-dark));
+  --focus-ring: var(--color-brand);
+}
+[data-brand-scope][data-brand-band] {
+  --color-band: light-dark(var(--brand-band-light), var(--brand-band-dark));
+  --color-on-band: light-dark(var(--brand-on-band-light), var(--brand-on-band-dark));
+  --color-band-tint: light-dark(var(--brand-band-tint-light), var(--brand-band-tint-dark));
+  --color-band-edge: light-dark(var(--brand-band-edge-light), var(--brand-band-edge-dark));
+}
+.course-cover {
+  color: light-dark(var(--cover-fg-light), var(--cover-fg-dark));
+}
+.course-cover-bg {
+  fill: light-dark(var(--cover-bg-light), var(--cover-bg-dark));
+}
+
 /* Theme-only content (two versions of a raster or SVG file): follows the toggle, else the system setting.
    Unlayered, so it wins over a display utility on the same element. */
 @media (prefers-color-scheme: light) {

@@ -140,12 +140,6 @@ export function themedBrandTokens(colors: TenantBrand["colors"]): Record<Theme, 
   return { light: brandTokens(colors, "light"), dark: brandTokens(colors, "dark") };
 }
 
-/** A CSS value that follows the theme: light-dark(light, dark). Both must be literal hex colours. */
-export function lightDark(light: string, dark: string): string {
-  if (!isHex(light) || !isHex(dark)) throw new Error("light-dark values must be literal #RRGGBB colours");
-  return `light-dark(${light}, ${dark})`;
-}
-
 type Pair = Omit<ContrastCheck, "ratio" | "shown" | "pass" | "theme">;
 
 /**
@@ -165,6 +159,11 @@ function themeChecks(brand: Pick<TenantBrand, "colors" | "mark">, theme: Theme):
     ["canvas", p.canvas],
     ["a muted panel", p.surfaceMuted],
   ] as const;
+  const evidencePanels = [
+    ["a science panel", p.scienceSoft],
+    ["a practice panel", p.practiceSoft],
+    ["a caution panel", p.cautionSoft],
+  ] as const;
   const pairs: Pair[] = [
     ...backgrounds.map(([where, bg]) => ({ role: `Link on ${where}`, state: "default" as const, foreground: t.accent, background: bg, minimum: 4.5 })),
     ...backgrounds.map(([where, bg]) => ({ role: `Link on ${where}`, state: "hover" as const, foreground: t.accentHover, background: bg, minimum: 4.5 })),
@@ -183,6 +182,13 @@ function themeChecks(brand: Pick<TenantBrand, "colors" | "mark">, theme: Theme):
     // Error text stays Spindle's danger colour; it is checked where it sits beside themed controls.
     { role: "Error text on its panel", state: "error", foreground: p.danger, background: p.dangerSoft, minimum: 4.5 },
     { role: "Error text on surface", state: "error", foreground: p.danger, background: p.surface, minimum: 4.5 },
+    // Evidence panels (Sol plan audit, M0): source links and their focus ring sit on the science, practice and
+    // caution washes inside lessons, so the accent is checked there too.
+    ...evidencePanels.flatMap(([where, bg]) => [
+      { role: `Link on ${where}`, state: "default" as const, foreground: t.accent, background: bg, minimum: 4.5 },
+      { role: `Link on ${where}`, state: "hover" as const, foreground: t.accentHover, background: bg, minimum: 4.5 },
+      { role: `Focus ring on ${where}`, state: "focus" as const, foreground: t.accent, background: bg, minimum: 3 },
+    ]),
   ];
   // P4-A2 header band and catalog hero: name, nav links and chips are onBand; the focus ring there is onBand too.
   pairs.push(
@@ -243,21 +249,26 @@ export function validateBrand(input: unknown): BrandResult {
   return { ok: true, brand, checks };
 }
 
+/** The scoped variable names a theme's accent tokens are written to (`--brand-accent-light`, ...). */
+export const BRAND_VAR = { accent: "accent", accentHover: "accent-hover", accentSoft: "accent-soft", onAccent: "on-accent" } as const;
+
 /**
- * CSS custom properties for a validated brand, mapped onto the Lab brand tokens and the focus ring, to
- * be set on the element that scopes the brand. Each value is light-dark(light, dark) of two validated
- * literal hex colours, so the scene follows the reader's theme and nothing else reaches the stylesheet.
+ * CSS custom properties for a validated brand: literal hex values per theme (`--brand-accent-light`,
+ * `--brand-accent-dark`, and the same for hover, soft and on-accent), to be set with `data-brand-scope`
+ * on the element that scopes the brand. A stylesheet rule on `[data-brand-scope]` (globals.css) maps them
+ * onto `--color-brand`, `--color-brand-hover`, `--color-brand-soft`, `--color-on-brand` and the focus
+ * ring through the build's light-dark() lowering, so they work in browsers without native light-dark().
+ * Only validated literal hex reaches the style attribute.
  */
 export function brandToCssVars(brand: ValidatedBrand): Record<string, string> {
   if (!VALIDATED.has(brand)) throw new Error("brandToCssVars accepts only a brand returned by validateBrand");
-  const { light, dark } = themedBrandTokens(brand.colors);
-  return {
-    "--color-brand": lightDark(light.accent, dark.accent),
-    "--color-brand-hover": lightDark(light.accentHover, dark.accentHover),
-    "--color-brand-soft": lightDark(light.accentSoft, dark.accentSoft),
-    "--color-on-brand": lightDark(light.onAccent, dark.onAccent),
-    "--focus-ring": lightDark(light.accent, dark.accent),
-  };
+  const tokens = themedBrandTokens(brand.colors);
+  const vars: Record<string, string> = {};
+  for (const theme of THEMES) {
+    for (const [key, name] of Object.entries(BRAND_VAR) as [keyof typeof BRAND_VAR, string][]) vars[`--brand-${name}-${theme}`] = tokens[theme][key];
+  }
+  if (!Object.values(vars).every(isHex)) throw new Error("brand colours must be literal #RRGGBB values");
+  return vars;
 }
 
 /**

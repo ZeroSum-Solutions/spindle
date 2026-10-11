@@ -4,7 +4,8 @@
 -- sets one accent pair per theme (accent/onAccent for light, accentDark/onAccentDark for dark): one
 -- colour cannot be link text on both white and graphite, and a brand is refused, never adjusted. A gym
 -- accent must also stay at least 0.10 apart (OKLab distance) from Spindle's signal magenta and the two
--- evidence colours of each theme. The header band stays one colour in both themes.
+-- evidence colours of each theme. The accent is also checked as a link and focus ring on the science, practice
+-- and caution panels, where source links sit. The header band stays one colour in both themes.
 -- Stored brands are re-checked by the app on every render (validateOrgBrand), so a stored brand without
 -- a dark pair, or one that no longer passes, renders unbranded until its owner saves a passing one.
 
@@ -54,10 +55,12 @@ as $$
   select case p_theme
     when 'light' then '{"label": "Light theme", "canvas": "#f4f5f7", "surface": "#ffffff", "surfaceMuted": "#ebedf1",
       "text": "#12151c", "textMuted": "#4a5160", "signal": "#c8195f", "science": "#0b6b50", "practice": "#8a4b10",
-      "danger": "#b42318", "dangerSoft": "#fdecea", "hoverToward": "#000000", "softWeight": 0.9}'::jsonb
+      "danger": "#b42318", "dangerSoft": "#fdecea", "scienceSoft": "#e6f4ee", "practiceSoft": "#fff1e0", "cautionSoft": "#fff6d1",
+      "hoverToward": "#000000", "softWeight": 0.9}'::jsonb
     when 'dark' then '{"label": "Dark theme", "canvas": "#0b0d12", "surface": "#181c25", "surfaceMuted": "#20242f",
       "text": "#f2f4f8", "textMuted": "#b4bac6", "signal": "#ff3b8e", "science": "#3ddc97", "practice": "#ffb547",
-      "danger": "#ff6b5f", "dangerSoft": "#34252c", "hoverToward": "#ffffff", "softWeight": 0.9}'::jsonb
+      "danger": "#ff6b5f", "dangerSoft": "#34252c", "scienceSoft": "#192a2b", "practiceSoft": "#292625", "cautionSoft": "#272927",
+      "hoverToward": "#ffffff", "softWeight": 0.9}'::jsonb
   end
 $$;
 
@@ -117,15 +120,24 @@ as $$
       (17, 'Focus ring on a field in error', 'focus', k ->> 'accent', p ->> 'dangerSoft', 3),
       (18, 'Error text on its panel', 'error', p ->> 'danger', p ->> 'dangerSoft', 4.5),
       (19, 'Error text on surface', 'error', p ->> 'danger', p ->> 'surface', 4.5),
-      (20, 'Brand name on the band', 'default', k ->> 'onBand', k ->> 'band', 4.5),
-      (21, 'Nav link on the band', 'default', k ->> 'onBand', k ->> 'band', 4.5),
-      (22, 'Chip text on the band tint', 'default', k ->> 'onBand', k ->> 'bandTint', 4.5),
-      (23, 'Focus ring on the band', 'focus', k ->> 'onBand', k ->> 'band', 3),
-      (25, 'Accent distinct from Spindle signal', 'distinct', k ->> 'accent', p ->> 'signal', 0.1),
-      (26, 'Accent distinct from Science', 'distinct', k ->> 'accent', p ->> 'science', 0.1),
-      (27, 'Accent distinct from Practice-based', 'distinct', k ->> 'accent', p ->> 'practice', 0.1)) as v (i, role, state, fg, bg, minimum)
+      (20, 'Link on a science panel', 'default', k ->> 'accent', p ->> 'scienceSoft', 4.5),
+      (21, 'Link on a science panel', 'hover', k ->> 'accentHover', p ->> 'scienceSoft', 4.5),
+      (22, 'Focus ring on a science panel', 'focus', k ->> 'accent', p ->> 'scienceSoft', 3),
+      (23, 'Link on a practice panel', 'default', k ->> 'accent', p ->> 'practiceSoft', 4.5),
+      (24, 'Link on a practice panel', 'hover', k ->> 'accentHover', p ->> 'practiceSoft', 4.5),
+      (25, 'Focus ring on a practice panel', 'focus', k ->> 'accent', p ->> 'practiceSoft', 3),
+      (26, 'Link on a caution panel', 'default', k ->> 'accent', p ->> 'cautionSoft', 4.5),
+      (27, 'Link on a caution panel', 'hover', k ->> 'accentHover', p ->> 'cautionSoft', 4.5),
+      (28, 'Focus ring on a caution panel', 'focus', k ->> 'accent', p ->> 'cautionSoft', 3),
+      (29, 'Brand name on the band', 'default', k ->> 'onBand', k ->> 'band', 4.5),
+      (30, 'Nav link on the band', 'default', k ->> 'onBand', k ->> 'band', 4.5),
+      (31, 'Chip text on the band tint', 'default', k ->> 'onBand', k ->> 'bandTint', 4.5),
+      (32, 'Focus ring on the band', 'focus', k ->> 'onBand', k ->> 'band', 3),
+      (34, 'Accent distinct from Spindle signal', 'distinct', k ->> 'accent', p ->> 'signal', 0.1),
+      (35, 'Accent distinct from Science', 'distinct', k ->> 'accent', p ->> 'science', 0.1),
+      (36, 'Accent distinct from Practice-based', 'distinct', k ->> 'accent', p ->> 'practice', 0.1)) as v (i, role, state, fg, bg, minimum)
     union all
-    select t.ord, 24, 'Text mark in the header', 'default', k ->> 'accent', p ->> 'surface', 3 from t where p_brand -> 'mark' ->> 'kind' = 'text'
+    select t.ord, 33, 'Text mark in the header', 'default', k ->> 'accent', p ->> 'surface', 3 from t where p_brand -> 'mark' ->> 'kind' = 'text'
   ),
   labelled as (
     select pairs.*, (select private.lab_palette(case pairs.ord when 0 then 'light' else 'dark' end) ->> 'label') as label,

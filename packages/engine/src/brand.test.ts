@@ -75,6 +75,10 @@ describe("validateBrand", () => {
       expect(checks.some((c) => c.role === role(theme, "Muted text on the current lesson marker"))).toBe(true);
       expect(checks.some((c) => c.role === role(theme, "Selected control") && c.state === "hover")).toBe(true);
       expect(checks.filter((c) => c.state === "error").every((c) => c.foreground === p.danger)).toBe(true);
+      // Source links sit on the evidence washes (Sol plan audit): link, hover and focus are checked there too.
+      for (const bg of [p.scienceSoft, p.practiceSoft, p.cautionSoft]) {
+        expect(checks.filter((c) => c.background === bg).map((c) => c.state).sort()).toEqual(["default", "focus", "hover"]);
+      }
     }
   });
 
@@ -159,17 +163,21 @@ describe("validateBrand", () => {
 });
 
 describe("brandToCssVars", () => {
-  it("maps a validated brand onto the Lab brand tokens and the focus ring, with literal colours only", () => {
+  it("emits only literal hex values per theme, which a stylesheet rule maps onto the brand tokens and the focus ring (Sol R2 on #51)", () => {
     const r = validateBrand(OXBLOOD);
     if (!r.ok) throw new Error("fixture must pass");
     const vars = brandToCssVars(r.brand);
-    expect(Object.keys(vars).sort()).toEqual(["--color-brand", "--color-brand-hover", "--color-brand-soft", "--color-on-brand", "--focus-ring"]);
-    expect(Object.values(vars).every((v) => /^light-dark\(#[0-9a-f]{6}, #[0-9a-f]{6}\)$/.test(v))).toBe(true);
-    expect(vars["--color-brand"]).toBe("light-dark(#7a1f2b, #f2877e)");
+    expect(Object.keys(vars).sort()).toEqual(
+      ["accent", "accent-hover", "accent-soft", "on-accent"].flatMap((k) => [`--brand-${k}-dark`, `--brand-${k}-light`]).sort(),
+    );
+    // No light-dark() or any other expression inline: browsers without native light-dark() would drop the colour and the focus ring.
+    expect(Object.values(vars).every((v) => /^#[0-9a-f]{6}$/.test(v))).toBe(true);
+    expect(vars["--brand-accent-light"]).toBe("#7a1f2b");
+    expect(vars["--brand-accent-dark"]).toBe("#f2877e");
     // Hover moves away from the surface: darker in light, lighter in dark. The soft tint sits over each theme's surface.
-    expect(vars["--color-brand-hover"]).toBe(`light-dark(${mix("#7A1F2B", "#000000", 0.15)}, ${mix("#F2877E", "#FFFFFF", 0.15)})`);
-    expect(vars["--color-brand-soft"]).toBe(`light-dark(${mix("#7A1F2B", PALETTE.light.surface, 0.9)}, ${mix("#F2877E", PALETTE.dark.surface, 0.9)})`);
-    expect(vars["--focus-ring"]).toBe(vars["--color-brand"]);
+    expect(vars["--brand-accent-hover-light"]).toBe(mix("#7A1F2B", "#000000", 0.15));
+    expect(vars["--brand-accent-hover-dark"]).toBe(mix("#F2877E", "#FFFFFF", 0.15));
+    expect(vars["--brand-accent-soft-dark"]).toBe(mix("#F2877E", PALETTE.dark.surface, 0.9));
   });
 
   it("refuses anything that did not come out of validateBrand", () => {

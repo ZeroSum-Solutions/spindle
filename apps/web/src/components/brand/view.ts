@@ -2,7 +2,7 @@
 // `VersionTenantText` rows (course_title, course_blurb, welcome): every tenant text field is either
 // live admitted text or null (pending, revoked or absent), so components never receive unadmitted
 // text, and a later adapter only maps rows onto these fields. Pure helpers, unit-tested.
-import { PALETTE, lightDark, themedBrandTokens, TENANT_TEXT_FALLBACKS as ENGINE_FALLBACKS, validateOrgBrand, type BrandTokens, type Theme } from "@spindle/engine";
+import { BRAND_VAR, PALETTE, THEMES, themedBrandTokens, TENANT_TEXT_FALLBACKS as ENGINE_FALLBACKS, validateOrgBrand, type BrandTokens, type Theme } from "@spindle/engine";
 import { COVER_PATTERNS, type BrandFont, type CoverPattern, type CurriculumLayer, type ModalityTag } from "@spindle/schema";
 
 /** Fixed Spindle text shown while a tenant slot is pending (DESIGN.md › Brand, held identity text), from the shared rule set. */
@@ -29,26 +29,25 @@ export const MODALITY_LABELS: Record<ModalityTag, string> = {
 export { COVER_PATTERNS };
 export type { CoverPattern, ModalityTag };
 
+/** A literal #RRGGBB colour, or one per Lab theme for a Spindle or accent cover that follows the theme. */
+export type Paint = string | Readonly<Record<Theme, string>>;
+
 /** Mirrors #38's `CourseCover`: a pattern and two colours, drawn by Spindle. Never an image. */
 export interface CoverView {
   pattern: CoverPattern;
-  /** #RRGGBB, or light-dark(#RRGGBB, #RRGGBB) for a Spindle or accent cover that follows the theme. */
-  background: string;
-  /** Same form, drawn faintly over the background. */
-  foreground: string;
+  background: Paint;
+  /** Drawn faintly over the background. */
+  foreground: Paint;
 }
 
-/**
- * The colours a branded member page draws with: exactly what the engine's `brandTokens` derives for each
- * Lab theme, as light-dark(light, dark) CSS values, so the scene follows the reader's theme.
- */
-export type BrandColors = Record<keyof BrandTokens, string>;
+/** The colours a branded member page draws with: exactly what the engine's `brandTokens` derives, per Lab theme. */
+export type BrandColors = Readonly<Record<Theme, BrandTokens>>;
 
-/** Both themes' tokens as light-dark() values. */
-export function themedColors(tokens: Record<Theme, BrandTokens>): BrandColors {
-  const keys = Object.keys(tokens.light) as (keyof BrandTokens)[];
-  return Object.fromEntries(keys.map((k) => [k, lightDark(tokens.light[k], tokens.dark[k])])) as BrandColors;
-}
+/** One brand token in both themes, as a cover paint. */
+export const paint = (colors: BrandColors, key: keyof BrandTokens): Paint => ({ light: colors.light[key], dark: colors.dark[key] });
+
+/** A paint's two literal values. */
+export const paintPair = (p: Paint): Readonly<Record<Theme, string>> => (typeof p === "string" ? { light: p, dark: p } : p);
 
 /** A gym's brand as member pages see it. `name` is null while it is pending admission. */
 export interface MemberBrandView {
@@ -98,27 +97,27 @@ export interface CoachNoteView {
  */
 export function memberColors(brand: unknown): BrandColors | null {
   const result = validateOrgBrand(brand);
-  return result.ok ? themedColors(themedBrandTokens(result.brand.colors)) : null;
+  return result.ok ? themedBrandTokens(result.brand.colors) : null;
 }
 
 /** A gym method course with no cover of its own: diagonal in the accent (spec rev4 §2). */
 export function methodDefaultCover(colors: BrandColors): CoverView {
-  return { pattern: "diagonal", background: colors.accent, foreground: colors.onAccent };
+  return { pattern: "diagonal", background: paint(colors, "accent"), foreground: paint(colors, "onAccent") };
 }
 
-/** CSS custom properties for a branded member scene: the accent set plus the band set. */
+const BAND_VAR = { band: "band", onBand: "on-band", bandTint: "band-tint", bandEdge: "band-edge" } as const;
+
+/**
+ * CSS custom properties for a branded member scene: literal hex per theme for the accent set and the band
+ * set, to be set with `data-brand-scope` on the scene. The `[data-brand-scope]` rule in globals.css maps
+ * them onto the tokens and the focus ring, so no inline light-dark() is needed (Sol R2 on #51).
+ */
 export function brandScopeVars(colors: BrandColors): Record<string, string> {
-  return {
-    "--color-brand": colors.accent,
-    "--color-brand-hover": colors.accentHover,
-    "--color-on-brand": colors.onAccent,
-    "--color-brand-soft": colors.accentSoft,
-    "--focus-ring": colors.accent,
-    "--color-band": colors.band,
-    "--color-on-band": colors.onBand,
-    "--color-band-tint": colors.bandTint,
-    "--color-band-edge": colors.bandEdge,
-  };
+  const vars: Record<string, string> = {};
+  for (const theme of THEMES) {
+    for (const [key, name] of Object.entries({ ...BRAND_VAR, ...BAND_VAR }) as [keyof BrandTokens, string][]) vars[`--brand-${name}-${theme}`] = colors[theme][key];
+  }
+  return vars;
 }
 
 export const displayName = (brand: Pick<MemberBrandView, "name">) => brand.name ?? TENANT_TEXT_FALLBACKS.brandName;
@@ -129,6 +128,6 @@ export const noteFrom = (note: Pick<CoachNoteView, "displayName">) => note.displ
 /** Spindle's neutral cover for Base and Modality cards: an ink pattern on surface-muted, in each theme. */
 export const NEUTRAL_COVER = {
   pattern: "dots",
-  background: lightDark(PALETTE.light.surfaceMuted, PALETTE.dark.surfaceMuted),
-  foreground: lightDark(PALETTE.light.ink, PALETTE.dark.ink),
+  background: { light: PALETTE.light.surfaceMuted, dark: PALETTE.dark.surfaceMuted },
+  foreground: { light: PALETTE.light.ink, dark: PALETTE.dark.ink },
 } as const satisfies CoverView;

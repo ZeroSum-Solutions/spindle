@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { themedBrandTokens } from "@spindle/engine";
 import type { MemberBrandDto } from "@spindle/schema";
 import { brandFromDto, cardSummary, catalogAction, catalogCards, shownCourseTitle, versionTexts, type CatalogAssignment } from "./adapt";
-import { TENANT_TEXT_FALLBACKS, themedColors } from "./view";
+import { TENANT_TEXT_FALLBACKS } from "./view";
 
 const ORG = "00000000-0000-4000-8000-0000000000a1";
 const DTO: MemberBrandDto = {
@@ -16,7 +16,7 @@ const DTO: MemberBrandDto = {
 describe("brandFromDto", () => {
   it("maps a saved brand with admitted texts; colours only through memberColors", () => {
     const out = brandFromDto(DTO)!;
-    expect(out.brand).toEqual({ name: "Example Strength Club", font: "barlow-condensed", colors: themedColors(themedBrandTokens(DTO.brand!.colors)) });
+    expect(out.brand).toEqual({ name: "Example Strength Club", font: "barlow-condensed", colors: themedBrandTokens({ ...DTO.brand!.colors, accentDark: "#f2877e", onAccentDark: "#0b0d12" }) });
     expect(out.hero).toEqual({ headline: "Lift well. Coach better.", tagline: "Our method for teaching the barbell.", modalities: [] });
   });
 
