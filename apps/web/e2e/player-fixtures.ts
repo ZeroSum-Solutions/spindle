@@ -10,7 +10,8 @@ import { join } from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const DB_URL = process.env.DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
-const MAILPIT = "http://127.0.0.1:54324";
+/** Mailpit of the stack under test; a private stack on other ports sets SPINDLE_MAILPIT_URL. */
+const MAILPIT = process.env.SPINDLE_MAILPIT_URL ?? "http://127.0.0.1:54324";
 
 /** Fixtures write synthetic rows; they only ever talk to this machine. */
 export function assertLoopback(url: string, what: string): void {

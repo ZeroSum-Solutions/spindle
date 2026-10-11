@@ -80,11 +80,13 @@ test("a branded gym with admitted texts: band header, hero, course card, and the
   await expect(card.locator("svg[data-pattern]")).toHaveAttribute("data-pattern", "diagonal");
   await expect(card).toHaveAttribute("href", learnPath(gymA, assignments.a!));
 
+  if (process.env.SPINDLE_CAPTURE_DIR) await page.screenshot({ path: `${process.env.SPINDLE_CAPTURE_DIR}/wire-branded-learn.png`, fullPage: true });
   await page.goto(learnPath(gymA, assignments.a!, "first"));
   const note = page.locator("[data-coach-note]");
   await expect(note).toContainText("Note from Coach A. Example");
   await expect(note).toContainText("Learn the squat the way we teach it on our floor.");
   await expect(note).toContainText("Practice-based");
+  if (process.env.SPINDLE_CAPTURE_DIR) await note.screenshot({ path: `${process.env.SPINDLE_CAPTURE_DIR}/wire-first-lesson-note.png` });
   await page.goto(learnPath(gymA, assignments.a!, "second"));
   await expect(page.locator("[data-coach-note]")).toHaveCount(0);
 });
