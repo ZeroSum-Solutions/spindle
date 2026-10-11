@@ -125,6 +125,7 @@ main(async () => {
   if (!outcome.ok) {
     console.log("NOT APPROVED (nothing recorded):");
     for (const e of outcome.errors) console.log(`  - ${e}`);
+    if (outcome.rawAnswer) console.log(`  the reviewer's raw answer is kept in ${join(out, "outcome.json")} (private)`);
     return 1;
   }
   for (const [id, item] of Object.entries(outcome.items)) console.log(`  ${id}: ${item.verdict} (${item.findings.length} findings)`);

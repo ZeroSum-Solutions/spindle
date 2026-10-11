@@ -34,7 +34,14 @@ export interface RunReceipt {
  */
 export type ReviewOutcome =
   | { ok: true; run: RunReceipt; answer: string; items: Record<string, ReviewedItem> }
-  | { ok: false; run: Partial<RunReceipt>; errors: string[] };
+  /**
+   * rawAnswer: the reviewer's final message when it ran but was refused, kept (bounded) in the
+   * private outcome file so a person can see why. Nothing is recorded from a failed outcome.
+   */
+  | { ok: false; run: Partial<RunReceipt>; errors: string[]; rawAnswer?: string };
+
+/** Longest raw answer kept in a refused outcome. */
+export const MAX_RAW_ANSWER_CHARS = 200_000;
 
 export const MODEL = /^[a-z0-9][a-z0-9._:-]{0,99}$/;
 export const SESSION = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/;
@@ -60,6 +67,6 @@ export async function runReview(packet: ReviewPacket, runner: ReviewRunner, now:
   else errors.push("the reviewer session is missing or malformed");
   const parsed = parseReviewResult(out.lastMessage, packet);
   if (!parsed.ok) errors.push(...parsed.errors);
-  if (errors.length > 0 || !parsed.ok) return { ok: false, run, errors };
+  if (errors.length > 0 || !parsed.ok) return { ok: false, run, errors, rawAnswer: String(out.lastMessage ?? "").slice(0, MAX_RAW_ANSWER_CHARS) };
   return { ok: true, run: run as RunReceipt, answer: out.lastMessage, items: Object.fromEntries(parsed.items) };
 }
