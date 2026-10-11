@@ -6,7 +6,7 @@
   "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
     "The force-couple section and its quiz were removed: no accessible source stated the named-muscle formulation (Ludewig's full text could not be retrieved; OpenStax's table contradicts it).",
-    "Diagram scapula-upward-rotation is the original drawing in apps/web (PR #17)."
+    "Diagram scapula-upward-rotation depends on the original drawing from PR #17; until #17 is on main the player shows 'not available yet'. The lesson must not publish before #17 lands."
   ],
   "claimSlots": [
     {

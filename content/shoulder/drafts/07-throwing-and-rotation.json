@@ -5,6 +5,7 @@
   "lessonNumber": 7,
   "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
+    "The rotation record is qualitative (no angles or totals), because a trainer set-up without a defined zero and stabilisation cannot give repeatable numbers.",
     "The stop blocks use SAFETY.md's tiers: persistent night pain with stiffness is routine; persistent pins and needles is urgent; inability to move after trauma is emergency.",
     "Throwing workload is stated as Spindle policy, not science. The cross-sport paragraph makes no claim about shared mechanics."
   ],
@@ -138,7 +139,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "So do not set out to make a thrower's two shoulders match, and do not treat one range number as a verdict. Record total rotation on both sides the same way over time.",
+        "content": "So do not set out to make a thrower's two shoulders match, and do not treat one range record as a verdict. Record rotation on both sides the same way over time.",
         "support": "practice-based",
         "claimIds": []
       },
@@ -157,10 +158,10 @@
         "kind": "checklist",
         "content": [
           "Use one set-up every time: the athlete lies on their back, arm out to the side at shoulder height, elbow bent to a right angle, with a folded towel under the elbow so the upper arm is level.",
+          "Ask them to keep the shoulder blade and the back flat on the bench throughout. If either lifts, note it rather than counting that range.",
           "The athlete turns the forearm up toward the head, then down toward the feet, on their own. You do not push.",
-          "If you have a goniometer or a phone inclinometer app, record the angle in degrees for each direction; otherwise note where the hand stops.",
-          "Record both sides, and the total (up plus down) for each side, at the same time of day and before training.",
-          "Look for change across the season, not for one number. This is a training record, not a test."
+          "Write down where the forearm stops in each direction in plain words, compared with the floor: for example \"short of level\", \"level\" or \"past level\". This record is qualitative; it gives no angles or totals.",
+          "Record both sides at the same time of day, before training, and look for change across the season. This is a training record, not a test."
         ],
         "support": "practice-based",
         "claimIds": []

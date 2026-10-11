@@ -7,7 +7,7 @@
   "reviewNotes": [
     "Anatomy claims now rest on OpenStax Anatomy and Physiology 2e (CC BY 4.0, read in full) plus abstracts; TA2 was dropped because its individual entries could not be read without JavaScript.",
     "The scapulothoracic and 'most of the force' statements were removed: no accessible source stated them.",
-    "Diagram shoulder-complex-front is the original drawing in apps/web (PR #17); shoulder-cuff-and-movers is a planned slot and says so."
+    "Diagram shoulder-complex-front depends on the original drawing in apps/web from PR #17 (the subject's left shoulder from the front). Until #17 is on main, the player shows 'not available yet' with this caption; the lesson must not publish before #17 lands. shoulder-cuff-and-movers is a planned slot and says so."
   ],
   "claimSlots": [
     {
@@ -18,13 +18,13 @@
           "kind": "textbook",
           "citation": "Betts JG, Young KA, Wise JA, et al. Anatomy and Physiology 2e. OpenStax, Rice University; 2022. Section 8.1, The pectoral girdle.",
           "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/8-1-the-pectoral-girdle",
-          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), OpenStax. Full text read. Cited and paraphrased only."
+          "rights": "CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/), OpenStax; the book pages also say the content may not be ingested into large language models or generative AI offerings without OpenStax's permission. Full text read to check facts; no OpenStax text is reproduced or adapted, and facts are paraphrased only. Flagged for LEAD review of the AI-ingestion clause."
         },
         {
           "kind": "textbook",
           "citation": "Betts JG, Young KA, Wise JA, et al. Anatomy and Physiology 2e. OpenStax, Rice University; 2022. Section 9.6, Anatomy of selected synovial joints.",
           "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/9-6-anatomy-of-selected-synovial-joints",
-          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), OpenStax. Full text read. Cited and paraphrased only."
+          "rights": "CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/), OpenStax; the book pages also say the content may not be ingested into large language models or generative AI offerings without OpenStax's permission. Full text read to check facts; no OpenStax text is reproduced or adapted, and facts are paraphrased only. Flagged for LEAD review of the AI-ingestion clause."
         }
       ]
     },
@@ -36,7 +36,7 @@
           "kind": "textbook",
           "citation": "Betts JG, Young KA, Wise JA, et al. Anatomy and Physiology 2e. OpenStax, Rice University; 2022. Section 9.6, Anatomy of selected synovial joints.",
           "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/9-6-anatomy-of-selected-synovial-joints",
-          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), OpenStax. Full text read. Cited and paraphrased only."
+          "rights": "CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/), OpenStax; the book pages also say the content may not be ingested into large language models or generative AI offerings without OpenStax's permission. Full text read to check facts; no OpenStax text is reproduced or adapted, and facts are paraphrased only. Flagged for LEAD review of the AI-ingestion clause."
         },
         {
           "kind": "paper",
@@ -54,13 +54,13 @@
           "kind": "textbook",
           "citation": "Betts JG, Young KA, Wise JA, et al. Anatomy and Physiology 2e. OpenStax, Rice University; 2022. Section 9.6, Anatomy of selected synovial joints.",
           "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/9-6-anatomy-of-selected-synovial-joints",
-          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), OpenStax. Full text read. Cited and paraphrased only."
+          "rights": "CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/), OpenStax; the book pages also say the content may not be ingested into large language models or generative AI offerings without OpenStax's permission. Full text read to check facts; no OpenStax text is reproduced or adapted, and facts are paraphrased only. Flagged for LEAD review of the AI-ingestion clause."
         },
         {
           "kind": "textbook",
           "citation": "Betts JG, Young KA, Wise JA, et al. Anatomy and Physiology 2e. OpenStax, Rice University; 2022. Section 11.5, Muscles of the pectoral girdle and upper limbs.",
           "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/11-5-muscles-of-the-pectoral-girdle-and-upper-limbs",
-          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), OpenStax. Full text read. Cited and paraphrased only."
+          "rights": "CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/), OpenStax; the book pages also say the content may not be ingested into large language models or generative AI offerings without OpenStax's permission. Full text read to check facts; no OpenStax text is reproduced or adapted, and facts are paraphrased only. Flagged for LEAD review of the AI-ingestion clause."
         }
       ]
     },
@@ -84,7 +84,7 @@
           "kind": "textbook",
           "citation": "Betts JG, Young KA, Wise JA, et al. Anatomy and Physiology 2e. OpenStax, Rice University; 2022. Section 11.5, Muscles of the pectoral girdle and upper limbs.",
           "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/11-5-muscles-of-the-pectoral-girdle-and-upper-limbs",
-          "rights": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), OpenStax. Full text read. Cited and paraphrased only."
+          "rights": "CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/), OpenStax; the book pages also say the content may not be ingested into large language models or generative AI offerings without OpenStax's permission. Full text read to check facts; no OpenStax text is reproduced or adapted, and facts are paraphrased only. Flagged for LEAD review of the AI-ingestion clause."
         }
       ]
     }
@@ -132,7 +132,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Three bones make the shoulder: the upper arm bone (humerus), the shoulder blade (scapula) and the collarbone (clavicle). The ball-and-socket joint (glenohumeral joint) joins the arm to the shoulder blade. The acromioclavicular joint joins the collarbone to the bony tip at the top of the shoulder blade (the acromion). The sternoclavicular joint joins the collarbone to the breastbone, and it is the only bony joint between the shoulder girdle and the rest of the skeleton.",
+        "content": "Three bones make the shoulder: the upper arm bone (humerus), the shoulder blade (scapula) and the collarbone (clavicle). The ball-and-socket joint (glenohumeral joint) joins the arm to the shoulder blade. The acromioclavicular joint joins the collarbone to the bony tip at the top of the shoulder blade (the acromion). The sternoclavicular joint joins the collarbone to the breastbone, and it is the only bony joint between the shoulder girdle and the axial skeleton: the skull, spine and ribcage.",
         "support": "science",
         "claimIds": [
           "claim-slot:l1-bones-joints"
@@ -142,7 +142,7 @@
         "kind": "diagram",
         "content": {
           "diagramId": "shoulder-complex-front",
-          "caption": "The shoulder complex, right shoulder from the front: the three joints, with the shoulder blade lying behind the ribs. Schematic, not to scale."
+          "caption": "The shoulder complex, left shoulder seen from the front: the three joints, with the shoulder blade lying behind the ribs. Schematic, not to scale."
         }
       },
       {

@@ -3,8 +3,9 @@
 Usage (from the repo root): python3 content/shoulder/drafts/build_drafts.py content/shoulder/drafts
 
 Lessons 4 and 8 take their referral lists from docs/curriculum/SAFETY.md, so run this again
-whenever SAFETY.md changes. Every lesson is rendered and checked before any file is written,
-and each file is replaced atomically, so a failed run changes nothing. Drafts are not
+whenever SAFETY.md changes. Every lesson is rendered and checked before any file is written.
+Writing is all or nothing: if a write fails part-way, files already replaced are restored and
+temporary files are removed. Drafts are not
 publishable: science blocks bind claim-slot ids that the publish gate rejects.
 """
 import json
@@ -47,7 +48,8 @@ def src(kind, citation, rights, **ids):
     return {"kind": kind, "citation": citation, **ids, "rights": rights}
 
 OPENSTAX = "Betts JG, Young KA, Wise JA, et al. Anatomy and Physiology 2e. OpenStax, Rice University; 2022."
-OS_LICENSE = "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), OpenStax. Full text read. " + OPEN_ACCESS_NOTE
+OS_LICENSE = ("CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/), OpenStax; the book pages also say the content may not be ingested into large language models or generative AI offerings without OpenStax's permission. "
+              "Full text read to check facts; no OpenStax text is reproduced or adapted, and facts are paraphrased only. Flagged for LEAD review of the AI-ingestion clause.")
 OS81 = src("textbook", f"{OPENSTAX} Section 8.1, The pectoral girdle.", OS_LICENSE, url="https://openstax.org/books/anatomy-and-physiology-2e/pages/8-1-the-pectoral-girdle")
 OS96 = src("textbook", f"{OPENSTAX} Section 9.6, Anatomy of selected synovial joints.", OS_LICENSE, url="https://openstax.org/books/anatomy-and-physiology-2e/pages/9-6-anatomy-of-selected-synovial-joints")
 OS115 = src("textbook", f"{OPENSTAX} Section 11.5, Muscles of the pectoral girdle and upper limbs.", OS_LICENSE, url="https://openstax.org/books/anatomy-and-physiology-2e/pages/11-5-muscles-of-the-pectoral-girdle-and-upper-limbs")
@@ -107,7 +109,21 @@ def safety_table(md, heading, columns):
         if line.startswith("#"):
             break
         section.append(line)
-    table = [l for l in section if l.startswith("|")]
+    # The table is the first run of non-blank lines that starts with a pipe. Every line in that
+    # run must be a pipe-delimited row: a row that lost its leading or trailing pipe is refused,
+    # never silently dropped.
+    start = next((i for i, l in enumerate(section) if l.startswith("|")), None)
+    if start is None:
+        raise SystemExit(f"SAFETY.md: no table under {heading!r}")
+    table = []
+    for line in section[start:]:
+        if not line.strip():
+            break
+        if not (line.startswith("|") and line.rstrip().endswith("|")):
+            raise SystemExit(f"SAFETY.md: a row under {heading!r} is not a pipe-delimited table row: {line!r}")
+        table.append(line.rstrip())
+    if any(l.startswith("|") for l in section[start + len(table):]):
+        raise SystemExit(f"SAFETY.md: more than one table, or a broken table, under {heading!r}")
     if len(table) < 3 or not re.fullmatch(r"\|(\s*-+\s*\|)+", table[1].replace(" ", "")):
         raise SystemExit(f"SAFETY.md: no well-formed table under {heading!r}")
     header = [c.strip() for c in table[0].strip("|").split("|")]
@@ -178,8 +194,8 @@ l1 = {
   "blocks": [
     P("This lesson gives you a working map of the shoulder: where the bones meet, what supports the ball and socket, and which muscles do the moving. Every later lesson in this module uses this map."),
     H("Three bones, three joints"),
-    S("Three bones make the shoulder: the upper arm bone (humerus), the shoulder blade (scapula) and the collarbone (clavicle). The ball-and-socket joint (glenohumeral joint) joins the arm to the shoulder blade. The acromioclavicular joint joins the collarbone to the bony tip at the top of the shoulder blade (the acromion). The sternoclavicular joint joins the collarbone to the breastbone, and it is the only bony joint between the shoulder girdle and the rest of the skeleton.", "claim-slot:l1-bones-joints"),
-    D("shoulder-complex-front", "The shoulder complex, right shoulder from the front: the three joints, with the shoulder blade lying behind the ribs. Schematic, not to scale."),
+    S("Three bones make the shoulder: the upper arm bone (humerus), the shoulder blade (scapula) and the collarbone (clavicle). The ball-and-socket joint (glenohumeral joint) joins the arm to the shoulder blade. The acromioclavicular joint joins the collarbone to the bony tip at the top of the shoulder blade (the acromion). The sternoclavicular joint joins the collarbone to the breastbone, and it is the only bony joint between the shoulder girdle and the axial skeleton: the skull, spine and ribcage.", "claim-slot:l1-bones-joints"),
+    D("shoulder-complex-front", "The shoulder complex, left shoulder seen from the front: the three joints, with the shoulder blade lying behind the ribs. Schematic, not to scale."),
     H("A shallow socket"),
     S("The socket on the shoulder blade (the glenoid) is small and shallow, about a third of the size of the ball at the top of the humerus. A rim of fibrocartilage around it, the labrum, deepens the socket. The joint capsule that surrounds it is thin and loose, which allows the arm's large range of movement.", "claim-slot:l1-shallow-socket"),
     P("A picture some coaches use with clients: a ball resting on a saucer rather than sitting in a cup. Use it if it helps; it is a teaching image, not a description of the anatomy."),
@@ -222,7 +238,7 @@ l1_slots = [
 l1_scen = [{"prompt": "A client points to the front of the shoulder and asks: \"Is that my rotator cuff?\"", "goodAnswer": "Describe the area; say you do not diagnose; ask how it behaves. If it hurts during training: stop shoulder loading for the session and apply the referral tiers.", "safety": "SAFETY.md sections 1 and 3"}]
 notes1 = ["Anatomy claims now rest on OpenStax Anatomy and Physiology 2e (CC BY 4.0, read in full) plus abstracts; TA2 was dropped because its individual entries could not be read without JavaScript.",
           "The scapulothoracic and 'most of the force' statements were removed: no accessible source stated them.",
-          "Diagram shoulder-complex-front is the original drawing in apps/web (PR #17); shoulder-cuff-and-movers is a planned slot and says so."]
+          "Diagram shoulder-complex-front depends on the original drawing in apps/web from PR #17 (the subject's left shoulder from the front). Until #17 is on main, the player shows 'not available yet' with this caption; the lesson must not publish before #17 lands. shoulder-cuff-and-movers is a planned slot and says so."]
 
 # ---------------------------------------------------------------- lesson 2
 
@@ -278,7 +294,7 @@ l2_scen = [
   {"prompt": "Same client, but the shoulder aches more with each rep.", "goodAnswer": "Stop shoulder loading for this session. If the pain is getting worse: routine referral now (GP or physiotherapist). If it has not improved after 2 weeks: routine referral. Urgent or emergency if those signs appear.", "safety": "SAFETY.md sections 3 and 4"},
 ]
 notes2 = ["The force-couple section and its quiz were removed: no accessible source stated the named-muscle formulation (Ludewig's full text could not be retrieved; OpenStax's table contradicts it).",
-          "Diagram scapula-upward-rotation is the original drawing in apps/web (PR #17)."]
+          "Diagram scapula-upward-rotation depends on the original drawing from PR #17; until #17 is on main the player shows 'not available yet'. The lesson must not publish before #17 lands."]
 
 # ---------------------------------------------------------------- lesson 3
 
@@ -562,14 +578,14 @@ l7 = {
     S("In professional baseball pitchers, the throwing shoulder typically has less internal rotation and more external rotation than the other shoulder. Part of that difference comes from a twist in the upper arm bone itself (humeral retroversion), not only from the soft tissues.", "claim-slot:l7-adaptation"),
     H("Range and injury risk: still uncertain"),
     S("Whether shoulder range is linked to injury is uncertain and differs by sport. A 2018 meta-analysis found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury in overhead athletes. A 2020 meta-analysis of prospective studies linked too little extra external rotation in the throwing arm to injury in professional pitchers, from three pooled studies, with a caution about the small number of studies, and suggested range screening may not identify risk in some other overhead sports. A 2025 review listed range among several risk factors, alongside reduced strength, previous pain or injury and training load, and noted that studies define injury differently.", "claim-slot:l7-injury-risk"),
-    P("So do not set out to make a thrower's two shoulders match, and do not treat one range number as a verdict. Record total rotation on both sides the same way over time."),
+    P("So do not set out to make a thrower's two shoulders match, and do not treat one range record as a verdict. Record rotation on both sides the same way over time."),
     H("How to see it"),
     PLANNED("rotation-record-position", "the lying rotation record position"),
     L(["Use one set-up every time: the athlete lies on their back, arm out to the side at shoulder height, elbow bent to a right angle, with a folded towel under the elbow so the upper arm is level.",
+       "Ask them to keep the shoulder blade and the back flat on the bench throughout. If either lifts, note it rather than counting that range.",
        "The athlete turns the forearm up toward the head, then down toward the feet, on their own. You do not push.",
-       "If you have a goniometer or a phone inclinometer app, record the angle in degrees for each direction; otherwise note where the hand stops.",
-       "Record both sides, and the total (up plus down) for each side, at the same time of day and before training.",
-       "Look for change across the season, not for one number. This is a training record, not a test."]),
+       "Write down where the forearm stops in each direction in plain words, compared with the floor: for example \"short of level\", \"level\" or \"past level\". This record is qualitative; it gives no angles or totals.",
+       "Record both sides at the same time of day, before training, and look for change across the season. This is a training record, not a test."]),
     stop(TINGLE, ACTIVE_LOSS, TRAUMA, NIGHT, WORSENING, UNDER_18),
     H("What to do"),
     P("Build strength for the rotator cuff and the shoulder blade muscles, rotation strength through the trunk and hips, and controlled deceleration work. Progress one thing at a time, with the same stop rules as lesson 6."),
@@ -593,7 +609,7 @@ l7_slots = [
   {"slot": "claim-slot:l7-injury-risk", "statement": "Evidence linking shoulder range of motion to injury in overhead athletes is uncertain and sport-specific: no statistically significant pooled association for the measures examined (2018 meta-analysis); external rotation insufficiency associated with injury in professional pitchers from three pooled studies, interpreted with caution (2020 meta-analysis of prospective cohorts); range among several risk factors, with inconsistent injury definitions (2025 systematic review).", "candidateSources": [KELLER, POZZI, SALAMH], "note": "Association, not individual prediction."},
 ]
 l7_scen = [{"prompt": "A 15-year-old pitcher says the shoulder hurts after games.", "goodAnswer": "Stop throwing and shoulder loading in the session; urgent: tell the athlete and a parent or carer to get an urgent GP appointment or NHS 111 the same day for referral to trauma and orthopaedics; emergency if any emergency sign.", "safety": "SAFETY.md sections 2 and 4"}]
-notes7 = ["The stop blocks use SAFETY.md's tiers: persistent night pain with stiffness is routine; persistent pins and needles is urgent; inability to move after trauma is emergency.",
+notes7 = ["The rotation record is qualitative (no angles or totals), because a trainer set-up without a defined zero and stabilisation cannot give repeatable numbers.", "The stop blocks use SAFETY.md's tiers: persistent night pain with stiffness is routine; persistent pins and needles is urgent; inability to move after trauma is emergency.",
           "Throwing workload is stated as Spindle policy, not science. The cross-sport paragraph makes no claim about shared mechanics."]
 
 # ---------------------------------------------------------------- lesson 8
@@ -719,11 +735,32 @@ def render():
     return files
 
 def write_atomically(files):
-    for name, text in files.items():
-        fd, tmp = tempfile.mkstemp(dir=OUT, prefix=f".{name}.", suffix=".tmp")
-        with os.fdopen(fd, "w") as f:
-            f.write(text)
-        os.replace(tmp, OUT / name)
+    """Writes every draft or none. All new contents go to temporary files first; then each file
+    is swapped in. If any step fails, files already swapped are restored from their previous
+    contents and every temporary file is removed, so a failed run leaves the folder as it was."""
+    previous = {name: (OUT / name).read_bytes() if (OUT / name).exists() else None for name in files}
+    temps = {}
+    replaced = []
+    try:
+        for name, text in files.items():
+            fd, tmp = tempfile.mkstemp(dir=OUT, prefix=f".{name}.", suffix=".tmp")
+            temps[name] = tmp
+            with os.fdopen(fd, "w") as f:
+                f.write(text)
+        for name in files:
+            os.replace(temps[name], OUT / name)
+            del temps[name]
+            replaced.append(name)
+    except BaseException:
+        for name in replaced:
+            if previous[name] is None:
+                (OUT / name).unlink(missing_ok=True)
+            else:
+                (OUT / name).write_bytes(previous[name])
+        raise
+    finally:
+        for tmp in temps.values():
+            pathlib.Path(tmp).unlink(missing_ok=True)
 
 files = render()
 write_atomically(files)
