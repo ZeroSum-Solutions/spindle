@@ -21,8 +21,19 @@ describe("completion receipt", () => {
     });
   });
 
-  it("does not guess the origin version when it is not visible", () => {
-    const state = savedState(3, { completed_at: "2026-10-05T10:00:00+00:00", origin_completion_id: "root" }, null);
-    expect(state.status === "saved" && savedMessage(state).text).toBe("This lesson already counts for v3 through your completion on 5 Oct 2026.");
+  it("never shows the carry date when the root completion could not be read", () => {
+    // Root done on 1 Oct, credit carried on 9 Oct; the origin read failed.
+    const state = savedState(2, { completed_at: "2026-10-09T10:00:00+00:00", origin_completion_id: "root" }, null);
+    expect(state).toMatchObject({ status: "saved", credit: { completedAt: null, versionNumber: null } });
+    const message = state.status === "saved" ? savedMessage(state) : null;
+    expect(message).toEqual({ lead: "Credited.", text: "This lesson already counts for v2 through an earlier completion." });
+    expect(message?.text).not.toContain("9 Oct 2026");
+  });
+
+  it("names the root's date, not the carry date, when the root is read", () => {
+    const state = savedState(2, { completed_at: "2026-10-09T10:00:00+00:00", origin_completion_id: "root" }, { completed_at: "2026-10-01T10:00:00+00:00", versionNumber: null });
+    const text = state.status === "saved" ? savedMessage(state).text : "";
+    expect(text).toBe("This lesson already counts for v2 through your completion on 1 Oct 2026.");
+    expect(text).not.toContain("9 Oct 2026");
   });
 });

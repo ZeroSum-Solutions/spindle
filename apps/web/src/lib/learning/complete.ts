@@ -62,6 +62,7 @@ export async function completeLesson(route: LessonRoute): Promise<CompleteState>
   // A carried row is credit from an earlier completion, not a completion made here.
   let root: RootRow | null = null;
   if (saved.origin_completion_id) {
+    // A failed read leaves root null; the receipt then says "an earlier completion" and shows no date.
     const { data: origin } = await own(saved.origin_completion_id);
     if (origin) {
       const { data: version } = await supabase.from("curriculum_versions").select("version_number").eq("id", origin.version_id).maybeSingle();

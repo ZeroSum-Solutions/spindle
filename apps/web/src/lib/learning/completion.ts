@@ -9,8 +9,8 @@ export type CompleteState =
       status: "saved";
       versionNumber: number;
       completedAt: string;
-      /** Set when the row is credit carried from another completion (its root). */
-      credit?: { completedAt: string; versionNumber: number | null };
+      /** Set when the row is credit carried from another completion. Root details are null when the root could not be read. */
+      credit?: { completedAt: string | null; versionNumber: number | null };
     }
   | { status: "error"; message: string };
 
@@ -31,13 +31,17 @@ export function savedState(versionNumber: number, row: SavedRow, root: RootRow |
     status: "saved",
     versionNumber,
     completedAt: row.completed_at,
-    credit: { completedAt: root?.completed_at ?? row.completed_at, versionNumber: root?.versionNumber ?? null },
+    // Never the carry row's own date: that is when credit moved, not when the learner did the lesson.
+    credit: { completedAt: root?.completed_at ?? null, versionNumber: root?.versionNumber ?? null },
   };
 }
 
 /** One sentence after the bold lead ("Saved." or "Credited."). */
 export function savedMessage(state: Extract<CompleteState, { status: "saved" }>): { lead: string; text: string } {
   if (!state.credit) return { lead: "Saved.", text: `Lesson completed for v${state.versionNumber} on ${formatDate(state.completedAt)}.` };
+  if (state.credit.completedAt === null) {
+    return { lead: "Credited.", text: `This lesson already counts for v${state.versionNumber} through an earlier completion.` };
+  }
   const from = state.credit.versionNumber ? ` in v${state.credit.versionNumber}` : "";
   return {
     lead: "Credited.",
