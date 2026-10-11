@@ -3,7 +3,7 @@
 import { useEffect, useId, useReducer, useRef, useState } from "react";
 import { ExternalLink, Play, VideoOff } from "lucide-react";
 import { createIframeApiLoader, type YTNamespace } from "../../lib/video/iframe-api";
-import { embedSrc, IFRAME_API_URL, nextPlayerState, PRIVACY_URL, READY_TIMEOUT_MS, segmentLabel, TERMS_URL, watchUrl } from "../../lib/video/youtube";
+import { boundedRecheck, embedSrc, IFRAME_API_URL, RECHECK_TIMEOUT_MS, nextPlayerState, PRIVACY_URL, READY_TIMEOUT_MS, segmentLabel, TERMS_URL, watchUrl } from "../../lib/video/youtube";
 
 /** The frozen segment plus the label the facade shows. */
 export interface PlayerClip {
@@ -38,12 +38,14 @@ export function YouTubePlayer({
   gone = false,
   recheck,
   readyTimeoutMs = READY_TIMEOUT_MS,
+  recheckTimeoutMs = RECHECK_TIMEOUT_MS,
 }: {
   video: PlayerClip;
   gone?: boolean;
   /** Asks the registry, at the moment of play, whether the clip may still play. Missing or failing: nothing loads. */
   recheck: (() => Promise<boolean>) | undefined;
   readyTimeoutMs?: number;
+  recheckTimeoutMs?: number;
 }) {
   // A clip the provider already reports as unavailable starts in that state; nothing is offered to load.
   const [state, dispatch] = useReducer(nextPlayerState, gone ? "unavailable" : "idle");
@@ -152,13 +154,8 @@ export function YouTubePlayer({
         disabled={state === "loading"}
         onClick={async () => {
           dispatch("activate");
-          // Recheck the registry before anything from YouTube loads; fail closed.
-          let allowed = false;
-          try {
-            allowed = recheck ? await recheck() : false;
-          } catch {
-            allowed = false;
-          }
+          // Recheck the registry before anything from YouTube loads; fail closed, also on a hung check.
+          const allowed = await boundedRecheck(recheck, recheckTimeoutMs);
           if (!allowed) {
             dispatch("blocked");
             return;

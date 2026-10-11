@@ -15,6 +15,8 @@ export const PRIVACY_URL = "https://policies.google.com/privacy";
 export const TERMS_URL = "https://www.youtube.com/t/terms";
 /** How long to wait for the player to report ready before saying it is unavailable. */
 export const READY_TIMEOUT_MS = 15_000;
+/** How long play waits for the registry recheck before it fails closed. */
+export const RECHECK_TIMEOUT_MS = 8_000;
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
@@ -91,4 +93,41 @@ export function nextPlayerState(state: PlayerState, event: PlayerEvent): PlayerS
     case "blocked":
       return state;
   }
+}
+
+/**
+ * Runs the registry recheck that gates play, bounded by a deadline. It resolves true only
+ * when the check answers true in time; a missing check, a rejection, a non-true answer or the
+ * deadline all resolve false. A late answer is ignored: the result is already settled.
+ */
+export function boundedRecheck(
+  recheck: (() => Promise<boolean>) | undefined,
+  timeoutMs: number = RECHECK_TIMEOUT_MS,
+  timers: { set: (fn: () => void, ms: number) => unknown; clear: (id: unknown) => void } = {
+    set: (fn, ms) => setTimeout(fn, ms),
+    clear: (id) => clearTimeout(id as ReturnType<typeof setTimeout>),
+  },
+): Promise<boolean> {
+  if (!recheck) return Promise.resolve(false);
+  return new Promise<boolean>((resolve) => {
+    const timer = timers.set(() => resolve(false), timeoutMs);
+    let pending: Promise<boolean>;
+    try {
+      pending = recheck();
+    } catch {
+      timers.clear(timer);
+      resolve(false);
+      return;
+    }
+    Promise.resolve(pending).then(
+      (allowed) => {
+        timers.clear(timer);
+        resolve(allowed === true);
+      },
+      () => {
+        timers.clear(timer);
+        resolve(false);
+      },
+    );
+  });
 }

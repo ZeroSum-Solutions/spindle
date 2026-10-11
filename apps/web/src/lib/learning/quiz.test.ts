@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ModuleStatus } from "@spindle/schema";
 import type { GradedQuestion } from "@spindle/engine";
-import { fieldName, MISSING_ANSWERS, moduleStatusView, neededToPass, questionViews, readSubmission, resultState, classifySubmitError } from "./quiz";
+import { fieldName, moduleQuizHref, MISSING_ANSWERS, moduleStatusView, neededToPass, questionViews, readSubmission, resultState, classifySubmitError } from "./quiz";
 
 const KEY = "6a64a1c2-0000-4000-8000-000000005619";
 const Q: GradedQuestion[] = [
@@ -184,5 +184,14 @@ describe("module status text", () => {
     const one = moduleStatusView({ ...base, lessonsTotal: 1, lessonsCompleted: 0, questionsTotal: 1 });
     expect(one.lessons).toBe("1 lesson still to do.");
     expect(one.quiz).toBe("Quiz not taken yet: 1 question, 1 correct to pass.");
+  });
+});
+
+describe("moduleQuizHref", () => {
+  it("is two segments below the course, so it can never be a lesson route", () => {
+    const course = "/gyms/synthetic/learn/00000000-0000-4000-8000-000000000001";
+    const href = moduleQuizHref(course);
+    expect(href.startsWith(`${course}/`)).toBe(true);
+    expect(href.slice(course.length + 1).split("/")).toHaveLength(2);
   });
 });

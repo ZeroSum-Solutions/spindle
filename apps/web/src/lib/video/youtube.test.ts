@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MediaAvailability } from "@spindle/schema";
-import { clipLabels, clipState, embedSrc, nextPlayerState, PLAYER_ORIGIN, segmentLabel, watchUrl, type PlayerEvent, type PlayerState } from "./youtube";
+import { boundedRecheck, clipLabels, clipState, embedSrc, nextPlayerState, PLAYER_ORIGIN, segmentLabel, watchUrl, type PlayerEvent, type PlayerState } from "./youtube";
 
 const SEGMENT = { videoId: "abcDEF12_-9", startSeconds: 65, endSeconds: 150 };
 const playable: MediaAvailability = { mediaId: "m1", state: "playable", title: "Synthetic clip", channel: "Synthetic channel", available: true };
@@ -79,5 +79,45 @@ describe("nextPlayerState", () => {
   ];
   it.each(cases)("%s + %s -> %s", (state, event, expected) => {
     expect(nextPlayerState(state, event)).toBe(expected);
+  });
+});
+
+describe("boundedRecheck", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("fails closed when the check never answers, and ignores a late answer", async () => {
+    vi.useFakeTimers();
+    let answer: (v: boolean) => void = () => {};
+    const result = boundedRecheck(() => new Promise<boolean>((r) => (answer = r)), 1000);
+    await vi.advanceTimersByTimeAsync(1000);
+    answer(true);
+    await expect(result).resolves.toBe(false);
+  });
+
+  it("never resolves on its own without the deadline: a hung check is bounded", async () => {
+    vi.useFakeTimers();
+    let settled = false;
+    const result = boundedRecheck(() => new Promise<boolean>(() => {}), 1000).then((v) => {
+      settled = true;
+      return v;
+    });
+    await vi.advanceTimersByTimeAsync(999);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await expect(result).resolves.toBe(false);
+  });
+
+  it("allows play only on an in-time true", async () => {
+    await expect(boundedRecheck(async () => true, 1000)).resolves.toBe(true);
+    await expect(boundedRecheck(async () => false, 1000)).resolves.toBe(false);
+    await expect(boundedRecheck(() => Promise.reject(new Error("synthetic")), 1000)).resolves.toBe(false);
+    await expect(
+      boundedRecheck(() => {
+        throw new Error("synthetic");
+      }, 1000),
+    ).resolves.toBe(false);
+    await expect(boundedRecheck(undefined, 1000)).resolves.toBe(false);
   });
 });
