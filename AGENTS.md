@@ -32,6 +32,13 @@ Use the pinned toolchain: `mise exec -- <cmd>` (Node 24, pnpm 10).
 - `pnpm --filter web e2e` — Playwright end-to-end tests (needs the local stack; copy `apps/web/.env.example` to `.env.local` with the key from `supabase status`)
 - `supabase gen types typescript --local > apps/web/src/lib/supabase/database.types.ts` — after every migration
 
+## Team workflow
+- **One lead, at most two writers.** The lead sets priorities, keeps `docs/DECISIONS.md` and is the only one who lands PRs. Writers each own one claimed unit.
+- **Claim before code:** every writer works in its own worktree, `~/projects/spindle-worktrees/<slug>` on branch `<type>/<slug>`, prepared with `scripts/worktree-setup.sh`. Never edit another writer's files without the lead's OK, and never run two git commands at once in one worktree.
+- **Red test first** for bugs: a test that fails on `main` and passes on the branch.
+- **PRs:** open as drafts and fill in `.github/pull_request_template.md`. Mark a PR ready once, after a cross-family review: GPT-6.1 Sol reviews Claude-written code, Claude reviews GPT-written code. Verify each finding against the code before acting on it.
+- **No direct pushes to `main`.** The ruleset requires the `ci` check and a squash merge.
+
 ## Working conventions
 - Small pure functions in `packages/engine`; the UI stays thin. Use zod at every boundary where external data enters.
 - Conventional commits on a feature branch; squash-merge through a PR. The `ci` check is required.
