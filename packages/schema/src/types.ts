@@ -120,3 +120,15 @@ export interface RedactedGradedQuiz {
 /** Blocks a learner sees: every block kind, with graded quizzes redacted. Practice self-checks keep their answers. */
 export type LearnerLessonBlock = LessonBlock | RedactedGradedQuiz;
 export type LearnerCourse = Course<LearnerLessonBlock>;
+
+/** A graded question as a lesson page shows it: the prompt only; it is answered in the module quiz. */
+export interface GradedPromptBlock {
+  kind: "quiz";
+  content: { prompt: string };
+  support: "science";
+  claimIds: string[];
+}
+
+/** Blocks the lesson pages render: every authored block except that graded quizzes are prompt-only. */
+export type LessonViewBlock = LessonBlock | GradedPromptBlock;
+export type LessonViewCourse = Course<LessonViewBlock>;
