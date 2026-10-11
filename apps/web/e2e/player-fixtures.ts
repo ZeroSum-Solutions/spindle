@@ -391,7 +391,7 @@ export class PlayerWorld {
   withdraw(claimId: string): void {
     sql(`begin; ${asService}
       select public.publisher_review_claim(${lit(this.publisherId)}, ${lit(claimId)}, jsonb_build_object('decision', 'rejected',
-        'expectedHash', public.publisher_claim_target(${lit(this.publisherId)}, ${lit(claimId)}) ->> 'hash', 'run', ${runReceipt(`${this.run}-withdraw`)},
+        'expectedHash', public.publisher_claim_target(${lit(this.publisherId)}, ${lit(claimId)}) ->> 'hash', 'run', ${runReceipt(`${this.run}-withdraw`, stamp(Date.now()))},
         'receipt', '{"existenceCheckedAt": "2026-10-01T00:00:00Z", "faithfulness": "unfaithful", "retractionCheckedAt": "2026-10-01T00:00:00Z", "notes": "synthetic withdrawal"}'::jsonb));
       commit;`);
   }
