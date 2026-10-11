@@ -173,8 +173,12 @@ TRAUMA = "After a fall or impact, an arm they cannot move or a shoulder that loo
 INJURY_WEAK = "Pain and weakness after an injury, while the arm still moves and looks normal: urgent, today."
 UNDER_18 = "Anyone under 18 with shoulder pain: urgent, today; tell a parent or carer."
 
-def stop(*rules):
-    return C(REFER, " ".join([f"If pain comes on or rises, or any warning sign appears: {STOP_SESSION}", *rules, "This never clears anyone and never names an injury."]))
+FULL_RULES = 'The full stop rules and referral tiers are in "When to refer out" (lesson 8).'
+FULL_RULES_L4 = 'The referral tiers are listed above in this lesson; the full stop rules and tiers are in "When to refer out" (lesson 8).'
+
+def stop(*rules, pointer=FULL_RULES):
+    """A stop-and-refer block: SAFETY.md rule 5, beside every assessment, screen and progression, pointing to the full rules."""
+    return C(REFER, " ".join([f"If pain comes on or rises, or any warning sign appears: {STOP_SESSION}", *rules, "This never clears anyone and never names an injury.", pointer]))
 
 # ---------------------------------------------------------------- lesson 1
 
@@ -320,7 +324,7 @@ l3 = {
     P("In coaching terms, mobility is the range a client can reach, and stability is how well they control that range, especially under load. Ask both questions; the answer to one changes what you do about the other."),
     H("Active and passive range"),
     P("Active range is how far the client moves the arm on their own. Passive range is how far it goes when someone else moves it, with the client relaxed. A difference between them is a reason to look closer. It is not a prescription, and this lesson draws no training rule from it."),
-    C(REFER, f"{STOP_SESSION} A client who can no longer lift or move the arm themselves, even though you could move it for them, with no injury: urgent, an urgent GP appointment or NHS 111 today. It is never something to train. {TRAUMA}"),
+    C(REFER, f"{STOP_SESSION} A client who can no longer lift or move the arm themselves, even though you could move it for them, with no injury: urgent, an urgent GP appointment or NHS 111 today. It is never something to train. {TRAUMA} {FULL_RULES}"),
     H("What research says about posture"),
     S("A 2016 systematic review found moderate evidence of no significant difference in how rounded the upper back is (thoracic kyphosis) between people with and without shoulder pain. A result that is not significant does not prove the two groups are the same, and the studies varied in quality. A 2024 review of cross-sectional studies found conflicting results for thoracic posture. These findings are about association; they do not show that posture causes or prevents shoulder pain.", "claim-slot:l3-kyphosis-pain"),
     S("In the single-session studies a 2016 review gathered, people reached more maximum shoulder range when sitting or standing upright than when slouched, with or without shoulder pain. Whether that matters over weeks of training is not known.", "claim-slot:l3-upright-range"),
@@ -400,20 +404,20 @@ l4 = {
        "Ask them to raise both arms forward and up as far as is comfortable, then lower slowly. Three to five times.",
        "Look for: how high each arm goes, whether both shoulder blades move at a similar time and amount, and whether one lifts away from the ribs on the way down.",
        "A side-to-side difference tells you where to look in training. It does not tell you why."]),
-    stop(ACTIVE_LOSS, TRAUMA, TINGLE, WORSENING),
+    stop(ACTIVE_LOSS, TRAUMA, TINGLE, WORSENING, pointer=FULL_RULES_L4),
     H("Screen 2: rotation range"),
     L(["Start: the client stands with the elbow at the side, bent to a right angle, thumb up.",
        "Ask them to turn the forearm outward, then inward across the body, without moving the elbow. Compare sides.",
        "Then, if comfortable, with the arm out to the side at shoulder height and the elbow bent, ask them to rotate the hand up and down. Compare sides.",
        "The client moves the arm; you do not push it.",
        "For throwing athletes, read lesson 7 before drawing any conclusion from a difference between sides."]),
-    stop(INJURY_WEAK, ACTIVE_LOSS, WORSENING),
+    stop(INJURY_WEAK, ACTIVE_LOSS, WORSENING, pointer=FULL_RULES_L4),
     H("Screen 3: reach patterns"),
     L(["Start: the client stands relaxed.",
        "Reach over the shoulder to touch the upper back, one side at a time. Note where the fingertips reach.",
        "Reach behind the back and up the spine, one side at a time. Note where the thumb reaches.",
        "Compare sides, and compare with last time."]),
-    stop(TWO_WEEKS, NIGHT, "Severe pain in both shoulders, or new pain, swelling or stiffness in several joints at once: urgent, today."),
+    stop(TWO_WEEKS, NIGHT, "Severe pain in both shoulders, or new pain, swelling or stiffness in several joints at once: urgent, today.", pointer=FULL_RULES_L4),
     H("What to do with what you saw"),
     P("Write down what you saw in plain words, without a diagnosis. Then choose: train as planned, adjust the plan for a later session, or refer, and say which tier. Re-check the same screen the same way in a later session."),
     H("Saying it"),
@@ -476,7 +480,7 @@ l5 = {
     stop("A warm-up drill that hurts is not a warm-up: skip it.", WORSENING, TWO_WEEKS, ACTIVE_LOSS),
     H("Cues"),
     P("Give one to three cues per drill, as a direction or a target: \"reach long through your hands\", \"push the band away\". Watch the next rep, and keep a cue only if the movement changes the way you want."),
-    C(REFER, f"Correctives never replace referral. Any stop rule means: {STOP_SESSION} {WORSENING} {TWO_WEEKS} Anything in the urgent or emergency tiers: refer at that tier (see \"When to refer out\")."),
+    C(REFER, f"Correctives never replace referral. Any stop rule means: {STOP_SESSION} {WORSENING} {TWO_WEEKS} Anything in the urgent or emergency tiers: refer at that tier. {FULL_RULES}"),
     H("Check your understanding"),
     Q("What does UK specialist guidance report about exercise for subacromial shoulder pain?", ["It reduces pain over 8 weeks to 6 months and improves patient-reported function; the recommendation is conditional, on low evidence, and the best approach is uncertain", "One exercise programme is proven best", "Exercise does not help"], 0,
       "The guidance reports that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function, grades this conditional positive on low evidence, and says the best approach is still uncertain.", "claim-slot:l5-subacromial-exercise"),
@@ -517,7 +521,7 @@ l6 = {
     S("For healthy adults, the American College of Sports Medicine position stand on resistance training recommends progressive resistance training to keep improving muscle strength, size and physical performance.", "claim-slot:l6-progression"),
     C(POLICY, BOUNDARY),
     H("Before any progression"),
-    C(REFER, f"Check first: no pain at the current level, full control of the range, and no warning sign since the last session. If pain comes on or rises with load: {STOP_SESSION} {WORSENING} {TWO_WEEKS} Anything in the urgent or emergency tiers: refer at that tier."),
+    C(REFER, f"Check first: no pain at the current level, full control of the range, and no warning sign since the last session. If pain comes on or rises with load: {STOP_SESSION} {WORSENING} {TWO_WEEKS} Anything in the urgent or emergency tiers: refer at that tier. {FULL_RULES}"),
     PLANNED("press-pull-overhead", "the pressing, pulling and overhead progressions"),
     H("Pressing"),
     P("Push-ups, presses with dumbbells or a bar, and the landmine press are all options. Choose by the range the client controls without pain and by their goal. Define a cue before you use it: \"push the floor away\" asks the client to keep pushing at the top of a push-up; \"bend the bar\" asks for tension through the upper back before the press."),
@@ -582,10 +586,10 @@ l7 = {
   "anatomyIds": ["UBERON:0001467", "UBERON:0001470", "UBERON:0000976"],
   "blocks": [
     P("This lesson gives a strength coach's view of the throwing shoulder. Throwing workload and return-to-throwing decisions belong to the athlete's sport coach and clinician."),
-    H("How pitchers' shoulders adapt"),
+    H("Range differences in professional pitchers"),
     S("In professional baseball pitchers, the throwing shoulder typically has less internal rotation and more external rotation than the other shoulder. Across the pitchers studied, the twist of the upper arm bone (humeral retroversion) also differed between the two arms, by about 15 degrees on average.", "claim-slot:l7-adaptation"),
     H("Range and injury risk: still uncertain"),
-    S("Whether shoulder range is linked to injury is uncertain and differs by sport. A 2018 meta-analysis found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury in overhead athletes. A 2020 meta-analysis of prospective studies linked too little extra external rotation in the throwing arm to injury in professional pitchers, from three pooled studies, with a caution about the small number of studies, and suggested range screening may not identify risk in some other overhead sports. A 2025 review listed range among several risk factors and noted that studies define injury differently.", "claim-slot:l7-injury-risk"),
+    S("Whether shoulder range is linked to injury is uncertain and differs by sport. A 2018 meta-analysis found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury in overhead athletes. A 2020 meta-analysis of prospective studies linked too little extra external rotation in the throwing arm to injury in professional pitchers, from three pooled studies, with a caution about the small number of studies. A 2025 review listed range among several risk factors and noted that studies define injury differently.", "claim-slot:l7-injury-risk"),
     P("So do not set out to make a thrower's two shoulders match, and do not treat one range record as a verdict. Record rotation on both sides the same way over time."),
     H("How to see it"),
     PLANNED("rotation-record-position", "the lying rotation record position"),
@@ -663,22 +667,23 @@ l8 = {
     H("Check your understanding"),
     Q("For subacromial shoulder pain, what does UK specialist guidance say about how symptoms usually go?", ["It is usually self-limiting, and most symptoms respond within three months", "Symptoms never improve without surgery", "Most need emergency care"], 0,
       "Among the treatments suitable for primary care, the guidance lists reassurance that this is usually a self-limiting condition, and that most symptoms respond within three months.", "claim-slot:l8-subacromial-course"),
-    Q("Before a session, a 15-year-old client tells you the shoulder has hurt after every game this week. What do you do?",
-      ["Leave the shoulder out of today's session and arrange an urgent referral today; tell a parent or carer", "Train around it and refer if it has not improved after 2 weeks", "Carry on as planned; young athletes recover quickly"], 0,
-      "The UK specialist pathway lists a child or adolescent with shoulder pain among the red flags that need urgent referral. Spindle's stop rule leaves the shoulder out of the session first.", "claim-slot:l8-red-flags"),
-    Q("A client mentions a new lump around the shoulder. What do you do?",
-      ["Refer routinely if it is still there in 2 weeks", "Leave the shoulder out of today's session and arrange an urgent referral today", "Massage the area and recheck next week"], 1,
-      "The UK specialist pathway lists swelling or a lump among the shoulder red flags that need urgent referral. Spindle's stop rule leaves the shoulder out of the session first.", "claim-slot:l8-red-flags"),
-    Q("A client reports new pain, swelling and stiffness in several joints at once, the shoulder among them. What do you do?",
-      ["Carry on with the session as planned", "Refer routinely if it is not better in 2 weeks", "Leave the shoulder out of today's session and arrange an urgent referral today"], 2,
-      "The UK specialist pathway lists inflammation involving several joints among the shoulder red flags that need urgent referral. Spindle's stop rule leaves the shoulder out of the session first.", "claim-slot:l8-red-flags"),
+    C("What you do first", "Whatever the referral, Spindle's stop rule comes first: leave the shoulder out of today's session and arrange the referral the same day. For anyone under 18, tell a parent or carer. This is Spindle's rule for trainers; the questions below test what the UK specialist pathway says about each sign."),
+    Q("Under the UK specialist pathway, what does shoulder pain in a child or adolescent need?",
+      ["Urgent referral to secondary care", "Routine referral if it has not improved after 2 weeks", "No referral"], 0,
+      "The pathway lists a child or adolescent with shoulder pain among the red flags that need urgent referral to secondary care.", "claim-slot:l8-red-flags"),
+    Q("Under the UK specialist pathway, what does a lump or swelling found when someone is assessed for shoulder pain need?",
+      ["Routine referral if it is still there in 2 weeks", "Urgent referral to secondary care", "No referral"], 1,
+      "The pathway lists swelling or lumps among the shoulder red flags that need urgent referral to secondary care.", "claim-slot:l8-red-flags"),
+    Q("Under the UK specialist pathway, what does shoulder pain with inflammation in several joints need?",
+      ["No referral", "Routine referral if it is not better in 2 weeks", "Urgent referral to secondary care"], 2,
+      "The pathway lists inflammation involving several joints among the shoulder red flags that need urgent referral to secondary care.", "claim-slot:l8-red-flags"),
     C("Talk it through", "Pick the tier and say what you do first, who to contact and how soon: (1) arm pain with chest tightness during a session; (2) a new lump above the collarbone; (3) shoulder pain that has got worse every day this week, with no other sign; (4) after a fall, the client cannot move the arm; (5) fever and shoulder pain; (6) an ache after training that settled within a day, with no other sign."),
   ],
   "media": [], "resources": [],
 }
 l8_slots = [
-  {"slot": "claim-slot:l8-red-flags", "statement": "The British Elbow & Shoulder Society subacromial pain care pathway states that shoulder pain red flags found at primary-care assessment need urgent secondary-care referral, and lists among them a child or adolescent patient, swelling or lumps, and inflammation involving multiple joints.", "candidateSources": [{**BESS25, "locator": "pp. 716-717, Red flags for the Shoulder"}],
-   "note": "Supports the graded adverse-case questions (SAFETY.md section 6). The excerpt stays in the private evidence packet (D-13). The tier each question picks matches SAFETY.md section 4 (urgent); the questions' stop-first step is Spindle's stop rule, attributed as such in each explanation."},
+  {"slot": "claim-slot:l8-red-flags", "statement": "The British Elbow & Shoulder Society subacromial pain care pathway states that shoulder pain red flags found at primary-care assessment need urgent secondary-care referral, and lists among them a child or adolescent patient, swelling or lumps, and inflammation involving multiple joints.", "candidateSources": [{**BESS25, "locator": "pp. 715-716, Red flags for the Shoulder"}],
+   "note": "Supports the graded adverse-case questions (SAFETY.md section 6), which test only the pathway's finding (urgent referral to secondary care). Spindle's stop-first, same-day and parent-or-carer steps sit in the practice-based 'What you do first' callout beside them. The excerpt stays in the private evidence packet (D-13)."},
   {"slot": "claim-slot:l8-subacromial-course", "statement": "Among interventions suitable for primary care, the British Elbow & Shoulder Society subacromial pain care pathway lists reassurance: this is usually a self-limiting condition, and most symptoms respond within three months.", "candidateSources": [{**BESS25, "locator": "p. 716, Treatment in primary care and community triage services"}],
    "note": "The attributed source excerpt stays in the private evidence packet (D-13)."},
 ]

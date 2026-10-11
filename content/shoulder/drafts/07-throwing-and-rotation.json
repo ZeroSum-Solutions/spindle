@@ -97,7 +97,7 @@
       },
       {
         "kind": "heading",
-        "content": "How pitchers' shoulders adapt"
+        "content": "Range differences in professional pitchers"
       },
       {
         "kind": "paragraph",
@@ -113,7 +113,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Whether shoulder range is linked to injury is uncertain and differs by sport. A 2018 meta-analysis found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury in overhead athletes. A 2020 meta-analysis of prospective studies linked too little extra external rotation in the throwing arm to injury in professional pitchers, from three pooled studies, with a caution about the small number of studies, and suggested range screening may not identify risk in some other overhead sports. A 2025 review listed range among several risk factors and noted that studies define injury differently.",
+        "content": "Whether shoulder range is linked to injury is uncertain and differs by sport. A 2018 meta-analysis found no statistically significant pooled association between the range measures it examined and shoulder or elbow injury in overhead athletes. A 2020 meta-analysis of prospective studies linked too little extra external rotation in the throwing arm to injury in professional pitchers, from three pooled studies, with a caution about the small number of studies. A 2025 review listed range among several risk factors and noted that studies define injury differently.",
         "support": "science",
         "claimIds": [
           "claim-slot:l7-injury-risk"
@@ -152,7 +152,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. A new inability to lift or move the arm themselves, without an injury: urgent, today. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back. Pain and stiffness that do not go away, including pain that is worse at night: routine referral. Pain that is getting worse: routine referral now; do not wait. Anyone under 18 with shoulder pain: urgent, today; tell a parent or carer. This never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. A new inability to lift or move the arm themselves, without an injury: urgent, today. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back. Pain and stiffness that do not go away, including pain that is worse at night: routine referral. Pain that is getting worse: routine referral now; do not wait. Anyone under 18 with shoulder pain: urgent, today; tell a parent or carer. This never clears anyone and never names an injury. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []
@@ -171,7 +171,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain while throwing, a loss of velocity with pain, or a \"dead arm\": stop throwing as well as shoulder loading, and refer at the tier that matches. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. Pain that is getting worse: routine referral now; do not wait. Anyone under 18 with shoulder pain: urgent, today; tell a parent or carer. An urgent GP appointment or NHS 111 the same day, for referral to trauma and orthopaedics. This never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain while throwing, a loss of velocity with pain, or a \"dead arm\": stop throwing as well as shoulder loading, and refer at the tier that matches. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. Pain that is getting worse: routine referral now; do not wait. Anyone under 18 with shoulder pain: urgent, today; tell a parent or carer. An urgent GP appointment or NHS 111 the same day, for referral to trauma and orthopaedics. This never clears anyone and never names an injury. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []

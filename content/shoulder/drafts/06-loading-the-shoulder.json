@@ -149,7 +149,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "Check first: no pain at the current level, full control of the range, and no warning sign since the last session. If pain comes on or rises with load: Stop shoulder loading for the rest of the session. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. Anything in the urgent or emergency tiers: refer at that tier."
+          "text": "Check first: no pain at the current level, full control of the range, and no warning sign since the last session. If pain comes on or rises with load: Stop shoulder loading for the rest of the session. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. Anything in the urgent or emergency tiers: refer at that tier. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []
@@ -185,7 +185,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain at the bottom of a press means stop for the session, not push through. In a later session, only if no warning sign remains, try a shorter range or another variation. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. This never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain at the bottom of a press means stop for the session, not push through. In a later session, only if no warning sign remains, try a shorter range or another variation. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. This never clears anyone and never names an injury. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []
@@ -213,7 +213,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. This never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. This never clears anyone and never names an injury. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []
@@ -249,7 +249,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. A new inability to lift or move the arm themselves, without an injury: urgent, today. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back. Pain that is getting worse: routine referral now; do not wait. This never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. A new inability to lift or move the arm themselves, without an injury: urgent, today. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back. Pain that is getting worse: routine referral now; do not wait. This never clears anyone and never names an injury. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []
@@ -284,7 +284,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. If pain comes on as volume rises, stop shoulder loading for the session and apply the referral rules first. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. Only in a later session, with no warning sign remaining, return to a lower volume. This never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. If pain comes on as volume rises, stop shoulder loading for the session and apply the referral rules first. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. Only in a later session, with no warning sign remaining, return to a lower volume. This never clears anyone and never names an injury. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []
@@ -303,7 +303,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Severe pain in both shoulders, or new pain, swelling or stiffness in several joints at once: urgent, today. Pain that is getting worse: routine referral now; do not wait. This never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Severe pain in both shoulders, or new pain, swelling or stiffness in several joints at once: urgent, today. Pain that is getting worse: routine referral now; do not wait. This never clears anyone and never names an injury. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []
