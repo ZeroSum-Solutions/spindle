@@ -172,7 +172,7 @@ test.describe.serial("learner flow", () => {
     await p.setViewportSize({ width: 320, height: 700 });
     for (const path of [learn(gymA), learn(gymA, assignments.partial), learn(gymA, assignments.partial, "lesson-one")]) {
       await p.goto(path);
-      await expect(p.locator("main")).toBeVisible();
+      await expect(p.getByRole("main")).toBeVisible();
       expect(await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), path).toBe(0);
     }
   });
