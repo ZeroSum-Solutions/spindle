@@ -414,6 +414,37 @@ export class PlayerWorld {
       .at(-1)!;
   }
 
+  /**
+   * `n` synthetic gyms owned by `owner`, each holding one pending catalog headline, created in one
+   * transaction through create_org and save_tenant_text. Returns the held text ids; the gyms are
+   * registered for cleanup (their texts go with them).
+   */
+  bulkPending(key: string, owner: Actor, n: number): string[] {
+    // Chunks of 100, each in its own transaction with the statement timeout lifted for that
+    // transaction only: the lexical screen runs once per saved text.
+    // A chunk that fails rolls back whole; every committed chunk's gyms are registered for cleanup
+    // before the next chunk runs.
+    const textIds: string[] = [];
+    for (let from = 1; from <= n; from += 100) {
+      const to = Math.min(n, from + 99);
+      const lines = sql(`begin; set local statement_timeout = 0; ${asUser(owner.id)}
+        select i || ',' || o.id::text || ',' || public.save_tenant_text(o.id, 'catalog_headline', null, ${lit(`Synthetic ${key} headline `)} || i)::text
+          from generate_series(${from}, ${to}) i,
+          lateral (select public.create_org(${lit(`Synthetic gym ${key.toUpperCase()} `)} || i, ${lit(`player-${key}-`)} || i || ${lit(`-${this.run}`)}) as id) o
+          order by i;
+        commit;`)
+        .split("\n")
+        .filter((line) => /^\d+,[0-9a-f-]{36},[0-9a-f-]{36}$/.test(line));
+      for (const line of lines) {
+        const [i, orgId, textId] = line.split(",") as [string, string, string];
+        this.orgs.set(`${key}-${i}`, { id: orgId, slug: `player-${key}-${i}-${this.run}` });
+        textIds.push(textId);
+      }
+      if (lines.length !== to - from + 1) throw new Error(`bulkPending: chunk ${from}-${to} returned ${lines.length} rows`);
+    }
+    return textIds;
+  }
+
   /** P4-A2: the publisher admits a held text through publisher_decide_tenant_text (never a direct receipt row). */
   admitText(textId: string): void {
     sql(`begin; select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);

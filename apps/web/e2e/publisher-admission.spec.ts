@@ -120,3 +120,20 @@ test("admit and reject go through publisher_decide_tenant_text, and history is r
   expect(world.textStatus(texts.headline!)).toBe("admitted");
   expect(world.textStatus(texts.tagline!)).toBe("rejected");
 });
+
+// Sol R3 on #46: the whole pending queue reaches the page over HTTP, past PostgREST's 1,000-row
+// max_rows, so the loader's 500-row pages must chain (500 + 500 + 1).
+test("more than 1,000 distinct pending texts all reach the page", async ({ browser, baseURL }) => {
+  test.setTimeout(240_000);
+  const ids = world.bulkPending("bulk", actors.owner!, 1001);
+  expect(new Set(ids).size, "distinct held texts").toBe(1001);
+  const pub = await signIn(browser, actors.pub!, PATH);
+  const res = await pub.request.get(`${baseURL}${PATH}`);
+  expect(res.status()).toBe(200);
+  const html = await res.text();
+  const counts = new Map<string, number>();
+  for (const m of html.matchAll(/data-text-id="([0-9a-f-]{36})"/g)) counts.set(m[1]!, (counts.get(m[1]!) ?? 0) + 1);
+  expect(ids.filter((id) => !counts.has(id)), "pending texts missing from the page").toEqual([]);
+  // Each text appears once in the pending queue, never repeated across page boundaries.
+  expect(ids.filter((id) => counts.get(id) !== 1), "pending texts shown more than once").toEqual([]);
+});
