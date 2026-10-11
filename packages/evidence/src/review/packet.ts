@@ -2,6 +2,7 @@
 // reviewer must answer, with the database hash it will be recorded against,
 // and carries the evidence as data. Its digest is what the receipt records.
 import { createHash } from "node:crypto";
+import { lessonBlockSchema, lessonSchema } from "@spindle/schema";
 import { z } from "zod";
 import type { RetractionState } from "../retraction";
 
@@ -86,12 +87,25 @@ const claimContentSchema = z.strictObject({
 });
 
 const claimView = z.array(z.strictObject({ claimId: uuid, statement: z.string().min(1), population: z.string().min(1) }));
-/** Content shape per item kind, as the builders produce it. */
+/** The course shell exactly as private.course_shell builds it: the snapshot without lesson bodies. */
+const courseShellSchema = z.strictObject({
+  id: z.string().min(1),
+  slug: z.string().min(1),
+  layer: z.enum(["base", "modality", "method"]),
+  title: z.string().min(1),
+  subtitle: z.string(),
+  description: z.string(),
+  level: z.enum(["foundation", "intermediate", "advanced"]),
+  outcomes: z.array(z.string()),
+  parts: z.array(z.strictObject({ id: z.string().min(1), ordinal: z.number().int().min(1), title: z.string().min(1), summary: z.string(), lessonIds: z.array(z.string().min(1)) })),
+});
+
+/** Content shape per item kind, as the builders produce it. Lessons and blocks use the real @spindle/schema schemas. */
 const CONTENT_SCHEMAS: Partial<Record<ItemKind, z.ZodType>> = {
   claim: claimContentSchema,
-  course: z.looseObject({ title: z.string().min(1), parts: z.array(z.unknown()) }),
-  block: z.strictObject({ lessonId: uuid, ordinal: z.number().int().min(1), block: z.looseObject({ kind: z.string().min(1) }), claims: claimView }),
-  lesson: z.strictObject({ lesson: z.looseObject({ id: z.string().min(1), blocks: z.array(z.unknown()) }), claims: claimView }),
+  course: courseShellSchema,
+  block: z.strictObject({ lessonId: uuid, ordinal: z.number().int().min(1), block: lessonBlockSchema, claims: claimView }),
+  lesson: z.strictObject({ lesson: lessonSchema, claims: claimView }),
 };
 
 /** The stored-packet boundary: every field, so a hand-edited or truncated packet fails before review or recording. */

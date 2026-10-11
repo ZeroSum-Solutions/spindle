@@ -47,6 +47,12 @@ const runner = (lastMessage: string, extra: Partial<{ model: string; session: st
   run: async () => ({ lastMessage, model: "gpt-6.1-sol", session: "019a-synthetic-session", exitCode: 0, ...extra }),
 });
 
+/** A course shell and lesson JSON in the exact shapes the database produces. */
+const SHELL = { id: C1, slug: "c", layer: "base", title: "x", subtitle: "", description: "", level: "foundation", outcomes: [] as string[],
+  parts: [{ id: "p1", ordinal: 1, title: "P", summary: "", lessonIds: [C2] }] };
+const LESSON_JSON = { id: C2, slug: "one", title: "One", summary: "", durationMinutes: 5, format: "article", objectives: [] as string[], anatomyIds: [] as string[], media: [] as unknown[], resources: [] as unknown[],
+  blocks: [{ kind: "paragraph", content: "Synthetic.", support: "science", claimIds: [S1] }] };
+
 /** The database identity of S1, matching evidence() and the extra unmatched source. */
 const SOURCES = new Map<string, SourceIdentity>([[S1, { doi: "10.5555/x", pmid: "1", kind: "meta_analysis" }]]);
 
@@ -91,8 +97,8 @@ describe("packets", () => {
 
   it("refuse a content packet without safety rules or with a claim item", () => {
     const targets = {
-      courseId: C1, course: { hash: H("c"), shell: { title: "x", parts: [] } },
-      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: { id: C2, blocks: [{ kind: "paragraph" }] },
+      courseId: C1, course: { hash: H("c"), shell: SHELL },
+      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: LESSON_JSON,
         blocks: [{ blockId: S1, ordinal: 1, kind: "paragraph", support: "science", hash: H("e"), claimIds: [S1] }] }],
     };
     const claims = new Map([[S1, { statement: "s", population: "p" }]]);
@@ -169,14 +175,35 @@ describe("Sol R2 on #19", () => {
 
   it("R03: refuses content items whose content is missing or malformed", () => {
     const targets = {
-      courseId: C1, course: { hash: H("c"), shell: { title: "x", parts: [] } },
-      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: { id: C2, blocks: [{ kind: "paragraph" }] },
+      courseId: C1, course: { hash: H("c"), shell: SHELL },
+      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: LESSON_JSON,
         blocks: [{ blockId: S1, ordinal: 1, kind: "paragraph", support: "science", hash: H("e"), claimIds: [S1] }] }],
     };
     const p = buildContentPacket(targets, new Map([[S1, { statement: "s", population: "p" }]]), "Stop rules.", NOW.toISOString());
     expect(() => assertPacket({ ...p, items: p.items.map((i) => (i.kind === "course" ? { ...i, content: null } : i)) })).toThrow(/course item .* malformed/);
     expect(() => assertPacket({ ...p, items: p.items.map((i) => (i.kind === "lesson" ? { ...i, content: { lesson: null, claims: [] } } : i)) })).toThrow(/lesson item .* malformed/);
     expect(() => assertPacket({ ...p, items: p.items.map((i) => (i.kind === "block" ? { ...i, content: { lessonId: C2 } } : i)) })).toThrow(/block item .* malformed/);
+  });
+
+  it("R03 (R3): validates nested course parts, lessons and blocks with their real schemas", () => {
+    const lessonJson = { id: C2, slug: "one", title: "One", summary: "", durationMinutes: 5, format: "article", objectives: [], anatomyIds: [], media: [], resources: [],
+      blocks: [{ kind: "paragraph", content: "Synthetic.", support: "science", claimIds: [S1] }] };
+    const shell = { id: C1, slug: "c", layer: "base", title: "x", subtitle: "", description: "", level: "foundation", outcomes: [],
+      parts: [{ id: "p1", ordinal: 1, title: "P", summary: "", lessonIds: [C2] }] };
+    const targets = {
+      courseId: C1, course: { hash: H("c"), shell },
+      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: lessonJson,
+        blocks: [{ blockId: S1, ordinal: 1, kind: "paragraph", support: "science", hash: H("e"), claimIds: [S1] }] }],
+    };
+    const p = buildContentPacket(targets, new Map([[S1, { statement: "s", population: "p" }]]), "Stop rules.", NOW.toISOString());
+    const swap = (kind: string, content: unknown) => ({ ...p, items: p.items.map((i) => (i.kind === kind ? { ...i, content } : i)) });
+    const lessonItem = p.items.find((i) => i.kind === "lesson")!.content as { lesson: typeof lessonJson; claims: unknown[] };
+    const blockItem = p.items.find((i) => i.kind === "block")!.content as Record<string, unknown>;
+    expect(() => assertPacket(swap("course", { ...shell, parts: [null] }))).toThrow(/course item .* malformed/);
+    expect(() => assertPacket(swap("course", { ...shell, extra: 1 }))).toThrow(/course item .* malformed/);
+    expect(() => assertPacket(swap("lesson", { ...lessonItem, lesson: { ...lessonJson, blocks: [null] } }))).toThrow(/lesson item .* malformed/);
+    expect(() => assertPacket(swap("block", { ...blockItem, block: { kind: "paragraph", content: 42, support: "science", claimIds: [S1] } }))).toThrow(/block item .* malformed/);
+    expect(() => assertPacket(p)).not.toThrow();
   });
 
   it("R14: removes the reviewer home when preparing it fails", () => {
@@ -278,8 +305,8 @@ describe("hardening (internal review)", () => {
     const future = buildClaimPacket([claim(C1)], new Map([[S1, evidence({ checkedAt: "2027-01-01T00:00:00.000Z" })]]), NOW.toISOString(), SOURCES);
     expect(future.packet).toBeNull();
     const targets = {
-      courseId: C1, course: { hash: H("c"), shell: { title: "x", parts: [] } },
-      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: { id: C2, blocks: [] },
+      courseId: C1, course: { hash: H("c"), shell: SHELL },
+      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: { ...LESSON_JSON, blocks: [] },
         blocks: [{ blockId: S1, ordinal: 1, kind: "paragraph", support: "science", hash: H("e"), claimIds: [S1] }] }],
     };
     expect(() => buildContentPacket(targets, new Map([[S1, { statement: "s", population: "p" }]]), "Stop rules.", NOW.toISOString())).toThrow(/block 1/);
