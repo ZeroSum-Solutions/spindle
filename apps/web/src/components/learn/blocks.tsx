@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ExternalLink, ImageOff, TriangleAlert } from "lucide-react";
 import type { LessonBlock, LessonResource, MediaAsset, MediaAvailability } from "@spindle/schema";
 import type { ClaimView } from "@/lib/learning/load";
@@ -15,6 +16,8 @@ export interface BlockContext {
   flagged: ReadonlySet<string>;
   /** Registry state of the version's clips (version_media); a clip missing here never plays. */
   media?: ReadonlyMap<string, MediaAvailability>;
+  /** The course's module quiz page, where graded questions are answered. */
+  quizHref?: string;
 }
 
 export function LessonBlocks({ blocks, ctx }: { blocks: LessonBlock[]; ctx: BlockContext }) {
@@ -65,7 +68,7 @@ function Supported({ block, index, ctx }: { block: SupportedBlock; index: number
           </span>
         ) : null}
       </div>
-      <BlockBody block={block} index={index} />
+      <BlockBody block={block} index={index} quizHref={ctx.quizHref} />
       {block.support === "science" && block.claimIds.length > 0 ? (
         <ClaimDisclosure claimIds={block.claimIds} claims={ctx.claims} flagged={ctx.flagged} />
       ) : null}
@@ -73,7 +76,7 @@ function Supported({ block, index, ctx }: { block: SupportedBlock; index: number
   );
 }
 
-function BlockBody({ block, index }: { block: SupportedBlock; index: number }) {
+function BlockBody({ block, index, quizHref }: { block: SupportedBlock; index: number; quizHref?: string }) {
   switch (block.kind) {
     case "paragraph":
       return <p className="whitespace-pre-line">{block.content}</p>;
@@ -93,7 +96,23 @@ function BlockBody({ block, index }: { block: SupportedBlock; index: number }) {
         </ul>
       );
     case "quiz":
-      return <QuizSelfCheck id={`q${index}`} {...block.content} />;
+      // A science quiz block is a graded question of the module quiz: the lesson shows the
+      // question but never its answer. Practice quizzes stay ungraded self-checks.
+      return block.support === "science" ? (
+        <div data-graded-question className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4">
+          <p className="font-medium">{block.content.prompt}</p>
+          <p className="text-label text-text-muted">
+            Graded question. Answer it in the module quiz, where your answers are saved and scored.{" "}
+            {quizHref ? (
+              <Link href={quizHref} className="text-brand underline underline-offset-2 hover:text-brand-hover">
+                Go to the module quiz
+              </Link>
+            ) : null}
+          </p>
+        </div>
+      ) : (
+        <QuizSelfCheck id={`q${index}`} {...block.content} />
+      );
   }
 }
 

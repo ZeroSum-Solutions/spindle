@@ -40,6 +40,12 @@ function lessonOne(w: PlayerWorld = world, set: CourseIds = ids, claim: string =
         support: "science",
         claimIds: [claim],
       },
+      {
+        kind: "quiz",
+        content: { prompt: "Synthetic practice question?", options: ["Synthetic P1", "Synthetic P2"], answerIndex: 1, explanation: "Synthetic practice explanation." },
+        support: "practice-based",
+        claimIds: [],
+      },
     ],
     resources: [{ label: "Synthetic reference", href: "https://example.org/synthetic", type: "reference" }],
   };
@@ -189,11 +195,17 @@ test.describe.serial("learner flow", () => {
     await expect(p.locator('[data-block="diagram"]')).toContainText("This diagram is not available yet.");
     // A storage object that does not exist: honest placeholder, no broken image.
     await expect(p.locator('[data-block="image"] [data-media="unavailable"]')).toContainText("Synthetic absent figure");
-    // Ungraded self-check: feedback after checking, and it says nothing is saved.
-    const quiz = p.locator('[data-block="quiz"]');
-    await quiz.getByLabel("Synthetic A").check();
+    // A graded (science) question shows its prompt and points to the module quiz; the lesson never reveals its answer.
+    const graded = p.locator('[data-block="quiz"][data-support="science"]');
+    await expect(graded).toContainText("Synthetic question?");
+    await expect(graded.getByRole("link", { name: "Go to the module quiz" })).toHaveAttribute("href", learn(gymA, assignments.partial, "quiz"));
+    await expect(graded.getByRole("button", { name: "Check answer" })).toHaveCount(0);
+    await expect(graded).not.toContainText("Synthetic explanation.");
+    // A practice question stays an ungraded self-check: feedback after checking, and it says nothing is saved.
+    const quiz = p.locator('[data-block="quiz"][data-support="practice-based"]');
+    await quiz.getByLabel("Synthetic P1").check();
     await quiz.getByRole("button", { name: "Check answer" }).click();
-    await expect(quiz).toContainText("Not quite. The answer is: Synthetic B");
+    await expect(quiz).toContainText("Not quite. The answer is: Synthetic P2");
     await expect(quiz).toContainText("not saved or graded");
     const external = p.getByRole("link", { name: /Synthetic reference/ });
     await expect(external).toHaveAttribute("rel", "noopener noreferrer");

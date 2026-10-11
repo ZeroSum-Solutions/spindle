@@ -96,7 +96,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
 
           <SupportLegend supports={lesson.blocks.flatMap((b) => ("support" in b ? [b.support] : []))} />
 
-          <LessonBlocks blocks={lesson.blocks} ctx={{ orgId: version.orgId, claims, flagged, media }} />
+          <LessonBlocks blocks={lesson.blocks} ctx={{ orgId: version.orgId, claims, flagged, media, quizHref: `${courseHref}/quiz` }} />
           <LessonMedia media={lesson.media} orgId={version.orgId} />
           <LessonResources resources={lesson.resources} orgId={version.orgId} />
 
