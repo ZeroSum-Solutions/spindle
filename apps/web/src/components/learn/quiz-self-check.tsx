@@ -62,7 +62,9 @@ export function QuizSelfCheck({
         >
           Check answer
         </button>
-        <span className="text-label text-text-muted">Self-check. Your answer is not saved or graded.</span>
+        <span className="text-label text-text-muted">
+          {selected === null ? "Choose an answer first. " : ""}Self-check. Your answer is not saved or graded.
+        </span>
       </div>
       <div aria-live="polite">
         {checked !== null ? (

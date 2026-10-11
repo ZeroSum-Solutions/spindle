@@ -38,6 +38,8 @@ main(async () => {
     return 1;
   }
   console.log(`${sources.length} cited sources rechecked: none retracted`);
-  console.log(`published version ${serviceValue(`public.publisher_publish_course(${lit(p)}, ${lit(course)})`)}`);
+  // The database publishes only if the course still cites exactly the sources rechecked here (Sol N01).
+  const checked = JSON.stringify(sources.map((s) => s.id));
+  console.log(`published version ${serviceValue(`public.publisher_publish_course_checked(${lit(p)}, ${lit(course)}, ${lit(checked)}::jsonb)`)}`);
   return 0;
 });

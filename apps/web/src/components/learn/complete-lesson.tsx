@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef, type ReactNode } from "react";
-import { LoaderCircle } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, LoaderCircle } from "lucide-react";
 import { savedMessage, type CompleteState } from "@/lib/learning/completion";
 
 /**
@@ -13,15 +14,18 @@ export function CompleteLesson({
   complete,
   done,
   receipt,
+  next,
 }: {
   complete: (prev: CompleteState, form: FormData) => Promise<CompleteState>;
+  /** The one primary action once the lesson is done: the next lesson, or back to the course. */
+  next?: NextStep;
   /** Done or credited when the page loaded, according to the database. */
   done: boolean;
   /** Server-written explanation of the existing completion or credit. */
   receipt: ReactNode;
 }) {
   const [state, action, pending] = useActionState<CompleteState, FormData>(complete, { status: "idle" });
-  return <CompletionView state={state} pending={pending} done={done} receipt={receipt} action={action} />;
+  return <CompletionView state={state} pending={pending} done={done} receipt={receipt} action={action} next={next} />;
 }
 
 /**
@@ -36,8 +40,10 @@ export function CompletionView({
   done,
   receipt,
   action,
+  next,
 }: {
   state: CompleteState;
+  next?: NextStep;
   pending: boolean;
   done: boolean;
   receipt: ReactNode;
@@ -53,18 +59,20 @@ export function CompletionView({
   let body: ReactNode;
   if (state.status === "saved") {
     body = (
-      <div ref={saved} tabIndex={-1} data-testid="lesson-status" className="confirm-appear flex items-center gap-3 rounded-card border border-border bg-surface p-4">
+      <div ref={saved} tabIndex={-1} data-testid="lesson-status" className="confirm-appear flex flex-wrap items-center gap-3 rounded-card border border-border bg-surface p-4">
         <ConfirmCheck animate />
-        <p>
+        <p className="flex-1">
           <span className="font-medium">{savedMessage(state).lead}</span> {savedMessage(state).text}
         </p>
+        {next ? <NextAction next={next} /> : null}
       </div>
     );
   } else if (done) {
     body = (
-      <div data-testid="lesson-status" className="flex items-center gap-3 rounded-card border border-border bg-surface p-4">
+      <div data-testid="lesson-status" className="flex flex-wrap items-center gap-3 rounded-card border border-border bg-surface p-4">
         <ConfirmCheck />
-        <p>{receipt}</p>
+        <p className="flex-1">{receipt}</p>
+        {next ? <NextAction next={next} /> : null}
       </div>
     );
   } else {
@@ -115,5 +123,23 @@ export function ConfirmCheck({ animate = false }: { animate?: boolean }) {
         <path d="M5 12.5l4.5 4.5L19 7.5" />
       </svg>
     </span>
+  );
+}
+
+export interface NextStep {
+  href: string;
+  label: string;
+}
+
+/** The completion card's single primary action. */
+function NextAction({ next }: { next: NextStep }) {
+  return (
+    <Link
+      href={next.href}
+      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover sm:w-auto"
+    >
+      {next.label}
+      <ArrowRight aria-hidden strokeWidth={1.75} className="size-4 shrink-0" />
+    </Link>
   );
 }

@@ -1,6 +1,6 @@
 // D-11 describer, spend cap and segment review. Fake fetch and fake reviewer: no network, no model.
 import { describe, expect, it } from "vitest";
-import { buildSegmentPacket, packetDigest, receiptCalls, receiptSql, reviewPrompt, runReview, type ReviewRunner } from "../review/index";
+import { assertPacket, buildSegmentPacket, packetDigest, receiptCalls, receiptSql, reviewPrompt, runReview, type ReviewRunner } from "../review/index";
 import {
   assertWithinCap,
   costUsd,
@@ -129,6 +129,12 @@ describe("segment review", () => {
     expect(prompt.match(/<\/packet>/g)).toHaveLength(1);
     expect(prompt).toContain("\\u003c/packet\\u003e");
     expect(prompt).toMatch(/model-written description of a video segment, not the video itself/);
+  });
+
+  it("refuses a stored segment item with malformed content", () => {
+    const p = packet();
+    expect(() => assertPacket({ ...p, items: [{ ...p.items[0]!, content: null }] })).toThrow(/segment item .* malformed/);
+    expect(() => assertPacket({ ...p, items: [{ ...p.items[0]!, content: { ...(p.items[0]!.content as object), describer: { costUsd: 0 } } }] })).toThrow(/malformed/);
   });
 
   it("refuses uncertain content and a clip no lesson embeds", () => {

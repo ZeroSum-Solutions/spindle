@@ -184,6 +184,9 @@ test.describe.serial("learner flow", () => {
     await expect(doi).toHaveAttribute("href", `https://doi.org/${world.doi}`);
     await expect(doi).toHaveAttribute("rel", "noopener noreferrer");
     await expect(p.locator('[data-block="paragraph"][data-support="practice-based"]').getByText("Practice-based", { exact: true })).toBeVisible();
+    // Back-to-back practice blocks (paragraph, callout, checklist) share one label; each keeps its support in data.
+    await expect(p.locator("article section[data-support]").getByText("Practice-based", { exact: true })).toHaveCount(1);
+    await expect(p.locator('article section[data-support="practice-based"]')).toHaveCount(3);
     await expect(p.locator('[data-block="callout"]')).toContainText("Synthetic callout.");
     await expect(p.locator('[data-block="checklist"] li')).toHaveCount(2);
     await expect(p.locator('[data-block="diagram"]')).toContainText("This diagram is not available yet.");
@@ -244,6 +247,48 @@ test.describe.serial("learner flow", () => {
     await expect(p.getByRole("heading", { level: 1 })).toHaveText("Synthetic lesson one");
     await p.locator(ARTICLE).evaluate((el: HTMLElement) => (el.style.transform = "translateX(-112px)"));
     expect((await layoutSpan(p, OUTLINE, ARTICLE))!.offset).toBeLessThanOrEqual(-50);
+  });
+
+  test("the header lines up with the content and survives a long gym name", async ({ browser }) => {
+    const p = await signIn(browser, actors.partial!, learn(gymA));
+    await p.setViewportSize({ width: 1440, height: 900 });
+    for (const [path, left] of [[learn(gymA), COLUMN], [learn(gymA, assignments.partial, "lesson-one"), OUTLINE]] as const) {
+      await p.goto(path);
+      await expect(p.getByRole("heading", { level: 1 })).toBeVisible();
+      const mark = (await p.locator("header img").first().boundingBox())!;
+      const content = (await layoutSpan(p, left, left))!;
+      expect(Math.abs(mark.x - content.left), `${path}: wordmark at ${mark.x}, content at ${content.left}`).toBeLessThanOrEqual(1);
+    }
+    // A gym name far longer than the header: it truncates beside the wordmark, never under it.
+    await p.setViewportSize({ width: 320, height: 700 });
+    await p.goto(learn(gymA));
+    await expect(p.getByRole("heading", { level: 1 })).toHaveText("Your courses");
+    await p.locator("[data-header-context]").evaluate((el) => (el.textContent = "A synthetic gym name that is much too long for any phone header at all"));
+    const mark = (await p.locator("header img").first().boundingBox())!;
+    const name = (await p.locator("[data-header-context]").boundingBox())!;
+    expect(mark.width).toBe(120);
+    expect(name.x, "gym name overlaps the wordmark").toBeGreaterThanOrEqual(mark.x + mark.width + 8);
+    expect(name.x + name.width).toBeLessThanOrEqual(320 - 16 + 1);
+    expect(await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  });
+
+  test("on phones, next lesson is the one full-width way forward; previous is a small link", async ({ browser }) => {
+    const p = await signIn(browser, actors.partial!, learn(gymA, assignments.partial, "lesson-2"));
+    for (const width of [390, 320]) {
+      await p.setViewportSize({ width, height: 800 });
+      await p.goto(learn(gymA, assignments.partial, "lesson-2"));
+      await expect(p.getByRole("heading", { level: 1 })).toHaveText("Synthetic lesson two");
+      const nav = p.getByRole("navigation", { name: "Lesson navigation" });
+      const next = nav.getByRole("link", { name: /Next lesson/ });
+      const prev = nav.getByRole("link", { name: /Previous lesson/ });
+      const [navBox, nextBox, prevBox] = [(await nav.boundingBox())!, (await next.boundingBox())!, (await prev.boundingBox())!];
+      expect(Math.abs(nextBox.width - navBox.width), "next is full width").toBeLessThanOrEqual(1);
+      expect(nextBox.height).toBeGreaterThanOrEqual(48);
+      expect(prevBox.y + prevBox.height, "previous sits above next").toBeLessThanOrEqual(nextBox.y);
+      expect(prevBox.height).toBeGreaterThanOrEqual(44);
+      const size = (l: typeof next) => l.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+      expect(await size(prev)).toBeLessThan(await size(next.locator("[data-next-title]")));
+    }
   });
 
   test("method course is practice-based only and serves its gym's media to members", async ({ browser }) => {
@@ -308,7 +353,10 @@ test.describe.serial("learner flow", () => {
     await expect(second.getByTestId("lesson-status")).toContainText("Saved.");
     expect(rows()).toBe(first); // still one row, and its completed_at did not move
     await p.reload();
-    await expect(p.getByTestId("lesson-status")).toContainText("Completed.");
+    await expect(p.getByTestId("lesson-status")).toContainText("Lesson complete · v1");
+    await expect(p.getByTestId("lesson-status")).not.toContainText("Completed");
+    // The confirmation holds the one primary way forward.
+    await expect(p.getByTestId("lesson-status").getByRole("link", { name: /Next: Synthetic lesson two/ })).toHaveAttribute("href", learn(gymA, assignments.partial, "lesson-2"));
     await p.goto(learn(gymA, assignments.partial));
     await expect(p.getByText("1 of 3 lessons done")).toBeVisible();
     const fresh = await signIn(browser, actors.partial!, learn(gymA, assignments.partial));
@@ -336,6 +384,16 @@ test.describe.serial("learner flow", () => {
     const list = await signIn(browser, actors.partial!, learn(gymA));
     await expect(list.getByTestId("course-row")).toHaveCount(2);
     await expect(list.getByRole("link", { name: /^v1 · 1 of 3 done$/ })).toHaveAttribute("href", learn(gymA, assignments.partial));
+    // At 320px the label sits above the version links, 8px apart and left-aligned; a link never wraps.
+    await list.setViewportSize({ width: 320, height: 700 });
+    const label = await list.getByText("Earlier versions", { exact: true }).boundingBox();
+    const v1 = list.getByRole("link", { name: /^v1 · 1 of 3 done$/ });
+    const link = await v1.boundingBox();
+    expect(link!.y - (label!.y + label!.height), "gap between label and links").toBeGreaterThanOrEqual(4);
+    expect(link!.y - (label!.y + label!.height), "gap between label and links").toBeLessThanOrEqual(12);
+    expect(Math.abs(link!.x - label!.x)).toBeLessThanOrEqual(1);
+    expect(await v1.evaluate((el) => { const r = document.createRange(); r.selectNodeContents(el); return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size; })).toBe(1);
+    await list.setViewportSize({ width: 1280, height: 800 });
     await expect(list.getByRole("link", { name: /Resume lesson/ })).toHaveAttribute("href", learn(gymA, assignments.partial2, "lesson-2"));
 
     const p = await signIn(browser, actors.partial!, learn(gymA, assignments.partial2));
@@ -374,7 +432,7 @@ test.describe.serial("learner flow", () => {
     const origin = sql(`select origin_completion_id from public.lesson_completions where user_id = '${actors.partial!.id}' and version_id = '${versions.v3}' and lesson_id = '${ids.l[0]}'`);
     expect(origin).toBe(root);
     const p = await signIn(browser, actors.partial!, learn(gymA, assignments.partial3, "lesson-one"));
-    await expect(p.getByTestId("lesson-status")).toContainText("Credited.");
+    await expect(p.getByTestId("lesson-status")).toContainText("Credited · v3");
     await expect(p.getByTestId("lesson-status")).toContainText("in v1");
     await p.reload();
     await expect(p.getByTestId("lesson-status")).toContainText("in v1");
@@ -539,6 +597,8 @@ test.describe.serial("learner flow", () => {
             await page.screenshot({ path: `${dir}/desktop-focus-complete.png` });
             await page.keyboard.press("Enter");
             await expect(page.getByTestId("lesson-status")).toContainText("Saved.");
+            // Capture the finished check, not a frame of its 320ms stroke.
+            await expect.poll(() => page.locator(".confirm-check path").evaluate((el) => getComputedStyle(el).strokeDashoffset)).toBe("0px");
             await page.screenshot({ path: `${dir}/desktop-saved.png` });
           }
           await context.close();
