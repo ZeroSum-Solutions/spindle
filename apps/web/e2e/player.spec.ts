@@ -19,36 +19,46 @@ let storageUp = false;
 
 const PNG_1PX = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
 
-function lessonOne(): LessonSpec {
+type CourseIds = { course: string; part: string; l: string[] };
+
+function lessonOne(w: PlayerWorld = world, set: CourseIds = ids, claim: string = claimId): LessonSpec {
   return {
-    id: ids.l[0]!,
+    id: set.l[0]!,
     slug: "lesson-one",
     title: "Synthetic lesson one",
     blocks: [
       { kind: "heading", content: "Synthetic heading" },
-      { kind: "paragraph", content: "Synthetic science paragraph.", support: "science", claimIds: [claimId] },
+      { kind: "paragraph", content: "Synthetic science paragraph.", support: "science", claimIds: [claim] },
       practice("Synthetic practice paragraph."),
       { kind: "callout", content: { label: "Synthetic note", text: "Synthetic callout." }, support: "practice-based", claimIds: [] },
       { kind: "checklist", content: ["Synthetic step one", "Synthetic step two"], support: "practice-based", claimIds: [] },
-      { kind: "image", content: { kind: "image", src: `/media/content/${world.run}/absent.png`, alt: "Synthetic absent figure", caption: "Synthetic caption", provenanceId: "synthetic" } },
+      { kind: "image", content: { kind: "image", src: `/media/content/${w.run}/absent.png`, alt: "Synthetic absent figure", caption: "Synthetic caption", provenanceId: "synthetic" } },
       { kind: "diagram", content: { diagramId: "synthetic-diagram", caption: "Synthetic diagram caption" } },
       {
         kind: "quiz",
         content: { prompt: "Synthetic question?", options: ["Synthetic A", "Synthetic B"], answerIndex: 1, explanation: "Synthetic explanation." },
         support: "science",
-        claimIds: [claimId],
+        claimIds: [claim],
       },
     ],
     resources: [{ label: "Synthetic reference", href: "https://example.org/synthetic", type: "reference" }],
   };
 }
-const lesson = (i: number, title: string, text = `Synthetic text ${i}.`): LessonSpec => ({ id: ids.l[i]!, slug: `lesson-${i + 1}`, title, blocks: [practice(text)] });
+const lessonFor = (set: CourseIds) => (i: number, title: string, text = `Synthetic text ${i}.`): LessonSpec => ({ id: set.l[i]!, slug: `lesson-${i + 1}`, title, blocks: [practice(text)] });
 
-const v1 = () => courseJson(ids.course, ids.part, "base", "Synthetic base course", [lessonOne(), lesson(1, "Synthetic lesson two"), lesson(2, "Synthetic lesson three")]);
-// v2: lesson one unchanged, two edited, three removed, four added.
-const v2 = () => courseJson(ids.course, ids.part, "base", "Synthetic base course", [lessonOne(), lesson(1, "Synthetic lesson two", "Synthetic text, revised."), lesson(3, "Synthetic lesson four")]);
-// v3: lesson one still unchanged.
-const v3 = () => courseJson(ids.course, ids.part, "base", "Synthetic base course", [lessonOne(), lesson(3, "Synthetic lesson four")]);
+/** v1 to v3 of one synthetic base course. v2: lesson one unchanged, two edited, three removed, four added. v3: lesson one still unchanged. */
+function courseVersions(w: PlayerWorld, set: CourseIds, claim: string, title: string) {
+  const lesson = lessonFor(set);
+  const one = () => lessonOne(w, set, claim);
+  return {
+    v1: () => courseJson(set.course, set.part, "base", title, [one(), lesson(1, "Synthetic lesson two"), lesson(2, "Synthetic lesson three")]),
+    v2: () => courseJson(set.course, set.part, "base", title, [one(), lesson(1, "Synthetic lesson two", "Synthetic text, revised."), lesson(3, "Synthetic lesson four")]),
+    v3: () => courseJson(set.course, set.part, "base", title, [one(), lesson(3, "Synthetic lesson four")]),
+  };
+}
+const v1 = () => courseVersions(world, ids, claimId, "Synthetic base course").v1();
+const v2 = () => courseVersions(world, ids, claimId, "Synthetic base course").v2();
+const v3 = () => courseVersions(world, ids, claimId, "Synthetic base course").v3();
 
 async function signIn(browser: Browser, who: Actor, next: string): Promise<Page> {
   const page = await (await browser.newContext()).newPage();
@@ -66,32 +76,20 @@ async function signIn(browser: Browser, who: Actor, next: string): Promise<Page>
 const learn = (gym: { slug: string }, assignment?: string, lessonSlug?: string) =>
   `/gyms/${gym.slug}/learn${assignment ? `/${assignment}` : ""}${lessonSlug ? `/${lessonSlug}` : ""}`;
 
-/**
- * Publish v2 and assign it to the partial and full learners, once. The v2 test and the
- * capture test both call it, so either one also runs on its own (`-g`).
- */
-function ensureV2(): void {
-  if (versions.v2) return;
-  versions.v2 = world.publishGlobal(v2());
-  assignments.partial2 = world.assign(gymA, actors.owner!, versions.v2, actors.partial!);
-  assignments.full2 = world.assign(gymA, actors.owner!, versions.v2, actors.full!);
+/** Where a horizontal span of the layout sits: the left edge of one element to the right edge of another. Null if either is missing. */
+async function layoutSpan(page: Page, leftSelector: string, rightSelector: string) {
+  return page.evaluate(([l, r]) => {
+    const a = document.querySelector(l)?.getBoundingClientRect();
+    const b = document.querySelector(r)?.getBoundingClientRect();
+    if (!a || !b) return null;
+    const viewport = document.documentElement.clientWidth;
+    return { left: Math.round(a.left), right: Math.round(b.right), width: Math.round(b.right - a.left), offset: Math.round((a.left + b.right) / 2 - viewport / 2) };
+  }, [leftSelector, rightSelector] as const);
 }
 
-/** Horizontal centre of everything rendered inside <main>, against the viewport's centre. */
-async function contentOffCentre(page: Page): Promise<{ offset: number; left: number; right: number }> {
-  return page.evaluate(() => {
-    let left = Infinity;
-    let right = -Infinity;
-    for (const el of document.querySelectorAll("main *")) {
-      const r = el.getBoundingClientRect();
-      if (r.width <= 1 || r.height <= 1) continue;
-      left = Math.min(left, r.left);
-      right = Math.max(right, r.right);
-    }
-    const width = document.documentElement.clientWidth;
-    return { offset: Math.round((left + right) / 2 - width / 2), left: Math.round(left), right: Math.round(width - right) };
-  });
-}
+const COLUMN = 'main [data-layout="column"]';
+const OUTLINE = 'main [data-layout="reading"] > :first-child';
+const ARTICLE = 'main article[aria-labelledby="lesson-title"]';
 
 async function expectNotFound(page: Page, path: string) {
   // Pages stream, so the status is sent before notFound(); assert content instead.
@@ -218,15 +216,34 @@ test.describe.serial("learner flow", () => {
 
   test("learner pages centre their column on wide screens", async ({ browser }) => {
     const p = await signIn(browser, actors.partial!, learn(gymA));
+    const pages = [
+      { path: learn(gymA), heading: "Your courses", span: [COLUMN, COLUMN], max: 768 },
+      { path: learn(gymA, assignments.partial), heading: "Synthetic base course", span: [COLUMN, COLUMN], max: 768 },
+      // The player: the outline's left edge to the article's right edge, centred as one group.
+      { path: learn(gymA, assignments.partial, "lesson-one"), heading: "Synthetic lesson one", span: [OUTLINE, ARTICLE], max: 1008 },
+    ] as const;
     for (const width of [1440, 1280, 1024]) {
       await p.setViewportSize({ width, height: 900 });
-      for (const path of [learn(gymA), learn(gymA, assignments.partial), learn(gymA, assignments.partial, "lesson-one")]) {
+      for (const { path, heading, span, max } of pages) {
         await p.goto(path);
-        await expect(p.getByRole("heading", { level: 1 })).toBeVisible();
-        const { offset, left, right } = await contentOffCentre(p);
-        expect(Math.abs(offset), `${path} at ${width}px: content is ${offset}px off centre (left ${left}, right ${right})`).toBeLessThanOrEqual(4);
+        await expect(p.getByRole("heading", { level: 1 })).toHaveText(heading);
+        const at = await layoutSpan(p, span[0], span[1]);
+        expect(at, `${path} at ${width}px: layout elements missing`).not.toBeNull();
+        expect(Math.abs(at!.offset), `${path} at ${width}px: ${at!.offset}px off centre (left ${at!.left}, right ${at!.right})`).toBeLessThanOrEqual(2);
+        // The column fills its frame, so a narrower inner element cannot hide inside a centred wrapper.
+        expect(Math.abs(at!.width - Math.min(max, width - 64)), `${path} at ${width}px: width ${at!.width}`).toBeLessThanOrEqual(2);
       }
     }
+    // Negative cases: the measurement must notice displaced inner content.
+    await p.setViewportSize({ width: 1440, height: 900 });
+    await p.goto(learn(gymA));
+    await expect(p.getByRole("heading", { level: 1 })).toHaveText("Your courses");
+    await p.locator(COLUMN).evaluate((el: HTMLElement) => (el.style.transform = "translateX(112px)"));
+    expect((await layoutSpan(p, COLUMN, COLUMN))!.offset).toBeGreaterThanOrEqual(100);
+    await p.goto(learn(gymA, assignments.partial, "lesson-one"));
+    await expect(p.getByRole("heading", { level: 1 })).toHaveText("Synthetic lesson one");
+    await p.locator(ARTICLE).evaluate((el: HTMLElement) => (el.style.transform = "translateX(-112px)"));
+    expect((await layoutSpan(p, OUTLINE, ARTICLE))!.offset).toBeLessThanOrEqual(-50);
   });
 
   test("method course is practice-based only and serves its gym's media to members", async ({ browser }) => {
@@ -311,7 +328,9 @@ test.describe.serial("learner flow", () => {
   });
 
   test("v2 carries unchanged credit, reopens changed lessons, retires removed ones", async ({ browser }) => {
-    ensureV2();
+    versions.v2 = world.publishGlobal(v2());
+    assignments.partial2 = world.assign(gymA, actors.owner!, versions.v2, actors.partial!);
+    assignments.full2 = world.assign(gymA, actors.owner!, versions.v2, actors.full!);
 
     // The list leads with v2; v1 stays reachable; Resume points into v2, never into a removed lesson.
     const list = await signIn(browser, actors.partial!, learn(gymA));
@@ -410,47 +429,123 @@ test.describe.serial("learner flow", () => {
   test("captures rendered learner states for design review", async ({ browser }) => {
     const dir = process.env.PLAYER_CAPTURE_DIR;
     test.skip(!dir, "set PLAYER_CAPTURE_DIR to capture design evidence");
-    // Seed the v2 state here too, so `-g "captures rendered"` works without the v2 test.
-    ensureV2();
-    const shots: [string, string][] = [
-      ["list", learn(gymA)],
-      ["overview-v2", learn(gymA, assignments.partial2)],
-      ["player-l1-v2", learn(gymA, assignments.partial2, "lesson-one")],
-      ["player-l2-v2", learn(gymA, assignments.partial2, "lesson-2")],
-    ];
-    for (const [width, height, label] of [[1440, 900, "desktop"], [390, 844, "mobile"], [320, 700, "narrow"]] as const) {
-      for (const reduced of [false, true]) {
-        const context = await browser.newContext({ viewport: { width, height }, reducedMotion: reduced ? "reduce" : "no-preference", deviceScaleFactor: 2 });
-        const page = await context.newPage();
-        await page.goto(`/sign-in?next=${encodeURIComponent(learn(gymA))}`);
-        const before = await messageIds(actors.partial!.email);
-        await page.getByLabel("Email").fill(actors.partial!.email);
-        await page.getByRole("button", { name: "Email me a code" }).click();
-        await page.getByLabel("6-digit code").fill(await codeAfter(actors.partial!.email, before));
-        await page.getByRole("button", { name: "Sign in" }).click();
-        await page.waitForURL(`**${learn(gymA)}`);
-        await new Promise((r) => setTimeout(r, 1100));
-        for (const [name, path] of shots) {
-          if (reduced && name !== "player-l2-v2") continue;
-          await page.goto(path);
-          await page.waitForLoadState("networkidle");
-          const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-          expect(overflow, `${name} at ${width}px scrolls sideways`).toBe(0);
-          await page.screenshot({ path: `${dir}/${label}${reduced ? "-reduced" : ""}-${name}.png`, fullPage: true });
+    test.setTimeout(300_000);
+    // A world of its own: actors, gym, claim and source, three versions, a carried credit and a
+    // retraction. The shots show the same state whether this runs alone (-g) or after the suite.
+    const cap = new PlayerWorld();
+    try {
+      cap.publisher();
+      const owner = await cap.actor("cap-owner");
+      const learner = await cap.actor("cap-learner");
+      const gym = cap.gym("cap", owner);
+      cap.join(gym, owner, learner);
+      const [capClaim, capSource] = cap.claim();
+      const set: CourseIds = { course: randomUUID(), part: randomUUID(), l: [randomUUID(), randomUUID(), randomUUID(), randomUUID()] };
+      const course = courseVersions(cap, set, capClaim, "Synthetic capture course");
+      const a1 = cap.assign(gym, owner, cap.publishGlobal(course.v1()), learner);
+      const { error } = await learner.client.rpc("complete_lesson", { p_assignment: a1, p_lesson: set.l[0] });
+      if (error) throw new Error(`seeding the v1 completion failed: ${error.message}`);
+      const a2 = cap.assign(gym, owner, cap.publishGlobal(course.v2()), learner);
+      const a3 = cap.assign(gym, owner, cap.publishGlobal(course.v3()), learner);
+      cap.retract(capSource);
+
+      const h1 = (page: Page) => page.getByRole("heading", { level: 1 });
+      /** The overview shows this version number and exactly these lessons, in order. */
+      const expectOverview = async (page: Page, version: string, lessons: string[]) => {
+        await expect(h1(page)).toHaveText("Synthetic capture course");
+        await expect(page.locator("main header").first()).toContainText(version);
+        await expect(page.getByTestId("lesson-list").getByTestId("lesson-title")).toHaveText(lessons);
+      };
+      /** The player shows this lesson, its position and the version it belongs to. */
+      const expectPlayer = async (page: Page, title: string, position: string, version: string) => {
+        await expect(h1(page)).toHaveText(title);
+        await expect(page.locator("article header")).toContainText(position);
+        await expect(page.locator("article header")).toContainText(version);
+      };
+      const row = (page: Page, title: string) => page.getByRole("listitem").filter({ has: page.getByText(title, { exact: true }) });
+      const shots: { name: string; path: string; check: (page: Page) => Promise<void> }[] = [
+        {
+          name: "list",
+          path: learn(gym),
+          check: async (page) => {
+            await expect(h1(page)).toHaveText("Your courses");
+            await expect(page.getByTestId("course-row")).toHaveCount(1);
+            await expect(page.getByTestId("course-row")).toContainText("v3");
+            await expect(page.getByRole("link", { name: /Resume lesson/ })).toHaveAttribute("href", learn(gym, a3, "lesson-4"));
+          },
+        },
+        {
+          name: "overview-v2",
+          path: learn(gym, a2),
+          check: async (page) => {
+            await expectOverview(page, "v2", ["Synthetic lesson one", "Synthetic lesson two", "Synthetic lesson four"]);
+            await expect(row(page, "Synthetic lesson one")).toContainText("Credited");
+            await expect(page.getByText("A source cited in this version was retracted after it was published")).toBeVisible();
+          },
+        },
+        {
+          name: "overview-v3",
+          path: learn(gym, a3),
+          check: async (page) => {
+            await expectOverview(page, "v3", ["Synthetic lesson one", "Synthetic lesson four"]);
+            await expect(row(page, "Synthetic lesson one")).toContainText("Credited");
+          },
+        },
+        {
+          name: "player-l1-v2",
+          path: learn(gym, a2, "lesson-one"),
+          check: async (page) => {
+            await expectPlayer(page, "Synthetic lesson one", "Lesson 1 of 3", "v2");
+            await expect(page.locator('[data-block="paragraph"][data-support="science"]').getByText("Source retracted")).toBeVisible();
+          },
+        },
+        {
+          name: "player-l2-v2",
+          path: learn(gym, a2, "lesson-2"),
+          check: async (page) => {
+            await expectPlayer(page, "Synthetic lesson two", "Lesson 2 of 3", "v2");
+            await expect(page.getByRole("region", { name: "Lesson completion" })).toBeVisible();
+          },
+        },
+      ];
+      for (const [width, height, label] of [[1440, 900, "desktop"], [390, 844, "mobile"], [320, 700, "narrow"]] as const) {
+        for (const reduced of [false, true]) {
+          const context = await browser.newContext({ viewport: { width, height }, reducedMotion: reduced ? "reduce" : "no-preference", deviceScaleFactor: 2 });
+          const page = await context.newPage();
+          await page.goto(`/sign-in?next=${encodeURIComponent(learn(gym))}`);
+          const before = await messageIds(learner.email);
+          await page.getByLabel("Email").fill(learner.email);
+          await page.getByRole("button", { name: "Email me a code" }).click();
+          await page.getByLabel("6-digit code").fill(await codeAfter(learner.email, before));
+          await page.getByRole("button", { name: "Sign in" }).click();
+          await page.waitForURL(`**${learn(gym)}`);
+          await new Promise((r) => setTimeout(r, 1100));
+          for (const { name, path, check } of shots) {
+            if (reduced && name !== "player-l2-v2") continue;
+            await page.goto(path);
+            await page.waitForLoadState("networkidle");
+            await check(page);
+            const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+            expect(overflow, `${name} at ${width}px scrolls sideways`).toBe(0);
+            await page.screenshot({ path: `${dir}/${label}${reduced ? "-reduced" : ""}-${name}.png`, fullPage: true });
+          }
+          if (label === "desktop" && !reduced) {
+            // Keyboard: the first focus stop is visible; then complete a lesson and capture the confirmation.
+            await page.goto(learn(gym, a2, "lesson-2"));
+            await expectPlayer(page, "Synthetic lesson two", "Lesson 2 of 3", "v2");
+            await page.keyboard.press("Tab");
+            await page.screenshot({ path: `${dir}/desktop-focus-first.png` });
+            await page.getByRole("button", { name: "Mark lesson complete" }).focus();
+            await page.screenshot({ path: `${dir}/desktop-focus-complete.png` });
+            await page.keyboard.press("Enter");
+            await expect(page.getByTestId("lesson-status")).toContainText("Saved.");
+            await page.screenshot({ path: `${dir}/desktop-saved.png` });
+          }
+          await context.close();
         }
-        if (label === "desktop" && !reduced) {
-          // Keyboard: the first focus stop is visible; then complete a lesson and capture the confirmation.
-          await page.goto(learn(gymA, assignments.partial2, "lesson-2"));
-          await page.keyboard.press("Tab");
-          await page.screenshot({ path: `${dir}/desktop-focus-first.png` });
-          await page.getByRole("button", { name: "Mark lesson complete" }).focus();
-          await page.screenshot({ path: `${dir}/desktop-focus-complete.png` });
-          await page.keyboard.press("Enter");
-          await expect(page.getByTestId("lesson-status")).toContainText("Saved.");
-          await page.screenshot({ path: `${dir}/desktop-saved.png` });
-        }
-        await context.close();
       }
+    } finally {
+      await cap.cleanup();
     }
   });
 
