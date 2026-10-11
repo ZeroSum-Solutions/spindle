@@ -20,7 +20,7 @@ export function LearnShell({
 }) {
   return (
     <>
-      <AppHeader context={gym} />
+      <AppHeader context={gym} frame={FRAME[frame]} />
       <main className="flex w-full flex-1 flex-col px-4 py-8 md:px-8 md:py-12">
         <div data-frame={frame} className={`mx-auto flex w-full flex-col gap-6 ${FRAME[frame]}`}>
         {back ? (
