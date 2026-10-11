@@ -42,8 +42,6 @@ export type ResolvedLink = { kind: "external"; url: string } | { kind: "media"; 
  * authorizes every request again on its own.
  */
 export function resolveContentUrl(src: string, owner: { orgId: string | null }): ResolvedLink {
-  // Video hosts load only through the click-to-load registry player (ADR 0007), never as plain media or links.
-  if (isVideoHostUrl(src)) return { kind: "unavailable" };
   if (src.startsWith("https://")) return { kind: "external", url: src };
   if (!src.startsWith("/media/")) return { kind: "unavailable" };
   const object = storageObjectFor(src.slice("/media/".length).split("/"));
