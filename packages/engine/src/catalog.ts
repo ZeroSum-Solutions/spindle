@@ -40,6 +40,9 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
             requireNoVideoHost(lesson.id, block.content.src);
             requireStoredMedia(course, lesson.id, block.content.src);
           }
+          if (block.kind === "diagram") {
+            invariant("support" in block, `${lesson.id} has a diagram without reviewable text (alt, caption, legend and support)`);
+          }
           if (block.kind === "video") {
             invariant(course.layer !== "method", `${lesson.id} is gym method content and cannot embed registry videos`);
             invariant(block.content.endSeconds > block.content.startSeconds, `${lesson.id} has a video segment that ends before it starts`);

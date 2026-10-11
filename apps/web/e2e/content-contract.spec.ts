@@ -62,7 +62,17 @@ const base: Course = {
               },
             },
             { kind: "checklist", content: ["Stand tall", "Breathe 🫁"], support: "practice-based", claimIds: [] },
-            { kind: "diagram", content: { diagramId: "diagram.shoulder_1", caption: "Synthetic diagram" } },
+            {
+              kind: "diagram",
+              content: {
+                diagramId: "diagram.shoulder_1",
+                alt: "Synthetic diagram of the shoulder 🦴",
+                caption: "Synthetic diagram",
+                legend: [{ key: "scapula", label: "Shoulder blade", text: "Synthetic legend text." }],
+              },
+              support: "science",
+              claimIds: [CLAIM],
+            },
             {
               kind: "quiz",
               content: { prompt: "How many cuff muscles?", options: ["Three", "Four"], answerIndex: 1, explanation: "Four." },
@@ -130,7 +140,7 @@ const method: Course = {
             { kind: "callout", content: { label: "Gym", text: "House rule." }, support: "practice-based", claimIds: [] },
             { kind: "checklist", content: ["Brace"], support: "practice-based", claimIds: [] },
             { kind: "image", content: { kind: "image", src: "/media/org/c2c2c2c2-0000-4000-8000-0000000000b1/cuff.png", alt: "Cuff", caption: "", provenanceId: "gym-1" } },
-            { kind: "diagram", content: { diagramId: "d1", caption: "" } },
+            { kind: "diagram", content: { diagramId: "d1", alt: "House diagram", caption: "", legend: [] }, support: "practice-based", claimIds: [] },
             {
               kind: "quiz",
               content: { prompt: "Which cue?", options: ["Ribs down", "Chin up", "Toes out"], answerIndex: 0, explanation: "House cue." },

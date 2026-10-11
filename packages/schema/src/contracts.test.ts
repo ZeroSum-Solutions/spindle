@@ -140,3 +140,26 @@ describe("learner projection (ADR 0007, T21)", () => {
     expect(() => parseCourse(course([quiz("science", true)]))).toThrow(ContentParseError);
   });
 });
+
+describe("diagram blocks carry reviewable text (Sol R16)", () => {
+  const diagram = {
+    kind: "diagram",
+    support: "science",
+    claimIds: [UUID],
+    content: { diagramId: "shoulder.rhythm", alt: "The shoulder blade rotating upward.", caption: "Scapular upward rotation",
+      legend: [{ key: "scapula", label: "Shoulder blade", text: "Rotates upward as the arm rises." }] },
+  };
+
+  it("parses the reviewable diagram block and still reads a legacy one", () => {
+    expect(lessonBlockSchema.parse(diagram)).toEqual(diagram);
+    expect(lessonBlockSchema.safeParse({ kind: "diagram", content: { diagramId: "d1", caption: "" } }).success).toBe(true);
+  });
+
+  it("refuses a diagram with missing text, loose legend items or no claims for science", () => {
+    expect(lessonBlockSchema.safeParse({ ...diagram, content: { ...diagram.content, alt: "" } }).success).toBe(false);
+    expect(lessonBlockSchema.safeParse({ ...diagram, content: { ...diagram.content, legend: [{ key: "a b", label: "x", text: "y" }] } }).success).toBe(false);
+    expect(lessonBlockSchema.safeParse({ ...diagram, content: { ...diagram.content, legend: [{ key: "a", label: "x", text: "y", colour: "red" }] } }).success).toBe(false);
+    expect(lessonBlockSchema.safeParse({ ...diagram, claimIds: [] }).success).toBe(false);
+    expect(lessonBlockSchema.safeParse({ ...diagram, support: "practice-based" }).success).toBe(false);
+  });
+});

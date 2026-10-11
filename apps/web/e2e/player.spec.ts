@@ -33,7 +33,7 @@ function lessonOne(w: PlayerWorld = world, set: CourseIds = ids, claim: string =
       { kind: "callout", content: { label: "Synthetic note", text: "Synthetic callout." }, support: "practice-based", claimIds: [] },
       { kind: "checklist", content: ["Synthetic step one", "Synthetic step two"], support: "practice-based", claimIds: [] },
       { kind: "image", content: { kind: "image", src: `/media/content/${w.run}/absent.png`, alt: "Synthetic absent figure", caption: "Synthetic caption", provenanceId: "synthetic" } },
-      { kind: "diagram", content: { diagramId: "synthetic-diagram", caption: "Synthetic diagram caption" } },
+      { kind: "diagram", content: { diagramId: "synthetic-diagram", alt: "Synthetic diagram", caption: "Synthetic diagram caption", legend: [] }, support: "practice-based", claimIds: [] },
       {
         kind: "quiz",
         content: { prompt: "Synthetic question?", options: ["Synthetic A", "Synthetic B"], answerIndex: 1, explanation: "Synthetic explanation." },

@@ -98,7 +98,6 @@ const blockVariants = z.discriminatedUnion("kind", [
   }),
   z.strictObject({ kind: z.literal("image"), content: mediaAssetSchema }),
   z.strictObject({ kind: z.literal("checklist"), content: z.array(requiredText).min(1).max(100), ...supported }),
-  z.strictObject({ kind: z.literal("diagram"), content: z.strictObject({ diagramId: idSchema, caption: text }) }),
   z.strictObject({
     kind: z.literal("quiz"),
     content: z
@@ -114,7 +113,22 @@ const blockVariants = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("video"), content: videoSegmentSchema }),
 ]);
 
-export const lessonBlockSchema = blockVariants.superRefine((block, ctx) => {
+/** Legacy diagram block (before R16): parses so historical snapshots stay readable; validateCatalog refuses it. */
+const legacyDiagramSchema = z.strictObject({ kind: z.literal("diagram"), content: z.strictObject({ diagramId: idSchema, caption: text }) });
+
+/** The reviewable diagram block (R16): alt, caption and legend text live in the lesson and are hashed and reviewed. */
+const diagramSchema = z.strictObject({
+  kind: z.literal("diagram"),
+  content: z.strictObject({
+    diagramId: idSchema,
+    alt: requiredText.max(500),
+    caption: text.max(1000),
+    legend: z.array(z.strictObject({ key: idSchema, label: requiredText.max(100), text: text.max(1000) })).max(20),
+  }),
+  ...supported,
+});
+
+export const lessonBlockSchema = z.union([blockVariants, diagramSchema, legacyDiagramSchema]).superRefine((block, ctx) => {
   if (!("support" in block)) return;
   const { support, claimIds } = block;
   if (new Set(claimIds).size !== claimIds.length) {

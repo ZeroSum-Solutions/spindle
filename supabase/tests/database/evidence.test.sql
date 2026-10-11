@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(210);
+select plan(221);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -1123,6 +1123,59 @@ select pg_temp.review_all('8a400000-0000-4000-8000-000000000000', 'stored');
 select throws_ok($$select pg_temp.publish('8a400000-0000-4000-8000-000000000000')$$, 'P0001',
   'publish gate: course 8a400000-0000-4000-8000-000000000000 has lesson media that is not a stored file of its owner',
   'legacy external lesson media cannot publish in global content');
+select pg_temp.reset_role();
+
+-- 9g. Diagram teaching text lives in the reviewed lesson data (Sol R16) -------------------------------
+create function pg_temp.diagram(support text, claims uuid[], legend jsonb default null) returns jsonb language sql as $$
+  select jsonb_build_object('kind', 'diagram', 'support', support, 'claimIds', to_jsonb(claims), 'content', jsonb_build_object(
+    'diagramId', 'shoulder.rhythm', 'alt', 'The shoulder blade rotating upward as the arm rises.', 'caption', 'Scapular upward rotation',
+    'legend', coalesce(legend, '[{"key": "scapula", "label": "Shoulder blade", "text": "Rotates upward as the arm rises."}]'::jsonb)))
+$$;
+select pg_temp.as_service();
+select throws_ok($$select pg_temp.save(pg_temp.course('8c600000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8c600000-0000-4000-8000-000000000011', 'diagram', jsonb_build_array(jsonb_build_object('kind', 'diagram', 'content',
+    jsonb_build_object('diagramId', 'shoulder.rhythm', 'caption', 'x')))))))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0].support: is required', 'a diagram must say how its teaching text is supported');
+select throws_ok($$select pg_temp.save(pg_temp.course('8c600000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8c600000-0000-4000-8000-000000000011', 'diagram', jsonb_build_array(pg_temp.diagram('practice-based', '{}',
+    '[{"key": "scapula", "label": "x", "text": "y", "colour": "red"}]'))))))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0].content.legend[0]: unknown key colour', 'legend items are strict');
+select throws_ok($$select pg_temp.save(pg_temp.course('8c600000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8c600000-0000-4000-8000-000000000011', 'diagram', jsonb_build_array(pg_temp.diagram('practice-based', '{}',
+    '[{"key": "two words", "label": "x", "text": "y"}]'))))))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0].content.legend[0].key: must be a plain identifier', 'legend keys are plain identifiers');
+select lives_ok($$select pg_temp.save(pg_temp.course('8c600000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('8c600000-0000-4000-8000-000000000011', 'diagram', jsonb_build_array(pg_temp.diagram('science', array[pg_temp.id('c_ok')]))))))$$,
+  'a science diagram with its text and claim saves');
+select throws_ok($$select pg_temp.publish('8c600000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 8c600000-0000-4000-8000-000000000011 has a diagram block with no supporting binding review for its exact content and claims',
+  'a science diagram needs a binding review of its exact text');
+select pg_temp.review_all('8c600000-0000-4000-8000-000000000000', 'diagram');
+select lives_ok($$select pg_temp.keep('dg_v1', pg_temp.publish('8c600000-0000-4000-8000-000000000000'))$$, 'once reviewed, the diagram publishes');
+select pg_temp.reset_role();
+select is((select snapshot #> '{parts,0,lessons,0,blocks,0,content,legend,0,text}' from public.curriculum_versions where id = pg_temp.id('dg_v1')),
+  '"Rotates upward as the arm rises."'::jsonb, 'the legend text is frozen in the snapshot, so the lesson hash covers it');
+select is((select count(*) from public.version_claims where version_id = pg_temp.id('dg_v1')), 1::bigint, 'the diagram''s claim is cited by the version');
+-- A diagram row saved before the rule (no support, no text) cannot publish.
+alter table public.lesson_blocks disable trigger user;
+alter table public.lesson_blocks drop constraint lesson_blocks_check;
+update public.lesson_blocks set support = null, content = '{"diagramId": "shoulder.rhythm", "caption": "x"}'::jsonb
+where lesson_id = '8c600000-0000-4000-8000-000000000011' and kind = 'diagram';
+delete from public.block_claims where block_id in (select id from public.lesson_blocks where lesson_id = '8c600000-0000-4000-8000-000000000011');
+update public.lesson_blocks set content_hash = private.block_hash(kind, content) where lesson_id = '8c600000-0000-4000-8000-000000000011';
+alter table public.lesson_blocks add constraint lesson_blocks_check check ((support is null) = (kind in ('heading', 'image', 'video'))) not valid;
+alter table public.lesson_blocks enable trigger user;
+select pg_temp.as_service();
+select throws_ok($$select pg_temp.publish('8c600000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 8c600000-0000-4000-8000-000000000011 has a diagram without reviewable text (alt, caption, legend and support)',
+  'a legacy diagram row cannot publish');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select throws_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.course('8d700000-0000-4000-8000-000000000000', 'method',
+  jsonb_build_array(pg_temp.lesson('8d700000-0000-4000-8000-000000000011', 'gym-diagram', jsonb_build_array(pg_temp.diagram('science', array[pg_temp.id('c_ok')]))))))$$,
+  '22023', 'invalid course.parts[0].lessons[0].blocks[0]: method content is practice-based', 'gym diagrams are practice-based');
+select lives_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.course('8d700000-0000-4000-8000-000000000000', 'method',
+  jsonb_build_array(pg_temp.lesson('8d700000-0000-4000-8000-000000000011', 'gym-diagram', jsonb_build_array(pg_temp.diagram('practice-based', '{}'))))))$$,
+  'a gym saves a practice-based diagram with its text');
 select pg_temp.reset_role();
 
 -- 10. Privileges and hygiene -------------------------------------------------------------------

@@ -136,6 +136,14 @@ describe("registry videos in a catalog", () => {
     expect(ok(withMedia("/media/content/clip.mp4"))).not.toThrow();
   });
 
+  it("refuse a legacy diagram without reviewable text in new content (R16)", () => {
+    const c = course();
+    const withBlock = (block: LessonBlock): Course => ({ ...c, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, blocks: [block] }] }] });
+    expect(() => validateCatalog({ version: "t", courses: [withBlock({ kind: "diagram", content: { diagramId: "d1", caption: "" } })] }, ...lookups)).toThrow(/reviewable text/);
+    const ok: LessonBlock = { kind: "diagram", support: "practice-based", claimIds: [], content: { diagramId: "d1", alt: "x", caption: "", legend: [] } };
+    expect(() => validateCatalog({ version: "t", courses: [withBlock(ok)] }, ...lookups)).not.toThrow();
+  });
+
   it("refuse the reserved lesson slug quiz in new content", () => {
     const c = course();
     const named: Course = { ...c, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, slug: "quiz" }] }] };

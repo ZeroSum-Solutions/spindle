@@ -38,6 +38,11 @@
   - `validateCatalog` applies the same rule to authored content (`storedMediaOwner`).
   - Snapshot parsing stays lenient, and the player shows non-storage media as unavailable.
 
+- **Diagram text is reviewed content (Sol R16).** A diagram block is `{kind: "diagram", content: {diagramId, alt, caption, legend: [{key, label, text}]}, support, claimIds}`.
+  - All text a learner reads lives in the lesson data and is hashed and reviewed. A science diagram binds claims and needs a binding review, like a paragraph.
+  - Code supplies only the drawing geometry keyed by `diagramId` (legend `key`s name its anchors), with no explanatory text.
+  - The legacy `{diagramId, caption}` form still parses for old snapshots, but new authoring (`validate_block`, `validateCatalog`) and the publish gate refuse it.
+
 ## Why
 - Sol's plan review found that a recorder could stamp a verdict onto newer content, and that changed practice guidance could publish with no review (P3-04, P3-05). Both were reproduced on the phase-2 schema before this change. Content-addressed receipts with an atomic compare close both.
 - D-08 makes model review the build-time gate for base content. Gyms author their own method content, so the tenant path stays as it was.
