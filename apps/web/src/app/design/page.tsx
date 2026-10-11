@@ -7,6 +7,7 @@ import { IntegrityAlert, LayerLabel, LessonStateLabel, SupportLabel, SupportLege
 import { LessonOutline } from "@/components/learn/outline";
 import { LearnShell, VersionUnavailable } from "@/components/learn/shell";
 import { VersionNotice } from "@/components/learn/version-notice";
+import { YouTubeSegment } from "@/components/learn/youtube-segment";
 import { ErrorNote } from "@/components/ui";
 import type { ClaimView } from "@/lib/learning/load";
 import type { CourseView, LessonView } from "@/lib/learning/view";
@@ -188,6 +189,21 @@ export default function DesignSpecimen() {
               orgId={null}
             />
           </article>
+        </div>
+      </Section>
+
+      <Section title="Video (click to load)">
+        <p className="text-label text-text-muted">
+          Nothing loads from YouTube until Play is pressed. The first clip is YouTube&apos;s own IFrame API demo video; the second id does not exist, so it
+          ends in the unavailable state.
+        </p>
+        <div className="grid max-w-[46rem] grid-cols-1 gap-10">
+          <YouTubeSegment
+            video={{ videoId: "M7lc1UVf-VE", start: 0, end: 30, title: "Specimen clip: YouTube IFrame API demo", channel: "YouTube API demo", rationale: "Synthetic rationale: shows how a coaching segment sits beside lesson text." }}
+          />
+          <YouTubeSegment
+            video={{ videoId: "000000000aa", start: 5, end: 20, title: "Specimen clip: video that cannot play", channel: "Synthetic channel", rationale: "Synthetic rationale: the player reports an error, so the lesson says so." }}
+          />
         </div>
       </Section>
 

@@ -184,6 +184,7 @@ Native elements first; no component library is installed. Lucide (ISC) is the on
 | CompletionView | `components/learn/complete-lesson.tsx` | idle, pending (button disabled, "Saving…"), saved for vN (after server confirmation only), failed with retry, done or credited on load (static) |
 | QuizSelfCheck | `components/learn/quiz-self-check.tsx` | unanswered, selected, feedback after "Check answer". Says it is not saved or graded; graded quizzes are phase 3 |
 | MediaImage, MediaVideo | `components/learn/media-image.tsx` | loaded; not available (missing, refused or failed object), never a broken image or player. Stored video plays through a signed Storage URL that lives at most 60 s |
+| YouTubeSegment, YouTubePlayer | `components/learn/youtube-segment.tsx`, `youtube-player.tsx` | idle (our own placeholder with a YouTube notice linking Google's privacy policy and YouTube's terms; nothing loads from YouTube), loading, ready (privacy-enhanced player with official controls, at least 200×200px, origin-only referrer), unavailable (player error, script failure or a 15 s ready timeout, with a Watch on YouTube link). Always practice-based and optional. The CSP (`lib/csp.ts`) frames only `youtube-nocookie.com` |
 | CourseRow, LessonOutline | `components/learn/` | progress as literal text plus a decorative bar; current lesson; earlier versions |
 | IntegrityAlert, VersionUnavailable | `components/learn/` | caution; failure |
 
