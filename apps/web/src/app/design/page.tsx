@@ -67,8 +67,37 @@ const blocks: LessonBlock[] = [
   { kind: "checklist", content: ["First synthetic step", "Second synthetic step"], support: "science", claimIds: [FLAGGED] },
   { kind: "image", content: { kind: "image", src: "/media/content/synthetic/missing.png", alt: "Synthetic missing figure", caption: "A storage figure that is not available.", provenanceId: "synthetic" } },
   { kind: "diagram", content: { diagramId: "synthetic-diagram", caption: "A diagram block without an asset yet." } },
-  { kind: "diagram", content: { diagramId: "shoulder-complex-front", caption: "Original diagram: the shoulder complex from the front." } },
-  { kind: "diagram", content: { diagramId: "scapula-upward-rotation", caption: "Original diagram: upward rotation of the shoulder blade." } },
+  {
+    kind: "diagram",
+    content: {
+      diagramId: "shoulder-complex-front",
+      alt: "Synthetic alt text: a schematic left shoulder from the front.",
+      caption: "Synthetic caption for a reviewed science diagram. Schematic, not to scale.",
+      legend: [
+        { key: "sternoclavicular", label: "Synthetic place one.", text: "Synthetic legend text." },
+        { key: "acromioclavicular", label: "Synthetic place two.", text: "" },
+        { key: "glenohumeral", label: "Synthetic place three.", text: "" },
+        { key: "scapula", label: "Synthetic place four.", text: "" },
+      ],
+    },
+    support: "science",
+    claimIds: [CLAIM],
+  },
+  {
+    kind: "diagram",
+    content: {
+      diagramId: "scapula-upward-rotation",
+      alt: "Synthetic alt text: three positions of a shoulder blade.",
+      caption: "Synthetic caption for a reviewed practice diagram. Schematic, not to scale.",
+      legend: [
+        { key: "arm-by-side", label: "Synthetic panel one.", text: "" },
+        { key: "arm-level", label: "Synthetic panel two.", text: "" },
+        { key: "arm-overhead", label: "Synthetic panel three.", text: "" },
+      ],
+    },
+    support: "practice-based",
+    claimIds: [],
+  },
   {
     kind: "quiz",
     content: { prompt: "Synthetic self-check: which option is right?", options: ["Option A", "Option B", "Option C"], answerIndex: 1, explanation: "Option B is the synthetic answer." },

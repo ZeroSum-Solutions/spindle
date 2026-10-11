@@ -93,7 +93,7 @@
       "accuracy": "Schematic and not to scale. Shows only positions the lesson text describes; adds no claim. All words (alt, caption, legend) come from the lesson's diagram block."
     },
     {
-      "id": "shoulder-cuff-and-movers",
+      "id": "shoulder-cuff",
       "file": "apps/web/src/components/illustrations/shoulder-cuff.tsx (SHOULDER_CUFF)",
       "subject": "The rotator cuff of a left shoulder, from the front (subscapularis) and from behind (supraspinatus, infraspinatus, teres minor); the subject's left is on the viewer's right from the front and on the viewer's left from behind. The larger movers are not drawn.",
       "source": "original-svg",

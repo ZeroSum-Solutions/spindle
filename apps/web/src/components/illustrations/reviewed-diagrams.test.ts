@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from "node:fs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -87,10 +88,33 @@ describe("reviewed diagrams: geometry in code, words from the lesson", () => {
   });
 
   it("names the four cuff muscles as anchors, each with a leader to its muscle, and nothing else muscular", () => {
-    const spec = DRAWINGS["shoulder-cuff-and-movers"]!;
+    const spec = DRAWINGS["shoulder-cuff"]!;
     const muscles = ["subscapularis", "supraspinatus", "infraspinatus", "teres-minor"];
     for (const m of muscles) expect(spec.anchors[m]?.leader).toBeDefined();
     const html = renderToStaticMarkup(createElement(Drawing, { spec, alt: "Synthetic alt", legend: [] }));
     expect([...html.matchAll(/data-muscle="([^"]+)"/g)].map((m) => m[1]).sort()).toEqual([...muscles].sort());
+  });
+});
+
+describe("the shoulder drafts' diagram blocks", () => {
+  // Every diagram in the base curriculum drafts names a drawing that exists, and every legend
+  // key names one of its anchors, so no marker silently goes missing.
+  const dir = `${__dirname}/../../../../../content/shoulder/drafts`;
+  const blocks = readdirSync(dir)
+    .filter((f) => f.endsWith(".json"))
+    .flatMap((f) => (JSON.parse(readFileSync(`${dir}/${f}`, "utf8")).lesson.blocks as { kind: string; content: ReviewedDiagramContent }[]).filter((b) => b.kind === "diagram"));
+
+  it("are all reviewed blocks with a drawing", () => {
+    expect(blocks.length).toBe(8);
+    for (const b of blocks) {
+      expect(b.content.alt, b.content.diagramId).toBeTruthy();
+      expect(drawingFor(b.content.diagramId), b.content.diagramId).toBeDefined();
+    }
+  });
+
+  it.each(blocks.map((b) => [b.content.diagramId, b.content] as const))("%s: every legend key is an anchor of its drawing", (_, content) => {
+    const spec = drawingFor(content.diagramId)!;
+    expect(content.legend.length).toBeGreaterThan(0);
+    for (const item of content.legend) expect(Object.keys(spec.anchors), item.key).toContain(item.key);
   });
 });

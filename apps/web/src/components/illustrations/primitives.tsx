@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from "react";
+import type { DiagramLegendItem } from "@spindle/schema";
 
 // Shared drawing primitives for Spindle's original line art (AI-assisted, CC BY-SA 4.0;
 // provenance in docs/design/spindle/asset-provenance.json). Lucide-style strokes: 1.75px at
@@ -32,12 +33,8 @@ export interface DrawingSpec {
   Art: () => ReactNode;
 }
 
-/** The legend item shape of a reviewed diagram block (mirrors DiagramLegendItem in @spindle/schema). */
-export interface LegendItem {
-  key: string;
-  label: string;
-  text: string;
-}
+/** The legend item of a reviewed diagram block. */
+export type LegendItem = DiagramLegendItem;
 
 export interface PlacedMarker extends Anchor {
   n: number;

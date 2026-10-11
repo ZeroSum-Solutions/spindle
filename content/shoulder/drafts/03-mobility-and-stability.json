@@ -177,8 +177,43 @@
         "kind": "diagram",
         "content": {
           "diagramId": "reach-screens",
-          "caption": "Planned diagram, not available yet: the wall reach, lying reach and active-then-passive check."
-        }
+          "alt": "Three schematic figures: standing with the back against a wall, arms raised but short of vertical; lying on the back with knees bent, arms overhead toward the floor; standing with one arm raised and supported at the elbow and wrist, with a dashed line showing further range.",
+          "caption": "Three ways to see reach. Schematic, not to scale.",
+          "legend": [
+            {
+              "key": "wall-reach",
+              "label": "Wall reach.",
+              "text": "Back against the wall; raise both arms forward and up."
+            },
+            {
+              "key": "hands-stop",
+              "label": "Where the hands stop.",
+              "text": "Note it; the dashed line is the full range."
+            },
+            {
+              "key": "lower-back",
+              "label": "Lower back.",
+              "text": "Note whether it leaves the wall."
+            },
+            {
+              "key": "lying-reach",
+              "label": "Lying reach.",
+              "text": "On the back, knees bent; arms overhead toward the floor behind."
+            },
+            {
+              "key": "active-passive",
+              "label": "Active then passive.",
+              "text": "The client's own raise, then the arm supported (dashed: further range)."
+            },
+            {
+              "key": "support",
+              "label": "Support at the elbow and wrist.",
+              "text": "Only with permission. Never push; stop at the first discomfort."
+            }
+          ]
+        },
+        "support": "practice-based",
+        "claimIds": []
       },
       {
         "kind": "checklist",

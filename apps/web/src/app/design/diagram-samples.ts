@@ -6,7 +6,7 @@ import type { ReviewedDiagramContent } from "@/components/learn/diagrams";
 
 export const DIAGRAM_SAMPLES: readonly ReviewedDiagramContent[] = [
   {
-    diagramId: "shoulder-cuff-and-movers",
+    diagramId: "shoulder-cuff",
     alt: "Two schematic views of a left shoulder. From the front, one muscle covers the front of the shoulder blade and crosses to the top of the upper arm bone. From behind, three muscles run from the shoulder blade, above and below its spine, to the top of the upper arm bone.",
     caption: "Sample text. The rotator cuff, left shoulder from the front and from behind. Schematic, not to scale.",
     legend: [

@@ -60,13 +60,13 @@ export const SHOULDER_COMPLEX: DrawingSpec = { view: SHOULDER_VIEW, anchors: SHO
 
 const SCAPULA = "M0 0 L-58 -16 L-40 112 Z";
 const SPINE = "M-4 -6 L-56 -2";
-const SCAPULA_VIEW = { width: 480, height: 290 } as const;
+const SCAPULA_VIEW = { width: 480, height: 298 } as const;
 
 /** Panel markers sit below each shoulder blade, clear of its lower tip. */
 const SCAPULA_ANCHORS = {
-  "arm-by-side": P(80, 266),
-  "arm-level": P(250, 266),
-  "arm-overhead": P(440, 266),
+  "arm-by-side": P(80, 268),
+  "arm-level": P(250, 268),
+  "arm-overhead": P(440, 268),
 } as const;
 
 function ScapulaPanel({ x, rotate, arm }: { x: number; rotate: number; arm: number }) {

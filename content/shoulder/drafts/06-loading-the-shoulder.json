@@ -154,8 +154,28 @@
         "kind": "diagram",
         "content": {
           "diagramId": "press-pull-overhead",
-          "caption": "Planned diagram, not available yet: the pressing, pulling and overhead progressions."
-        }
+          "alt": "Three rows of schematic figures, each a progression from left to right: push-ups from a high box to the floor; a chest-supported row, a bent-over row and a heavier bent-over row; a landmine press, a half-kneeling one-arm press and a standing press.",
+          "caption": "One progression per row, left to right. Change one thing at a time. Schematic, not to scale.",
+          "legend": [
+            {
+              "key": "pressing",
+              "label": "Pressing.",
+              "text": "Push-up from a raised surface, then a lower surface, then the floor."
+            },
+            {
+              "key": "pulling",
+              "label": "Pulling.",
+              "text": "Chest-supported row, then an unsupported row, then a heavier load."
+            },
+            {
+              "key": "overhead",
+              "label": "Overhead.",
+              "text": "Landmine press, then half-kneeling single-arm press, then standing press."
+            }
+          ]
+        },
+        "support": "practice-based",
+        "claimIds": []
       },
       {
         "kind": "heading",

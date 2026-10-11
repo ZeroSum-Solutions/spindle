@@ -126,3 +126,48 @@ describe("practice runs and the integrity report", () => {
     expect(labels(render(blocks, [], integrity))).toEqual(expected);
   });
 });
+
+describe("reviewed diagram blocks (Sol R16)", () => {
+  const legend = [
+    { key: "sternoclavicular", label: "Synthetic label one.", text: "Synthetic text one." },
+    { key: "glenohumeral", label: "Synthetic label two.", text: "" },
+  ];
+  const science: LessonBlock = {
+    kind: "diagram",
+    content: { diagramId: "shoulder-complex-front", alt: "Synthetic alt.", caption: "Synthetic caption.", legend },
+    support: "science",
+    claimIds: [C1],
+  };
+  const practice: LessonBlock = { ...science, support: "practice-based", claimIds: [] } as LessonBlock;
+
+  it("renders as a supported block: its label, its sources, and every word from the block", () => {
+    const html = render([science]);
+    expect(html).toMatch(/<section data-block="diagram" data-support="science"/);
+    expect(html).toContain(">Science<");
+    expect(html).toMatch(/Show sources[\s\S]*Synthetic claim one\./);
+    expect(html).toContain("<title");
+    expect(html).toContain("Synthetic alt.");
+    expect(html).toMatch(/<figcaption[^>]*>Synthetic caption\.<\/figcaption>/);
+    expect(html).toMatch(/data-legend="sternoclavicular"[\s\S]*Synthetic label one\.[\s\S]*Synthetic text one\./);
+    expect(html).toContain('data-anchor="glenohumeral"');
+    // One block, one data-block: the figure inside the section does not repeat it.
+    expect(html.match(/data-block="diagram"/g)).toHaveLength(1);
+    // No teaching text from code: the old legend and the not-to-scale line are gone.
+    expect(html).not.toContain("Sternoclavicular joint: the collarbone meets the breastbone.");
+    expect(html).not.toContain("Schematic, not to scale.");
+  });
+
+  it("a practice diagram is labelled practice-based and carries no sources", () => {
+    const html = render([practice]);
+    expect(html).toContain(">Practice-based<");
+    expect(html).not.toContain("Show sources");
+  });
+
+  it("an older diagram block still renders its drawing and caption, without code-side legend text", () => {
+    const html = render([{ kind: "diagram", content: { diagramId: "shoulder-complex-front", caption: "Synthetic old caption." } }]);
+    expect(html).toContain('data-diagram="available"');
+    expect(html).toContain("Synthetic old caption.");
+    expect(html).not.toContain("data-marker");
+    expect(html).not.toContain("Sternoclavicular joint");
+  });
+});

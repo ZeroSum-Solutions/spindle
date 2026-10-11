@@ -38,10 +38,11 @@ export function drawingFor(id: string): DrawingSpec | undefined {
  * and the block's caption. An id with no drawing shows the unavailable state, still with the
  * block's caption and legend, so the lesson text is never lost.
  */
-export function ReviewedDiagram({ content }: { content: ReviewedDiagramContent }) {
+export function ReviewedDiagram({ content, nested = false }: { content: ReviewedDiagramContent; nested?: boolean }) {
   const spec = drawingFor(content.diagramId);
   return (
-    <figure data-block="diagram" data-diagram={spec ? "available" : undefined} className="flex flex-col gap-2">
+    // Inside a lesson the surrounding block section carries data-block; standalone (the specimen) the figure does.
+    <figure data-block={nested ? undefined : "diagram"} data-diagram={spec ? "available" : undefined} className="flex flex-col gap-2">
       <div className="flex flex-col gap-3 rounded-card bg-surface-muted p-4 md:p-6">
         {spec ? (
           <div className="mx-auto w-full max-w-[34rem]">

@@ -131,8 +131,33 @@
         "kind": "diagram",
         "content": {
           "diagramId": "rotation-record-position",
-          "caption": "Planned diagram, not available yet: the lying rotation record position."
-        }
+          "alt": "A schematic figure lying on its back on a bench, seen from the right side. The right upper arm points toward the viewer with a folded towel under the elbow; the forearm points up, with arcs showing it turning toward the head and toward the feet.",
+          "caption": "The lying rotation record position, right arm. Schematic, not to scale.",
+          "legend": [
+            {
+              "key": "towel",
+              "label": "Towel under the elbow.",
+              "text": "The upper arm is out to the side at shoulder height, and level."
+            },
+            {
+              "key": "toward-head",
+              "label": "Toward the head.",
+              "text": "The athlete turns the forearm up toward the head, on their own."
+            },
+            {
+              "key": "toward-feet",
+              "label": "Toward the feet.",
+              "text": "Then down toward the feet. You do not push."
+            },
+            {
+              "key": "level",
+              "label": "Level with the floor.",
+              "text": "Record where the forearm stops: short of level, level or past level."
+            }
+          ]
+        },
+        "support": "practice-based",
+        "claimIds": []
       },
       {
         "kind": "checklist",
