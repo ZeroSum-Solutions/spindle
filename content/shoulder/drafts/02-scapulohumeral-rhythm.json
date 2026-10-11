@@ -1,0 +1,312 @@
+{
+  "draft": true,
+  "status": "provisional: written before the outline review; not publishable (claim slots are not approved claims)",
+  "module": "shoulder",
+  "lessonNumber": 2,
+  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words from general anatomy knowledge; the candidate sources were used only to choose which facts need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
+  "reviewNotes": [
+    "The anatomy ids are verified Uberon terms.",
+    "Video slots C5 and C2 are not placed yet.",
+    "The cue paragraph is practice-based; it refers back to the science block but makes no new claim."
+  ],
+  "claimSlots": [
+    {
+      "slot": "claim-slot:l2-scapular-motions",
+      "statement": "During humeral elevation the scapula upwardly rotates, tilts posteriorly and externally rotates on the thorax.",
+      "candidateSources": [
+        {
+          "kind": "paper",
+          "citation": "Ludewig PM, Reynolds JF. The association of scapular kinematics and glenohumeral joint pathologies. J Orthop Sports Phys Ther. 2009;39(2):90-104.",
+          "doi": "10.2519/jospt.2009.2808",
+          "pmid": "19194022"
+        },
+        {
+          "kind": "paper",
+          "citation": "McClure PW, Michener LA, Sennett BJ, Karduna AR. Direct 3-dimensional measurement of scapular kinematics during dynamic movements in vivo. J Shoulder Elbow Surg. 2001;10(3):269-277.",
+          "doi": "10.1067/mse.2001.112954",
+          "pmid": "11408911"
+        }
+      ]
+    },
+    {
+      "slot": "claim-slot:l2-shared-ratio",
+      "statement": "Humeral elevation is shared between glenohumeral and scapulothoracic motion; an overall ratio of about 2:1 is commonly reported, but the ratio varies between individuals, across the range of elevation and with external load.",
+      "candidateSources": [
+        {
+          "kind": "paper",
+          "citation": "Inman VT, Saunders JB, Abbott LC. Observations of the function of the shoulder joint. 1944. Reprinted in Clin Orthop Relat Res. 1996;(330):3-12.",
+          "doi": "10.1097/00003086-199609000-00002",
+          "pmid": "8804269"
+        },
+        {
+          "kind": "paper",
+          "citation": "McQuade KJ, Smidt GL. Dynamic scapulohumeral rhythm: the effects of external resistance during elevation of the arm in the scapular plane. J Orthop Sports Phys Ther. 1998;27(2):125-133.",
+          "doi": "10.2519/jospt.1998.27.2.125",
+          "pmid": "9475136"
+        }
+      ],
+      "note": "The block must keep the variation clause. Inman is a 1944 study reprinted in 1996; McQuade and Smidt show the load effect."
+    },
+    {
+      "slot": "claim-slot:l2-force-couple",
+      "statement": "Scapular upward rotation is produced by a force couple of the upper and lower trapezius and the serratus anterior.",
+      "candidateSources": [
+        {
+          "kind": "paper",
+          "citation": "Bagg SD, Forrest WJ. A biomechanical analysis of scapular rotation during arm abduction in the scapular plane. Am J Phys Med Rehabil. 1988;67(6):238-245.",
+          "pmid": "3196449"
+        },
+        {
+          "kind": "paper",
+          "citation": "Reinold MM, Escamilla RF, Wilk KE. Current concepts in the scientific and clinical rationale behind exercises for glenohumeral and scapulothoracic musculature. J Orthop Sports Phys Ther. 2009;39(2):105-117.",
+          "doi": "10.2519/jospt.2009.2835",
+          "pmid": "19194023"
+        }
+      ]
+    },
+    {
+      "slot": "claim-slot:l2-dyskinesis",
+      "statement": "Observable scapular dyskinesis is common in people without shoulder pain and, on its own, does not identify shoulder injury.",
+      "candidateSources": [
+        {
+          "kind": "consensus",
+          "citation": "Kibler WB, Ludewig PM, McClure PW, et al. Clinical implications of scapular dyskinesis in shoulder injury: the 2013 consensus statement from the 'Scapular Summit'. Br J Sports Med. 2013;47(14):877-885.",
+          "doi": "10.1136/bjsports-2013-092425",
+          "pmid": "23580420"
+        },
+        {
+          "kind": "paper",
+          "citation": "Plummer HA, Sum JC, Pozzi F, Varghese R, Michener LA. Observational scapular dyskinesis: known-groups validity in patients with and without shoulder pain. J Orthop Sports Phys Ther. 2017;47(8):530-537.",
+          "doi": "10.2519/jospt.2017.7268",
+          "pmid": "28683230"
+        }
+      ],
+      "note": "Wording must stay within the consensus statement and the known-groups study; no causal claim."
+    }
+  ],
+  "scenarios": [
+    {
+      "prompt": "One shoulder blade lifts a little from the ribs as a client lowers from overhead; no pain, no warning signs.",
+      "goodAnswer": "Continue with a load and range they control; note it; no referral without warning signs.",
+      "safety": "SAFETY.md sections 1 and 3"
+    },
+    {
+      "prompt": "Same client, but the shoulder aches more with each rep.",
+      "goodAnswer": "Stop that movement; do not progress; if it persists or worsens over 2 weeks, routine referral; urgent if any urgent sign appears.",
+      "safety": "SAFETY.md sections 3 and 4"
+    }
+  ],
+  "lesson": {
+    "id": "shoulder-02-rhythm",
+    "slug": "scapulohumeral-rhythm",
+    "title": "Scapulohumeral rhythm",
+    "summary": "When the arm goes up, the shoulder blade moves with it. Learn what that shared movement looks like and how to watch it.",
+    "durationMinutes": 12,
+    "format": "article",
+    "objectives": [
+      "Describe how the shoulder blade moves when the arm is raised.",
+      "Explain that raising the arm is shared between the ball-and-socket joint and the shoulder blade, and that the share varies.",
+      "Name the muscles that rotate the shoulder blade upward.",
+      "Watch a client raise their arms and describe what you see in plain words."
+    ],
+    "anatomyIds": [
+      "UBERON:0001467",
+      "UBERON:0001470",
+      "UBERON:0006849"
+    ],
+    "blocks": [
+      {
+        "kind": "paragraph",
+        "content": "Raise your arm overhead and the shoulder blade comes along. Watching that shared movement is one of the most useful things a trainer can learn to do, as long as you remember what it can and cannot tell you.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "The shoulder blade moves too"
+      },
+      {
+        "kind": "paragraph",
+        "content": "When the arm is raised, the shoulder blade does not stay still. It rotates upward, so the socket turns to face more toward the ceiling. It tilts backward at the top, and it turns outward around the ribcage.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l2-scapular-motions"
+        ]
+      },
+      {
+        "kind": "diagram",
+        "content": {
+          "diagramId": "scapula-upward-rotation",
+          "caption": "The shoulder blade at three arm positions: by the side, level with the shoulder, and overhead."
+        }
+      },
+      {
+        "kind": "heading",
+        "content": "A shared movement"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Raising the arm is shared between the ball-and-socket joint and the shoulder blade. Over the whole movement the ball-and-socket joint often contributes about twice as much as the shoulder blade, but that ratio is not fixed: it differs between people, changes through the range, and changes with load.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l2-shared-ratio"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "content": "Do not count degrees on the gym floor. The useful idea is the sharing, not the number.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "The muscles that turn the shoulder blade"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Upward rotation of the shoulder blade comes from muscles pulling in different directions at the same time: the upper and lower parts of the trapezius together with the serratus anterior. A pair or group of muscles working like this is called a force couple.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l2-force-couple"
+        ]
+      },
+      {
+        "kind": "heading",
+        "content": "Different does not mean injured"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Visible differences in how the shoulder blade moves, often called scapular dyskinesis, are common in people who have no shoulder pain. On their own they do not show that someone is injured or will be.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l2-dyskinesis"
+        ]
+      },
+      {
+        "kind": "heading",
+        "content": "How to see it"
+      },
+      {
+        "kind": "checklist",
+        "content": [
+          "Stand behind the client. Ask first; a fitted top lets you see the shoulder blades without asking anyone to undress.",
+          "Ask them to raise both arms slowly forward and up, then lower them, 3 to 5 times.",
+          "Watch both shoulder blades: do they start moving at a similar time and travel a similar amount?",
+          "On the way down, watch the inner edge and the bottom tip of each shoulder blade. Do they stay close to the ribs or lift away?",
+          "If differences are hard to see, a light dumbbell in each hand can make them clearer.",
+          "Write down what you saw in plain words, for example: \"left shoulder blade lifts away from the ribs on the way down.\""
+        ],
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Stop the drill if pain comes on or rises during the raise, if the client feels pins and needles or numbness, or if they cannot lift the arm. Refer (see \"When to refer out\"). What you saw is a note for training, not a finding: this check never clears anyone and never names an injury."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "What to do: cues for overhead work"
+      },
+      {
+        "kind": "paragraph",
+        "content": "\"Shoulder blades back and down\" is a common cue, and it helps some lifters set up for a bench press. Overhead, the same cue can fight the upward rotation you learned above. For overhead reaching, try \"reach long through your hands\" or \"let your shoulder blades travel with your arms\".",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "paragraph",
+        "content": "Give one cue, watch the next rep, and keep the cue only if the movement changes the way you want. If it does not, drop it and try a different position or a lighter load.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Check your understanding"
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "Which set of shoulder blade movements happens as the arm is raised overhead?",
+          "options": [
+            "Upward rotation, backward tilt and outward turning",
+            "Downward rotation, forward tilt and inward turning",
+            "No movement: the shoulder blade stays still"
+          ],
+          "answerIndex": 0,
+          "explanation": "As the arm rises, the shoulder blade rotates upward, tilts backward and turns outward."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l2-scapular-motions"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "How is raising the arm shared between the ball-and-socket joint and the shoulder blade?",
+          "options": [
+            "A fixed 2:1 in everyone",
+            "The share varies between people, through the range and with load",
+            "The shoulder blade does most of the work"
+          ],
+          "answerIndex": 1,
+          "explanation": "About 2:1 is a common average over the whole movement, but the ratio varies between people, through the range and with load."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l2-shared-ratio"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "Which muscles work together to rotate the shoulder blade upward?",
+          "options": [
+            "Upper and lower trapezius with serratus anterior",
+            "Biceps and triceps",
+            "Pectoralis major and latissimus dorsi"
+          ],
+          "answerIndex": 0,
+          "explanation": "Upward rotation comes from a force couple: upper and lower trapezius with serratus anterior."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l2-force-couple"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "A client with no shoulder pain shows a shoulder blade that lifts away from the ribs when lowering the arms. What does that tell you on its own?",
+          "options": [
+            "They have a shoulder injury",
+            "Nothing certain: this is common in people without pain",
+            "They must stop all overhead training"
+          ],
+          "answerIndex": 1,
+          "explanation": "Visible changes in shoulder blade movement are common in people without pain, so on their own they do not show an injury."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l2-dyskinesis"
+        ]
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Talk it through",
+          "text": "One shoulder blade lifts a little from the ribs as a client lowers from overhead. They have no pain and no other warning signs. Do you continue, adjust or refer? Now change one thing: the client says the shoulder aches more with each rep. What changes in your answer?"
+        },
+        "support": "practice-based",
+        "claimIds": []
+      }
+    ],
+    "media": [],
+    "resources": []
+  }
+}
