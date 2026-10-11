@@ -9,6 +9,7 @@ The design contract is the root [DESIGN.md](../../../DESIGN.md). The app's token
 | `asset-provenance.json` | Generator, model, task ids and prompts for the wordmark | Provenance, not trademark clearance |
 | `asset-provenance.json` › `illustrations` | Original SVG line art: shoulder complex, scapular upward rotation, layer stack | Hand-written geometry, AI-assisted, never traced; CC BY-SA 4.0 |
 | `assets/geist*-OFL.txt` | SIL Open Font License for Geist and Geist Mono | Fonts load through `next/font` |
+| `assets/barlow-condensed-OFL.txt`, `assets/fraunces-OFL.txt` | SIL Open Font License (with copyright notices) for the two bundled tenant fonts | Self-hosted by `next/font`; used only by tenant themes |
 | `build-brand.py` | Writes the app's brand SVGs and icon from the trace; prints the raster commands | Run from the repo root |
 | `proposal/` | The revision-2 Atlas proposal as delivered (design notes, components, motion, generated tokens, shadcn adapter) | Historical. Superseded by the root DESIGN.md where they differ |
 
