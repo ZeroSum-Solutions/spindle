@@ -8,9 +8,9 @@
  */
 import { join } from "node:path";
 import type { ReviewOutcome } from "../src/review/harness";
-import { packetDigest, type ReviewPacket } from "../src/review/packet";
+import { assertEvidenceMatchesSources, packetDigest, type ReviewPacket } from "../src/review/packet";
 import { receiptCalls, receiptSql } from "../src/review/receipts";
-import { args, main, publisherId, readJson, sql } from "./lib/cli";
+import { args, main, publisherId, readJson, sourceIdentities, sql } from "./lib/cli";
 
 main(async () => {
   const d = args().get("dir");
@@ -20,6 +20,7 @@ main(async () => {
   if (packetDigest(packet) !== d.replace(/\/+$/, "").split("/").pop()) throw new Error("the packet does not match its directory digest");
   let calls;
   try {
+    assertEvidenceMatchesSources(packet, sourceIdentities(packet.evidence.map((e) => e.sourceId)));
     calls = receiptCalls(packet, outcome, new Date());
   } catch (e) {
     console.log(`refused: ${e instanceof Error ? e.message : String(e)}`);

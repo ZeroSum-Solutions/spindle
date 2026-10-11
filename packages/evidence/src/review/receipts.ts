@@ -2,7 +2,7 @@
 // runs them in one transaction as the named publisher; the database compares
 // every expected hash again and refuses a stale one.
 import { MODEL, SESSION, type ReviewOutcome } from "./harness";
-import { assertPacket, canonicalJson, packetDigest, type ReviewPacket, type SegmentDescriber } from "./packet";
+import { assertPacket, canonicalJson, MAX_EVIDENCE_AGE_DAYS, packetDigest, type ReviewPacket, type SegmentDescriber } from "./packet";
 import { parseReviewResult } from "./result";
 
 export interface ReceiptCall {
@@ -49,6 +49,10 @@ export function receiptCalls(packet: ReviewPacket, outcome: ReviewOutcome, now: 
         if (sources.some((s) => !s)) throw new Error(`${item.id} cites a source missing from the packet`);
         const checkedAt = sources.map((s) => s!.checkedAt).sort((a, b) => Date.parse(a) - Date.parse(b))[0]!;
         const approve = answer.verdict === "approve";
+        const age = now.getTime() - Date.parse(checkedAt);
+        if (approve && !(age <= MAX_EVIDENCE_AGE_DAYS * 86_400_000 && age >= -5 * 60_000)) {
+          throw new Error(`${item.id}: its evidence was checked over ${MAX_EVIDENCE_AGE_DAYS} days before recording (or in the future); re-ingest and review again`);
+        }
         if (approve && sources.some((s) => s!.retraction !== "not_retracted")) throw new Error(`${item.id}: a source is not verified as not retracted`);
         return {
           fn: "publisher_review_claim",

@@ -2,6 +2,7 @@
 // reviewer must answer, with the database hash it will be recorded against,
 // and carries the evidence as data. Its digest is what the receipt records.
 import { createHash } from "node:crypto";
+import { z } from "zod";
 import type { RetractionState } from "../retraction";
 
 export const PACKET_VERSION = 1;
@@ -63,12 +64,56 @@ export function packetDigest(packet: ReviewPacket): string {
 }
 
 const HASH = /^[0-9a-f]{64}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const uuid = z.string().regex(UUID);
+
+export const evidenceEntrySchema = z.strictObject({
+  sourceId: uuid,
+  kind: z.enum(["systematic_review", "meta_analysis", "position_stand", "textbook", "nomenclature"]),
+  title: z.string().min(1),
+  identifiers: z.strictObject({ doi: z.string().optional(), pmid: z.string().optional(), url: z.string().optional() }),
+  text: z.string().min(1),
+  textOrigin: z.string().min(1),
+  retraction: z.enum(["retracted", "not_retracted", "unknown"]),
+  checkedAt: z.string(),
+}) satisfies z.ZodType<EvidenceEntry>;
+
+const claimContentSchema = z.strictObject({
+  statement: z.string().min(1).max(2000),
+  evidenceLevel: z.string().min(1),
+  population: z.string().min(1),
+  sourceIds: z.array(uuid).min(1).max(20),
+});
+
+/** The stored-packet boundary: every field, so a hand-edited or truncated packet fails before review or recording. */
+const packetSchema = z.strictObject({
+  version: z.literal(PACKET_VERSION),
+  rubric: z.enum(["claims", "content", "segments"]),
+  createdAt: z.iso.datetime({ offset: true }),
+  items: z.array(
+    z.strictObject({
+      id: z.string().min(1).max(300),
+      kind: z.enum(["claim", "block", "lesson", "course", "segment"]),
+      target: uuid,
+      expectedHash: z.string().regex(HASH),
+      claimIds: z.array(uuid).max(1000).optional(),
+      content: z.unknown(),
+    }),
+  ),
+  evidence: z.array(evidenceEntrySchema),
+  safetyRules: z.string().optional(),
+});
 
 /** Throws unless the packet is well formed and within bounds. */
 export function assertPacket(packet: ReviewPacket): void {
   const fail = (m: string): never => {
     throw new Error(`Invalid review packet: ${m}`);
   };
+  const shape = packetSchema.safeParse(packet);
+  if (!shape.success) fail(shape.error.issues.slice(0, 3).map((i) => `${i.path.join(".")}: ${i.message}`).join("; "));
+  for (const item of packet.items) {
+    if (item.kind === "claim" && !claimContentSchema.safeParse(item.content).success) fail(`claim item ${item.id} has malformed content`);
+  }
   if (packet.version !== PACKET_VERSION) fail(`version must be ${PACKET_VERSION}`);
   if (packet.items.length === 0) fail("it has no items");
   if (packet.items.length > MAX_PACKET_ITEMS) fail(`it has ${packet.items.length} items; the limit is ${MAX_PACKET_ITEMS}`);
@@ -109,10 +154,36 @@ export interface ClaimTarget {
 /** Evidence checked longer ago than this must be re-ingested (existence and retraction) before a claim review. */
 export const MAX_EVIDENCE_AGE_DAYS = 30;
 
+/** The immutable identity of a database source (sources row). */
+export interface SourceIdentity {
+  doi: string | null;
+  pmid: string | null;
+  url?: string | null;
+  kind: string;
+}
+
+/** Evidence counts for a source only when its kind and every identifier the source has match exactly. */
+export function evidenceMatchesSource(e: EvidenceEntry, s: SourceIdentity | undefined): boolean {
+  if (!s || e.kind !== s.kind) return false;
+  if (!s.doi && !s.pmid && !s.url) return false;
+  if (s.doi && (e.identifiers.doi ?? "").toLowerCase() !== s.doi.toLowerCase()) return false;
+  if (s.pmid && e.identifiers.pmid !== s.pmid) return false;
+  if (!s.doi && !s.pmid && s.url && e.identifiers.url !== s.url) return false;
+  return true;
+}
+
+/** The recorder repeats the identity check against the database before it records anything. */
+export function assertEvidenceMatchesSources(packet: ReviewPacket, sources: ReadonlyMap<string, SourceIdentity>): void {
+  for (const e of packet.evidence) {
+    if (!evidenceMatchesSource(e, sources.get(e.sourceId))) throw new Error(`evidence for ${e.sourceId} does not match the cited source`);
+  }
+}
+
 export function buildClaimPacket(
   claims: readonly ClaimTarget[],
   evidence: ReadonlyMap<string, EvidenceEntry>,
   createdAt: string,
+  sources: ReadonlyMap<string, SourceIdentity>,
 ): { packet: ReviewPacket | null; blocked: { claimId: string; reason: string }[] } {
   const oldest = Date.parse(createdAt) - MAX_EVIDENCE_AGE_DAYS * 86_400_000;
   const latest = Date.parse(createdAt) + 5 * 60_000;
@@ -124,6 +195,11 @@ export function buildClaimPacket(
     const unsafe = c.sourceIds.filter((s) => evidence.get(s) && evidence.get(s)!.retraction !== "not_retracted");
     if (c.sourceIds.length === 0 || missing.length > 0) {
       blocked.push({ claimId: c.claimId, reason: `no evidence text for source ${missing.join(", ") || "(none)"}` });
+      continue;
+    }
+    const mismatched = c.sourceIds.filter((s) => !evidenceMatchesSource(evidence.get(s)!, sources.get(s)));
+    if (mismatched.length > 0) {
+      blocked.push({ claimId: c.claimId, reason: `evidence for ${mismatched.join(", ")} does not match the cited source` });
       continue;
     }
     const odd = c.sourceIds.filter((s) => !(Date.parse(evidence.get(s)!.checkedAt) <= latest));
@@ -153,6 +229,20 @@ export function buildClaimPacket(
   const packet: ReviewPacket = { version: PACKET_VERSION, rubric: "claims", createdAt, items, evidence: [...used.values()] };
   assertPacket(packet);
   return { packet, blocked };
+}
+
+/**
+ * A claim review request is all or nothing: if any requested claim is blocked, no packet is built,
+ * so no requested claim can silently drop out of the expected item set.
+ */
+export function requireCompleteClaimPacket(
+  claims: readonly ClaimTarget[],
+  evidence: ReadonlyMap<string, EvidenceEntry>,
+  createdAt: string,
+  sources: ReadonlyMap<string, SourceIdentity>,
+): { packet: ReviewPacket | null; blocked: { claimId: string; reason: string }[] } {
+  const built = buildClaimPacket(claims, evidence, createdAt, sources);
+  return built.blocked.length > 0 ? { packet: null, blocked: built.blocked } : built;
 }
 
 /** publisher_review_targets output (see @spindle/schema ReviewTargets). */

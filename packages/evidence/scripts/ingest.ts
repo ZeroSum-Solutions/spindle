@@ -26,8 +26,13 @@ main(async () => {
   if (!a.has("add-source")) return 0;
 
   const p = publisherId();
-  const out = sql(`begin;\n${AS_SERVICE}\nselect public.publisher_add_source(${lit(p)}, ${lit(JSON.stringify(paper.sourceInput))}::jsonb);\ncommit;`).split("\n");
-  const sourceId = out[out.length - 1]!;
+  // An existing source keeps its id: only its private evidence entry is refreshed (Sol C02).
+  const existing = sql(`select coalesce((select id::text from public.sources where doi = ${lit(paper.sourceInput.doi)}), '')`);
+  if (existing) {
+    const pmid = sql(`select coalesce(pmid, '') from public.sources where id = ${lit(existing)}`);
+    if (pmid && paper.pmid && pmid !== paper.pmid) throw new Error(`source ${existing} lists PMID ${pmid}, not ${paper.pmid}`);
+  }
+  const sourceId = existing || sql(`begin;\n${AS_SERVICE}\nselect public.publisher_add_source(${lit(p)}, ${lit(JSON.stringify(paper.sourceInput))}::jsonb);\ncommit;`).split("\n").pop()!;
   const entry: EvidenceEntry = {
     sourceId,
     kind: paper.sourceInput.kind,
@@ -39,6 +44,6 @@ main(async () => {
     checkedAt: paper.check.checkedAt,
   };
   writeJson(evidencePath(sourceId), entry);
-  console.log(`source ${sourceId} added; evidence entry written`);
+  console.log(`source ${sourceId} ${existing ? "already existed; evidence entry refreshed" : "added; evidence entry written"}`);
   return 0;
 });

@@ -32,9 +32,47 @@ const VERDICTS: Record<ItemKind, readonly string[]> = {
 
 export type ParsedResult = { ok: true; items: Map<string, ReviewedItem> } | { ok: false; errors: string[] };
 
+/**
+ * The first duplicate object key in JSON text, or null. JSON.parse keeps the last duplicate, so a
+ * "verdict":"reject","verdict":"approve" pair would silently turn a rejection into an approval.
+ * Keys are compared after unescaping, so "a" and "\u0061" count as the same key.
+ */
+export function firstDuplicateKey(text: string): string | null {
+  const stack: { isObject: boolean; expectKey: boolean; keys: Set<string> }[] = [];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!;
+    if (ch === '"') {
+      let j = i + 1;
+      while (j < text.length && text[j] !== '"') j += text[j] === "\\" ? 2 : 1;
+      const top = stack[stack.length - 1];
+      if (top?.isObject && top.expectKey) {
+        let key: string;
+        try {
+          key = JSON.parse(text.slice(i, j + 1)) as string;
+        } catch {
+          return null; // malformed; JSON.parse reports it
+        }
+        if (top.keys.has(key)) return key;
+        top.keys.add(key);
+        top.expectKey = false;
+      }
+      i = j;
+    } else if (ch === "{") stack.push({ isObject: true, expectKey: true, keys: new Set() });
+    else if (ch === "[") stack.push({ isObject: false, expectKey: false, keys: new Set() });
+    else if (ch === "}" || ch === "]") stack.pop();
+    else if (ch === ",") {
+      const top = stack[stack.length - 1];
+      if (top?.isObject) top.expectKey = true;
+    }
+  }
+  return null;
+}
+
 export function parseReviewResult(raw: string, packet: ReviewPacket): ParsedResult {
   const text = raw.trim();
   if (!text) return { ok: false, errors: ["the reviewer returned nothing"] };
+  const dup = firstDuplicateKey(text);
+  if (dup !== null) return { ok: false, errors: [`the reviewer's answer repeats the duplicate key "${dup}"`] };
   let json: unknown;
   try {
     json = JSON.parse(text);

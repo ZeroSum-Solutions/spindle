@@ -8,25 +8,14 @@
  * Exit 0 every item answered and valid, 1 not approved (see errors), 2 error.
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { z } from "zod";
 import { join } from "node:path";
 import { requireUuid } from "../src/guards";
 import { runReview } from "../src/review/harness";
-import { buildClaimPacket, buildContentPacket, packetDigest, type ClaimTarget, type ContentTargets, type EvidenceEntry, type ReviewPacket } from "../src/review/packet";
+import { buildContentPacket, evidenceEntrySchema, requireCompleteClaimPacket, packetDigest, type ClaimTarget, type ContentTargets, type EvidenceEntry, type ReviewPacket } from "../src/review/packet";
 import { reviewPrompt } from "../src/review/prompt";
 import { codexRunner } from "../src/review/runner";
-import { args, dir, evidencePath, lit, main, publisherId, readJson, serviceValue, writeJson } from "./lib/cli";
+import { args, dir, evidencePath, lit, main, publisherId, readJson, serviceValue, sourceIdentities, writeJson } from "./lib/cli";
 
-const evidenceSchema = z.strictObject({
-  sourceId: z.string(),
-  kind: z.enum(["systematic_review", "meta_analysis", "position_stand", "textbook", "nomenclature"]),
-  title: z.string().min(1),
-  identifiers: z.strictObject({ doi: z.string().optional(), pmid: z.string().optional(), url: z.string().optional() }),
-  text: z.string().min(1),
-  textOrigin: z.string().min(1),
-  retraction: z.enum(["retracted", "not_retracted", "unknown"]),
-  checkedAt: z.string(),
-}) satisfies z.ZodType<EvidenceEntry>;
 
 function claimTarget(p: string, id: string): ClaimTarget {
   return JSON.parse(serviceValue(`public.publisher_claim_target(${lit(p)}, ${lit(requireUuid(id, "claim id"))})`)) as ClaimTarget;
@@ -42,13 +31,16 @@ main(async () => {
     const evidence = new Map<string, EvidenceEntry>();
     for (const s of new Set(claims.flatMap((c) => c.sourceIds))) {
       if (!existsSync(evidencePath(s))) continue;
-      const entry = evidenceSchema.parse(readJson<unknown>(evidencePath(s)));
+      const entry = evidenceEntrySchema.parse(readJson<unknown>(evidencePath(s)));
       if (entry.sourceId !== s) throw new Error(`evidence file for ${s} names source ${entry.sourceId}`);
       evidence.set(s, entry);
     }
-    const built = buildClaimPacket(claims, evidence, now.toISOString());
+    const built = requireCompleteClaimPacket(claims, evidence, now.toISOString(), sourceIdentities([...new Set(claims.flatMap((c) => c.sourceIds))]));
     for (const b of built.blocked) console.log(`blocked ${b.claimId}: ${b.reason}`);
-    if (!built.packet) return 1;
+    if (!built.packet) {
+      console.log("refused: every requested claim must be reviewable; fix or drop the blocked ones and run again");
+      return 1;
+    }
     packet = built.packet;
   } else if (a.get("course")) {
     const safety = a.get("safety");

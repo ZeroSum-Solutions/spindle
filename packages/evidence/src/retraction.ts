@@ -37,3 +37,46 @@ export function recheckAction(check: SourceCheck): RecheckAction {
   if (state === "not_retracted") return { action: "clear" };
   return { action: "unknown", issues: check.issues.length > 0 ? check.issues : [`status ${check.status}`] };
 }
+
+export interface CitedSource {
+  id: string;
+  doi: string | null;
+  kind: string;
+}
+
+export interface PrepublishDecision {
+  publish: boolean;
+  /** Retractions to record before refusing. */
+  record: { sourceId: string; notice: RetractionNotice }[];
+  /** DOI sources whose status is unknown now. */
+  unknown: { sourceId: string; issues: string[] }[];
+  /** Papers without a DOI, which verifySource cannot check. */
+  unverifiable: string[];
+}
+
+/** Kinds that are not retractable papers: an edition and page, or an official term. */
+const NOT_RETRACTABLE = new Set(["textbook", "nomenclature"]);
+
+/**
+ * The pre-publish gate (plan section 7: retraction status is rechecked before every publish). Every
+ * cited paper must be verified as not retracted now; anything else refuses the publish.
+ */
+export function prepublishDecision(sources: readonly CitedSource[], checks: ReadonlyMap<string, SourceCheck>): PrepublishDecision {
+  const d: PrepublishDecision = { publish: false, record: [], unknown: [], unverifiable: [] };
+  for (const s of sources) {
+    if (!s.doi) {
+      if (!NOT_RETRACTABLE.has(s.kind)) d.unverifiable.push(s.id);
+      continue;
+    }
+    const check = checks.get(s.id);
+    if (!check) {
+      d.unknown.push({ sourceId: s.id, issues: ["not checked"] });
+      continue;
+    }
+    const action = recheckAction(check);
+    if (action.action === "record") d.record.push({ sourceId: s.id, notice: action.notice });
+    else if (action.action === "unknown") d.unknown.push({ sourceId: s.id, issues: action.issues });
+  }
+  d.publish = d.record.length === 0 && d.unknown.length === 0 && d.unverifiable.length === 0;
+  return d;
+}
