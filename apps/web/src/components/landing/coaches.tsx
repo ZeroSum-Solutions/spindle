@@ -3,7 +3,8 @@ import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { LayerLabel, SupportLabel } from "../learn/labels";
 import type { Brand } from "../../lib/brand";
-import { BASE_ATTRIBUTION, themeStyle, validateTheme, type ContrastCheck, type TenantTheme } from "../../lib/theme/tenant-theme";
+import type { BrandFont } from "@spindle/schema";
+import { BASE_ATTRIBUTION, brandToCssVars, validateBrand, type ContrastCheck, type ValidatedBrand } from "@spindle/engine";
 import { Section, SectionHead, SIGN_IN, SiteFooter, SiteHeader, Wordmark } from "./landing";
 
 // Signed-out page for coaches and gyms. Honest copy only: no statistics, testimonials, coach
@@ -56,7 +57,7 @@ export const CAPABILITIES = [
 ] as const;
 
 export interface ThemeSwatch {
-  theme: TenantTheme;
+  brand: ValidatedBrand;
   checks: ContrastCheck[];
   /** The tenant font's class and family, resolved by the page (next/font). */
   font: { className: string; family: string };
@@ -66,10 +67,10 @@ export interface ThemeSwatch {
  * The example swatches for the page: each brand goes through the real validator, and a brand it
  * refuses is left out rather than shown. `fontFor` resolves the bundled font (next/font in the app).
  */
-export function exampleSwatches(brands: readonly unknown[], fontFor: (font: TenantTheme["font"]) => ThemeSwatch["font"]): ThemeSwatch[] {
+export function exampleSwatches(brands: readonly unknown[], fontFor: (font: BrandFont) => ThemeSwatch["font"]): ThemeSwatch[] {
   return brands.flatMap((brand) => {
-    const result = validateTheme(brand);
-    return result.ok ? [{ theme: result.theme, checks: result.checks, font: fontFor(result.theme.font) }] : [];
+    const result = validateBrand(brand);
+    return result.ok ? [{ brand: result.brand, checks: result.checks, font: fontFor(result.brand.font) }] : [];
   });
 }
 
@@ -257,28 +258,28 @@ function Capabilities({ brand }: { brand: Brand }) {
 }
 
 function Swatch({ swatch }: { swatch: ThemeSwatch }) {
-  const { theme, checks, font } = swatch;
+  const { brand, checks, font } = swatch;
   const passing = checks.filter((c) => c.pass).length;
   const rows: { label: string; value: string; sample: ReactNode }[] = [
-    { label: "Links and focus", value: theme.accent, sample: <span className="size-5 rounded-small" style={{ background: "var(--tenant-accent)" }} /> },
+    { label: "Links and focus", value: brand.colors.accent, sample: <span className="size-5 rounded-small bg-brand" /> },
     {
       label: "Text on the accent",
-      value: theme.onAccent,
-      sample: <span className="size-5 rounded-small border border-border" style={{ background: "var(--tenant-on-accent)" }} />,
+      value: brand.colors.onAccent,
+      sample: <span className="size-5 rounded-small border border-border bg-on-brand" />,
     },
   ];
   return (
-    <figure data-theme-swatch={theme.name} className="flex min-w-0 flex-col gap-3">
-      <div style={themeStyle(theme) as CSSProperties} className={`${font.className} flex flex-col overflow-hidden rounded-card border border-border bg-canvas`}>
+    <figure data-theme-swatch={brand.name} className="flex min-w-0 flex-col gap-3">
+      <div style={brandToCssVars(brand) as CSSProperties} className={`${font.className} flex flex-col overflow-hidden rounded-card border border-border bg-canvas`}>
         <div className="flex min-h-14 items-center border-b border-border bg-surface px-4">
-          <span style={{ fontFamily: font.family, color: "var(--tenant-accent)" }} className="truncate text-xl font-semibold tracking-tight">
-            {theme.name}
+          <span style={{ fontFamily: font.family }} className="truncate text-xl font-semibold tracking-tight text-brand">
+            {brand.name}
           </span>
         </div>
         <div className="flex flex-col gap-4 p-4">
-          <p className="rounded-small bg-[var(--tenant-accent-soft)] px-3 py-2 text-label font-medium text-[var(--tenant-accent)]">Current lesson</p>
+          <p className="rounded-small bg-brand-soft px-3 py-2 text-label font-medium text-brand">Current lesson</p>
           <p className="flex flex-wrap items-center gap-2">
-            <span className="rounded-control bg-[var(--tenant-accent)] px-3 py-2 text-label font-medium text-[var(--tenant-on-accent)]">Selected</span>
+            <span className="rounded-control bg-brand px-3 py-2 text-label font-medium text-on-brand">Selected</span>
             <SupportLabel support="science" />
             <SupportLabel support="practice-based" />
           </p>
@@ -307,7 +308,7 @@ function WhiteLabel({ swatches }: { swatches: ThemeSwatch[] }) {
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
         <div className="flex flex-col gap-4">
           <SectionHead id="brand-title" title="Your name on it, with the evidence colours kept honest.">
-            A gym brand will change four things: the mark, links, the current-lesson marker and the focus ring. Science, practice, caution and danger
+            A gym brand will change only the mark, links, the current-lesson marker, selected controls, the focus ring and the heading font. Science, practice, caution and danger
             colours never change, and neither does the line that credits the base.
           </SectionHead>
           <p className="flex flex-wrap items-center gap-2 text-label text-text-muted">
@@ -317,7 +318,7 @@ function WhiteLabel({ swatches }: { swatches: ThemeSwatch[] }) {
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {swatches.map((s) => (
-            <Swatch key={s.theme.name} swatch={s} />
+            <Swatch key={s.brand.name} swatch={s} />
           ))}
         </div>
       </div>
