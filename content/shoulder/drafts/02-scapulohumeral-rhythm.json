@@ -12,6 +12,8 @@
     {
       "slot": "claim-slot:l2-scapular-motions",
       "statement": "During humeral elevation the scapula upwardly rotates and tilts posteriorly; its internal or external rotation on the thorax varies with the plane of elevation and through the range.",
+      "evidenceLevel": "Narrative review; in vivo kinematic study (bone pins)",
+      "population": "\"8 healthy volunteers (5 men, 3 women)\" (McClure 2001); normal scapular kinematics during arm elevation, reviewed by Ludewig 2009.",
       "candidateSources": [
         {
           "kind": "paper",
@@ -33,6 +35,8 @@
     {
       "slot": "claim-slot:l2-shared-ratio",
       "statement": "Humeral elevation is shared between glenohumeral and scapulothoracic motion; an overall ratio of about 2:1 is commonly reported, but the ratio varies between individuals, across the range of elevation and with external load.",
+      "evidenceLevel": "Laboratory kinematic studies",
+      "population": "\"25 normal subjects\" (McQuade 1998); the Inman 1944 record has no abstract, so its population is not quoted.",
       "candidateSources": [
         {
           "kind": "paper",
@@ -54,6 +58,8 @@
     {
       "slot": "claim-slot:l2-dyskinesis",
       "statement": "Observable scapular dyskinesis is common in people without shoulder pain and, on its own, does not identify a shoulder injury.",
+      "evidenceLevel": "Consensus statement; cross-sectional study",
+      "population": "\"67 with shoulder pain and 68 healthy controls\" (Plummer 2017); shoulder injuries in general (Kibler 2013 Scapular Summit consensus).",
       "candidateSources": [
         {
           "kind": "consensus",

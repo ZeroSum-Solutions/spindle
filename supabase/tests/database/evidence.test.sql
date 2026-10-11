@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(209);
+select plan(213);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -51,9 +51,9 @@ create function pg_temp.run(tag text) returns jsonb language sql as $$
     'packetDigest', encode(extensions.digest(tag, 'sha256'), 'hex'), 'reviewedAt', '2026-10-01T00:00:00Z')
 $$;
 -- A synthetic describer run (D-11): what a Gemini segment description would record.
-create function pg_temp.describer(tag text, cost numeric) returns jsonb language sql as $$
+create function pg_temp.describer(tag text, cost numeric, at timestamptz default now() - interval '1 day') returns jsonb language sql as $$
   select jsonb_build_object('run', jsonb_build_object('model', 'gemini-3.8-flash', 'session', 'gemini-' || tag,
-    'packetDigest', encode(extensions.digest('describe-' || tag, 'sha256'), 'hex'), 'reviewedAt', '2026-10-01T00:00:00Z'), 'costUsd', cost)
+    'packetDigest', encode(extensions.digest('describe-' || tag, 'sha256'), 'hex'), 'reviewedAt', pg_temp.iso(at)), 'costUsd', cost)
 $$;
 -- The lessons that embed a clip now, as a segment packet would carry them (Sol PR20-10).
 create function pg_temp.ctx(media uuid) returns jsonb language sql security definer as $$ select private.segment_context(media) $$;
@@ -896,7 +896,7 @@ select lives_ok(format($$select public.publisher_record_media_check(pg_temp.pat(
   jsonb_build_object('kind', 'segment', 'outcome', 'fail', 'checkedAt', %L, 'notes', 'Describer reported uncertain content.'))$$,
   pg_temp.id('md'), pg_temp.iso(now())), 'a failed segment review may omit the describer and lessons');
 select pg_temp.reset_role();
-select results_eq(format($$select c.describer_model, c.describer_cost_usd, c.described_at = '2026-10-01T00:00:00Z'::timestamptz,
+select results_eq(format($$select c.describer_model, c.describer_cost_usd, c.described_at = (pg_temp.describer('ok', 0.0067) #>> '{run,reviewedAt}')::timestamptz,
   d.session_id, c.describer_run_id <> c.run_id, c.context = pg_temp.ctx(%L) from public.practice_media_checks c
   join public.review_runs d on d.id = c.describer_run_id where c.id = %L$$, pg_temp.id('md'), pg_temp.id('md_check')),
   $$values ('gemini-3.8-flash'::text, 0.0067::numeric, true, 'gemini-ok'::text, true, true)$$,
@@ -916,8 +916,15 @@ select throws_ok($$select pg_temp.publish('7e000000-0000-4000-8000-000000000000'
   'publish gate: lesson 7e000000-0000-4000-8000-000000000011 has a video whose registry entry is not segment-reviewed with this lesson',
   'a lesson edited after the segment review cannot publish the clip');
 select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('md'), pg_temp.seg_pass(pg_temp.id('md'), 'seg-ok3', now()));
-select lives_ok($$select pg_temp.publish('7e000000-0000-4000-8000-000000000000')$$,
+select lives_ok($$select pg_temp.keep('md_v2', pg_temp.publish('7e000000-0000-4000-8000-000000000000'))$$,
   'a fresh segment review with the edited lesson lets it publish');
+-- Playback is bound to the lessons the latest review saw, per version (Sol R2 PR20-10).
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format('select state from public.version_media(%L)', pg_temp.id('md_v2')), $$values ('playable'::text)$$,
+  'the version whose lesson the latest segment review saw plays the clip');
+select results_eq(format('select state, review from public.version_media(%L)', pg_temp.id('md_v1')), $$values ('disabled'::text, null::text)$$,
+  'an older version whose lesson the latest segment review did not see stops playing the clip');
+select pg_temp.as_service();
 select public.publisher_save_course_draft(pg_temp.pat(), pg_temp.course('e7000000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
   pg_temp.lesson('e7000000-0000-4000-8000-000000000011', 'described-too', jsonb_build_array(pg_temp.prac('Another cue.'),
     jsonb_build_object('kind', 'video', 'content', jsonb_build_object('mediaId', pg_temp.id('md'), 'provider', 'youtube', 'videoId', 'MdEsCrIbEd0',
@@ -926,6 +933,17 @@ select pg_temp.review_all('e7000000-0000-4000-8000-000000000000', 'described-too
 select throws_ok($$select pg_temp.publish('e7000000-0000-4000-8000-000000000000')$$, 'P0001',
   'publish gate: lesson e7000000-0000-4000-8000-000000000011 has a video whose registry entry is not segment-reviewed with this lesson',
   'a lesson that embeds the clip after its review cannot publish it');
+-- A description older than 90 days does not count, however fresh the review of it (Sol R2 PR20-11).
+select pg_temp.as_service();
+select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('md'),
+  pg_temp.seg_pass(pg_temp.id('md'), 'seg-old-desc', now()) || jsonb_build_object('describer', pg_temp.describer('old-desc', 0.01, now() - interval '91 days')));
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format('select state from public.version_media(%L)', pg_temp.id('md_v2')), $$values ('disabled'::text)$$,
+  'a fresh review of a description older than 90 days does not make the clip playable');
+select pg_temp.as_service();
+select throws_ok($$select pg_temp.publish('7e000000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 7e000000-0000-4000-8000-000000000011 has a video whose registry entry is segment-unchecked',
+  'nor can it publish');
 -- A pass stored before this migration (no describer, no lessons) does not count (Sol PR20-07).
 select pg_temp.reset_role();
 alter table public.practice_media_checks drop constraint practice_media_checks_describer_check;
