@@ -10,6 +10,7 @@ import { LearnShell, LoadingNote, VersionUnavailable } from "@/components/learn/
 import { completeLesson, type CompleteState, type LessonRoute } from "@/lib/learning/complete";
 import { claimEvidence, learnerGym, lessonClaimIds, myAssignment } from "@/lib/learning/load";
 import { lessonsOf } from "@/lib/learning/view";
+import { versionMedia } from "@/lib/learning/version-media";
 
 const FORMAT: Record<string, string> = { article: "Article", video: "Video", diagram: "Diagram", practice: "Practice", quiz: "Quiz" };
 
@@ -46,7 +47,8 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
   const lesson = lessons[index]!;
   const state = view.lessons[index]!;
   const flagged = new Set(view.flaggedClaimIds);
-  const claims = await claimEvidence(ctx, lessonClaimIds(version, lesson.id));
+  const hasVideo = lesson.blocks.some((b) => b.kind === "video");
+  const [claims, media] = await Promise.all([claimEvidence(ctx, lessonClaimIds(version, lesson.id)), hasVideo ? versionMedia(ctx, version.id) : Promise.resolve(new Map())]);
   const prev = lessons[index - 1];
   const next = lessons[index + 1];
   const done = state.state === "done" || state.state === "credited";
@@ -94,7 +96,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
 
           <SupportLegend supports={lesson.blocks.flatMap((b) => ("support" in b ? [b.support] : []))} />
 
-          <LessonBlocks blocks={lesson.blocks} ctx={{ orgId: version.orgId, claims, flagged }} />
+          <LessonBlocks blocks={lesson.blocks} ctx={{ orgId: version.orgId, claims, flagged, media }} />
           <LessonMedia media={lesson.media} orgId={version.orgId} />
           <LessonResources resources={lesson.resources} orgId={version.orgId} />
 

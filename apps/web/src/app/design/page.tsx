@@ -211,15 +211,21 @@ export default function DesignSpecimen() {
 
       <Section title="Video (click to load)">
         <p className="text-label text-text-muted">
-          Nothing loads from YouTube until Play is pressed. The first clip is YouTube&apos;s own IFrame API demo video; the second id does not exist, so it
-          ends in the unavailable state.
+          Nothing loads from YouTube until Play is pressed. The first clip is YouTube&apos;s own IFrame API demo video (playable); the second is one the
+          provider reports as unavailable; the third is switched off in the registry, so nothing from YouTube is offered.
         </p>
         <div className="grid max-w-[46rem] grid-cols-1 gap-10">
           <YouTubeSegment
-            video={{ videoId: "M7lc1UVf-VE", start: 0, end: 30, title: "Specimen clip: YouTube IFrame API demo", channel: "YouTube API demo", rationale: "Synthetic rationale: shows how a coaching segment sits beside lesson text." }}
+            segment={{ mediaId: "m-demo", provider: "youtube", videoId: "M7lc1UVf-VE", startSeconds: 0, endSeconds: 30, rationale: "Synthetic rationale: shows how a coaching segment sits beside lesson text.", caption: "" }}
+            availability={{ mediaId: "m-demo", state: "playable", title: "Specimen clip: YouTube IFrame API demo", channel: "YouTube API demo", available: true }}
           />
           <YouTubeSegment
-            video={{ videoId: "000000000aa", start: 5, end: 20, title: "Specimen clip: video that cannot play", channel: "Synthetic channel", rationale: "Synthetic rationale: the player reports an error, so the lesson says so." }}
+            segment={{ mediaId: "m-gone", provider: "youtube", videoId: "000000000aa", startSeconds: 5, endSeconds: 20, rationale: "Synthetic rationale: the provider reports this clip as unavailable.", caption: "" }}
+            availability={{ mediaId: "m-gone", state: "playable", title: null, channel: null, available: false }}
+          />
+          <YouTubeSegment
+            segment={{ mediaId: "m-off", provider: "youtube", videoId: "000000000bb", startSeconds: 5, endSeconds: 20, rationale: "Synthetic rationale: the registry has switched this clip off.", caption: "" }}
+            availability={{ mediaId: "m-off", state: "disabled", title: null, channel: null, available: null }}
           />
         </div>
       </Section>

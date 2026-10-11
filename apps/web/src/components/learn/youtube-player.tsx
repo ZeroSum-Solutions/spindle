@@ -2,7 +2,16 @@
 
 import { useEffect, useId, useReducer, useRef, useState } from "react";
 import { ExternalLink, Play, VideoOff } from "lucide-react";
-import { embedSrc, IFRAME_API_URL, nextPlayerState, PRIVACY_URL, READY_TIMEOUT_MS, segmentLabel, TERMS_URL, watchUrl, type YouTubeVideo } from "@/lib/video/youtube";
+import { embedSrc, IFRAME_API_URL, nextPlayerState, PRIVACY_URL, READY_TIMEOUT_MS, segmentLabel, TERMS_URL, watchUrl } from "@/lib/video/youtube";
+
+/** The frozen segment plus the label the facade shows. */
+export interface PlayerClip {
+  videoId: string;
+  startSeconds: number;
+  endSeconds: number;
+  title: string;
+  channel: string;
+}
 
 // Click-to-load YouTube player (D-09). Before the click the page holds only our own
 // placeholder: no thumbnail, no preconnect, no oEmbed, no YouTube script. Pressing
@@ -48,8 +57,9 @@ function loadIframeApi(): Promise<YTNamespace> {
   return apiPromise;
 }
 
-export function YouTubePlayer({ video, readyTimeoutMs = READY_TIMEOUT_MS }: { video: YouTubeVideo; readyTimeoutMs?: number }) {
-  const [state, dispatch] = useReducer(nextPlayerState, "idle");
+export function YouTubePlayer({ video, gone = false, readyTimeoutMs = READY_TIMEOUT_MS }: { video: PlayerClip; gone?: boolean; readyTimeoutMs?: number }) {
+  // A clip the provider already reports as unavailable starts in that state; nothing is offered to load.
+  const [state, dispatch] = useReducer(nextPlayerState, gone ? "unavailable" : "idle");
   const [src, setSrc] = useState<string | null>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const noticeId = useId();
@@ -93,7 +103,7 @@ export function YouTubePlayer({ video, readyTimeoutMs = READY_TIMEOUT_MS }: { vi
         className="flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-card border border-dashed border-control bg-surface-muted p-6 text-center"
       >
         <VideoOff aria-hidden strokeWidth={1.75} className="size-6 text-text-muted" />
-        <p className="text-base text-text">This video is unavailable here right now. The YouTube player could not play it.</p>
+        <p className="text-base text-text">This video is unavailable here right now.</p>
         <a
           href={watchUrl(video)}
           target="_blank"
@@ -129,34 +139,38 @@ export function YouTubePlayer({ video, readyTimeoutMs = READY_TIMEOUT_MS }: { vi
     );
   }
 
+  // The facade is our own ink panel: the clip's title, its range, the play control and
+  // the YouTube notice. No thumbnail or other YouTube request before the click.
   return (
-    <div className="flex flex-col gap-2">
-      <div
-        data-video="facade"
-        className="flex aspect-video min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-card border border-border bg-surface-muted p-4 text-center"
-      >
-        <button
-          type="button"
-          onClick={() => {
-            setSrc(embedSrc(video, window.location.origin));
-            dispatch("activate");
-          }}
-          aria-describedby={noticeId}
-          className="inline-flex min-h-12 items-center gap-2 rounded-control border border-control bg-surface px-5 font-medium text-text transition-colors duration-[var(--duration-feedback)] hover:bg-surface-muted"
-        >
-          <Play aria-hidden strokeWidth={1.75} className="size-4" />
-          Play video<span className="sr-only">: {video.title}</span>
-        </button>
-        <p className="font-mono text-code text-text-muted">{segmentLabel(video)}</p>
+    <div
+      data-video="facade"
+      className="flex min-h-[200px] w-full flex-col justify-end gap-3 rounded-card bg-ink p-4 text-white [--focus-ring:var(--color-white)] sm:aspect-video md:p-6"
+    >
+      <div className="flex flex-col gap-1">
+        <p className="text-base font-medium">{video.title}</p>
+        <p className="text-label text-white/80">
+          {video.channel} · <span className="font-mono text-code">{segmentLabel(video)}</span>
+        </p>
       </div>
-      <p id={noticeId} data-video="notice" className="text-label text-text-muted">
-        Plays from YouTube. Pressing play loads YouTube&apos;s player, which may collect data and store information on your device. See
-        Google&apos;s{" "}
-        <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-brand underline underline-offset-2 hover:text-brand-hover">
+      <button
+        type="button"
+        onClick={() => {
+          setSrc(embedSrc(video, window.location.origin));
+          dispatch("activate");
+        }}
+        aria-describedby={noticeId}
+        className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-white px-5 font-medium text-ink transition-colors duration-[var(--duration-feedback)] hover:bg-surface-muted"
+      >
+        <Play aria-hidden strokeWidth={1.75} className="size-4" />
+        Play video<span className="sr-only">: {video.title}</span>
+      </button>
+      <p id={noticeId} data-video="notice" className="text-label text-white/80">
+        Plays from YouTube. Pressing play loads YouTube&apos;s player, which may collect data and store information on your device. See Google&apos;s{" "}
+        <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-white underline underline-offset-2">
           privacy policy
         </a>{" "}
         and YouTube&apos;s{" "}
-        <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" className="text-brand underline underline-offset-2 hover:text-brand-hover">
+        <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" className="text-white underline underline-offset-2">
           terms
         </a>
         .

@@ -1,9 +1,9 @@
-import { z } from "zod";
+import type { MediaAvailability, VideoSegment } from "@spindle/schema";
 
-// Click-to-load YouTube segments (D-09, phase 3 plan section 6). Pure helpers only:
-// no network and no DOM, so the rules are unit-tested. The prop shape is provisional
-// until the practice-media registry lands; it mirrors what a published lesson freezes
-// (id, start, end, rationale) plus refreshable provider data (title, channel).
+// Click-to-load YouTube segments (D-09, ADR 0007). Pure helpers only: no network and no
+// DOM, so the rules are unit-tested. The segment comes frozen from the lesson's video
+// block (registry id, video id, start, end, rationale); title, channel and availability
+// are refreshable provider data from version_media, never part of the lesson.
 
 /** The only host a player frame may come from. */
 export const PLAYER_ORIGIN = "https://www.youtube-nocookie.com";
@@ -18,51 +18,57 @@ export const READY_TIMEOUT_MS = 15_000;
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
-export const youTubeVideoSchema = z
-  .object({
-    videoId: z.string().regex(VIDEO_ID, "not a YouTube video id"),
-    start: z.number().int().min(0),
-    end: z.number().int().positive().optional(),
-    title: z.string().trim().min(1).max(200),
-    channel: z.string().trim().min(1).max(120),
-    rationale: z.string().trim().min(1).max(500),
-  })
-  .strict()
-  .refine((v) => v.end === undefined || v.end > v.start, { message: "end must be after start", path: ["end"] });
+type Segment = Pick<VideoSegment, "videoId" | "startSeconds" | "endSeconds">;
 
-export type YouTubeVideo = z.infer<typeof youTubeVideoSchema>;
-
-/** Player frame URL: privacy-enhanced host, official controls, our segment, JS API for error reporting. */
-export function embedSrc(video: YouTubeVideo, pageOrigin: string): string {
-  const id = parseVideoId(video.videoId);
+/** Player frame URL: privacy-enhanced host, official controls, the frozen segment, JS API for error reporting. */
+export function embedSrc(segment: Segment, pageOrigin: string): string {
   const params = new URLSearchParams({
     autoplay: "1", // the learner just pressed play
     playsinline: "1",
     rel: "0",
     enablejsapi: "1",
     origin: new URL(pageOrigin).origin,
-    start: String(video.start),
+    start: String(segment.startSeconds),
+    end: String(segment.endSeconds),
   });
-  if (video.end !== undefined) params.set("end", String(video.end));
-  return `${PLAYER_ORIGIN}/embed/${id}?${params}`;
+  return `${PLAYER_ORIGIN}/embed/${videoId(segment.videoId)}?${params}`;
 }
 
 /** The fallback link: the same video on YouTube, at the segment start. */
-export function watchUrl(video: Pick<YouTubeVideo, "videoId" | "start">): string {
-  const params = new URLSearchParams({ v: parseVideoId(video.videoId) });
-  if (video.start > 0) params.set("t", `${video.start}s`);
+export function watchUrl(segment: Pick<VideoSegment, "videoId" | "startSeconds">): string {
+  const params = new URLSearchParams({ v: videoId(segment.videoId) });
+  if (segment.startSeconds > 0) params.set("t", `${segment.startSeconds}s`);
   return `https://www.youtube.com/watch?${params}`;
 }
 
 /** "1:05 to 2:30" for the caption, so the learner knows which part plays. */
-export function segmentLabel(video: Pick<YouTubeVideo, "start" | "end">): string {
+export function segmentLabel(segment: Pick<VideoSegment, "startSeconds" | "endSeconds">): string {
   const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-  return video.end === undefined ? `From ${clock(video.start)}` : `${clock(video.start)} to ${clock(video.end)}`;
+  return `${clock(segment.startSeconds)} to ${clock(segment.endSeconds)}`;
 }
 
-function parseVideoId(id: string): string {
+function videoId(id: string): string {
   if (!VIDEO_ID.test(id)) throw new Error("not a YouTube video id");
   return id;
+}
+
+/**
+ * Whether a clip may be offered, from version_media. Fails closed: a clip the
+ * registry did not report, or reports as disabled, is "off" and nothing from
+ * YouTube is offered. A clip the provider says is unavailable is "gone": it is
+ * shown as unavailable, with the link to YouTube.
+ */
+export type ClipState = "playable" | "off" | "gone";
+
+export function clipState(availability: MediaAvailability | undefined): ClipState {
+  if (!availability || availability.state !== "playable") return "off";
+  if (availability.available === false) return "gone";
+  return "playable";
+}
+
+/** What the facade shows. Provider title and channel are null unless fetched in the last 30 days. */
+export function clipLabels(availability: MediaAvailability | undefined): { title: string; channel: string } {
+  return { title: availability?.title ?? "Coaching video", channel: availability?.channel ?? "YouTube" };
 }
 
 // Player states. Nothing from YouTube exists in "idle"; "unavailable" is final for this mount.

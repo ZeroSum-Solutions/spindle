@@ -1,17 +1,20 @@
 import { ExternalLink, ImageOff, TriangleAlert } from "lucide-react";
-import type { LessonBlock, LessonResource, MediaAsset } from "@spindle/schema";
+import type { LessonBlock, LessonResource, MediaAsset, MediaAvailability } from "@spindle/schema";
 import type { ClaimView } from "@/lib/learning/load";
 import { resolveContentUrl, resolveMediaUrl } from "@/lib/learning/media";
 import { ClaimDisclosure } from "./claim-disclosure";
 import { SupportLabel } from "./labels";
 import { MediaImage, MediaUnavailable, MediaVideo } from "./media-image";
 import { QuizSelfCheck } from "./quiz-self-check";
+import { YouTubeSegment } from "./youtube-segment";
 
 export interface BlockContext {
   /** The gym that owns the version, or null for global content. */
   orgId: string | null;
   claims: ReadonlyMap<string, ClaimView>;
   flagged: ReadonlySet<string>;
+  /** Registry state of the version's clips (version_media); a clip missing here never plays. */
+  media?: ReadonlyMap<string, MediaAvailability>;
 }
 
 export function LessonBlocks({ blocks, ctx }: { blocks: LessonBlock[]; ctx: BlockContext }) {
@@ -41,8 +44,7 @@ function Block({ block, index, ctx }: { block: LessonBlock; index: number; ctx: 
         </figure>
       );
     case "video":
-      // Registry clips get the click-to-load player in P3-B; until then nothing loads or renders.
-      return null;
+      return <YouTubeSegment segment={block.content} availability={ctx.media?.get(block.content.mediaId)} />;
     default:
       return <Supported block={block} index={index} ctx={ctx} />;
   }
