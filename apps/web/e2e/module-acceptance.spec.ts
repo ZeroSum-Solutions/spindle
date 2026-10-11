@@ -157,8 +157,17 @@ test.describe.serial("shoulder module acceptance", () => {
     ];
     for (const { path, marker } of pages) {
       for (const [headers, type] of [[{}, "text/html"], [{ RSC: "1" }, "text/x-component"]] as [Record<string, string>, string][]) {
-        const res = await page.request.get(path, { headers, maxRedirects: 0 });
         const what = `${path} ${JSON.stringify(headers)}`;
+        let res = await page.request.get(path, { headers, maxRedirects: 0 });
+        if (headers.RSC && res.status() === 307) {
+          // Next validates RSC requests (validateRSCRequestHeaders): without the `_rsc` cache-busting
+          // parameter it answers 307 to the same path with that parameter. Follow exactly that one
+          // redirect, and nothing else: a redirect anywhere else (sign-in, an error) still fails.
+          const location = new URL(res.headers().location ?? "", "http://localhost");
+          expect(location.pathname, `${what}: RSC redirect target`).toBe(path);
+          expect(location.searchParams.has("_rsc"), `${what}: RSC redirect adds _rsc`).toBe(true);
+          res = await page.request.get(`${location.pathname}${location.search}`, { headers, maxRedirects: 0 });
+        }
         expect(res.status(), what).toBe(200);
         expect(new URL(res.url()).pathname, what).toBe(path);
         expect(res.headers()["content-type"] ?? "", what).toContain(type);
