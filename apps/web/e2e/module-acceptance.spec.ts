@@ -84,18 +84,37 @@ const questions = drafts.flatMap((d, i) =>
 );
 
 /**
- * Assessments followed by their stop-and-refer warning, per lesson, as the drafts have them on main.
- * Pinned so that a warning removed or moved away from its assessment fails the test.
+ * The assessments that must carry a stop-and-refer warning as the very next block, per lesson,
+ * pinned by the assessment's first item and a line of its own warning. Pinned so that a warning
+ * moved onto another checklist, or a checklist losing its warning, fails even if the count holds.
  */
-const REQUIRED_PAIRS: Record<string, number> = {
-  "shoulder-anatomy": 1,
-  "scapulohumeral-rhythm": 1,
-  "mobility-and-stability": 1,
-  "screens-and-red-flags": 3,
-  "correctives-and-activation": 1,
-  "loading-the-shoulder": 3,
-  "throwing-and-rotation": 1,
-  "when-to-refer-out": 0,
+const REQUIRED_PAIRS: Record<string, { assessment: string; warning: string }[]> = {
+  "shoulder-anatomy": [
+    { assessment: "Follow the collarbone out from the base of the neck to the bony point at the top of the shoulder (acromion).", warning: "After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now." },
+  ],
+  "scapulohumeral-rhythm": [
+    { assessment: "Stand behind the client. Ask first; a fitted top lets you see the shoulder blades without asking anyone to undress.", warning: "Pain that is getting worse: routine referral now; do not wait." },
+  ],
+  "mobility-and-stability": [
+    { assessment: "Ask first: is this new, and does it hurt? If it is new, unexplained or painful, go to the stop-and-refer rules before any screen.", warning: "Pain that is getting worse: routine referral now; do not wait." },
+  ],
+  "screens-and-red-flags": [
+    { assessment: "Start: the client stands relaxed, arms by the sides, in a top that lets you see the shoulder blades. Stand behind them.", warning: "A new inability to lift or move the arm themselves, without an injury: urgent, today." },
+    { assessment: "Start: the client stands with the elbow at the side, bent to a right angle, thumb up.", warning: "Pain and weakness after an injury, while the arm still moves and looks normal: urgent, today." },
+    { assessment: "Start: the client stands relaxed.", warning: "Pain that has not improved after 2 weeks: routine referral." },
+  ],
+  "correctives-and-activation": [
+    { assessment: "Position: set up the stance or support you will use in the first lift. Easier version: support the back against a wall or bench.", warning: "A warm-up drill that hurts is not a warm-up: skip it." },
+  ],
+  "loading-the-shoulder": [
+    { assessment: "Progression: push-up from a raised surface, then a lower surface, then the floor.", warning: "Pain at the bottom of a press means stop for the session, not push through." },
+    { assessment: "Progression: supported row (chest on a bench), then an unsupported row, then heavier load.", warning: "Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today." },
+    { assessment: "Progression: landmine press, then half-kneeling single-arm press, then standing press.", warning: "A new inability to lift or move the arm themselves, without an injury: urgent, today." },
+  ],
+  "throwing-and-rotation": [
+    { assessment: "Use one set-up every time: the athlete lies on their back, arm out to the side at shoulder height, elbow bent to a right angle, with a folded towel under the elbow so the upper arm is level.", warning: "Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today." },
+  ],
+  "when-to-refer-out": [],
 };
 
 async function answerAll(page: Page, pick: (q: (typeof questions)[number]) => number) {
@@ -197,9 +216,25 @@ test.describe.serial("shoulder module acceptance", () => {
       await expect(scienceSections, d.lesson.slug).toHaveCount(science);
       await expect(article.locator('section[data-support="science"][data-evidence]'), "no synthetic claim reads as withdrawn or unknown").toHaveCount(0);
       await expect(practiceSections, d.lesson.slug).toHaveCount(practiceCount);
-      // Labels beside the content itself, not the legend at the top of the article.
-      if (practiceCount > 0) await expect(practiceSections.getByText("Practice-based", { exact: true }).first()).toBeVisible();
-      if (science > 0) await expect(scienceSections.getByText("Science", { exact: true }).first()).toBeVisible();
+      // A support label opens every run of same-support blocks (a block without support ends a
+      // run), and only there: checked block by block, beside the content, never in the legend.
+      const supported = article.locator("section[data-support]");
+      let previous: string | null = null;
+      let k = 0;
+      for (const b of blocks) {
+        const support = "support" in b && b.support ? b.support : null;
+        if (support === null) {
+          previous = null;
+          continue;
+        }
+        const label = support === "science" ? "Science" : "Practice-based";
+        const chip = supported.nth(k).getByText(label, { exact: true });
+        if (support !== previous) await expect(chip, `${d.lesson.slug}: label at block ${k + 1}`).toBeVisible();
+        else await expect(chip, `${d.lesson.slug}: no repeated label at block ${k + 1}`).toHaveCount(0);
+        previous = support;
+        k += 1;
+      }
+      await expect(supported).toHaveCount(k);
       // Each science block's sources open to its own synthetic claims, the source and its DOI link.
       for (const [k, b] of scienceBlocks.entries()) {
         const section = scienceSections.nth(k);
@@ -210,23 +245,25 @@ test.describe.serial("shoulder module acceptance", () => {
         await expect(details.locator(`a[href="https://doi.org/${world.doi}"]`).first()).toBeVisible();
       }
 
-      // Safety beside assessments: each checklist the draft follows with a stop-and-refer callout
-      // is followed by it on the page, as the very next block. The count per lesson is pinned, so
-      // a warning removed or moved in the draft fails here too.
-      let pairs = 0;
-      let checklist = -1;
-      for (const [i, b] of blocks.entries()) {
-        if (b.kind !== "checklist") continue;
-        checklist += 1;
+      // Safety beside assessments: every pinned assessment is on the page, and the very next block
+      // is a stop-and-refer callout carrying its own warning line. The draft must agree with the pins.
+      const required = REQUIRED_PAIRS[d.lesson.slug]!;
+      const draftPairs = blocks.flatMap((b, i) => {
         const next = blocks[i + 1];
-        if (next?.kind !== "callout" || (next.content as { label: string }).label !== "Stop and refer") continue;
-        pairs += 1;
-        const sibling = await nth("checklist", checklist).evaluate((el) => ({ kind: el.nextElementSibling?.getAttribute("data-block"), text: el.nextElementSibling?.textContent ?? "" }));
-        expect(sibling.kind, `${d.lesson.slug}: stop rule after checklist ${checklist + 1}`).toBe("callout");
+        return b.kind === "checklist" && next?.kind === "callout" && (next.content as { label: string }).label === "Stop and refer"
+          ? [{ assessment: (b.content as string[])[0]!, warning: (next.content as { text: string }).text }]
+          : [];
+      });
+      expect(draftPairs.map((p) => p.assessment), `${d.lesson.slug}: assessments with a stop rule`).toEqual(required.map((r) => r.assessment));
+      for (const pin of required) {
+        const firstItems = await article.locator('[data-block="checklist"]').evaluateAll((els) => els.map((el) => el.querySelector("li")?.textContent ?? ""));
+        const at = firstItems.indexOf(pin.assessment);
+        expect(at, `${d.lesson.slug}: assessment "${pin.assessment.slice(0, 40)}"`).toBeGreaterThanOrEqual(0);
+        const sibling = await nth("checklist", at).evaluate((el) => ({ kind: el.nextElementSibling?.getAttribute("data-block"), text: el.nextElementSibling?.textContent ?? "" }));
+        expect(sibling.kind, `${d.lesson.slug}: stop rule after "${pin.assessment.slice(0, 40)}"`).toBe("callout");
         expect(sibling.text).toContain("Stop and refer");
-        expect(sibling.text).toContain((next.content as { text: string }).text.slice(0, 40));
+        expect(sibling.text).toContain(pin.warning);
       }
-      expect(pairs, `${d.lesson.slug}: assessment and warning pairs`).toBe(REQUIRED_PAIRS[d.lesson.slug]);
 
       // Graded questions show the prompt and point to the module quiz; never the answer.
       for (const q of blocks.filter((b) => b.kind === "quiz" && b.support === "science")) {

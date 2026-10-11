@@ -329,7 +329,7 @@ export class PlayerWorld {
       -- D-11: each registry clip the course embeds gets a synthetic segment review, with a
       -- synthetic describer run, bound to the lessons (and lesson hashes) that embed it now.
       select public.publisher_record_media_check(${p}, m.id, jsonb_build_object('kind', 'segment', 'outcome', 'pass',
-          'checkedAt', ${lit(new Date().toISOString())}, 'run', ${runReceipt(this.run)},
+          'checkedAt', ${lit(new Date().toISOString())}, 'run', ${runReceipt(this.run, this.reviewedAt)},
           'describer', jsonb_build_object('run', ${describerReceipt(this.run)}, 'costUsd', 0),
           -- Every global lesson that embeds the clip, in any course (Sol R2 PR20-13).
           'context', (select jsonb_agg(jsonb_build_object('lessonId', l ->> 'lessonId', 'hash', l ->> 'hash') order by (l ->> 'lessonId')::uuid)
