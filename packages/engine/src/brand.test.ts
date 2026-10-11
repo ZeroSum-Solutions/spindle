@@ -140,3 +140,41 @@ describe("a validated brand cannot change afterwards", () => {
     expect(r.brand.mark).toMatchObject({ key: "barbell-mark.png" });
   });
 });
+
+describe("the P4-A2 header band", () => {
+  const base = { mark: { kind: "text" }, colors: { accent: "#7A1F2B", onAccent: "#FFFFFF" }, font: "geist", name: "Example Barbell Club" } as const;
+  it("defaults to the Atlas surface with ink on it", () => {
+    const r = validateBrand(base);
+    expect(r.ok).toBe(true);
+    const band = r.checks.find((c) => c.role === "Brand name on the band")!;
+    expect([band.foreground, band.background]).toEqual([ATLAS.ink, ATLAS.surface]);
+  });
+  it("puts white on a dark band and ink on a light one", () => {
+    expect(brandChecks({ ...base, colors: { ...base.colors, band: "#0B3D2E" } }).find((c) => c.role === "Brand name on the band")!.foreground).toBe("#ffffff");
+    expect(brandChecks({ ...base, colors: { ...base.colors, band: "#F2E8D5" } }).find((c) => c.role === "Brand name on the band")!.foreground).toBe(ATLAS.ink);
+  });
+  it("refuses a band on which neither ink nor white reaches 4.5:1", () => {
+    const r = validateBrand({ ...base, colors: { ...base.colors, band: "#808080" } });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.problems.join("\n")).toMatch(/Brand name on the band \(default\): 4\.0\d:1, needs 4\.5:1/);
+  });
+  it("checks chip text on the band tint", () => {
+    const checks = brandChecks({ ...base, colors: { ...base.colors, band: "#0B3D2E" } });
+    const chip = checks.find((c) => c.role === "Chip text on the band tint")!;
+    expect(chip.background).not.toBe("#0b3d2e");
+    expect(chip.pass).toBe(true);
+  });
+});
+
+describe("validateOrgBrand (the stored brand)", () => {
+  it("accepts a text-mark brand with a band and refuses a name, a logo and a failing band", async () => {
+    const { validateOrgBrand } = await import("./brand");
+    const ok = { mark: { kind: "text" }, colors: { accent: "#506E4B", onAccent: "#FFFFFF", band: "#0B3D2E" }, font: "fraunces" };
+    expect(validateOrgBrand(ok).ok).toBe(true);
+    expect(validateOrgBrand({ ...ok, name: "x" }).ok).toBe(false);
+    expect(validateOrgBrand({ ...ok, mark: { kind: "logo" } }).ok).toBe(false);
+    const grey = validateOrgBrand({ ...ok, colors: { ...ok.colors, band: "#808080" } });
+    expect(grey.ok).toBe(false);
+    if (!grey.ok) expect(grey.problems[0]).toBe("Brand name on the band (default): 4.05:1, needs 4.5:1");
+  });
+});
