@@ -83,10 +83,20 @@ const questions = drafts.flatMap((d, i) =>
     }),
 );
 
-const text = (b: Block) =>
-  b.kind === "paragraph" ? String(b.content) : b.kind === "callout" ? (b.content as { text: string }).text : b.kind === "checklist" ? (b.content as string[])[0]! : "";
-/** The first words of a block, enough to find it without depending on how long text wraps. */
-const opening = (s: string) => s.split("\n")[0]!.slice(0, 60);
+/**
+ * Assessments followed by their stop-and-refer warning, per lesson, as the drafts have them on main.
+ * Pinned so that a warning removed or moved away from its assessment fails the test.
+ */
+const REQUIRED_PAIRS: Record<string, number> = {
+  "shoulder-anatomy": 1,
+  "scapulohumeral-rhythm": 1,
+  "mobility-and-stability": 1,
+  "screens-and-red-flags": 3,
+  "correctives-and-activation": 1,
+  "loading-the-shoulder": 3,
+  "throwing-and-rotation": 1,
+  "when-to-refer-out": 0,
+};
 
 async function answerAll(page: Page, pick: (q: (typeof questions)[number]) => number) {
   for (const q of questions) await page.locator(`fieldset[data-question="${q.id}"] input[value="${pick(q)}"]`).check();
@@ -120,13 +130,24 @@ test.describe.serial("shoulder module acceptance", () => {
 
   test("no answer key reaches the browser before an attempt is submitted", async ({ browser }) => {
     const page = await signIn(browser, actors.trainer!, learnPath(gym, assignment, "module/quiz"));
-    const paths = [learnPath(gym, assignment, "module/quiz"), ...drafts.map((d) => learnPath(gym, assignment, d.lesson.slug))];
-    for (const path of paths) {
-      for (const headers of [{}, { RSC: "1" }] as Record<string, string>[]) {
-        const body = await (await page.request.get(path, { headers })).text();
-        expect(body.length, path).toBeGreaterThan(500);
-        expect(body, `${path} ${JSON.stringify(headers)}`).not.toMatch(/"answerIndex"/);
-        for (const q of questions) expect(body, `${path} ${JSON.stringify(headers)}`).not.toContain(q.explanation);
+    // Each response must be the real page (200, no redirect, the right content type and its own
+    // title), so an error or sign-in page can never pass for a redacted one.
+    const pages = [
+      { path: learnPath(gym, assignment, "module/quiz"), marker: "Module quiz" },
+      ...drafts.map((d) => ({ path: learnPath(gym, assignment, d.lesson.slug), marker: d.lesson.title })),
+    ];
+    for (const { path, marker } of pages) {
+      for (const [headers, type] of [[{}, "text/html"], [{ RSC: "1" }, "text/x-component"]] as [Record<string, string>, string][]) {
+        const res = await page.request.get(path, { headers, maxRedirects: 0 });
+        const what = `${path} ${JSON.stringify(headers)}`;
+        expect(res.status(), what).toBe(200);
+        expect(new URL(res.url()).pathname, what).toBe(path);
+        expect(res.headers()["content-type"] ?? "", what).toContain(type);
+        const body = await res.text();
+        expect(body, what).toContain(marker);
+        // The bare token, so an escaped key (\"answerIndex\") is caught too.
+        expect(body, what).not.toContain("answerIndex");
+        for (const q of questions) expect(body, what).not.toContain(q.explanation);
       }
     }
   });
@@ -147,31 +168,65 @@ test.describe.serial("shoulder module acceptance", () => {
       for (const b of blocks.filter((b) => b.kind === "heading")) {
         await expect(article.getByRole("heading", { level: 2, name: String(b.content), exact: true }).first(), d.lesson.slug).toBeVisible();
       }
-      for (const b of blocks.filter((b) => text(b))) await expect(article, d.lesson.slug).toContainText(opening(text(b)));
+      // Every text block in full, in its own block, in draft order: paragraphs, callouts (label and
+      // text) and every checklist item, so a truncated warning or a dropped referral line fails.
+      const nth = (kind: string, i: number) => article.locator(`[data-block="${kind}"]`).nth(i);
+      const seen: Record<string, number> = {};
+      for (const b of blocks) {
+        const i = (seen[b.kind] = (seen[b.kind] ?? -1) + 1);
+        if (b.kind === "paragraph") await expect(nth("paragraph", i), d.lesson.slug).toContainText(String(b.content));
+        if (b.kind === "callout") {
+          const c = b.content as { label: string; text: string };
+          await expect(nth("callout", i), d.lesson.slug).toContainText(c.label);
+          await expect(nth("callout", i), d.lesson.slug).toContainText(c.text);
+        }
+        if (b.kind === "checklist") {
+          const items = b.content as string[];
+          const li = nth("checklist", i).locator("li");
+          await expect(li, d.lesson.slug).toHaveCount(items.length);
+          for (const [k, item] of items.entries()) await expect(li.nth(k), d.lesson.slug).toHaveText(item);
+        }
+      }
 
       // Science blocks carry the Science presentation and their own sources; practice blocks are labelled.
-      const science = blocks.filter((b) => b.support === "science").length;
+      const scienceBlocks = blocks.filter((b) => b.support === "science" && b.kind !== "diagram");
+      const science = scienceBlocks.length;
       const practiceCount = blocks.filter((b) => b.support === "practice-based" && b.kind !== "diagram").length;
-      await expect(article.locator('section[data-support="science"]:not([data-block="diagram"])'), d.lesson.slug).toHaveCount(science);
-      await expect(article.locator('section[data-support="science"]').filter({ has: page.locator("summary", { hasText: "Show sources" }) }), d.lesson.slug).toHaveCount(science);
+      const scienceSections = article.locator('section[data-support="science"]:not([data-block="diagram"])');
+      const practiceSections = article.locator('section[data-support="practice-based"]:not([data-block="diagram"])');
+      await expect(scienceSections, d.lesson.slug).toHaveCount(science);
       await expect(article.locator('section[data-support="science"][data-evidence]'), "no synthetic claim reads as withdrawn or unknown").toHaveCount(0);
-      await expect(article.locator('section[data-support="practice-based"]:not([data-block="diagram"])'), d.lesson.slug).toHaveCount(practiceCount);
-      if (practiceCount > 0) await expect(article.getByText("Practice-based", { exact: true }).first()).toBeVisible();
-      if (science > 0) await expect(article.getByText("Science", { exact: true }).first()).toBeVisible();
+      await expect(practiceSections, d.lesson.slug).toHaveCount(practiceCount);
+      // Labels beside the content itself, not the legend at the top of the article.
+      if (practiceCount > 0) await expect(practiceSections.getByText("Practice-based", { exact: true }).first()).toBeVisible();
+      if (science > 0) await expect(scienceSections.getByText("Science", { exact: true }).first()).toBeVisible();
+      // Each science block's sources open to its own synthetic claims, the source and its DOI link.
+      for (const [k, b] of scienceBlocks.entries()) {
+        const section = scienceSections.nth(k);
+        await section.locator("summary", { hasText: "Show sources" }).click();
+        const details = section.locator("details");
+        for (const slot of b.claimIds ?? []) await expect(details, `${d.lesson.slug} ${slot}`).toContainText(world.claimStatement(slot));
+        await expect(details).toContainText(`Synthetic review ${world.run}`);
+        await expect(details.locator(`a[href="https://doi.org/${world.doi}"]`).first()).toBeVisible();
+      }
 
       // Safety beside assessments: each checklist the draft follows with a stop-and-refer callout
-      // is followed by it on the page too, as the very next block.
+      // is followed by it on the page, as the very next block. The count per lesson is pinned, so
+      // a warning removed or moved in the draft fails here too.
+      let pairs = 0;
+      let checklist = -1;
       for (const [i, b] of blocks.entries()) {
+        if (b.kind !== "checklist") continue;
+        checklist += 1;
         const next = blocks[i + 1];
-        if (b.kind !== "checklist" || next?.kind !== "callout" || (next.content as { label: string }).label !== "Stop and refer") continue;
-        const sibling = await article
-          .locator('[data-block="checklist"]')
-          .filter({ hasText: opening(text(b)) })
-          .first()
-          .evaluate((el) => ({ kind: el.nextElementSibling?.getAttribute("data-block"), text: el.nextElementSibling?.textContent ?? "" }));
-        expect(sibling.kind, `${d.lesson.slug}: stop rule after "${opening(text(b))}"`).toBe("callout");
+        if (next?.kind !== "callout" || (next.content as { label: string }).label !== "Stop and refer") continue;
+        pairs += 1;
+        const sibling = await nth("checklist", checklist).evaluate((el) => ({ kind: el.nextElementSibling?.getAttribute("data-block"), text: el.nextElementSibling?.textContent ?? "" }));
+        expect(sibling.kind, `${d.lesson.slug}: stop rule after checklist ${checklist + 1}`).toBe("callout");
         expect(sibling.text).toContain("Stop and refer");
+        expect(sibling.text).toContain((next.content as { text: string }).text.slice(0, 40));
       }
+      expect(pairs, `${d.lesson.slug}: assessment and warning pairs`).toBe(REQUIRED_PAIRS[d.lesson.slug]);
 
       // Graded questions show the prompt and point to the module quiz; never the answer.
       for (const q of blocks.filter((b) => b.kind === "quiz" && b.support === "science")) {
@@ -187,7 +242,11 @@ test.describe.serial("shoulder module acceptance", () => {
   });
 
   test("the module quiz: a failed attempt, then a pass, and the module completes", async ({ browser }) => {
-    const page = await signIn(browser, actors.trainer!, learnPath(gym, assignment, "module/quiz"));
+    // Every lesson is done but there is no pass yet: the module is not complete.
+    const overview = await signIn(browser, actors.trainer!, learnPath(gym, assignment));
+    await expect(overview.getByTestId("module-status")).toHaveAttribute("data-complete", "false");
+    const page = overview;
+    await page.goto(learnPath(gym, assignment, "module/quiz"));
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Module quiz");
     await expect(page.locator("fieldset[data-question]")).toHaveCount(questions.length);
 
@@ -195,6 +254,11 @@ test.describe.serial("shoulder module acceptance", () => {
     await page.getByRole("button", { name: "Submit answers" }).click();
     await expect(page.getByTestId("quiz-result")).toContainText("Not passed yet.");
     await expect(page.getByTestId("quiz-result")).toContainText(`You got 0 of ${questions.length} correct.`);
+    // A failed attempt does not complete the module.
+    const check = await page.context().newPage();
+    await check.goto(learnPath(gym, assignment));
+    await expect(check.getByTestId("module-status")).toHaveAttribute("data-complete", "false");
+    await check.close();
 
     await page.getByTestId("quiz-result").getByRole("button", { name: "Try again" }).click();
     await answerAll(page, (q) => q.answerIndex);
