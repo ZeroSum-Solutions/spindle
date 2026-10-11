@@ -4,7 +4,16 @@ import { canonicalJson, type ReviewPacket } from "./packet";
 
 const CLAIM_RUBRIC = `For each claim item: approve only if the supplied evidence text, read on its own, fully supports the statement
 for the stated population, without extrapolation. A drafter's summary is not evidence. If evidence is missing,
-incomplete or only partly supports the claim, reject it. Set faithfulness to "faithful" only when you approve.`;
+incomplete or only partly supports the claim, reject it. Set faithfulness to "faithful" only when you approve.
+Each evidence entry's year and journal come from its PubMed record (the title from Crossref or PubMed), not from
+the drafter; a claim may cite them. An entry with kindOverride had its type recorded by a publisher because PubMed
+labels it otherwise. For a guidance override (position_stand, clinical_guideline, consensus_statement, care_pathway),
+approve a claim that relies on it only if its text itself reads as that kind of guidance from a professional body;
+otherwise reject with a BLOCK on the evidence level.
+For a reference override (anatomy_reference, nomenclature_reference), approve a claim that relies on it only if its text itself reads as an anatomy or nomenclature reference (a description of structures and names), not a study, trial, case report or notice, whatever its publication label; otherwise reject with a BLOCK on the evidence level. Such a source is not guidance: it may support only a
+"foundation" claim. Each claim has a domain. A "foundation" claim states anatomy or nomenclature (structure, names,
+attachments, what a part is); reject a foundation claim that asserts an effect, risk, treatment, prevalence or
+prognosis, and reject any claim whose only support is a reference override unless it is such a foundation claim.`;
 
 const CONTENT_RUBRIC = `For each block item: "supported" only if its cited claims together fully support exactly what the block says.
 For each lesson and course item: apply the safety rules below, check that nothing is diagnostic or overclaims, that

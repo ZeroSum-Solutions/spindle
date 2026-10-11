@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(200);
+select plan(230);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -1135,6 +1135,124 @@ select is((select count(*) from pg_proc p where p.prosecdef and p.pronamespace i
 select ok((select array_agg(distinct action) from private.content_audit where actor = '00000000-0000-0000-0000-0000000000c1')
   @> array['review_lesson', 'review_course', 'admit_media', 'check_media', 'set_media_status', 'refresh_media_metadata', 'review_block', 'review_claim'],
   'every new publisher action is audited under the named actor');
+
+-- 12. D-12: a recorded source-type override for a mislabelled guideline or position stand ------------
+select pg_temp.as_service();
+create function pg_temp.ps(doi text, ov jsonb, kind text default 'position_stand') returns jsonb language sql as $$
+  select jsonb_build_object('kind', kind, 'title', 'Synthetic position stand', 'doi', doi, 'license', 'Synthetic test record',
+    'kindOverride', ov)
+$$;
+create function pg_temp.ov(doc text default 'position_stand', types jsonb default '["Review", "Journal Article"]',
+  why text default 'The title and the society page name it a position stand; PubMed tags it only as a review.') returns jsonb
+language sql as $$ select jsonb_build_object('documentType', doc, 'justification', why, 'publicationTypes', types) $$;
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.1', pg_temp.ov(), 'systematic_review'))$$,
+  '22023', 'invalid source.kindOverride: only a guideline, position stand or open foundation reference can be recorded by override',
+  'an override is refused for a systematic review');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.2',
+  pg_temp.ov('position_stand', '["Randomized Controlled Trial", "Journal Article"]')))$$,
+  '22023', 'invalid source.kindOverride.publicationTypes: name a study or notice type; only guidance documents and open references can be overridden',
+  'an override is refused for a record PubMed types as a study');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.3',
+  pg_temp.ov('position_stand', '["Retraction of Publication"]')))$$,
+  '22023', 'invalid source.kindOverride.publicationTypes: name a study or notice type; only guidance documents and open references can be overridden',
+  'an override is refused for a notice');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.4', pg_temp.ov('narrative_review')))$$,
+  '22023', null, 'an override names a guidance document type');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.5', pg_temp.ov('position_stand', '["Review"]', 'Looks right.')))$$,
+  '22023', null, 'an override needs a real justification');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.6', pg_temp.ov() - 'publicationTypes'))$$,
+  '22023', null, 'an override records the publication types it overrides');
+select lives_ok($$select pg_temp.keep('ov_src', public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.7', pg_temp.ov('care_pathway'))))$$,
+  'a publisher records an override for a mislabelled guidance document');
+select pg_temp.reset_role();
+select results_eq(format($$select o.kind, o.document_type, o.publication_types, o.recorded_by, s.kind
+  from public.source_kind_overrides o join public.sources s on s.id = o.source_id where o.source_id = %L$$, pg_temp.id('ov_src')),
+  $$values ('position_stand'::text, 'care_pathway'::text, array['Review', 'Journal Article'], '00000000-0000-0000-0000-0000000000c1'::uuid, 'position_stand'::text)$$,
+  'the override is stored with its document type, overridden types and the publisher who recorded it');
+select is((select count(*) from private.content_audit where action = 'source_kind_override' and target = pg_temp.id('ov_src')), 1::bigint,
+  'the override is logged');
+select throws_ok(format($$update public.source_kind_overrides set justification = repeat('x', 50) where source_id = %L$$, pg_temp.id('ov_src')),
+  'P0001', 'source_kind_overrides rows are immutable', 'an override cannot be rewritten, even by the table owner');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select throws_ok('select * from public.source_kind_overrides', '42501', null, 'learners cannot read overrides');
+select pg_temp.reset_role();
+
+-- Open foundation references: only foundation claims may cite them (plan v3 section 4).
+select pg_temp.as_service();
+create function pg_temp.fr(doi text, ov jsonb, license text default 'CC BY 4.0') returns jsonb language sql as $$
+  select jsonb_build_object('kind', 'foundation_reference', 'title', 'Synthetic anatomy review', 'doi', doi, 'license', license)
+    || case when ov is null then '{}'::jsonb else jsonb_build_object('kindOverride', ov) end
+$$;
+create function pg_temp.frov(doc text default 'anatomy_reference') returns jsonb language sql as $$
+  select jsonb_build_object('documentType', doc, 'justification', 'An open-access anatomy review used for structure and naming only, never for effects.',
+    'publicationTypes', '["Review", "Journal Article"]'::jsonb)
+$$;
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.1', null))$$,
+  '22023', 'invalid source.kindOverride: a foundation reference is admitted only by a recorded override',
+  'a foundation reference needs a recorded override');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.2', pg_temp.frov(), 'All rights reserved'))$$,
+  '22023', 'invalid source.license: a foundation reference must carry an open licence (CC BY, CC0 or public domain)',
+  'a foundation reference must be open');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.3', pg_temp.frov('clinical_guideline')))$$,
+  '22023', null, 'a foundation reference is an anatomy or nomenclature reference, not guidance');
+select lives_ok($$select pg_temp.keep('fr_src', public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.4', pg_temp.frov())))$$,
+  'an open anatomy review is admitted as a foundation reference by override');
+select throws_ok(format($$select public.publisher_add_claim(pg_temp.pat(), jsonb_build_object('statement', 'Synthetic applied claim.',
+  'evidenceLevel', 'x', 'population', 'x', 'sourceIds', jsonb_build_array(%L)))$$, pg_temp.id('fr_src')),
+  '23514', 'only a foundation claim can cite a foundation reference', 'an applied claim cannot cite a foundation reference');
+select lives_ok(format($$select pg_temp.keep('fr_claim', public.publisher_add_claim(pg_temp.pat(), jsonb_build_object('statement',
+  'Synthetic anatomy claim.', 'evidenceLevel', 'Open anatomy reference', 'population', 'Adults', 'domain', 'foundation',
+  'sourceIds', jsonb_build_array(%L))))$$, pg_temp.id('fr_src')), 'a foundation claim cites a foundation reference');
+select is(public.publisher_claim_target(pg_temp.pat(), pg_temp.id('fr_claim')) ->> 'domain', 'foundation',
+  'the claim target names the domain the reviewer must check');
+select pg_temp.reset_role();
+select throws_ok(format($$update public.claims set domain = 'applied' where id = %L$$, pg_temp.id('fr_claim')),
+  'P0001', 'a claim''s domain is fixed when it is created', 'even the table owner cannot change a claim''s domain');
+insert into public.claims (id, statement, evidence_level, population, created_by)
+values ('76000000-0000-4000-8000-0000000000dd', 'Smuggled applied claim.', 'x', 'x', '00000000-0000-0000-0000-0000000000c1');
+select throws_ok(format($$insert into public.claim_sources values ('76000000-0000-4000-8000-0000000000dd', %L)$$, pg_temp.id('fr_src')),
+  '23514', 'only a foundation claim can cite a foundation reference', 'even the table owner cannot attach a foundation reference to an applied claim');
+
+-- Sol R1 on #26: restricted licences, every study and notice type, and truncation.
+select pg_temp.as_service();
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.5', pg_temp.frov(), 'CC BY-NC-SA 4.0'))$$,
+  '22023', 'invalid source.license: a foundation reference must carry an open licence (CC BY, CC0 or public domain)',
+  'a restricted CC licence is not open (PR26-01)');
+select lives_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.6', pg_temp.frov(), 'CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)'))$$,
+  'CC BY with a version and a link is open');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.8', pg_temp.ov('position_stand', '["Multicenter Study", "Journal Article"]')))$$,
+  '22023', 'invalid source.kindOverride.publicationTypes: name a study or notice type; only guidance documents and open references can be overridden',
+  'any study type blocks an override (PR26-02)');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.ps('10.5555/ov.9', pg_temp.ov('position_stand', '["Expression of Concern"]')))$$,
+  '22023', 'invalid source.kindOverride.publicationTypes: name a study or notice type; only guidance documents and open references can be overridden',
+  'a notice blocks an override (PR26-02)');
+select pg_temp.reset_role();
+select throws_ok('truncate public.source_kind_overrides cascade', 'P0001', 'source_kind_overrides cannot be truncated',
+  'even the table owner cannot truncate overrides (PR26-06)');
+
+create function pg_temp.old_hash(cid uuid) returns text language sql security definer as $$
+  select private.sha256(jsonb_build_object('id', c.id, 'statement', c.statement, 'evidenceLevel', c.evidence_level,
+    'population', c.population, 'sourceIds', coalesce((select jsonb_agg(cs.source_id order by cs.source_id)
+      from public.claim_sources cs where cs.claim_id = c.id), '[]'::jsonb)))
+  from public.claims c where c.id = cid
+$$;
+create function pg_temp.hash_of(cid uuid) returns text language sql security definer as $$ select private.claim_hash(cid) $$;
+select is(pg_temp.hash_of('76000000-0000-4000-8000-0000000000dd'), pg_temp.old_hash('76000000-0000-4000-8000-0000000000dd'),
+  'an applied claim keeps the hash it had before D-12');
+select isnt(pg_temp.hash_of(pg_temp.id('fr_claim')), pg_temp.old_hash(pg_temp.id('fr_claim')),
+  'a foundation claim''s hash covers its domain');
+
+select pg_temp.as_service();
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.7', pg_temp.frov(), 'CC BY 4.0; non-commercial use only'))$$,
+  '22023', 'invalid source.license: a foundation reference must carry an open licence (CC BY, CC0 or public domain)',
+  'a restriction after punctuation is not dropped (PR26-01 R2)');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.8', pg_temp.frov(), 'CC BY (NC-SA)'))$$,
+  '22023', 'invalid source.license: a foundation reference must carry an open licence (CC BY, CC0 or public domain)',
+  'a parenthesised restriction is not dropped (PR26-01 R2)');
+select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr('10.5555/fr.9', pg_temp.frov(), 'CC BY 4.0 (https://creativecommons.org/licenses/by-nc/4.0/)'))$$,
+  '22023', 'invalid source.license: a foundation reference must carry an open licence (CC BY, CC0 or public domain)',
+  'a licence URL must match an open licence');
+select pg_temp.reset_role();
 
 select * from finish();
 rollback;
