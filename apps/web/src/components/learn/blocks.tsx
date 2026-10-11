@@ -1,13 +1,13 @@
 import { ExternalLink, ImageOff, TriangleAlert } from "lucide-react";
 import type { LessonBlock, LessonResource, MediaAsset } from "@spindle/schema";
-import type { ClaimView } from "@/lib/learning/load";
-import { resolveContentUrl, resolveMediaUrl } from "@/lib/learning/media";
+import type { ClaimView } from "../../lib/learning/load";
+import { resolveContentUrl, resolveMediaUrl } from "../../lib/learning/media";
 import { ClaimDisclosure } from "./claim-disclosure";
 import { DIAGRAMS, DiagramFigure } from "./diagrams";
 import { SupportLabel } from "./labels";
 import { MediaImage, MediaUnavailable, MediaVideo } from "./media-image";
 import { QuizSelfCheck } from "./quiz-self-check";
-import { supportLabelPlan } from "@/lib/learning/presentation";
+import { supportLabelPlan } from "../../lib/learning/presentation";
 
 export interface BlockContext {
   /** The gym that owns the version, or null for global content. */
