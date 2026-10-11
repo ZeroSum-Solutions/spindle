@@ -6,17 +6,37 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { RunReceipt } from "../review/harness";
 import { canonicalJson } from "../review/packet";
+import { CONTEXT_SECONDS, descriptionTimesError } from "./timestamps";
 
 export const DESCRIBER_MODEL = "gemini-3.8-flash";
-/** Introductory list price per 1M tokens (Vertex AI pricing, through 2026-12-31); video billed as input. */
-export const DESCRIBER_PRICE = { inputPerM: 0.75, outputPerM: 3.75 } as const;
-/** Seconds either side of the segment, so omitted qualifications are visible. */
-export const CONTEXT_SECONDS = 15;
+/**
+ * Gemini Developer API paid-tier list prices per 1M tokens (video billed as input, thinking as
+ * output), read from https://ai.google.dev/gemini-api/docs/pricing on 2026-10-11. Each period
+ * holds only until its date; past the last one every call is refused until the prices are
+ * verified again (Sol PR20-06).
+ */
+export const DESCRIBER_PRICES = [
+  { until: "2027-01-01T00:00:00Z", inputPerM: 0.75, outputPerM: 3.75 },
+  { until: "2027-04-01T00:00:00Z", inputPerM: 1.5, outputPerM: 7.5 },
+] as const;
+export const DESCRIBER_PRICES_VERIFIED_AT = "2026-10-11";
 export const MAX_DESCRIBE_SECONDS = 600;
 export const MAX_OUTPUT_TOKENS = 4096;
 export const THINKING_BUDGET = 1024;
-/** Observed about 91 video tokens per second (2026-10-11 probe); bound with headroom. */
-const VIDEO_TOKENS_PER_SECOND_BOUND = 150;
+/**
+ * The documented upper rate: about 300 tokens per second of video at high media resolution
+ * (https://ai.google.dev/gemini-api/docs/video-understanding, 2026-10-11). The request uses the
+ * default (about 100); a 2026-10-11 probe measured 91.
+ */
+const VIDEO_TOKENS_PER_SECOND_BOUND = 300;
+const PROMPT_TOKENS_BOUND = 2000;
+
+/** The verified price for a call made at this time, or a refusal. */
+export function describerPrice(at: Date): { inputPerM: number; outputPerM: number } {
+  const price = DESCRIBER_PRICES.find((p) => at.getTime() < Date.parse(p.until));
+  if (!price) throw new Error(`describer prices were verified on ${DESCRIBER_PRICES_VERIFIED_AT} and no longer cover this date; verify them again before spending`);
+  return price;
+}
 
 export interface SegmentRef {
   mediaId: string;
@@ -49,7 +69,8 @@ Return JSON with exactly these keys:
 "access": "direct-video" only if you received this video's audio and frames as input;
 "spoken": [{"t": "m:ss", "text": "..."}], the speaker's instructions and claims, close to verbatim;
 "visual": [{"t": "m:ss", "text": "..."}], what is visibly demonstrated: body position, equipment, load, movement, range, on-screen text;
-"uncertain": everything in the window you could not hear or see clearly. Do not guess; never fill gaps.`;
+"uncertain": everything in the window you could not hear or see clearly. Do not guess; never fill gaps.
+Every "t" is the time in the full video (so between ${w.start}s and ${w.end}s), not the time from the start of the window.`;
 
 /** The exact request body. Its digest is the describer run's packet digest. */
 export function describeRequest(seg: SegmentRef): object {
@@ -63,11 +84,12 @@ export function describeRequest(seg: SegmentRef): object {
   };
 }
 
-/** An upper bound on one describe call's cost, for the spend cap. */
-export function estimateMaxCostUsd(seg: SegmentRef): number {
+/** An upper bound on one describe call's cost at this time, for the spend cap. */
+export function estimateMaxCostUsd(seg: SegmentRef, at: Date): number {
   const w = describeWindow(seg);
-  const input = (w.end - w.start) * VIDEO_TOKENS_PER_SECOND_BOUND + 2000;
-  return (input * DESCRIBER_PRICE.inputPerM + (MAX_OUTPUT_TOKENS + THINKING_BUDGET) * DESCRIBER_PRICE.outputPerM) / 1e6;
+  const price = describerPrice(at);
+  const input = (w.end - w.start) * VIDEO_TOKENS_PER_SECOND_BOUND + PROMPT_TOKENS_BOUND;
+  return (input * price.inputPerM + (MAX_OUTPUT_TOKENS + THINKING_BUDGET) * price.outputPerM) / 1e6;
 }
 
 const usageSchema = z.object({
@@ -76,19 +98,20 @@ const usageSchema = z.object({
   thoughtsTokenCount: z.number().int().min(0).default(0),
 });
 
-export function costUsd(usage: z.input<typeof usageSchema>): number {
+export function costUsd(usage: z.input<typeof usageSchema>, at: Date): number {
   const u = usageSchema.parse(usage);
-  return Math.round(((u.promptTokenCount * DESCRIBER_PRICE.inputPerM + (u.candidatesTokenCount + u.thoughtsTokenCount) * DESCRIBER_PRICE.outputPerM) / 1e6) * 1e6) / 1e6;
+  const price = describerPrice(at);
+  return Math.round(((u.promptTokenCount * price.inputPerM + (u.candidatesTokenCount + u.thoughtsTokenCount) * price.outputPerM) / 1e6) * 1e6) / 1e6;
 }
 
 export type DescribeResult =
   | { ok: true; description: SegmentDescription; run: RunReceipt; costUsd: number; uncertain: boolean }
-  | { ok: false; error: string; costUsd: number };
+  /** costUsd is null when the charge is unknown: the call may have been billed (Sol PR20-02). */
+  | { ok: false; error: string; costUsd: number | null };
 
 const responseSchema = z.object({
   modelVersion: z.string().optional(),
   responseId: z.string().optional(),
-  usageMetadata: usageSchema.optional(),
   candidates: z.array(z.object({ content: z.object({ parts: z.array(z.object({ text: z.string().optional() }).passthrough()) }).optional(), finishReason: z.string().optional() }).passthrough()).optional(),
 });
 
@@ -98,11 +121,19 @@ export interface DescribeDeps {
   now: () => Date;
 }
 
-/** Calls the Gemini API once. The key travels only in a header and never reaches an error or receipt. */
+/** Only a short code from the response may reach an error; anything else is replaced. */
+const code = (v: unknown, re: RegExp, fallback: string) => (typeof v === "string" && re.test(v) ? v : fallback);
+
+/**
+ * Calls the Gemini API once. The key travels only in a header and never reaches an error or
+ * receipt. The cost comes from the response's usage alone; without it the cost is unknown.
+ */
 export async function describeSegment(seg: SegmentRef, deps: DescribeDeps): Promise<DescribeResult> {
   const body = describeRequest(seg);
   const digest = createHash("sha256").update(canonicalJson(body)).digest("hex");
-  const scrub = (s: string) => (deps.apiKey ? s.split(deps.apiKey).join("***") : s);
+  const at = deps.now();
+  const scrub = (s: string) => (deps.apiKey ? s.split(deps.apiKey).join("***") : s).slice(0, 300);
+  const fail = (error: string, cost: number | null): DescribeResult => ({ ok: false, error: scrub(error), costUsd: cost });
   let res: Response;
   try {
     res = await deps.fetch(`https://generativelanguage.googleapis.com/v1beta/models/${DESCRIBER_MODEL}:generateContent`, {
@@ -112,37 +143,41 @@ export async function describeSegment(seg: SegmentRef, deps: DescribeDeps): Prom
       signal: AbortSignal.timeout(600_000),
     });
   } catch (e) {
-    return { ok: false, error: scrub(`describer request failed: ${e instanceof Error ? e.message : String(e)}`).slice(0, 300), costUsd: 0 };
+    return fail(`describer request failed: ${e instanceof Error ? e.message : String(e)}`, null);
   }
   let json: unknown;
   try {
     json = await res.json();
   } catch {
-    return { ok: false, error: `describer HTTP ${res.status}: not JSON`, costUsd: 0 };
+    return fail(`describer HTTP ${res.status}: not JSON`, null);
   }
+  const usage = usageSchema.safeParse((json as { usageMetadata?: unknown } | null)?.usageMetadata);
+  const cost = usage.success ? costUsd(usage.data, at) : null;
+  if (!res.ok) return fail(`describer HTTP ${res.status}`, cost);
   const parsed = responseSchema.safeParse(json);
-  const cost = parsed.success && parsed.data.usageMetadata ? costUsd(parsed.data.usageMetadata) : 0;
-  if (!res.ok) return { ok: false, error: `describer HTTP ${res.status}`, costUsd: cost };
-  if (!parsed.success) return { ok: false, error: "describer response is malformed", costUsd: cost };
+  if (!parsed.success) return fail("describer response is malformed", cost);
+  if (cost === null) return fail("describer response reports no usage, so its cost is unknown", null);
   const cand = parsed.data.candidates?.[0];
-  if (cand?.finishReason !== "STOP") return { ok: false, error: `describer did not finish (${cand?.finishReason ?? "no candidate"})`, costUsd: cost };
+  if (cand?.finishReason !== "STOP") return fail(`describer did not finish (${code(cand?.finishReason, /^[A-Z_]{1,40}$/, cand ? "unexpected reason" : "no candidate")})`, cost);
   const text = (cand.content?.parts ?? []).map((p) => p.text ?? "").join("");
   let desc: unknown;
   try {
     desc = JSON.parse(text);
   } catch {
-    return { ok: false, error: "describer answer is not JSON", costUsd: cost };
+    return fail("describer answer is not JSON", cost);
   }
   const d = segmentDescriptionSchema.safeParse(desc);
-  if (!d.success) return { ok: false, error: `describer answer is not a complete direct-video description: ${d.error.issues[0]?.message ?? ""}`.slice(0, 300), costUsd: cost };
+  if (!d.success) return fail("describer answer is not a complete direct-video description", cost);
+  const times = descriptionTimesError(d.data, seg);
+  if (times) return fail(`describer answer does not describe the segment: ${times}`, cost);
   const model = parsed.data.modelVersion ?? DESCRIBER_MODEL;
-  if (!model.startsWith(DESCRIBER_MODEL)) return { ok: false, error: `describer answered with ${model}`, costUsd: cost };
+  if (!model.startsWith(DESCRIBER_MODEL)) return fail(`describer answered with ${code(model, /^[a-z0-9][a-z0-9.-]{0,60}$/, "another model")}`, cost);
   const session = (parsed.data.responseId ?? "").replace(/[^A-Za-z0-9._:-]/g, "");
-  if (!session) return { ok: false, error: "describer response has no id", costUsd: cost };
+  if (!session) return fail("describer response has no id", cost);
   return {
     ok: true,
     description: d.data,
-    run: { model: DESCRIBER_MODEL, session: `gemini-${session}`.slice(0, 200), packetDigest: digest, reviewedAt: deps.now().toISOString() },
+    run: { model: DESCRIBER_MODEL, session: scrub(`gemini-${session}`).slice(0, 200), packetDigest: digest, reviewedAt: at.toISOString() },
     costUsd: cost,
     uncertain: d.data.uncertain.length > 0,
   };

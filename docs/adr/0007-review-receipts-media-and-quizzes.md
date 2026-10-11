@@ -29,7 +29,11 @@
   - The describer approves nothing. Sol reviews the description (as fenced, untrusted data), the lessons that embed the clip and SAFETY.md as a `segment` item in the fail-closed harness.
   - `publisher_record_media_check` stores Sol's run as the receipt and the describer run in `describer_model`, `describer_run_id`, `describer_cost_usd` and `described_at`. A passing segment check without a describer run is refused for every writer.
   - A describer failure means not approved. Uncertain content records a failed segment check, which stops playback.
-  - The script refuses a call that could take the month past $5 (private spend ledger) and refuses a second description of a clip within 90 days.
+  - Spend and interval are enforced before a call is sent. Under an exclusive lock on the private ledger, the script refuses a call made within 90 days of the clip's last description or call (whatever came of it), or one whose upper-bound cost could take the UTC month past $5. Otherwise it writes a durable reservation at that bound in the current month. The reservation is settled with the cost from the response's usage. An unsettled reservation, or one with an unknown cost (timeout, unreadable response, no usage), keeps its full bound. The bound uses the documented 300 video tokens per second and the Gemini API list prices verified on 2026-10-11, each valid only until a stated date; past it every call is refused (Sol R1 PR20-01, 02, 03, 05, 06).
+  - Every description line must carry a valid time inside the described window, and at least one visual line must fall inside the selected segment (PR20-08).
+  - Only a `gpt-6.1-sol` run can be recorded as a segment review, and the database refuses any Gemini run as a segment reviewer (PR20-04).
+  - A passing segment check stores the lessons it was reviewed with (`context`: lesson id and lesson hash). The database compares that set with the lessons that embed the clip now, under a share lock on their courses. The publish gate requires the clip's latest segment check to cover each lesson exactly as it is. An edited lesson, or a lesson that embeds the clip later, needs a fresh Sol review; `segment-review.ts --reuse <dir>` sends the existing description again with the current lessons (PR20-10).
+  - A passing segment check from before this migration (no describer run or lesson context) counts as no segment check (PR20-07).
   - `version_media` reports a playable clip as `review: 'model-described'`. No human has checked it until the D-08 launch review, and the player must not claim otherwise.
 
 ## Why
