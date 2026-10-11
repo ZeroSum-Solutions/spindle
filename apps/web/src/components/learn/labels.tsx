@@ -109,11 +109,11 @@ export function ProgressBar({ done, total }: { done: number; total: number }) {
 /** Shown once per lesson: what the two support labels mean. */
 export function SupportLegend() {
   return (
-    <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 rounded-card border border-border bg-surface p-4 text-label">
+    <dl className="grid grid-cols-1 items-start gap-x-3 gap-y-1 rounded-card sm:grid-cols-[auto_1fr] sm:items-center sm:gap-y-2 border border-border bg-surface p-4 text-label">
       <dt>
         <SupportLabel support="science" />
       </dt>
-      <dd className="text-text-muted">Backed by an approved research claim. Open its sources under the block.</dd>
+      <dd className="mb-2 text-text-muted sm:mb-0">Backed by an approved research claim. Open its sources under the block.</dd>
       <dt>
         <SupportLabel support="practice-based" />
       </dt>
