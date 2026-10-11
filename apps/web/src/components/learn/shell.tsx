@@ -11,17 +11,20 @@ export function LearnShell({
   gym,
   back,
   frame = "column",
+  dock,
   children,
 }: {
   gym?: string;
   back?: { href: string; label: string };
   frame?: keyof typeof FRAME;
+  /** The bottom lesson bar. The page reserves its measured height (--dock-h; 4.5rem until measured) after the content. */
+  dock?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <>
       <AppHeader context={gym} frame={FRAME[frame]} />
-      <main className="flex w-full flex-1 flex-col px-4 py-8 md:px-8 md:py-12">
+      <main className={`flex w-full flex-1 flex-col px-4 pt-8 md:px-8 md:pt-12 ${dock ? "pb-[calc(var(--dock-h,4.5rem)+2rem)] md:pb-[calc(var(--dock-h,4.5rem)+3rem)]" : "pb-8 md:pb-12"}`}>
         <div data-frame={frame} className={`mx-auto flex w-full flex-col gap-6 ${FRAME[frame]}`}>
         {back ? (
           <Link href={back.href} className="-ml-1 inline-flex min-h-11 items-center gap-1.5 self-start px-1 text-label text-brand hover:text-brand-hover">
@@ -32,6 +35,7 @@ export function LearnShell({
         {children}
         </div>
       </main>
+      {dock}
     </>
   );
 }

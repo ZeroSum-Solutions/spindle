@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { LessonBlocks } from "@/components/learn/blocks";
 import { LayerLabel, SupportLegend, VersionTag } from "@/components/learn/labels";
 import { ModuleStatusCard } from "@/components/learn/module-status";
+import { LessonDock } from "@/components/learn/lesson-dock";
 import { LessonOutline } from "@/components/learn/outline";
+import { ProgressTrack, segmentsOf } from "@/components/learn/progress-track";
 import { LearnShell } from "@/components/learn/shell";
 import { MeasurementSpecimen, StopReferSpecimen } from "../../foundations-board";
 import { blocks, claims, FLAGGED, SPECIMEN_INTEGRITY, view } from "../../specimen-data";
@@ -34,10 +36,19 @@ async function DesignScreen({ params }: { params: Promise<{ screen: string }> })
   const back = { href: "/design#screens", label: "Design kit" };
   if (screen === "lesson") {
     return (
-      <LearnShell gym="Synthetic gym" back={back} frame="reading">
+      <LearnShell
+        gym="Synthetic gym"
+        back={back}
+        frame="reading"
+        dock={
+          <LessonDock sheetId="design-outline-sheet">
+            <ProgressTrack segments={segmentsOf(view.lessons, 1)} />
+          </LessonDock>
+        }
+      >
         <div data-layout="reading" className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_minmax(0,46rem)] lg:justify-center">
           <div className="lg:sticky lg:top-6 lg:self-start">
-            <LessonOutline view={view} base="/design/screens" currentId="l2" />
+            <LessonOutline view={view} base="/design/screens" currentId="l2" phone="sheet" sheetId="design-outline-sheet" />
           </div>
           <article className="flex min-w-0 max-w-[46rem] flex-col gap-8 text-reading" aria-labelledby="lesson-title">
             <header className="flex flex-col gap-3">
@@ -49,7 +60,6 @@ async function DesignScreen({ params }: { params: Promise<{ screen: string }> })
               <h1 id="lesson-title" className="text-heading-lesson text-text">
                 Synthetic lesson 2
               </h1>
-              <MeasurementSpecimen done={1} total={5} />
             </header>
             <SupportLegend supports={["science", "practice-based"]} />
             <LessonBlocks blocks={blocks} ctx={{ orgId: null, claims, flagged: new Set([FLAGGED]), integrity: SPECIMEN_INTEGRITY }} />
