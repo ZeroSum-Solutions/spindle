@@ -19,6 +19,8 @@ let storageUp = false;
 
 const PNG_1PX = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
 
+const CUFF_LEGEND = ["subscapularis", "supraspinatus", "infraspinatus", "teres-minor"] as const;
+
 type CourseIds = { course: string; part: string; l: string[] };
 
 function lessonOne(w: PlayerWorld = world, set: CourseIds = ids, claim: string = claimId): LessonSpec {
@@ -33,6 +35,18 @@ function lessonOne(w: PlayerWorld = world, set: CourseIds = ids, claim: string =
       { kind: "callout", content: { label: "Synthetic note", text: "Synthetic callout." }, support: "practice-based", claimIds: [] },
       { kind: "checklist", content: ["Synthetic step one", "Synthetic step two"], support: "practice-based", claimIds: [] },
       { kind: "image", content: { kind: "image", src: `/media/content/${w.run}/absent.png`, alt: "Synthetic absent figure", caption: "Synthetic caption", provenanceId: "synthetic" } },
+      // A real drawing (known id) with a legend, bound to a claim: the reviewed science diagram path.
+      {
+        kind: "diagram",
+        content: {
+          diagramId: "shoulder-cuff",
+          alt: "Synthetic cuff description for the drawing test.",
+          caption: "Synthetic cuff caption",
+          legend: CUFF_LEGEND.map((key) => ({ key, label: `Synthetic ${key}.`, text: `Synthetic text for ${key}.` })),
+        },
+        support: "science",
+        claimIds: [claim],
+      },
       { kind: "diagram", content: { diagramId: "synthetic-diagram", alt: "Synthetic diagram", caption: "Synthetic diagram caption", legend: [] }, support: "practice-based", claimIds: [] },
       {
         kind: "quiz",
@@ -200,7 +214,22 @@ test.describe.serial("learner flow", () => {
     await expect(p.locator('article section[data-support="practice-based"]')).toHaveCount(5);
     await expect(p.locator('[data-block="callout"]')).toContainText("Synthetic callout.");
     await expect(p.locator('[data-block="checklist"] li')).toHaveCount(2);
-    await expect(p.locator('[data-block="diagram"]')).toContainText("This diagram is not available yet.");
+    await expect(p.locator('[data-block="diagram"][data-support="practice-based"]')).toContainText("This diagram is not available yet.");
+    // The reviewed science diagram draws: its name is the caption, its description the alt text, with
+    // a numbered marker per legend item, the legend in HTML, and its sources reachable by keyboard.
+    const drawing = p.locator('section[data-block="diagram"][data-support="science"]');
+    await expect(drawing.getByText("Science", { exact: true })).toBeVisible();
+    const svg = drawing.getByRole("img", { name: "Synthetic cuff caption" });
+    await expect(svg).toBeVisible();
+    await expect(svg).toHaveAccessibleDescription("Synthetic cuff description for the drawing test.");
+    await expect(drawing.locator("figcaption")).toContainText("Synthetic cuff caption");
+    await expect(drawing.locator("[data-marker]")).toHaveCount(CUFF_LEGEND.length);
+    for (const key of CUFF_LEGEND) await expect(drawing).toContainText(`Synthetic text for ${key}.`);
+    const drawingSources = drawing.locator("summary", { hasText: "Show sources" });
+    await drawingSources.focus();
+    await expect(drawingSources).toBeFocused();
+    await p.keyboard.press("Enter");
+    await expect(drawing.getByText(`Synthetic claim ${world.run}.`)).toBeVisible();
     // A storage object that does not exist: honest placeholder, no broken image.
     await expect(p.locator('[data-block="image"] [data-media="unavailable"]')).toContainText("Synthetic absent figure");
     // A graded (science) question shows its prompt and points to the module quiz; the lesson never reveals its answer.
@@ -228,6 +257,11 @@ test.describe.serial("learner flow", () => {
       await expect(p.getByRole("main")).toBeVisible();
       expect(await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), path).toBe(0);
     }
+    // The drawing fits the 320px column, legend and markers included.
+    const narrow = p.locator('section[data-block="diagram"][data-support="science"]');
+    await expect(narrow.getByRole("img", { name: "Synthetic cuff caption" })).toBeVisible();
+    const box = await narrow.boundingBox();
+    expect(box && box.x >= 0 && box.x + box.width <= 320, "the drawing stays inside 320px").toBe(true);
     // Long identifiers in open sources wrap instead of widening the page.
     await p.locator('[data-block="paragraph"][data-support="science"] summary').click();
     await expect(p.getByRole("link", { name: /DOI 10\.5555/ })).toBeVisible();
