@@ -13,7 +13,12 @@ otherwise reject with a BLOCK on the evidence level.
 For a reference override (anatomy_reference, nomenclature_reference), approve a claim that relies on it only if its text itself reads as an anatomy or nomenclature reference (a description of structures and names), not a study, trial, case report or notice, whatever its publication label; otherwise reject with a BLOCK on the evidence level. Such a source is not guidance: it may support only a
 "foundation" claim. Each claim has a domain. A "foundation" claim states anatomy or nomenclature (structure, names,
 attachments, what a part is); reject a foundation claim that asserts an effect, risk, treatment, prevalence or
-prognosis, and reject any claim whose only support is a reference override unless it is such a foundation claim.`;
+prognosis, and reject any claim whose only support is a reference override unless it is such a foundation claim.
+An entry may carry excerpts: open-licence full-text sections ("europepmc-fulltext") or a short excerpt a publisher
+entered from a source without an open licence ("publisher-excerpt", at most 300 words), each with a locator. Treat
+them as evidence from that source, like its abstract. If an excerpt is too short, cut off or lacks the context a
+claim needs (for example the population, the comparison or a qualifier), reject the claim and say in a BLOCK finding
+that the excerpt is insufficient and what is missing.`;
 
 const CONTENT_RUBRIC = `For each block item: "supported" only if its cited claims together fully support exactly what the block says.
 For each lesson and course item: apply the safety rules below, check that nothing is diagnostic or overclaims, that

@@ -24,7 +24,7 @@ describe("the shoulder complex drawing", () => {
   const spec = DRAWINGS["shoulder-complex-front"]!;
   const legend = ["sternoclavicular", "acromioclavicular", "glenohumeral", "scapula"].map((key) => ({ key, label: `Synthetic ${key}`, text: "" }));
 
-  it("numbers its four places from the block's legend, with a leader to the ball and socket", () => {
+  it("numbers its four places from the block's legend, with a leader to the glenohumeral joint", () => {
     const html = renderToStaticMarkup(createElement(Drawing, { spec, alt: "Synthetic alt", legend }));
     expect([...html.matchAll(/data-marker="(\d)" data-anchor="([a-z]+)"/g)].map((m) => [m[1], m[2]])).toEqual(legend.map((l, i) => [String(i + 1), l.key]));
     expect(html).toContain('data-leader="glenohumeral"');

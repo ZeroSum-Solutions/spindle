@@ -117,4 +117,13 @@ describe("the shoulder drafts' diagram blocks", () => {
     expect(content.legend.length).toBeGreaterThan(0);
     for (const item of content.legend) expect(Object.keys(spec.anchors), item.key).toContain(item.key);
   });
+
+  it("use the drafts' joint names: no diagram says ball-and-socket (#33 dropped it from lesson 1)", () => {
+    for (const b of blocks) {
+      const words = [b.content.alt, b.content.caption, ...b.content.legend.flatMap((l) => [l.label, l.text])].join(" ");
+      expect(words, b.content.diagramId).not.toMatch(/ball[- ]and[- ]socket/i);
+    }
+    const front = blocks.find((b) => b.content.diagramId === "shoulder-complex-front")!.content;
+    expect(front.legend.find((l) => l.key === "glenohumeral")?.label).toBe("Glenohumeral joint.");
+  });
 });

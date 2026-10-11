@@ -4,7 +4,7 @@ import { ACCENT_FILL, CONTEXT, P, STROKE, SURFACE_FILL, type DrawingSpec } from 
 // docs/design/spindle/asset-provenance.json). The rotator cuff of a left shoulder, front and
 // back. Hand-written geometry, not traced from any atlas or image; not to scale. It draws
 // only what the lesson's cuff claim states: four muscles that start on the shoulder blade
-// and attach to the top of the humerus, around the ball and socket. Geometry and named
+// and attach to the top of the humerus, around the glenohumeral joint. Geometry and named
 // anchors only: every word comes from the lesson's diagram block.
 
 const CUFF_VIEW = { width: 480, height: 270 } as const;
