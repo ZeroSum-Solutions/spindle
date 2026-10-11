@@ -10,17 +10,22 @@ const JATS = `<?xml version="1.0"?><!DOCTYPE article PUBLIC "-//NLM//DTD JATS//E
 <sec id="s1"><title>1. Anatomy</title><p>The scapula is a flat bone &amp; rests on the thorax (p &lt; 0.05).</p>
   <fig id="f1"><label>Figure 1</label><caption><p>Figure caption is skipped.</p></caption></fig>
   <sec id="s1a"><title>1.1 Muscles</title><p>Serratus anterior attaches to the <italic>medial</italic> border.</p>
-    <table-wrap><table><tr><td>table text skipped</td></tr></table></table-wrap></sec>
+    <table-wrap id="t1"><label>Table 1</label><caption><p>Synthetic muscles.</p></caption><table><thead><tr><th>Muscle</th><th>Insertion</th></tr></thead>
+      <tbody><tr><td>Subscapularis</td><td>Lesser tubercle</td></tr><tr><td>Supraspinatus</td><td>Greater <italic>tubercle</italic></td></tr></tbody></table>
+      <table-wrap-foot><p>Synthetic footnote.</p></table-wrap-foot></table-wrap></sec>
   <p>After the subsection.<![CDATA[ x<y ]]></p></sec>
 <sec id="s2"><title>2. Treatment</title><p>Not anatomy.</p></sec>
-</body><back><ref-list><ref><p>Reference text.</p></ref></ref-list></back></article>`;
+</body><back><ref-list><ref><p>Reference text.</p></ref></ref-list></back>
+<floats-group><table-wrap id="t2"><label>Table 2</label><caption><p>Floating table.</p></caption><table><tbody><tr><td>A</td><td>B</td></tr></tbody></table></table-wrap></floats-group></article>`;
 
 describe("jatsSections", () => {
-  it("returns body sections with their own prose and a title path, skipping figures, tables, front and back", () => {
+  it("returns body sections with their own prose and a title path, then tables as header: value rows, skipping figures, front and back", () => {
     expect(jatsSections(JATS)).toEqual([
       { locator: "Section: 1. Anatomy > 1.1 Muscles", text: "Serratus anterior attaches to the medial border." },
       { locator: "Section: 1. Anatomy", text: "The scapula is a flat bone & rests on the thorax (p < 0.05). After the subsection. x<y" },
       { locator: "Section: 2. Treatment", text: "Not anatomy." },
+      { locator: "Table: Table 1", text: "Synthetic muscles. Muscle: Subscapularis; Insertion: Lesser tubercle. Muscle: Supraspinatus; Insertion: Greater tubercle. Synthetic footnote." },
+      { locator: "Table: Table 2", text: "Floating table. A; B." },
     ]);
   });
 });
@@ -30,6 +35,7 @@ describe("selectSections", () => {
   it("picks the named sections under an open licence", () => {
     const picked = selectSections(sections, ["anatomy"], "cc-by");
     expect(picked.map((p) => p.locator)).toEqual(["Section: 1. Anatomy > 1.1 Muscles", "Section: 1. Anatomy"]);
+    expect(selectSections(sections, ["Table 1"], "cc-by").map((p) => p.locator)).toEqual(["Table: Table 1"]);
     expect(picked.every((p) => p.origin === "europepmc-fulltext" && p.license === "cc-by")).toBe(true);
   });
   it.each([

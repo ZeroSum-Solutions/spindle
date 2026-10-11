@@ -37,11 +37,25 @@ const decode = (t: string) =>
 // Well-formed XML: text never holds a raw "<", so one token pattern suffices.
 const TOKEN = /<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>|<\?[\s\S]*?\?>|<!(?!\[CDATA\[)[^>]*>|<(\/?)([A-Za-z_][\w.:-]*)((?:\s+[^\s=/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>|([^<]+)/g;
 /** Text inside these elements is not section prose. */
-const SKIP = new Set(["table-wrap", "fig", "fn-group", "ref-list", "supplementary-material", "disp-formula", "inline-formula", "graphic", "media", "label"]);
+const SKIP = new Set(["fig", "fn-group", "ref-list", "supplementary-material", "disp-formula", "inline-formula", "graphic", "media", "label"]);
 
-/** The body's sections in document order, each with its own prose (nested sections apart) and its title path. */
+interface TableState { label: string; caption: string; head: string[][]; rows: string[][]; row: string[] | null; cell: string | null; part: "label" | "caption" | "head" | "body" | "foot" | null; foot: string }
+
+function tableText(t: TableState): string {
+  const head = t.head[t.head.length - 1] ?? [];
+  const rows = t.rows.map((r) => r.map((v, i) => (head[i] ? `${head[i]}: ${v}` : v)).join("; "));
+  return [t.caption, ...rows.map((r) => `${r}.`), t.foot].map((x) => x.replace(/\s+/g, " ").trim()).filter(Boolean).join(" ");
+}
+
+/**
+ * The body's sections in document order, each with its own prose (nested sections apart) and its
+ * title path, then one entry per table ("Table: <label>"): caption, rows as "header: value" pairs,
+ * and table footnotes. Figures, references and the front matter are skipped.
+ */
 export function jatsSections(xml: string): { locator: string; text: string }[] {
   const out: { locator: string; text: string }[] = [];
+  const tables: { locator: string; text: string }[] = [];
+  let table: TableState | null = null;
   const secs: { title: string; parts: string[] }[] = [];
   const stack: string[] = [];
   let inBody = 0;
@@ -58,10 +72,44 @@ export function jatsSections(xml: string): { locator: string; text: string }[] {
     const [, cdata, slash, name, , selfClose, text] = m;
     if (name) {
       if (selfClose) continue;
+      if (table && inBody && !skip) {
+        if (!slash) {
+          stack.push(name);
+          if (name === "label") table.part = "label";
+          else if (name === "caption") table.part = "caption";
+          else if (name === "thead") table.part = "head";
+          else if (name === "tbody") table.part = "body";
+          else if (name === "table-wrap-foot") table.part = "foot";
+          else if (name === "tr") table.row = [];
+          else if (name === "td" || name === "th") table.cell = "";
+          continue;
+        }
+        while (stack.length && stack[stack.length - 1] !== name) stack.pop();
+        stack.pop();
+        if (name === "td" || name === "th") {
+          table.row?.push((table.cell ?? "").replace(/\s+/g, " ").trim());
+          table.cell = null;
+        } else if (name === "tr" && table.row) {
+          (table.part === "head" ? table.head : table.rows).push(table.row);
+          table.row = null;
+        } else if (name === "label" || name === "caption" || name === "table-wrap-foot") table.part = null;
+        else if (name === "table-wrap") {
+          const label = table.label.replace(/\s+/g, " ").trim() || `Table ${tables.length + 1}`;
+          const text = tableText(table);
+          if (text) tables.push({ locator: `Table: ${label}`, text });
+          table = null;
+        }
+        continue;
+      }
       if (!slash) {
         stack.push(name);
-        if (name === "body") inBody++;
+        // Floats (tables) may sit in <floats-group> after the body; they count like body content.
+        if (name === "body" || name === "floats-group") inBody++;
         if (!inBody) continue;
+        if (name === "table-wrap" && !skip) {
+          table = { label: "", caption: "", head: [], rows: [], row: null, cell: null, part: null, foot: "" };
+          continue;
+        }
         if (SKIP.has(name)) skip++;
         else if (name === "sec") secs.push({ title: "", parts: [] });
         else if (name === "title" && secs.length && stack[stack.length - 2] === "sec") {
@@ -71,8 +119,8 @@ export function jatsSections(xml: string): { locator: string; text: string }[] {
       } else {
         while (stack.length && stack[stack.length - 1] !== name) stack.pop();
         stack.pop();
-        if (name === "body") inBody = Math.max(0, inBody - 1);
-        if (!inBody && name !== "body") continue;
+        if (name === "body" || name === "floats-group") inBody = Math.max(0, inBody - 1);
+        if (!inBody && name !== "body" && name !== "floats-group") continue;
         if (SKIP.has(name)) skip = Math.max(0, skip - 1);
         else if (name === "sec" && secs.length) close();
         else if (name === "title" && titleFor) {
@@ -84,11 +132,18 @@ export function jatsSections(xml: string): { locator: string; text: string }[] {
     }
     const chunk = cdata ?? (text !== undefined ? decode(text) : "");
     if (!chunk || !inBody || skip) continue;
+    if (table) {
+      if (table.cell !== null) table.cell += chunk;
+      else if (table.part === "label") table.label += chunk;
+      else if (table.part === "caption") table.caption += ` ${chunk}`;
+      else if (table.part === "foot") table.foot += ` ${chunk}`;
+      continue;
+    }
     if (titleFor) titleText += chunk;
     else if (inP && secs.length) secs[secs.length - 1]!.parts.push(chunk);
   }
   while (secs.length) close();
-  return out;
+  return [...out, ...tables];
 }
 
 /** Europe PMC's open-access full text (JATS XML) for a PMCID, or null when it has none. */
