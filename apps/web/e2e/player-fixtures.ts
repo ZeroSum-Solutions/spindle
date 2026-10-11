@@ -399,6 +399,13 @@ export class PlayerWorld {
       commit;`);
   }
 
+  /** P4-A2: the publisher revokes one admitted held text through publisher_revoke_tenant_text. */
+  revokeText(textId: string): void {
+    sql(`begin; select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+      select public.publisher_revoke_tenant_text(${lit(this.publisherId)}, ${lit(textId)}, jsonb_build_object('reason', 'Synthetic e2e revocation.'));
+      commit;`);
+  }
+
   /** P4-A2: the publisher revokes a gym course's admitted title through publisher_revoke_tenant_text. */
   revokeTitle(courseId: string): void {
     sql(`begin; select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);

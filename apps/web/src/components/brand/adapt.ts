@@ -55,3 +55,29 @@ export function versionTexts(rows: readonly VersionTenantText[]): { titleRevoked
 export function shownCourseTitle(title: string, texts: { titleRevoked: boolean }): string {
   return texts.titleRevoked ? TENANT_TEXT_FALLBACKS.courseTitle : title;
 }
+
+/** What the catalog needs of one assignment: the version it opens and that version's card facts. */
+export interface CatalogAssignment {
+  id: string;
+  versionNumber: number;
+  available: boolean;
+  view?: { title: string; layer: CourseCardView["layer"]; done: number; next: { slug: string } | null };
+  card?: { cover?: CourseCardView["cover"]; tags: readonly string[]; lessonCount: number; durationMinutes: number; blurb: string | null };
+}
+
+/**
+ * One card per assigned course, built from the version the card opens (the newest assigned
+ * version), never from a newer published version the member is not assigned. Earlier assigned
+ * versions stay reachable as plain links beside the card.
+ */
+export function catalogCards(
+  _courses: readonly { latest: CatalogAssignment; earlier: readonly CatalogAssignment[] }[],
+  _base: string,
+): { card: CourseCardView; earlier: { href: string; label: string }[] }[] {
+  return [];
+}
+
+/** The hero's one action: continue where the member left off, start if nothing is started, none when all is done. */
+export function catalogAction(_courses: readonly { latest: CatalogAssignment }[], _base: string): { label: string; href: string } | undefined {
+  return undefined;
+}
