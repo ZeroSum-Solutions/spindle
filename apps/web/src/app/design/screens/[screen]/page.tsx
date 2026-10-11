@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { LessonBlocks } from "@/components/learn/blocks";
 import { LayerLabel, SupportLegend, VersionTag } from "@/components/learn/labels";
@@ -17,8 +18,17 @@ export const metadata: Metadata = { title: "Design screen (development only)", r
 const SCREENS = ["lesson", "quiz", "complete"] as const;
 type Screen = (typeof SCREENS)[number];
 
-export default async function DesignScreen({ params }: { params: Promise<{ screen: string }> }) {
+export default function DesignScreenPage({ params }: { params: Promise<{ screen: string }> }) {
   if (process.env.NODE_ENV === "production") notFound();
+  // The route reads its params at request time, so it renders behind Suspense (cache components).
+  return (
+    <Suspense fallback={null}>
+      <DesignScreen params={params} />
+    </Suspense>
+  );
+}
+
+async function DesignScreen({ params }: { params: Promise<{ screen: string }> }) {
   const { screen } = await params;
   if (!SCREENS.includes(screen as Screen)) notFound();
   const back = { href: "/design#screens", label: "Design kit" };
