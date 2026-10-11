@@ -65,7 +65,7 @@ export interface ThemeSwatch {
 export function Coaches({ brand, swatches }: { brand: Brand; swatches: ThemeSwatch[] }) {
   return (
     <>
-      <SiteHeader brand={brand} />
+      <SiteHeader brand={brand} current="/coaches" />
       <main className="flex flex-1 flex-col">
         <Hero brand={brand} />
         <Base brand={brand} />
@@ -81,7 +81,8 @@ export function Coaches({ brand, swatches }: { brand: Brand; swatches: ThemeSwat
 }
 
 function PlannedTag() {
-  return <span className="inline-flex items-center rounded-small border border-control px-2 py-0.5 text-label font-medium text-text-muted">Planned</span>;
+  // Styled like the layer label (a pale border is structure, not a control), so it never reads as a button.
+  return <span className="inline-flex items-center rounded-small border border-border bg-surface px-2 py-0.5 text-label font-medium text-text-muted">Planned</span>;
 }
 
 function Hero({ brand }: { brand: Brand }) {
@@ -122,7 +123,7 @@ function LayeredSpecimen() {
   return (
     <figure className="flex min-w-0 flex-col gap-3" aria-labelledby="layered-caption">
       <div className="relative flex flex-col">
-        <div className="cut-marker relative z-10 flex flex-col gap-3 rounded-card border border-ink bg-surface p-5 md:p-6">
+        <div className="relative z-10 flex flex-col gap-3 rounded-card border border-ink bg-surface p-5 md:p-6">
           <p className="flex flex-wrap items-center gap-2">
             <LayerLabel layer="method" />
             <SupportLabel support="practice-based" />
@@ -203,7 +204,7 @@ function Modalities() {
       </SectionHead>
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {COACH_MODALITIES.map((m) => (
-          <li key={m.name} data-modality className="flex flex-col gap-3 rounded-card border border-border bg-canvas p-4">
+          <li key={m.name} data-modality className="flex flex-col gap-3 rounded-card bg-surface-muted p-4">
             <span className="flex items-start justify-between gap-2">
               <h3 className="text-base font-medium text-text">{m.name}</h3>
               <PlannedTag />
@@ -223,9 +224,9 @@ function Capabilities({ brand }: { brand: Brand }) {
         Coaches who teach their system need to publish it, show it on video, structure it into programs and tracks, and put their own name on it.
         These are planned for {brand.name}, with no dates yet. Where part of it works today, it says so.
       </SectionHead>
-      <ol className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
+      <ol className="flex flex-col divide-y divide-border border-y border-border">
         {CAPABILITIES.map((c, i) => (
-          <li key={c.title} data-capability className="grid grid-cols-1 gap-3 p-5 md:grid-cols-[3rem_minmax(0,16rem)_minmax(0,1fr)] md:gap-6 md:p-6">
+          <li key={c.title} data-capability className="grid grid-cols-1 gap-3 py-5 md:grid-cols-[3rem_minmax(0,16rem)_minmax(0,1fr)] md:gap-6 md:py-6">
             <span aria-hidden className="font-mono text-code text-text-muted">
               {String(i + 1).padStart(2, "0")}
             </span>

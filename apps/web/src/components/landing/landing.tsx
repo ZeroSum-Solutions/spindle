@@ -56,7 +56,7 @@ export function Wordmark({ src, brand, className = "" }: { src: string; brand: B
 }
 
 /** The signed-out site header: the wordmark home link, the coaches page and sign-in. */
-export function SiteHeader({ brand }: { brand: Brand }) {
+export function SiteHeader({ brand, current }: { brand: Brand; current?: "/coaches" }) {
   return (
     <header className="border-b border-border bg-surface">
       <div className="mx-auto flex min-h-16 w-full max-w-[1200px] items-center justify-between gap-4 px-4 md:px-8">
@@ -64,7 +64,11 @@ export function SiteHeader({ brand }: { brand: Brand }) {
           <Wordmark src={brand.wordmark.onLight} brand={brand} className="logo-reveal" />
         </Link>
         <nav aria-label="Site" className="flex items-center gap-2 sm:gap-4">
-          <Link href="/coaches" className="hidden min-h-11 items-center px-1 font-medium text-text hover:text-brand sm:inline-flex">
+          <Link
+              href="/coaches"
+              aria-current={current === "/coaches" ? "page" : undefined}
+              className="hidden min-h-11 items-center px-1 font-medium text-text hover:text-brand aria-[current=page]:underline aria-[current=page]:underline-offset-4 sm:inline-flex"
+            >
             For coaches
           </Link>
           <Link
