@@ -2,7 +2,7 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useSyncExternalStore } from "react";
-import { THEME_KEY, isThemeChoice, type ThemeChoice } from "./theme";
+import { THEME_KEY, applyThemeColor, isThemeChoice, type ThemeChoice } from "./theme";
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
@@ -28,7 +28,13 @@ function subscribe(onChange: () => void) {
  * Switches between Lab Light and Lab Dark and keeps the choice. The label names the action, not the state;
  * the icon shows the theme you will get. Before hydration it renders the same accessible button.
  */
-export function ThemeToggle({ className = "" }: { className?: string }) {
+/** `tone="band"` draws the toggle in on-band colours, for a gym's header band (all pairs checked by brandChecks). */
+const TONE = {
+  page: "border-control text-text hover:bg-surface-muted",
+  band: "border-on-band text-on-band hover:bg-band-tint",
+} as const;
+
+export function ThemeToggle({ className = "", tone = "page" }: { className?: string; tone?: keyof typeof TONE }) {
   const theme = useSyncExternalStore(subscribe, current, () => null);
   const next: ThemeChoice = theme === "dark" ? "light" : "dark";
   return (
@@ -39,13 +45,14 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       data-theme-current={theme ?? undefined}
       onClick={() => {
         document.documentElement.dataset.theme = next;
+        applyThemeColor(next);
         try {
           localStorage.setItem(THEME_KEY, next);
         } catch {
           // Storage blocked: the choice holds for this page only.
         }
       }}
-      className={`pressable inline-flex size-11 shrink-0 items-center justify-center rounded-control border border-control text-text hover:bg-surface-muted ${className}`}
+      className={`pressable inline-flex size-11 shrink-0 items-center justify-center rounded-control border ${TONE[tone]} ${className}`}
     >
       {next === "light" ? <Sun aria-hidden className="size-5" /> : <Moon aria-hidden className="size-5" />}
     </button>

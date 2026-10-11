@@ -78,9 +78,14 @@ export async function noOverflow(page: Page, what: string) {
   }
 }
 
-/** Every Tab stop in a scene, in order: header links, the ink action, then one stop per card. */
+/** Every Tab stop in a scene, in order: header links, the header's theme toggle, the ink action, then one stop per card. */
 export async function tabStops(root: Locator): Promise<Locator[]> {
-  return [...(await root.locator("header a").all()), root.locator("[data-catalog-action]"), ...(await root.locator("a[data-course-card]").all())];
+  return [
+    ...(await root.locator("header a").all()),
+    root.locator("header [data-theme-toggle]"),
+    root.locator("[data-catalog-action]"),
+    ...(await root.locator("a[data-course-card]").all()),
+  ];
 }
 
 /** Walks the scene's keyboard path and checks each ring: colour, size, contrast, and not clipped by any ancestor. */
