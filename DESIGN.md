@@ -174,7 +174,7 @@ Spindle teaches personal trainers how the body works, and every science claim is
   - `band-edge` is `on-band` mixed 20% into the band.
 
   The defaults in `@theme` are `#ffffff`, `#17232b`, `#e3e5e6` and `#d1d3d5`; `lib/theme/atlas-sync.test.ts` asserts that they follow this derivation. The accent is never drawn on the band: on a dark band it can fall to about 1.5:1.
-- **Checked tenant contrast (P4-A2).** `brandChecks` decides on the unrounded ratio, and a brand that fails any row is refused. A unit test asserts every fixed pair (Atlas only) meets its minimum, so an Atlas edit cannot silently break one.
+- **Checked tenant contrast (P4-A2, planned).** These are acceptance requirements for the W1 validator and the W2 components, not checks that exist yet. `brandChecks` will decide on the unrounded ratio and refuse a brand that fails any row. A unit test will assert that every fixed pair (Atlas only) meets its minimum, so an Atlas edit cannot silently break one.
 
   | Role | Foreground / background | Min | States |
   |---|---|---|---|
@@ -195,7 +195,7 @@ Spindle teaches personal trainers how the body works, and every science claim is
   | Seal text | `text-muted` / `surface`, `canvas` | 4.5 | default |
   | P4-A core pairs (links, selected, current lesson, error) | as `validateBrand` | 4.5 / 3 | default, hover, selected, focus, error |
 
-  Exempt, because they are decorative: pattern covers, `band-edge`, `border` hairlines and the cover edge. The renderer draws only the colours `brandTokens` returns plus the fixed Atlas palette. A render test fails on any other computed colour.
+  Exempt, because they are decorative: pattern covers, `band-edge`, `border` hairlines and the cover edge. Planned (W2 acceptance): the renderer draws only the colours `brandTokens` returns plus the fixed Atlas palette, and a render test fails on any other computed colour.
 - Light theme only. A dark theme is deferred until it is designed and checked; the OS dark setting must not half-invert the app.
 
 ## Typography
@@ -212,7 +212,7 @@ Geist for everything readable. **A gym's brand font (P4-A2) applies only to disp
 - The course list leads with a single "Resume lesson" action, taken from the newest assigned version of each course. Older versions of a course stay reachable from its row.
 - Curriculum layer (Base, Modality, Gym method) labels a course. Science or practice-based labels a block. They are separate axes and never stand in for each other.
 - **Support runs.** Back-to-back blocks with the same support share one label at the start of the run; a heading, image or diagram ends the run. From 1024px every supported block also carries a 2px rule in the left margin, `science` green or `practice` brown, so support stays visible without repeating the chip. Words and colour both remain.
-- **Header frame.** The app header's inner frame is the page's content frame (`LearnShell` frame, or the form column on sign-in), so the wordmark lines up with the content. The bar is 64px tall so the focus ring never touches the window edge. The tenant name wraps (at most 60 characters, `overflow-wrap: anywhere`); it never truncates and never overlaps the mark. On member pages of a branded gym (P4-A2) the header is the tenant band: the name in the brand font (20px, `on-band`) and up to two nav links (`on-band`, always underlined, thicker underline on hover). It is one row from a 480px container; below that, the name row sits above the link row, and each link is 44px tall. A 60-character unbroken name with two links never scrolls sideways at 320 or 390px. The header is not sticky.
+- **Header frame.** The app header's inner frame is the page's content frame (`LearnShell` frame, or the form column on sign-in), so the wordmark lines up with the content. The bar is at least 64px tall, with automatic height because a tenant name may wrap, so the focus ring never touches the window edge. The tenant name wraps (at most 60 characters, `overflow-wrap: anywhere`); it never truncates and never overlaps the mark. On member pages of a branded gym (P4-A2) the header is the tenant band: the name in the brand font (20px, `on-band`) and up to two nav links (`on-band`, always underlined, thicker underline on hover). It is one row from a 480px container; below that, the name row sits above the link row, and each link is 44px tall. A 60-character unbroken name with two links never scrolls sideways at 320 or 390px. The header is not sticky.
 - **Catalog hero (P4-A2).** The member catalog has a second branded surface directly under the header: the band colour, holding the headline (brand font, display step, `on-band`), the tagline (Geist 18px, `on-band`) and up to three modality chips (`on-band` on `band-tint`). It carries text only, never an image. Copy sits left from a 720px container and stacks below that. The one ink primary action ("Continue where you left off" or "Start your first course", 48px) sits on canvas directly below the hero, never on the band. After the hero come the Gym method courses, then a "Base curriculum" section with the base seal.
 - **Lesson navigation.** Below 768px, previous is a small link above a full-width 48px "Next lesson" button that names the lesson; from 768px they share a row.
 - **Completion card.** Once a lesson is done the card says it once ("Lesson complete · v2 · 11 Oct 2026", or "Credited · v3 · from your completion on … in v1") and holds the one ink action: the next lesson, or back to the course.
@@ -252,7 +252,7 @@ Native elements first; no component library is installed. Lucide (ISC) is the on
 | BaseSeal (P4-A2, planned) | `components/brand/` | one state: the Spindle symbol (16px ink tile) and the fixed line "Base curriculum by Spindle, cited" (14px, `text-muted`) on a hairline strip. Only where cited base curriculum appears (the catalog's Base section, base cards, base lesson footers); never on the band, method or modality content. No check-shield and no "evidence" wording; no review claim until a recorded PT review exists (D-08) |
 | ModalityChip (P4-A2, planned) | `components/brand/` | default only (not interactive). On the hero, `on-band` on `band-tint`; on cards, `text` on `surface-muted`. The youth tag reads "Youth coaching education" |
 
-`/design` in development renders every component above with synthetic props, plus a replayable motion board. Production builds answer 404 there (asserted in `e2e/player.spec.ts`).
+`/design` in development renders the existing learner components above with synthetic props, a replayable motion board, and the three P4-A2 token specimens (header band, catalog hero, pattern covers). The planned P4-A2 components are not on it yet. Production builds answer 404 there (asserted in `e2e/player.spec.ts`).
 
 ## Do's and Don'ts
 

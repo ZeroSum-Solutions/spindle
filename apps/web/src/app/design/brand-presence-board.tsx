@@ -128,7 +128,7 @@ export function BrandPresenceBoard() {
                 </nav>
               </div>
               <div className="flex flex-col gap-3 px-4 py-8 md:px-8">
-                <p className="text-heading font-semibold" style={{ fontFamily: font.family }}>
+                <p className="text-display font-semibold" style={{ fontFamily: font.family }}>
                   {s.headline}
                 </p>
                 <p className="text-reading">{s.tagline}</p>
