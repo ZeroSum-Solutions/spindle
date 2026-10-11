@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(276);
+select plan(284);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -653,8 +653,8 @@ select pg_temp.as_service();
 select public.publisher_refresh_media_metadata(pg_temp.pat(), pg_temp.id('mv'), jsonb_build_object('title', 'Synthetic clip',
   'channel', 'Synthetic channel', 'available', true, 'fetchedAt', pg_temp.iso(now() - interval '31 days')));
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
-select results_eq(format('select state, title from public.version_media(%L)', pg_temp.id('v_v1')),
-  $$values ('playable'::text, null::text)$$, 'metadata older than 30 days is not served');
+select results_eq(format('select state, title, channel from public.version_media(%L)', pg_temp.id('v_v1')),
+  $$values ('playable'::text, null::text, null::text)$$, 'metadata older than 30 days is not served');
 -- Playback follows the latest checks, not only the status (Sol S01).
 select pg_temp.as_service();
 -- The draft embeds the first clip again, so it can be re-reviewed with its lesson.
@@ -665,15 +665,41 @@ select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
 select results_eq(format('select state from public.version_media(%L)', pg_temp.id('v_v1')), $$values ('disabled'::text)$$,
   'a failed segment review stops playback in a published version at once');
 select pg_temp.as_service();
+select throws_ok($$select pg_temp.publish('78000000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 78000000-0000-4000-8000-000000000011 has a video whose registry entry is segment-unchecked',
+  'a failed segment review refuses a new publish');
+select pg_temp.as_service();
 select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'), pg_temp.seg_pass(pg_temp.id('mv'), 'segment-old-pass', now() - interval '91 days'));
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
 select results_eq(format('select state from public.version_media(%L)', pg_temp.id('v_v1')), $$values ('disabled'::text)$$,
   'a segment review older than 90 days stops playback');
 select pg_temp.as_service();
+select throws_ok($$select pg_temp.publish('78000000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 78000000-0000-4000-8000-000000000011 has a video whose registry entry is segment-unchecked',
+  'a segment review older than 90 days refuses a new publish');
+select pg_temp.as_service();
 select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'), pg_temp.seg_pass(pg_temp.id('mv'), 'segment-recheck', now()));
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
 select results_eq(format('select state from public.version_media(%L)', pg_temp.id('v_v1')), $$values ('playable'::text)$$,
   'a fresh passing segment review restores playback');
+select pg_temp.as_service();
+select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'),
+  jsonb_build_object('kind', 'embed', 'outcome', 'fail', 'checkedAt', pg_temp.iso(now()), 'notes', 'Embedding disabled.'));
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format('select state from public.version_media(%L)', pg_temp.id('v_v1')), $$values ('disabled'::text)$$,
+  'a failed embed check stops playback in a published version at once');
+select pg_temp.as_service();
+select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'),
+  jsonb_build_object('kind', 'embed', 'outcome', 'pass', 'checkedAt', pg_temp.iso(now() - interval '91 days')));
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format('select state from public.version_media(%L)', pg_temp.id('v_v1')), $$values ('disabled'::text)$$,
+  'an embed check older than 90 days stops playback in a published version');
+select pg_temp.as_service();
+select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'),
+  jsonb_build_object('kind', 'embed', 'outcome', 'pass', 'checkedAt', pg_temp.iso(now())));
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format('select state from public.version_media(%L)', pg_temp.id('v_v1')), $$values ('playable'::text)$$,
+  'a fresh embed check restores playback');
 select pg_temp.as_service();
 select public.publisher_set_media_status(pg_temp.pat(), pg_temp.id('mv'), '{"status": "disabled", "reason": "Synthetic takedown."}');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
@@ -683,9 +709,20 @@ select pg_temp.reset_role();
 select is((select count(*) from public.curriculum_versions where course_id = '78000000-0000-4000-8000-000000000000'), 1::bigint,
   'disabling a clip makes no new content version');
 select pg_temp.as_service();
+select throws_ok($$select pg_temp.publish('78000000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 78000000-0000-4000-8000-000000000011 has a video whose registry entry is disabled',
+  'a disabled clip refuses a new publish');
+select pg_temp.as_service();
 select public.publisher_set_media_status(pg_temp.pat(), pg_temp.id('mv'), '{"status": "retired", "reason": "Leaves the registry."}');
 select is((select count(*) from public.practice_media_metadata where media_id = pg_temp.id('mv')), 0::bigint,
   'retiring a clip deletes its provider metadata');
+select throws_ok($$select pg_temp.publish('78000000-0000-4000-8000-000000000000')$$, 'P0001',
+  'publish gate: lesson 78000000-0000-4000-8000-000000000011 has a video whose registry entry is retired',
+  'a retired clip refuses a new publish');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format('select state, title from public.version_media(%L)', pg_temp.id('v_v1')), $$values ('disabled'::text, null::text)$$,
+  'a retired clip stays off in a published version');
+select pg_temp.as_service();
 select throws_ok(format($$select public.publisher_refresh_media_metadata(pg_temp.pat(), %L, '{"title": "x", "channel": "x",
   "available": true, "fetchedAt": "2026-10-01T00:00:00Z"}')$$, pg_temp.id('mv')), 'P0001',
   format('media %s is retired', pg_temp.id('mv')), 'a retired clip gets no new metadata');
