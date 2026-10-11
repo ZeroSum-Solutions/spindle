@@ -379,6 +379,16 @@ export class PlayerWorld {
       .at(-1)!;
   }
 
+  /** Grants a signed-in actor the content-publisher role (setup, as the database owner; removed with the account). */
+  makePublisher(actor: Actor): void {
+    sql(`insert into private.content_publishers (user_id, note) values (${lit(actor.id)}, 'synthetic admission-screen e2e');`);
+  }
+
+  /** The current status of a held text (pending, admitted, rejected, revoked or cleared). */
+  textStatus(textId: string): string {
+    return sql(`select private.tenant_text_status(${lit(textId)});`);
+  }
+
   /** P4-A2: the owner saves the gym's brand through save_org_brand (which repeats the AA checks). */
   saveBrand(org: { id: string }, owner: Actor, brand: Json): void {
     sql(`begin; ${asUser(owner.id)} select public.save_org_brand(${lit(org.id)}, ${lit(JSON.stringify(brand))}::jsonb); commit;`);
