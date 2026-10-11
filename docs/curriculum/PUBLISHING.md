@@ -50,6 +50,9 @@ Run from `packages/evidence` with the environment set.
    - Slots that no draft defines any more drop out of the map.
    - A slot whose source is missing loses its mapping and blocks the step (exit 1).
    - A slot defined differently in two lessons is refused before any write.
+   - The state file records the publisher and database it belongs to and is written atomically (temporary file, then rename). A state file written for another publisher or database is refused: use one `SPINDLE_MODULE_STATE_DIR` per publisher and database.
+   - **Recovery:** if the state file is reported unreadable (an interrupted write) or has an unknown shape, move it aside and run step 2 again. It recovers this publisher's identical claims (same text, metadata and exact sources) instead of creating duplicates.
+   - Two slots with an identical claim share one claim id; `claim-ids.txt` lists each id once.
 3. **Course draft.** Save the course tree, with slots replaced by claim ids. Each slot must be unchanged since step 2, so run step 2 after any draft change:
    ```sh
    mise exec -- pnpm exec tsx scripts/module.ts course --module ../../content/<module>/module.json --drafts ../../content/<module>/drafts

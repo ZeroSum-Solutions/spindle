@@ -84,7 +84,8 @@ export interface ClaimBody {
 export interface ClaimDeps {
   /** The ingested source for a candidate, matched by DOI (and its PMID, when given) or by PMID alone; null if absent or mismatched. */
   resolve(c: Candidate): string | null;
-  claimExists(id: string): boolean;
+  /** True only for a claim this publisher owns whose stored body and source set equal `body` (Sol R2 W2). */
+  claimMatches(id: string, body: ClaimBody): boolean;
   /** A claim already committed with exactly this body (recovers an interrupted run without duplicates). */
   findIdentical(body: ClaimBody): string | null;
   addClaim(body: ClaimBody): string;
@@ -116,7 +117,7 @@ export function syncClaims(slots: ReadonlyMap<string, Slot>, previous: ClaimStat
     }
     const known = previous[id];
     let claimId: string;
-    if (known && known.fingerprint === current.fingerprint && deps.claimExists(known.claimId)) claimId = known.claimId;
+    if (known && known.fingerprint === current.fingerprint && deps.claimMatches(known.claimId, current.body)) claimId = known.claimId;
     else claimId = deps.findIdentical(current.body) ?? deps.addClaim(current.body);
     state[id] = { claimId, fingerprint: current.fingerprint };
     deps.checkpoint(state);
@@ -124,6 +125,52 @@ export function syncClaims(slots: ReadonlyMap<string, Slot>, previous: ClaimStat
   // Nothing written yet (every slot blocked or none left): still drop the old mappings.
   if (Object.keys(state).length === 0) deps.checkpoint(state);
   return { state, blocked };
+}
+
+/** The claim ids to review: each once, even when two slots share one claim (Sol R2 W3). */
+export function reviewIds(state: ClaimState): string[] {
+  return [...new Set(Object.values(state).map((c) => c.claimId))];
+}
+
+/** Where a state file was written: the publisher and database it describes. */
+export interface StateContext {
+  publisher: string;
+  target: string;
+}
+
+/** The state file: its context and the slot→claim map. */
+export function moduleStateText(context: StateContext, claims: ClaimState): string {
+  return `${JSON.stringify({ publisher: context.publisher, target: context.target, claims }, null, 2)}\n`;
+}
+
+/**
+ * Reads a state file for this publisher and database. A corrupt file, or one written for another
+ * publisher or database, is refused (Sol R2 W1, W2). Moving it aside is safe: the claims step then
+ * recovers this publisher's identical claims instead of creating duplicates.
+ */
+export function readModuleState(text: string | null, context: StateContext): ClaimState {
+  if (text === null) return {};
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("the claims state file is unreadable (an interrupted write?); move it aside and run the claims step again: it recovers identical claims without duplicating them");
+  }
+  const st = z
+    .strictObject({ publisher: z.string(), target: z.string(), claims: z.record(z.string(), z.strictObject({ claimId: z.string().min(1), fingerprint: z.string() })) })
+    .safeParse(parsed);
+  if (!st.success) throw new Error("the claims state file has an unknown shape; move it aside and run the claims step again");
+  if (st.data.publisher !== context.publisher || st.data.target !== context.target) {
+    throw new Error("the claims state file was written for another publisher or database; use a separate SPINDLE_MODULE_STATE_DIR per publisher and database");
+  }
+  return st.data.claims;
+}
+
+/** Writes a file atomically: a temporary file in the same directory, then a rename (Sol R2 W1). */
+export function atomicWrite(path: string, text: string, fs: { writeFileSync(p: string, t: string, o?: unknown): void; renameSync(a: string, b: string): void }): void {
+  const tmp = `${path}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, text, { mode: 0o600 });
+  fs.renameSync(tmp, path);
 }
 
 export const moduleSchema = z.strictObject({
@@ -178,7 +225,8 @@ export function bindCourse(metaInput: ModuleMeta, drafts: readonly LoadedDraft[]
           id: uuidV5(`lesson:${m.key}:${id}`),
           blocks: blocks.map((b) => {
             const block = b as { claimIds?: string[] };
-            return block.claimIds?.length ? { ...block, claimIds: block.claimIds.map(bind) } : b;
+            // Two slots that share one claim bind it once (Sol R2 W3).
+            return block.claimIds?.length ? { ...block, claimIds: [...new Set(block.claimIds.map(bind))] } : b;
           }),
         };
       }),

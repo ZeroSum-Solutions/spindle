@@ -17,14 +17,29 @@
  * SPINDLE_EXCERPT_DIR; claims and course SPINDLE_MODULE_STATE_DIR. Exit 0 done, 1 refused or blocked, 2 error.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import type { Excerpt } from "../src/fulltext";
 import { requireUuid } from "../src/guards";
-import { bindCourse, collectSlots, excerptAction, loadDrafts, syncClaims, type Candidate, type ClaimBody, type ClaimDeps, type ClaimState } from "../src/module";
-import { AS_SERVICE, args, dir, evidencePath, lit, main, publisherId, readJson, sql, writeJson } from "./lib/cli";
+import {
+  atomicWrite,
+  bindCourse,
+  collectSlots,
+  excerptAction,
+  loadDrafts,
+  moduleStateText,
+  readModuleState,
+  reviewIds,
+  syncClaims,
+  type Candidate,
+  type ClaimBody,
+  type ClaimDeps,
+  type ClaimState,
+  type StateContext,
+} from "../src/module";
+import { AS_SERVICE, args, dir, evidencePath, lit, main, publisherId, readJson, sql } from "./lib/cli";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -96,26 +111,34 @@ function sources(manifestPath: string): number {
   return failed ? 1 : 0;
 }
 
-function claimDeps(stateDir: string): ClaimDeps {
-  const p = publisherId();
+/** The publisher and database a state file belongs to. */
+function stateContext(): StateContext {
+  const u = new URL(process.env.SPINDLE_DB_URL ?? "");
+  return { publisher: publisherId(), target: `${u.hostname}:${u.port || "5432"}${u.pathname}` };
+}
+
+const realFs = { writeFileSync: (p: string, t: string, o?: unknown) => writeFileSync(p, t, o as { mode: number }), renameSync };
+
+/** Same body and the exact source set, owned by this publisher. */
+const sameClaim = (p: string, body: ClaimBody) => `c.statement = ${lit(body.statement)} and c.evidence_level = ${lit(body.evidenceLevel)}
+  and c.population = ${lit(body.population)} and c.domain = ${lit(body.domain)} and c.created_by = ${lit(p)}
+  and (select array_agg(cs.source_id order by cs.source_id) from public.claim_sources cs where cs.claim_id = c.id)
+    = array[${body.sourceIds.map((s) => `${lit(requireUuid(s, "source id"))}::uuid`).join(", ")}]`;
+
+function claimDeps(stateDir: string, context: StateContext): ClaimDeps {
+  const p = context.publisher;
   return {
     resolve: resolveSource,
-    claimExists: (id) => sql(`select count(*) from public.claims where id = ${lit(requireUuid(id, "claim id"))}`) === "1",
-    findIdentical: (body: ClaimBody) =>
-      sql(`select coalesce((select c.id::text from public.claims c
-        where c.statement = ${lit(body.statement)} and c.evidence_level = ${lit(body.evidenceLevel)} and c.population = ${lit(body.population)}
-          and c.domain = ${lit(body.domain)} and c.created_by = ${lit(p)}
-          and (select array_agg(cs.source_id order by cs.source_id) from public.claim_sources cs where cs.claim_id = c.id)
-            = array[${body.sourceIds.map((s) => `${lit(requireUuid(s, "source id"))}::uuid`).join(", ")}]
-        order by c.created_at limit 1), '')`) || null,
+    claimMatches: (id, body) => sql(`select count(*) from public.claims c where c.id = ${lit(requireUuid(id, "claim id"))} and ${sameClaim(p, body)}`) === "1",
+    findIdentical: (body: ClaimBody) => sql(`select coalesce((select c.id::text from public.claims c where ${sameClaim(p, body)} order by c.created_at limit 1), '')`) || null,
     addClaim: (body) => {
       const id = sql(`begin;\n${AS_SERVICE}\nselect public.publisher_add_claim(${lit(p)}, ${lit(JSON.stringify(body))}::jsonb);\ncommit;`).split("\n").pop()!;
       console.log(`claim created ${id}`);
       return requireUuid(id, "claim id");
     },
     checkpoint: (state: ClaimState) => {
-      writeJson(join(stateDir, "claims.json"), state);
-      writeFileSync(join(stateDir, "claim-ids.txt"), Object.values(state).map((c) => c.claimId).join(","), { mode: 0o600 });
+      atomicWrite(join(stateDir, "claims.json"), moduleStateText(context, state), realFs);
+      atomicWrite(join(stateDir, "claim-ids.txt"), reviewIds(state).join(","), realFs);
     },
   };
 }
@@ -126,8 +149,9 @@ function readDrafts(path: string) {
 
 function claims(draftsPath: string, stateDir: string): number {
   const statePath = join(stateDir, "claims.json");
-  const previous: ClaimState = existsSync(statePath) ? readJson<ClaimState>(statePath) : {};
-  const { state, blocked } = syncClaims(collectSlots(readDrafts(draftsPath)), previous, claimDeps(stateDir));
+  const context = stateContext();
+  const previous = readModuleState(existsSync(statePath) ? readFileSync(statePath, "utf8") : null, context);
+  const { state, blocked } = syncClaims(collectSlots(readDrafts(draftsPath)), previous, claimDeps(stateDir, context));
   for (const b of blocked) console.log(`blocked ${b}: a candidate source is not ingested or its identifiers disagree; it has no claim now`);
   console.log(`${Object.keys(state).length} current claims in ${statePath}`);
   return blocked.length ? 1 : 0;
@@ -135,7 +159,10 @@ function claims(draftsPath: string, stateDir: string): number {
 
 function course(modulePath: string, draftsPath: string, stateDir: string): number {
   const drafts = readDrafts(draftsPath);
-  const state = readJson<ClaimState>(join(stateDir, "claims.json"));
+  const statePath = join(stateDir, "claims.json");
+  if (!existsSync(statePath)) throw new Error("no claims state; run the claims step first");
+  // Refused when the state was written for another publisher or database (Sol R2 W2).
+  const state = readModuleState(readFileSync(statePath, "utf8"), stateContext());
   const tree = bindCourse(JSON.parse(readFileSync(modulePath, "utf8")), drafts, collectSlots(drafts), state, { resolve: resolveSource }) as { id: string; parts: { lessons: unknown[] }[] };
   const saved = sql(`begin;\n${AS_SERVICE}\nselect public.publisher_save_course_draft(${lit(publisherId())}, ${lit(JSON.stringify(tree))}::jsonb);\ncommit;`).split("\n").pop()!;
   if (saved !== tree.id) throw new Error(`the database saved ${saved}, not ${tree.id}`);
