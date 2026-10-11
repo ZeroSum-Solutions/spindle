@@ -55,6 +55,11 @@ describe("ingestPaper", () => {
     expect(paper.issues.join(" ")).toMatch(/no record ties PMID/);
   });
 
+  it("C03/R07: uses PubMed types when the matched Europe PMC record lists none", async () => {
+    const { ctx } = testContext(clean([["esummary.fcgi", esummary(DOI, ["Meta-Analysis"])], ["europepmc", epmc({ pubTypeList: undefined })]]));
+    expect(await ingestPaper(ctx, { pmid: PMID })).toMatchObject({ status: "ready", kind: "meta_analysis" });
+  });
+
   it("R05: refuses a PubMed record for another PMID", async () => {
     const other = { result: { uids: ["999"], [PMID]: { uid: "999", title: "Other.", pubtype: ["Meta-Analysis"], articleids: [{ idtype: "doi", value: DOI }] } } };
     const { ctx } = testContext(clean([["esummary.fcgi", other], ["europepmc", { hitCount: 0, resultList: { result: [] } }]]));

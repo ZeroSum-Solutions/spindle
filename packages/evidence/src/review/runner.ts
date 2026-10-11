@@ -32,10 +32,16 @@ export function prepareReviewerHome(sourceCodexHome: string): ReviewerHome & { d
   const auth = join(sourceCodexHome, "auth.json");
   if (!existsSync(auth)) throw new Error(`no codex login (auth.json) in ${sourceCodexHome}`);
   const home = mkdtempSync(join(tmpdir(), "spindle-reviewer-home-"));
+  const dispose = () => rmSync(home, { recursive: true, force: true });
   const codexHome = join(home, "codex");
-  mkdirSync(codexHome, { mode: 0o700 });
-  copyFileSync(auth, join(codexHome, "auth.json"));
-  return { home, codexHome, dispose: () => rmSync(home, { recursive: true, force: true }) };
+  try {
+    mkdirSync(codexHome, { mode: 0o700 });
+    copyFileSync(auth, join(codexHome, "auth.json"));
+  } catch (e) {
+    dispose();
+    throw e;
+  }
+  return { home, codexHome, dispose };
 }
 
 /** Tools and integrations the reviewer never needs. It reads only the prompt. */

@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(174);
+select plan(179);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -937,6 +937,38 @@ select throws_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaa
 select pg_temp.reset_role();
 select throws_ok($$update public.lessons set slug = 'quiz' where id = '7c000000-0000-4000-8000-000000000011'$$,
   '22023', 'invalid course: the lesson slug "quiz" is reserved', 'not even the table owner can write the reserved slug');
+
+-- 9e. Publishing after a retraction recheck is bound to the sources that were rechecked (Sol N01) -----
+select pg_temp.as_service();
+create function pg_temp.cited(cid uuid) returns jsonb language sql as $$
+  select coalesce(jsonb_agg(distinct cs.source_id), '[]'::jsonb) from public.lessons l join public.lesson_blocks b on b.lesson_id = l.id
+  join public.block_claims bc on bc.block_id = b.id join public.claim_sources cs on cs.claim_id = bc.claim_id where l.course_id = cid
+$$;
+select pg_temp.save(pg_temp.course('7f200000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('7f200000-0000-4000-8000-000000000011', 'checked', jsonb_build_array(pg_temp.sci('The cuff has four muscles.', array[pg_temp.id('c_ok')]))))));
+select pg_temp.review_all('7f200000-0000-4000-8000-000000000000', 'checked');
+select set_config('test.checked_a', pg_temp.cited('7f200000-0000-4000-8000-000000000000')::text, true);
+-- A concurrent save switches the draft to another, already reviewed citation set before publishing.
+select pg_temp.keep('s_other', pg_temp.source('10.5555/p3.checked-other'));
+select pg_temp.keep('c_checked_other', pg_temp.claim('Synthetic claim on an unchecked source.', pg_temp.id('s_other')));
+select pg_temp.approve(pg_temp.id('c_checked_other'));
+select pg_temp.save(pg_temp.course('7f200000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('7f200000-0000-4000-8000-000000000011', 'checked', jsonb_build_array(pg_temp.sci('The cuff has four muscles.', array[pg_temp.id('c_checked_other')]))))));
+select pg_temp.review_all('7f200000-0000-4000-8000-000000000000', 'checked-2');
+select throws_ok($$select public.publisher_publish_course_checked(pg_temp.pat(), '7f200000-0000-4000-8000-000000000000',
+  current_setting('test.checked_a')::jsonb)$$, 'P0001',
+  'stale recheck: course 7f200000-0000-4000-8000-000000000000 cites sources that were not rechecked',
+  'a publish is refused when the cited sources differ from the rechecked set');
+select is((select count(*) from public.curriculum_versions where course_id = '7f200000-0000-4000-8000-000000000000'), 0::bigint,
+  'nothing was published on a stale recheck');
+select lives_ok($$select public.publisher_publish_course_checked(pg_temp.pat(), '7f200000-0000-4000-8000-000000000000',
+  pg_temp.cited('7f200000-0000-4000-8000-000000000000'))$$, 'a publish with the current cited set goes through the full gate');
+select throws_ok($$select public.publisher_publish_course_checked(pg_temp.pat(), '7f200000-0000-4000-8000-000000000000', '{}')$$,
+  '22023', 'invalid checkedSources: must be an array', 'the checked set must be an array of source ids');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000c2');
+select throws_ok($$select public.publisher_publish_course_checked(pg_temp.pat(), '7f200000-0000-4000-8000-000000000000', '[]')$$, '42501', null,
+  'a signed-in user cannot call the checked publish');
+select pg_temp.reset_role();
 
 -- 10. Privileges and hygiene -------------------------------------------------------------------
 create temp table p3_tables (name text);

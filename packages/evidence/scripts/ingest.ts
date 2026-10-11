@@ -8,8 +8,8 @@
 import { join } from "node:path";
 import { createContext } from "../src/context";
 import { ingestPaper } from "../src/ingest";
-import type { EvidenceEntry } from "../src/review/packet";
-import { AS_SERVICE, args, dir, evidencePath, lit, main, publisherId, sql, writeJson } from "./lib/cli";
+import { evidenceMatchesSource, type EvidenceEntry } from "../src/review/packet";
+import { AS_SERVICE, args, dir, evidencePath, lit, main, publisherId, sourceIdentities, sql, writeJson } from "./lib/cli";
 
 main(async () => {
   const a = args();
@@ -28,10 +28,6 @@ main(async () => {
   const p = publisherId();
   // An existing source keeps its id: only its private evidence entry is refreshed (Sol C02).
   const existing = sql(`select coalesce((select id::text from public.sources where doi = ${lit(paper.sourceInput.doi)}), '')`);
-  if (existing) {
-    const pmid = sql(`select coalesce(pmid, '') from public.sources where id = ${lit(existing)}`);
-    if (pmid && paper.pmid && pmid !== paper.pmid) throw new Error(`source ${existing} lists PMID ${pmid}, not ${paper.pmid}`);
-  }
   const sourceId = existing || sql(`begin;\n${AS_SERVICE}\nselect public.publisher_add_source(${lit(p)}, ${lit(JSON.stringify(paper.sourceInput))}::jsonb);\ncommit;`).split("\n").pop()!;
   const entry: EvidenceEntry = {
     sourceId,
@@ -43,6 +39,14 @@ main(async () => {
     retraction: paper.retraction,
     checkedAt: paper.check.checkedAt,
   };
+  if (existing) {
+    // Refresh only with an entry that matches the existing source's full identity; otherwise keep the old file (Sol N02).
+    const identity = sourceIdentities([existing]).get(existing);
+    if (!evidenceMatchesSource(entry, identity)) {
+      console.log(`refused: the new evidence does not match source ${existing} (kind ${identity?.kind}, DOI ${identity?.doi}, PMID ${identity?.pmid ?? "none"}); the previous evidence file is unchanged`);
+      return 1;
+    }
+  }
   writeJson(evidencePath(sourceId), entry);
   console.log(`source ${sourceId} ${existing ? "already existed; evidence entry refreshed" : "added; evidence entry written"}`);
   return 0;

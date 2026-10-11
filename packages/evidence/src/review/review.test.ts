@@ -23,6 +23,7 @@ import {
   sessionFromEvents,
   type ClaimTarget,
   type EvidenceEntry,
+  type SourceIdentity,
   type ReviewRunner,
 } from "./index";
 
@@ -47,7 +48,7 @@ const runner = (lastMessage: string, extra: Partial<{ model: string; session: st
 });
 
 /** The database identity of S1, matching evidence() and the extra unmatched source. */
-const SOURCES = new Map([[S1, { doi: "10.5555/x", pmid: "1", kind: "meta_analysis" }]]);
+const SOURCES = new Map<string, SourceIdentity>([[S1, { doi: "10.5555/x", pmid: "1", kind: "meta_analysis" }]]);
 
 function claimPacket() {
   const { packet } = buildClaimPacket([claim(C1), claim(C2)], new Map([[S1, evidence()]]), NOW.toISOString(), SOURCES);
@@ -90,8 +91,8 @@ describe("packets", () => {
 
   it("refuse a content packet without safety rules or with a claim item", () => {
     const targets = {
-      courseId: C1, course: { hash: H("c"), shell: { title: "x" } },
-      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: { blocks: [{ kind: "paragraph" }] },
+      courseId: C1, course: { hash: H("c"), shell: { title: "x", parts: [] } },
+      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: { id: C2, blocks: [{ kind: "paragraph" }] },
         blocks: [{ blockId: S1, ordinal: 1, kind: "paragraph", support: "science", hash: H("e"), claimIds: [S1] }] }],
     };
     const claims = new Map([[S1, { statement: "s", population: "p" }]]);
@@ -147,6 +148,47 @@ describe("Sol R1 standards on #19", () => {
   it("H01: the reviewer cannot view images or start other agents", () => {
     const args = codexArgs("/tmp/d", "/tmp/d/s.json", "/tmp/d/a.json");
     for (const f of ["view_image", "image_generation", "multi_agent", "memories"]) expect(args.slice(args.indexOf(f) - 1, args.indexOf(f) + 1), f).toEqual(["--disable", f]);
+  });
+});
+
+describe("Sol R2 on #19", () => {
+  it("R02: every cited evidence time must be readable and inside the window at recording time", async () => {
+    const S2 = "66666666-6666-4666-8666-666666666666";
+    const both = new Map([[S1, evidence()], [S2, evidence({ sourceId: S2, identifiers: { doi: "10.5555/y" } })]]);
+    const ids = new Map([...SOURCES, [S2, { doi: "10.5555/y", pmid: null, kind: "meta_analysis" }]]);
+    const p = buildClaimPacket([claim(C1, [S1, S2])], both, NOW.toISOString(), ids).packet!;
+    const outcome = await runReview(p, runner(answer([approve(`claim:${C1}`)])), () => NOW);
+    expect(receiptCalls(p, outcome, NOW)).toHaveLength(1);
+    const future = { ...p, evidence: p.evidence.map((e) => (e.sourceId === S2 ? { ...e, checkedAt: "2027-01-01T00:00:00.000Z" } : e)) };
+    const futureOutcome = await runReview(future, runner(answer([approve(`claim:${C1}`)])), () => NOW);
+    expect(() => receiptCalls(future, futureOutcome, NOW)).toThrow(/checked over 30 days before recording \(or in the future\)/);
+    const garbled = { ...p, evidence: p.evidence.map((e) => (e.sourceId === S2 ? { ...e, checkedAt: "soon" } : e)) };
+    const garbledOutcome = await runReview(garbled, runner(answer([approve(`claim:${C1}`)])), () => NOW);
+    expect(() => receiptCalls(garbled, garbledOutcome, NOW)).toThrow(/checked over 30 days/);
+  });
+
+  it("R03: refuses content items whose content is missing or malformed", () => {
+    const targets = {
+      courseId: C1, course: { hash: H("c"), shell: { title: "x", parts: [] } },
+      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: { id: C2, blocks: [{ kind: "paragraph" }] },
+        blocks: [{ blockId: S1, ordinal: 1, kind: "paragraph", support: "science", hash: H("e"), claimIds: [S1] }] }],
+    };
+    const p = buildContentPacket(targets, new Map([[S1, { statement: "s", population: "p" }]]), "Stop rules.", NOW.toISOString());
+    expect(() => assertPacket({ ...p, items: p.items.map((i) => (i.kind === "course" ? { ...i, content: null } : i)) })).toThrow(/course item .* malformed/);
+    expect(() => assertPacket({ ...p, items: p.items.map((i) => (i.kind === "lesson" ? { ...i, content: { lesson: null, claims: [] } } : i)) })).toThrow(/lesson item .* malformed/);
+    expect(() => assertPacket({ ...p, items: p.items.map((i) => (i.kind === "block" ? { ...i, content: { lessonId: C2 } } : i)) })).toThrow(/block item .* malformed/);
+  });
+
+  it("R14: removes the reviewer home when preparing it fails", () => {
+    const src = mkdtempSync(join(tmpdir(), "codex-src-"));
+    mkdirSync(join(src, "auth.json")); // a directory: the copy fails after the home exists
+    const before = readdirSync(tmpdir()).filter((n) => n.startsWith("spindle-reviewer-home-")).length;
+    try {
+      expect(() => prepareReviewerHome(src)).toThrow();
+    } finally {
+      rmSync(src, { recursive: true, force: true });
+    }
+    expect(readdirSync(tmpdir()).filter((n) => n.startsWith("spindle-reviewer-home-")).length).toBe(before);
   });
 });
 
@@ -236,8 +278,8 @@ describe("hardening (internal review)", () => {
     const future = buildClaimPacket([claim(C1)], new Map([[S1, evidence({ checkedAt: "2027-01-01T00:00:00.000Z" })]]), NOW.toISOString(), SOURCES);
     expect(future.packet).toBeNull();
     const targets = {
-      courseId: C1, course: { hash: H("c"), shell: {} },
-      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: { blocks: [] },
+      courseId: C1, course: { hash: H("c"), shell: { title: "x", parts: [] } },
+      lessons: [{ lessonId: C2, hash: H("d"), claimIds: [S1], lesson: { id: C2, blocks: [] },
         blocks: [{ blockId: S1, ordinal: 1, kind: "paragraph", support: "science", hash: H("e"), claimIds: [S1] }] }],
     };
     expect(() => buildContentPacket(targets, new Map([[S1, { statement: "s", population: "p" }]]), "Stop rules.", NOW.toISOString())).toThrow(/block 1/);
