@@ -13,6 +13,6 @@ Each phase ends with a check that proves it.
 | 6+ | Spaced review, anatomy viewer, more modules, credentials, MCP server | Each gets its own plan |
 
 ## Phase 2 status
-Landed: the content database and publish gate, immutable versions, assignments and progress (PR #8); runtime content schemas and the version-credit engine (PR #7). In review: the learner flow and design system, with its browser tests (`e2e/player.spec.ts`), and the storage and auth verification. Phase 2 is not complete until the combined browser and API proof passes on `main`.
+Complete. Landed: the content database and publish gate, immutable versions, assignments and progress (PR #8); runtime content schemas and the version-credit engine (PR #7); storage API isolation, session refresh and the content contract tests (PR #10); the learner flow and design system, with its browser tests in `e2e/player.spec.ts` (PR #11). The combined proof passed on `main` at d95615a: `pnpm check`, `supabase test db`, and the full production-build browser suite.
 
 Moved out of phase 2 on purpose: graded, persisted quizzes and the quiz completion rule (phase 3); expiry and rejection notices for learners (needs a learner-readable review state); a resume pointer.
