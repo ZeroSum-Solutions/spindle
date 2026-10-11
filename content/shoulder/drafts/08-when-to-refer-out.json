@@ -12,11 +12,15 @@
     {
       "slot": "claim-slot:l8-subacromial-course",
       "statement": "BESS 2025 describes subacromial pain as usually self-limiting, with most symptoms responding within three months, in the context of initial primary-care management.",
+      "evidenceLevel": "Clinical guideline (GRADE), British Elbow & Shoulder Society",
+      "population": "\"Subacromial Shoulder Pain\" (BESS 2025 patient care pathway).",
       "candidateSources": [
         {
           "kind": "consensus",
           "citation": "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724.",
           "doi": "10.1177/17585732251374282",
+          "pmid": "41245988",
+          "pmcid": "PMC12611748",
           "url": "https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf",
           "rights": "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. Cited and paraphrased only."
         }

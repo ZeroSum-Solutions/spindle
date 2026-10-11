@@ -12,6 +12,8 @@
     {
       "slot": "claim-slot:l6-progression",
       "statement": "The 2026 ACSM position stand recommends that healthy adults perform progressive resistance training to improve muscle function, size and physical performance.",
+      "evidenceLevel": "Position stand (overview of systematic reviews)",
+      "population": "\"healthy adults (≥18 yr)\" (ACSM 2026).",
       "candidateSources": [
         {
           "kind": "position_stand",
@@ -27,6 +29,8 @@
     {
       "slot": "claim-slot:l6-overhead-upward",
       "statement": "Full humeral elevation involves scapular upward rotation.",
+      "evidenceLevel": "Narrative review; in vivo kinematic study (bone pins)",
+      "population": "\"8 healthy volunteers (5 men, 3 women)\" (McClure 2001); normal scapular kinematics during arm elevation, reviewed by Ludewig 2009.",
       "candidateSources": [
         {
           "kind": "paper",
@@ -49,6 +53,8 @@
     {
       "slot": "claim-slot:l6-volume",
       "statement": "Muscle hypertrophy increases with weekly resistance training volume, with diminishing returns (2026 meta-regression); the 2026 ACSM position stand reports hypertrophy enhanced by higher volumes (about 10 or more sets per week) in healthy adults.",
+      "evidenceLevel": "Meta-regression; position stand (overview of systematic reviews)",
+      "population": "Participants in 35 studies contributing to the hypertrophy volume analysis, n=1,032 (Pelland 2026, section 3.6.1); \"healthy adults (≥18 yr)\" (ACSM 2026).",
       "candidateSources": [
         {
           "kind": "meta_analysis",
@@ -71,6 +77,8 @@
     {
       "slot": "claim-slot:l6-failure",
       "statement": "A 2023 meta-analysis found no hypertrophy advantage for training to momentary muscular failure over non-failure training; this does not establish equivalence, and a 2024 exploratory meta-regression found hypertrophy increased as sets were terminated closer to failure.",
+      "evidenceLevel": "Systematic review with meta-analysis; exploratory meta-regression",
+      "population": "\"healthy adults of any age and resistance training experience\" (Refalo 2023); the Robinson 2024 abstract does not state a population.",
       "candidateSources": [
         {
           "kind": "meta_analysis",

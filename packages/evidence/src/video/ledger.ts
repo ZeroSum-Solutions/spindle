@@ -61,8 +61,13 @@ const monthOf = (d: Date) => d.toISOString().slice(0, 7);
  * upper bound while unsettled or settled with an unknown cost.
  */
 export function monthSpendUsd(entries: readonly SpendEntry[], month: string): number {
+  // Several settlements for one call (written by hand or replayed) count at the highest; an unknown one wins.
   const settled = new Map<string, number | null>();
-  for (const e of entries) if ("type" in e && e.type === "settle") settled.set(e.id, e.costUsd);
+  for (const e of entries) {
+    if (!("type" in e) || e.type !== "settle") continue;
+    const prev = settled.get(e.id);
+    settled.set(e.id, prev === null || e.costUsd === null ? null : Math.max(prev ?? 0, e.costUsd));
+  }
   let sum = 0;
   for (const e of entries) {
     if (!("type" in e)) {
@@ -156,6 +161,13 @@ export function reserveCall(ledgerPath: string, req: AdmitRequest): Reservation 
 /** Records what a reserved call cost; null keeps the reservation's upper bound. */
 export function settleCall(ledgerPath: string, r: Reservation, costUsd: number | null, ok: boolean, now: Date): Settlement {
   return withLock(ledgerPath, () => {
+    const entries = read(ledgerPath);
+    if (!entries.some((e) => "type" in e && e.type === "reserve" && e.id === r.id)) throw new Error(`no reservation ${r.id} in the spend ledger`);
+    const prior = entries.find((e): e is Settlement => "type" in e && e.type === "settle" && e.id === r.id);
+    if (prior) {
+      if (prior.costUsd === costUsd && prior.ok === ok) return prior;
+      throw new Error(`reservation ${r.id} is already settled differently; the ledger keeps the first settlement`);
+    }
     const s = settleSchema.parse({ type: "settle", id: r.id, at: now.toISOString(), costUsd, ok });
     appendDurably(ledgerPath, `${JSON.stringify(s)}\n`);
     return s;

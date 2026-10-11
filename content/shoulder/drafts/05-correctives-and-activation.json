@@ -13,11 +13,15 @@
     {
       "slot": "claim-slot:l5-subacromial-exercise",
       "statement": "For subacromial pain, BESS 2025 (PICO 6) reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves patient-reported function, grades this 'Conditional Positive (low evidence)', and states that the most effective physiotherapy or exercise approach remains uncertain.",
+      "evidenceLevel": "Clinical guideline (GRADE), British Elbow & Shoulder Society",
+      "population": "\"Subacromial Shoulder Pain\" (BESS 2025 patient care pathway).",
       "candidateSources": [
         {
           "kind": "consensus",
           "citation": "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724.",
           "doi": "10.1177/17585732251374282",
+          "pmid": "41245988",
+          "pmcid": "PMC12611748",
           "url": "https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf",
           "rights": "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. Cited and paraphrased only."
         }
@@ -27,6 +31,8 @@
     {
       "slot": "claim-slot:l5-csaw",
       "statement": "In the CSAW trial (subacromial pain for at least 3 months, intact rotator cuff tendons, eligible for surgery, after non-operative management including exercise therapy and at least one steroid injection), arthroscopic decompression gave no benefit over arthroscopy only on the Oxford Shoulder Score at 6 months, and the surgical groups' advantage over no treatment was not clinically important.",
+      "evidenceLevel": "Randomised placebo-controlled surgical trial",
+      "population": "Patients \"who had subacromial pain for at least 3 months with intact rotator cuff tendons, were eligible for arthroscopic surgery, and had previously completed a non-operative management programme that included exercise therapy and at least one steroid injection\" (CSAW, Beard 2018).",
       "candidateSources": [
         {
           "kind": "paper",
@@ -41,6 +47,8 @@
     {
       "slot": "claim-slot:l5-progressive-comparisons",
       "statement": "A 2020 systematic review found uncertain clinical benefit for progressive and resisted exercise and no significant benefit for non-progressive or non-resisted exercise, each versus placebo or no treatment at more than 6 weeks to 6 months, in rotator cuff related shoulder pain; evidence was low certainty and the categories were not compared directly.",
+      "evidenceLevel": "Systematic review with meta-analysis of randomised controlled trials",
+      "population": "\"people with rotator cuff related pain\" (Naunton 2020).",
       "candidateSources": [
         {
           "kind": "meta_analysis",

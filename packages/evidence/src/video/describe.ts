@@ -92,16 +92,24 @@ export function estimateMaxCostUsd(seg: SegmentRef, at: Date): number {
   return (input * price.inputPerM + (MAX_OUTPUT_TOKENS + THINKING_BUDGET) * price.outputPerM) / 1e6;
 }
 
+// The reported total is required: without it the billable usage is unknown (Sol R2 PR20-02).
 const usageSchema = z.object({
   promptTokenCount: z.number().int().min(0),
   candidatesTokenCount: z.number().int().min(0).default(0),
   thoughtsTokenCount: z.number().int().min(0).default(0),
+  totalTokenCount: z.number().int().min(0),
 });
 
+/**
+ * An upper bound on what the call was billed: the prompt at the input price, and everything
+ * else the total reports (or the output counts, if larger) at the output price.
+ */
 export function costUsd(usage: z.input<typeof usageSchema>, at: Date): number {
   const u = usageSchema.parse(usage);
   const price = describerPrice(at);
-  return Math.round(((u.promptTokenCount * price.inputPerM + (u.candidatesTokenCount + u.thoughtsTokenCount) * price.outputPerM) / 1e6) * 1e6) / 1e6;
+  const output = Math.max(u.candidatesTokenCount + u.thoughtsTokenCount, u.totalTokenCount - u.promptTokenCount);
+  // Rounded up to the micro-dollar, so rounding never understates spend.
+  return Math.ceil(u.promptTokenCount * price.inputPerM + output * price.outputPerM - 1e-6) / 1e6;
 }
 
 export type DescribeResult =
