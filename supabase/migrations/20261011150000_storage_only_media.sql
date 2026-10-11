@@ -28,6 +28,17 @@ begin
 end;
 $$;
 
+/** Video is registry-only: no plain video asset, even a stored one (Sol R1 PR23-01). */
+create function private.video_error(p_src text)
+returns void
+language plpgsql immutable set search_path = ''
+as $$
+begin
+  raise exception 'invalid course: a plain video asset is not allowed; use a registry video block (got %)', p_src
+    using errcode = '22023';
+end;
+$$;
+
 create function private.guard_block_media()
 returns trigger
 language plpgsql security definer set search_path = ''
@@ -36,12 +47,15 @@ begin
   if new.kind = 'image' and not private.media_src_ok(new.content ->> 'src', new.org_id) then
     perform private.media_error(new.content ->> 'src');
   end if;
+  if new.kind = 'image' and new.content ->> 'kind' = 'video' then
+    perform private.video_error(new.content ->> 'src');
+  end if;
   return new;
 end;
 $$;
 
 create trigger lesson_blocks_media_storage
-before insert or update of content, kind on public.lesson_blocks
+before insert or update of content, kind, org_id on public.lesson_blocks
 for each row execute function private.guard_block_media();
 
 create function private.guard_lesson_media()
@@ -54,12 +68,14 @@ begin
   select m ->> 'src' into bad from jsonb_array_elements(new.media) m
   where not private.media_src_ok(m ->> 'src', new.org_id) limit 1;
   if found then perform private.media_error(bad); end if;
+  select m ->> 'src' into bad from jsonb_array_elements(new.media) m where m ->> 'kind' = 'video' limit 1;
+  if found then perform private.video_error(bad); end if;
   return new;
 end;
 $$;
 
 create trigger lessons_media_storage
-before insert or update of media on public.lessons
+before insert or update of media, org_id on public.lessons
 for each row execute function private.guard_lesson_media();
 
 -- The publish gate (every earlier check kept) gains the storage rule.
@@ -117,6 +133,10 @@ begin
       raise exception 'publish gate: lesson % has media that is not a stored file of its owner', b.lesson_id
         using errcode = 'P0001';
     end if;
+    if b.kind = 'image' and b.content ->> 'kind' = 'video' then
+      raise exception 'publish gate: lesson % has a plain video asset; use a registry video block', b.lesson_id
+        using errcode = 'P0001';
+    end if;
     if b.kind = 'video' then
       if c.org_id is not null then
         raise exception 'publish gate: lesson % is gym method content, which cannot embed registry videos', b.lesson_id
@@ -171,6 +191,11 @@ begin
     raise exception 'publish gate: course % has lesson media that is not a stored file of its owner', p_course
       using errcode = 'P0001';
   end if;
+  if exists (select 1 from public.lessons l, jsonb_array_elements(l.media) m
+             where l.course_id = p_course and m ->> 'kind' = 'video') then
+    raise exception 'publish gate: course % has a plain video asset; use a registry video block', p_course
+      using errcode = 'P0001';
+  end if;
 
   -- Founder (global) content: a clean lesson receipt on the exact lesson hash,
   -- practice text and frozen video fields included, and a clean course receipt
@@ -220,5 +245,5 @@ end;
 $function$;
 
 
-revoke all on function private.media_src_ok(text, uuid), private.media_error(text), private.guard_block_media(),
+revoke all on function private.media_src_ok(text, uuid), private.media_error(text), private.video_error(text), private.guard_block_media(),
   private.guard_lesson_media() from public, anon, authenticated, service_role;

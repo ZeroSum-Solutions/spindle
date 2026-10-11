@@ -38,6 +38,7 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
           if (block.kind === "image") {
             requireProvenance(provenance, block.content.provenanceId);
             requireNoVideoHost(lesson.id, block.content.src);
+            requireNoPlainVideo(lesson.id, block.content.kind);
             requireStoredMedia(course, lesson.id, block.content.src);
           }
           if (block.kind === "diagram") {
@@ -69,6 +70,7 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
         for (const media of lesson.media) {
           requireProvenance(provenance, media.provenanceId);
           requireNoVideoHost(lesson.id, media.src);
+          requireNoPlainVideo(lesson.id, media.kind);
           requireStoredMedia(course, lesson.id, media.src);
         }
       }
@@ -88,6 +90,11 @@ function claimUnique(ids: Set<string>, id: string): void {
 function requireStoredMedia(course: Course, lessonId: string, src: string): void {
   const owner = storedMediaOwner(src);
   invariant(owner !== null && (owner.area === "content" || course.layer === "method"), `${lessonId} has media that is not a stored file (${src})`);
+}
+
+/** New content has no plain video assets, even stored ones: video is registry-only (ADR 0007, Sol R1 PR23-01). */
+function requireNoPlainVideo(lessonId: string, kind: string): void {
+  invariant(kind !== "video", `${lessonId} has a plain video asset; use a registry video block`);
 }
 
 /** New content embeds video only through registry video blocks (ADR 0007). */

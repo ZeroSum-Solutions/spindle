@@ -151,8 +151,18 @@ describe("registry videos in a catalog", () => {
     expect(ok(withImage("/media/org/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/x.png"))).toThrow(/stored file/);
     expect(ok(withImage("/media/org/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/x.png", "method"))).not.toThrow();
     expect(ok(withImage("/elsewhere/x.png"))).toThrow(/stored file/);
-    expect(ok(withMedia("https://cdn.example.org/clip.mp4"))).toThrow(/stored file/);
-    expect(ok(withMedia("/media/content/clip.mp4"))).not.toThrow();
+    expect(ok(withMedia("https://cdn.example.org/clip.mp4"))).toThrow(/stored file|registry video block/);
+  });
+
+  it("refuse plain video media, stored or not, in lesson media and image blocks: video is registry-only (Sol R1 PR23-01)", () => {
+    const c = course();
+    const ok = (course: Course) => () => validateCatalog({ version: "t", courses: [course] }, ...lookups);
+    const lessonVideo: Course = { ...c, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, media: [{ kind: "video", src: "/media/content/clip.mp4", alt: "x", caption: "", provenanceId: "p1" }] }] }] };
+    const blockVideo: Course = { ...c, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, blocks: [{ kind: "image", content: { kind: "video", src: "/media/content/clip.mp4", alt: "x", caption: "", provenanceId: "p1" } }] }] }] };
+    expect(ok(lessonVideo)).toThrow(/registry video block/);
+    expect(ok(blockVideo)).toThrow(/registry video block/);
+    const lessonImage: Course = { ...c, parts: [{ ...c.parts[0]!, lessons: [{ ...c.parts[0]!.lessons[0]!, media: [{ kind: "image", src: "/media/content/x.png", alt: "x", caption: "", provenanceId: "p1" }] }] }] };
+    expect(ok(lessonImage)).not.toThrow();
   });
 
   it("refuse a legacy diagram without reviewable text in new content (R16)", () => {

@@ -180,6 +180,10 @@ begin
       raise exception 'publish gate: lesson % has media that is not a stored file of its owner', b.lesson_id
         using errcode = 'P0001';
     end if;
+    if b.kind = 'image' and b.content ->> 'kind' = 'video' then
+      raise exception 'publish gate: lesson % has a plain video asset; use a registry video block', b.lesson_id
+        using errcode = 'P0001';
+    end if;
     if b.kind = 'video' then
       if c.org_id is not null then
         raise exception 'publish gate: lesson % is gym method content, which cannot embed registry videos', b.lesson_id
@@ -236,6 +240,11 @@ begin
   if exists (select 1 from public.lessons l, jsonb_array_elements(l.media) m
              where l.course_id = p_course and not private.media_src_ok(m ->> 'src', c.org_id)) then
     raise exception 'publish gate: course % has lesson media that is not a stored file of its owner', p_course
+      using errcode = 'P0001';
+  end if;
+  if exists (select 1 from public.lessons l, jsonb_array_elements(l.media) m
+             where l.course_id = p_course and m ->> 'kind' = 'video') then
+    raise exception 'publish gate: course % has a plain video asset; use a registry video block', p_course
       using errcode = 'P0001';
   end if;
 
