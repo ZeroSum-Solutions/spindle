@@ -501,7 +501,7 @@ l5_scen = [{"prompt": "A client wants 20 minutes of activation before every sess
 notes5 = ["The EMG section and its quiz were removed: the accessible abstract did not support the ratios or the inference limit.",
           "The outline no longer says 'first-line'. The lesson does not generalise BESS PICO 18's narrower recommendation (physiotherapy as a possible first-line treatment for chronic subacromial pain).",
           "The warm-up is practice-based and ranks nothing.",
-          "BESS 2025 is admissible as guidance through W1's D-12 operator-asserted source kind; its claim statements carry no publication year until the review packet includes one."]
+          "BESS 2025 is expected to become admissible as guidance through W1's D-12 operator-asserted source kind (pending: no receipt yet); its claim statements carry no publication year until the review packet includes one."]
 
 # ---------------------------------------------------------------- lesson 6
 
@@ -541,7 +541,7 @@ l6 = {
        "Do not progress to a vertical press until the client reaches overhead without pain and without arching the lower back to get there."]),
     stop(ACTIVE_LOSS, TRAUMA, WORSENING),
     H("Building muscle"),
-    S("A meta-regression of 67 studies found that muscle growth increases as weekly training volume rises, with diminishing returns: each extra set adds less than the one before.", "claim-slot:l6-volume"),
+    S("A meta-regression found that muscle growth increases as weekly training volume rises, with diminishing returns: each extra set adds less than the one before.", "claim-slot:l6-volume"),
     S("A meta-analysis did not find an extra muscle-growth benefit from taking sets all the way to momentary muscular failure compared with stopping short of it. That does not show the two are equivalent: a later exploratory analysis suggests muscle growth increases as sets end closer to failure.", "claim-slot:l6-failure"),
     P("For shoulders, add weekly sets gradually, keep a few reps in reserve on most sets, and increase volume only when the client recovers well between sessions and shows no warning sign."),
     stop("If pain comes on as volume rises, stop shoulder loading for the session and apply the referral rules first.", WORSENING, TWO_WEEKS, "Only in a later session, with no warning sign remaining, return to a lower volume."),
@@ -553,7 +553,7 @@ l6 = {
       "The position stand recommends progressive resistance training for healthy adults.", "claim-slot:l6-progression"),
     Q("Which shoulder blade movement is part of reaching fully overhead?", ["Upward rotation", "Downward rotation", "None: the shoulder blade stays still"], 0,
       "Reaching fully overhead involves upward rotation of the shoulder blade.", "claim-slot:l6-overhead-upward"),
-    Q("What did a meta-regression of 67 studies find about weekly training volume and muscle growth?", ["Growth increases with volume, with diminishing returns", "Volume made no difference", "Growth rises by the same amount with every extra set"], 0,
+    Q("What did a meta-regression find about weekly training volume and muscle growth?", ["Growth increases with volume, with diminishing returns", "Volume made no difference", "Growth rises by the same amount with every extra set"], 0,
       "Growth increases as volume rises, but each extra set adds less: diminishing returns.", "claim-slot:l6-volume"),
     Q("What did a meta-analysis find about training to momentary failure for muscle growth?", ["No extra benefit from reaching failure, which does not show the two are equivalent", "Failure training always gives more growth", "Failure training prevents growth"], 0,
       "The review found no extra hypertrophy benefit from reaching failure; that does not show equivalence, and later work suggests growth increases closer to failure.", "claim-slot:l6-failure"),
@@ -563,9 +563,9 @@ l6 = {
 }
 l6_slots = [
   {"slot": "claim-slot:l6-progression", "statement": "The American College of Sports Medicine position stand on resistance training prescription recommends that healthy adults perform progressive resistance training to improve muscle function, size and physical performance.", "candidateSources": [ACSM26],
-   "note": "Healthy adults only. ACSM is admissible as a position stand through W1's D-12 operator-asserted source kind; no publication year in the statement until the review packet includes one."},
+   "note": "Healthy adults only. ACSM is expected to become admissible as a position stand through W1's D-12 operator-asserted source kind (pending: no receipt yet); no publication year in the statement until the review packet includes one."},
   {"slot": "claim-slot:l6-overhead-upward", "statement": "In asymptomatic individuals, the scapula rotates upward during arm elevation.", "candidateSources": [FERNANDEZ], "note": "Same source as l2-scapular-motions."},
-  {"slot": "claim-slot:l6-volume", "statement": "A meta-regression of 67 studies found that muscle hypertrophy increases with weekly resistance training volume, with diminishing returns.", "candidateSources": [PELLAND],
+  {"slot": "claim-slot:l6-volume", "statement": "A meta-regression found that muscle hypertrophy increases with weekly resistance training volume, with diminishing returns.", "candidateSources": [PELLAND],
    "note": "Dry-run fix: the ACSM clause and the years are dropped (Sol round 3)."},
   {"slot": "claim-slot:l6-failure", "statement": "A meta-analysis found no hypertrophy advantage for training to momentary muscular failure over non-failure training; this does not establish equivalence, and an exploratory meta-regression found hypertrophy increased as sets were terminated closer to failure.", "candidateSources": [REFALO, ROBINSON],
    "note": "Dry-run fix: neutral population and no publication years. Distinguish reaching failure from proximity to failure."},
