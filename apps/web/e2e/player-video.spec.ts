@@ -1,27 +1,30 @@
+import { randomUUID } from "node:crypto";
 import { expect, test, type Page, type Request } from "@playwright/test";
+import { courseJson, PlayerWorld, practice, type Actor } from "./player-fixtures";
+import { PracticeMedia } from "./helpers/practice-media";
+import { learnPath, signIn } from "./helpers/sign-in";
 
-// Click-to-load YouTube player (D-09), against the /design specimen. Production builds
-// answer 404 at /design, so these cases run against a dev server only; they move to a
-// real lesson once video blocks can be published. YouTube itself is stubbed: the
-// tests prove what our page requests and renders, not YouTube's availability.
+// Click-to-load YouTube player (D-09, ADR 0007) in a real published lesson. Registry clips
+// are synthetic fixtures admitted through the publisher RPCs; no real clip is published.
+// YouTube itself is stubbed in the browser: these tests prove what our page requests and
+// renders, not YouTube's availability.
 
-const ORIGIN_OK = (url: string, base: string) => {
+const world = new PlayerWorld();
+const media = new PracticeMedia(world);
+const actors: Record<string, Actor> = {};
+let gym: { id: string; slug: string };
+let assignment: string;
+
+const CLIP = { videoId: "abcDEF12_-9", startSeconds: 30, endSeconds: 95, rationale: "Synthetic rationale: shows the set-up." };
+const OFF = { videoId: "zyxWVU98_-7", startSeconds: 0, endSeconds: 20, rationale: "Synthetic rationale: switched off after publishing." };
+const LESSON = "clips";
+
+const sameOrigin = (url: string, base: string) => {
   const u = new URL(url);
   return u.origin === new URL(base).origin || u.protocol === "data:" || u.protocol === "blob:";
 };
 
-async function openSpecimen(page: Page): Promise<Request[]> {
-  const requests: Request[] = [];
-  page.on("request", (r) => requests.push(r));
-  const res = await page.goto("/design");
-  test.skip(res?.status() === 404, "/design is development-only; the production build answers 404");
-  await page.waitForLoadState("networkidle");
-  return requests;
-}
-
-const segment = (page: Page, title: string) => page.locator('[data-block="video"]').filter({ hasText: title });
-
-/** A stand-in IFrame API: a Player that reports ready, or an error, without any network. */
+/** A stand-in IFrame API: a Player that reports ready or an error, with no network. */
 function stubApi(outcome: "ready" | "error" | "silent"): string {
   return `window.YT = { Player: function (frame, opts) {
     setTimeout(function () {
@@ -39,60 +42,102 @@ async function stubYouTube(page: Page, outcome: "ready" | "error" | "silent" | "
   );
 }
 
-test.describe("click-to-load YouTube player", () => {
-  test("nothing third-party loads before the click, and the facade says where the video comes from", async ({ page, baseURL }) => {
-    const requests = await openSpecimen(page);
-    expect(requests.map((r) => r.url()).filter((u) => !ORIGIN_OK(u, baseURL!))).toEqual([]);
-    expect(await page.locator("iframe").count()).toBe(0);
-    expect(await page.locator('link[rel="preconnect"], link[rel="dns-prefetch"], link[rel="preload"]').evaluateAll((els) =>
-      els.map((e) => e.getAttribute("href") ?? "").filter((h) => /youtube|ytimg|googlevideo/.test(h)),
-    )).toEqual([]);
-    expect(await page.locator("script[src]").evaluateAll((els) => els.map((e) => e.getAttribute("src")!).filter((s) => /youtube/.test(s)))).toEqual([]);
+const clip = (page: Page, state: "playable" | "off") => page.locator(`[data-block="video"][data-clip="${state}"]`);
 
-    const clip = segment(page, "Specimen clip: YouTube IFrame API demo");
-    await expect(clip.getByText("Practice-based", { exact: true })).toBeVisible();
-    await expect(clip).toContainText("You can complete this lesson without watching it.");
-    await expect(clip.getByRole("link", { name: "privacy policy" })).toHaveAttribute("href", "https://policies.google.com/privacy");
-    await expect(clip.getByRole("link", { name: "terms" })).toHaveAttribute("href", "https://www.youtube.com/t/terms");
-    await expect(clip.locator("img")).toHaveCount(0);
-
-    const csp = (await page.request.get("/design")).headers()["content-security-policy"] ?? "";
-    expect(csp).toContain("frame-src https://www.youtube-nocookie.com;");
+test.describe.serial("click-to-load registry clips", () => {
+  test.beforeAll(async () => {
+    test.setTimeout(180_000);
+    world.publisher();
+    for (const name of ["vowner", "vlearner"]) {
+      const a = await world.actor(name);
+      actors[name] = { email: a.email, id: a.id };
+    }
+    gym = world.gym("v", actors.vowner!);
+    world.join(gym, actors.vowner!, actors.vlearner!);
+    const playable = media.playable(CLIP, { title: "Synthetic clip title", channel: "Synthetic channel", available: true });
+    const off = media.playable(OFF, { title: "Synthetic off clip", channel: "Synthetic channel", available: true });
+    const version = world.publishGlobal(
+      courseJson(randomUUID(), randomUUID(), "base", "Synthetic video course", [
+        { id: randomUUID(), slug: LESSON, title: "Synthetic clips", blocks: [practice("Synthetic text."), media.block(playable, CLIP), media.block(off, OFF)] },
+      ]),
+    );
+    // Disabling takes effect at once, without a new version.
+    media.disable(off);
+    assignment = world.assign(gym, actors.vowner!, version, actors.vlearner!);
   });
 
-  test("pressing play mounts the privacy-enhanced player in place of the facade", async ({ page }) => {
+  test.afterAll(async () => {
+    media.cleanup();
+    await world.cleanup();
+  });
+
+  test("nothing third-party loads before the click; a switched-off clip offers nothing", async ({ browser, baseURL }) => {
+    const path = learnPath(gym, assignment, LESSON);
+    const page = await signIn(browser, actors.vlearner!, path);
+    const requests: Request[] = [];
+    page.on("request", (r) => requests.push(r));
+    const res = await page.goto(path);
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Synthetic clips");
+    expect(requests.map((r) => r.url()).filter((u) => !sameOrigin(u, baseURL!))).toEqual([]);
+    expect(await page.locator("iframe").count()).toBe(0);
+    expect(await page.locator("script[src]").evaluateAll((els) => els.map((e) => e.getAttribute("src")!).filter((s) => /youtube/.test(s)))).toEqual([]);
+    expect(await page.locator('link[rel="preconnect"], link[rel="dns-prefetch"], link[rel="preload"]').evaluateAll((els) => els.map((e) => e.getAttribute("href") ?? "").filter((h) => /youtube|ytimg|googlevideo/.test(h)))).toEqual([]);
+    expect(res?.headers()["content-security-policy"] ?? "").toContain("frame-src https://www.youtube-nocookie.com;");
+
+    const playable = clip(page, "playable");
+    await expect(playable.getByText("Practice-based", { exact: true })).toBeVisible();
+    await expect(playable.locator('[data-video="facade"]')).toContainText("Synthetic clip title");
+    await expect(playable.locator('[data-video="facade"]')).toContainText("0:30 to 1:35");
+    await expect(playable).toContainText("Synthetic rationale: shows the set-up.");
+    await expect(playable).toContainText("You can complete this lesson without watching it.");
+    await expect(playable.getByRole("link", { name: "privacy policy" })).toHaveAttribute("href", "https://policies.google.com/privacy");
+    await expect(playable.getByRole("link", { name: "terms" })).toHaveAttribute("href", "https://www.youtube.com/t/terms");
+    await expect(playable.locator("img")).toHaveCount(0);
+
+    const off = clip(page, "off");
+    await expect(off).toContainText("This video is switched off for now.");
+    await expect(off.getByRole("button")).toHaveCount(0);
+    await expect(off.locator("a")).toHaveCount(0);
+    // Completion never depends on a video.
+    await expect(page.getByRole("button", { name: "Mark lesson complete" })).toBeVisible();
+  });
+
+  test("pressing play mounts the privacy-enhanced player in place of the facade", async ({ browser }) => {
+    const path = learnPath(gym, assignment, LESSON);
+    const page = await signIn(browser, actors.vlearner!, path);
     await stubYouTube(page, "ready");
-    await openSpecimen(page);
-    const clip = segment(page, "Specimen clip: YouTube IFrame API demo");
-    await clip.getByRole("button", { name: /Play video/ }).click();
-    const frame = clip.locator('iframe[data-video="player"]');
+    await page.reload();
+    const playable = clip(page, "playable");
+    await playable.getByRole("button", { name: /Play video/ }).click();
+    const frame = playable.locator('iframe[data-video="player"]');
     await expect(frame).toBeVisible();
     const src = new URL((await frame.getAttribute("src"))!);
     expect(src.origin).toBe("https://www.youtube-nocookie.com");
-    expect(src.pathname).toBe("/embed/M7lc1UVf-VE");
-    expect(src.searchParams.get("end")).toBe("30");
+    expect(src.pathname).toBe(`/embed/${CLIP.videoId}`);
+    expect([src.searchParams.get("start"), src.searchParams.get("end")]).toEqual(["30", "95"]);
     expect(src.searchParams.has("controls")).toBe(false);
     await expect(frame).toHaveAttribute("referrerpolicy", "strict-origin");
-    await expect(frame).toHaveAttribute("title", "YouTube video: Specimen clip: YouTube IFrame API demo");
-    await expect(clip.locator('[data-video="facade"]')).toHaveCount(0);
+    await expect(frame).toHaveAttribute("title", "YouTube video: Synthetic clip title");
+    await expect(playable.locator('[data-video="facade"]')).toHaveCount(0);
     const box = (await frame.boundingBox())!;
     expect(box.width).toBeGreaterThanOrEqual(200);
     expect(box.height).toBeGreaterThanOrEqual(200);
-    await expect(clip.getByText("Loading the YouTube player…")).toHaveCount(0);
-    // The other clip on the page is untouched.
-    await expect(segment(page, "video that cannot play").locator('[data-video="facade"]')).toBeVisible();
+    await expect(playable.getByText("Loading the YouTube player…")).toHaveCount(0);
   });
 
   for (const outcome of ["error", "script-fails"] as const) {
-    test(`a player ${outcome === "error" ? "error" : "script that fails to load"} ends in a truthful unavailable state`, async ({ page }) => {
+    test(`a player ${outcome === "error" ? "error" : "script that fails to load"} ends in a truthful unavailable state`, async ({ browser }) => {
+      const path = learnPath(gym, assignment, LESSON);
+      const page = await signIn(browser, actors.vlearner!, path);
       await stubYouTube(page, outcome);
-      await openSpecimen(page);
-      const clip = segment(page, "video that cannot play");
-      await clip.getByRole("button", { name: /Play video/ }).click();
-      const unavailable = clip.locator('[data-video="unavailable"]');
+      await page.reload();
+      const playable = clip(page, "playable");
+      await playable.getByRole("button", { name: /Play video/ }).click();
+      const unavailable = playable.locator('[data-video="unavailable"]');
       await expect(unavailable).toContainText("This video is unavailable here right now.");
-      await expect(unavailable.getByRole("link", { name: /Watch on YouTube/ })).toHaveAttribute("href", "https://www.youtube.com/watch?v=000000000aa&t=5s");
-      await expect(clip.locator("iframe")).toHaveCount(0);
+      await expect(unavailable.getByRole("link", { name: /Watch on YouTube/ })).toHaveAttribute("href", `https://www.youtube.com/watch?v=${CLIP.videoId}&t=30s`);
+      await expect(playable.locator("iframe")).toHaveCount(0);
     });
   }
 });
