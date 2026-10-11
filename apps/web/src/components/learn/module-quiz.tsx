@@ -138,7 +138,11 @@ export function QuizView({
               <span className="font-medium">{result.passed ? "Passed." : "Not passed yet."}</span> You got {result.correct} of {result.total} correct.{" "}
               {result.passed ? "This attempt counts toward the module." : `You need ${neededToPass(result.total)} to pass.`}
             </p>
-            {result.feedback === null ? <p className="text-label text-text-muted">Feedback for each question is not available for this attempt.</p> : null}
+            {result.reviewLocked ? (
+              <p className="text-label text-text-muted">Answers and explanations open once you pass.</p>
+            ) : result.feedback === null ? (
+              <p className="text-label text-text-muted">Feedback for each question is not available for this attempt.</p>
+            ) : null}
             <button
               type="button"
               onClick={onTryAgain}

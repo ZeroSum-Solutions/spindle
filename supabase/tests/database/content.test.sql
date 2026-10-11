@@ -710,7 +710,8 @@ select is((select count(*) from content_tables t where has_table_privilege('anon
   'anon cannot read content tables');
 select is((select array_agg(t.name order by t.name) from content_tables t
   where not has_table_privilege('authenticated', 'public.' || t.name, 'SELECT')),
-  array['binding_reviews', 'block_claims', 'claim_reviews'], 'reviews and draft claim links are not client-readable');
+  array['binding_reviews', 'block_claims', 'claim_reviews', 'curriculum_versions'],
+  'reviews and draft claim links are not client-readable; versions are readable by column only (ADR 0007: no raw snapshot)');
 select ok((select bool_and(c.relrowsecurity) from content_tables t join pg_class c on c.oid = ('public.' || t.name)::regclass),
   'RLS is on for every content table');
 select is((select count(*) from pg_proc p where p.prosecdef and p.pronamespace in ('public'::regnamespace, 'private'::regnamespace)

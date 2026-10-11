@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
-import type { ModuleStatus } from "@spindle/schema";
-import type { GradedQuestion } from "@spindle/engine";
+import { parseQuizReview, type ModuleStatus } from "@spindle/schema";
+import type { LearnerQuestion } from "@spindle/engine";
 import { fieldName, moduleQuizHref, MISSING_ANSWERS, moduleStatusView, neededToPass, questionViews, readSubmission, resultState, classifySubmitError } from "./quiz";
 
 const KEY = "6a64a1c2-0000-4000-8000-000000005619";
-const Q: GradedQuestion[] = [
-  { questionId: "l1:q1", lessonId: "l1", prompt: "Synthetic one?", options: ["A", "B"], answerIndex: 1, explanation: "Synthetic: B." },
-  { questionId: "l1:q2", lessonId: "l1", prompt: "Synthetic two?", options: ["A", "B", "C"], answerIndex: 0, explanation: "Synthetic: A." },
-  { questionId: "l2:q1", lessonId: "l2", prompt: "Synthetic three?", options: ["A", "B"], answerIndex: 0, explanation: "Synthetic: A." },
+// Learner questions carry no answer key (T21): the quiz page never has one before a pass.
+const Q: LearnerQuestion[] = [
+  { questionId: "l1:q1", lessonId: "l1", prompt: "Synthetic one?", options: ["A", "B"] },
+  { questionId: "l1:q2", lessonId: "l1", prompt: "Synthetic two?", options: ["A", "B", "C"] },
+  { questionId: "l2:q1", lessonId: "l2", prompt: "Synthetic three?", options: ["A", "B"] },
 ];
 
 function form(entries: Record<string, string>): FormData {
@@ -86,40 +87,43 @@ describe("classifySubmitError", () => {
   });
 });
 
-describe("resultState", () => {
-  const answers = [
-    { questionId: "l1:q1", answerIndex: 1 },
-    { questionId: "l1:q2", answerIndex: 2 },
-    { questionId: "l2:q1", answerIndex: 0 },
+describe("resultState (T21: feedback only after a pass, from the server's review)", () => {
+  const review = [
+    { questionId: "l1:q1", chosen: 1, answerIndex: 1, correct: true, explanation: "Synthetic: B." },
+    { questionId: "l1:q2", chosen: 0, answerIndex: 0, correct: true, explanation: "Synthetic: A." },
+    { questionId: "l2:q1", chosen: 1, answerIndex: 0, correct: false, explanation: "Synthetic: A." },
   ];
 
-  it("explains the server's result question by question when the counts agree", () => {
-    const state = resultState({ attemptId: "a1", correct: 2, total: 3, passed: false }, Q, answers);
-    expect(state).toMatchObject({ status: "result", correct: 2, total: 3, passed: false });
+  it("shows the score only for a failed attempt: no answers, no explanations", () => {
+    const state = resultState({ attemptId: "a1", correct: 1, total: 3, passed: false }, null);
+    expect(state).toEqual({ status: "result", attemptId: "a1", correct: 1, total: 3, passed: false, feedback: null, reviewLocked: true });
+  });
+
+  it("explains a passing attempt question by question from the server's review", () => {
+    const state = resultState({ attemptId: "a1", correct: 2, total: 3, passed: true }, review);
+    expect(state.reviewLocked).toBe(false);
     expect(state.feedback).toEqual([
       { questionId: "l1:q1", correct: true, explanation: "Synthetic: B." },
-      { questionId: "l1:q2", correct: false, explanation: "Synthetic: A." },
-      { questionId: "l2:q1", correct: true, explanation: "Synthetic: A." },
+      { questionId: "l1:q2", correct: true, explanation: "Synthetic: A." },
+      { questionId: "l2:q1", correct: false, explanation: "Synthetic: A." },
     ]);
   });
 
-  it("keeps the server's numbers and withholds feedback when the engine disagrees", () => {
-    const state = resultState({ attemptId: "a1", correct: 3, total: 3, passed: true }, Q, answers);
-    expect(state).toMatchObject({ correct: 3, total: 3, passed: true, feedback: null });
+  it("withholds feedback when the review does not match the server's score, or is missing", () => {
+    expect(resultState({ attemptId: "a1", correct: 3, total: 3, passed: true }, review).feedback).toBeNull();
+    expect(resultState({ attemptId: "a1", correct: 2, total: 3, passed: true }, review.slice(0, 2)).feedback).toBeNull();
+    expect(resultState({ attemptId: "a1", correct: 2, total: 3, passed: true }, null)).toMatchObject({ feedback: null, reviewLocked: false });
   });
 
   it("never derives passed itself", () => {
-    // Even a result the engine would call a pass stays as the server reported it.
-    const all = [
-      { questionId: "l1:q1", answerIndex: 1 },
-      { questionId: "l1:q2", answerIndex: 0 },
-      { questionId: "l2:q1", answerIndex: 0 },
-    ];
-    expect(resultState({ attemptId: "a1", correct: 3, total: 3, passed: false }, Q, all).passed).toBe(false);
+    expect(resultState({ attemptId: "a1", correct: 3, total: 3, passed: false }, null).passed).toBe(false);
   });
 
-  it("withholds feedback when the answers do not fit the questions", () => {
-    expect(resultState({ attemptId: "a1", correct: 1, total: 3, passed: false }, Q, answers.slice(0, 2)).feedback).toBeNull();
+  it("parses a review whose explanation is as long as publishing allows (Sol R2 PR22-05)", () => {
+    const long = "x".repeat(4500);
+    const rows = parseQuizReview([{ question_id: "l1:q1", chosen: 1, answer_index: 1, correct: true, explanation: long }]);
+    expect(rows[0]!.explanation).toHaveLength(4500);
+    expect(() => parseQuizReview([{ question_id: "l1:q1", chosen: 1, answer_index: 1, correct: true, explanation: "x".repeat(5001) }])).toThrow();
   });
 });
 

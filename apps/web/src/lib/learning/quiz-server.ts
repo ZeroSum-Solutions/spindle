@@ -3,8 +3,8 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
-import { parseModuleStatus, parseQuizAttemptResult, type ModuleStatus } from "@spindle/schema";
-import { gradedQuestions } from "@spindle/engine";
+import { parseModuleStatus, parseQuizAttemptResult, parseQuizReview, type ModuleStatus, type QuizReviewRow } from "@spindle/schema";
+import { learnerQuestions } from "@spindle/engine";
 import { slugSchema } from "@/lib/forms";
 import { learnerGym, myAssignment, type LearnerGym } from "./load";
 import { classifySubmitError, readSubmission, resultState, UNCONFIRMED, type QuizState } from "./quiz";
@@ -34,7 +34,8 @@ export async function submitQuiz(route: QuizRoute, form: FormData): Promise<Quiz
     const detail = await myAssignment(ctx, parsed.data.assignmentId);
     if (!detail.available) return { status: "error", kind: "rejected", message: "This course version can't be displayed, so its quiz can't be submitted. Nothing was saved." };
     // Only phase-3 versions have a graded quiz; submit_quiz_attempt refuses the rest.
-    const questions = detail.version.gradedQuiz ? gradedQuestions(detail.version.course) : [];
+    // From the learner projection: prompts and options only, no answer key (T21, Sol R1 PR22-01).
+    const questions = detail.version.gradedQuiz ? learnerQuestions(detail.version.learnerCourse) : [];
     if (questions.length === 0) return { status: "error", kind: "rejected", message: "This course version has no graded quiz. Nothing was saved." };
     const read = readSubmission(form, questions);
     if ("error" in read) return { status: "error", kind: "rejected", message: read.error };
@@ -53,10 +54,23 @@ export async function submitQuiz(route: QuizRoute, form: FormData): Promise<Quiz
     } catch {
       // The attempt is saved; a stale cache only delays the status card.
     }
-    return resultState(result, questions, read.answers);
+    // Answers and explanations come only from the server, and only after a pass.
+    const review = result.passed ? await loadReview(ctx, result.attemptId) : null;
+    return resultState(result, review);
   } catch (err) {
     unstable_rethrow(err);
     return submitted ? UNCONFIRMED : NOT_SUBMITTED;
+  }
+}
+
+/** The post-pass answer review for my own attempt, or null when it cannot be read (the score still stands). */
+async function loadReview(ctx: LearnerGym, attemptId: string): Promise<QuizReviewRow[] | null> {
+  try {
+    const { data, error } = await ctx.supabase.rpc("quiz_attempt_review", { p_attempt: attemptId });
+    if (error) return null;
+    return parseQuizReview(data);
+  } catch {
+    return null;
   }
 }
 
