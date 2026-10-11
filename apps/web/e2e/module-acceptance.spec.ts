@@ -268,20 +268,26 @@ test.describe.serial("shoulder module acceptance", () => {
       for (const b of blocks.map((x) => (x.kind === "diagram" ? diagramBlock(x) : x))) {
         const support = "support" in b && b.support ? b.support : null;
         if (support === null) {
+          // A block without support (a heading) ends the run, and with it any exemption.
           previous = null;
+          afterPlainDiagram = false;
           continue;
         }
         if (b.kind === "diagram" && diagramSections === 0) {
-          // Known gap on main: the run this diagram opens has no visible label. The block right after
-          // it is exempt from the chip check either way; the gap is pinned as an expected failure below.
+          // Known gap on main: the run this diagram opens has no visible label. Only the block
+          // immediately after it, and only when it continues the diagram's run (same support), is
+          // exempt from the chip check; the gap is pinned as an expected failure below.
           previous = support;
           afterPlainDiagram = true;
           continue;
         }
         const label = support === "science" ? "Science" : "Practice-based";
         const chip = supported.nth(k).getByText(label, { exact: true });
-        if (afterPlainDiagram) afterPlainDiagram = false;
-        else if (support !== previous) await expect(chip, `${d.lesson.slug}: label at block ${k + 1}`).toBeVisible();
+        const exempt = afterPlainDiagram && support === previous;
+        afterPlainDiagram = false;
+        if (exempt) {
+          // The continuation of a plain diagram's run: no assertion either way (see above).
+        } else if (support !== previous) await expect(chip, `${d.lesson.slug}: label at block ${k + 1}`).toBeVisible();
         else await expect(chip, `${d.lesson.slug}: no repeated label at block ${k + 1}`).toHaveCount(0);
         previous = support;
         k += 1;
@@ -335,6 +341,8 @@ test.describe.serial("shoulder module acceptance", () => {
         const after = order.slice(at + 1, at + 1 + ADVERSE_CASE_PROMPTS.length);
         expect(after.map((b) => b.kind)).toEqual(ADVERSE_CASE_PROMPTS.map(() => "quiz"));
         ADVERSE_CASE_PROMPTS.forEach((prompt, i) => expect(after[i]!.text).toContain(prompt));
+        // Exactly three: the run of questions after the box ends there.
+        expect(order[at + 1 + ADVERSE_CASE_PROMPTS.length]?.kind, "lesson 8: no fourth question in the run").not.toBe("quiz");
       }
 
       // Graded questions show the prompt and point to the module quiz; never the answer.
