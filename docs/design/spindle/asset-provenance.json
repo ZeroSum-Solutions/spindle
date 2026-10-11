@@ -21,7 +21,9 @@
   "scope": "Corrected user-preferred wordmark only; generated asset provenance is not trademark clearance.",
   "font_licenses": [
     "assets/geist-OFL.txt",
-    "assets/geist-mono-OFL.txt"
+    "assets/geist-mono-OFL.txt",
+    "assets/barlow-condensed-OFL.txt",
+    "assets/fraunces-OFL.txt"
   ],
   "illustrations": [
     {
