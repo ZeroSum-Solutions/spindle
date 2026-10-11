@@ -81,22 +81,6 @@ export function sqlErrorInRollback(script: string): string | null {
 /** A SQL string literal. */
 export const lit = (value: string) => `'${value.replaceAll("'", "''")}'`;
 
-/** Exact ids of run-owned users and orgs that still exist, plus their sessions and refresh tokens. */
-export function residue(userIds: string[], orgIds: string[]) {
-  const users = `array[${userIds.map(lit).join(",") || "null"}]::uuid[]`;
-  const orgs = `array[${orgIds.map(lit).join(",") || "null"}]::uuid[]`;
-  const [row] = sql(`select
-    (select count(*) from auth.users where id = any(${users})),
-    (select count(*) from auth.sessions where user_id = any(${users})),
-    (select count(*) from auth.refresh_tokens where user_id = any(${users}::text[])),
-    (select count(*) from public.orgs where id = any(${orgs})),
-    (select count(*) from public.memberships where org_id = any(${orgs}) or user_id = any(${users})),
-    (select count(*) from public.invites where org_id = any(${orgs})),
-    (select count(*) from storage.objects where bucket_id = 'org-media' and private.path_org(name) = any(${orgs}))`);
-  const [authUsers, sessions, refreshTokens, orgRows, memberships, invites, orgObjects] = row!.map(Number);
-  return { authUsers, sessions, refreshTokens, orgs: orgRows, memberships, invites, orgObjects };
-}
-
 /** What a run owns, named before anything is created so a lost response cannot hide a row. */
 export type RunScope = {
   emails: string[];
@@ -105,10 +89,29 @@ export type RunScope = {
   objects: string;
 };
 
+const textArray = (values: string[]) => `array[${values.map(lit).join(",") || "null"}]::text[]`;
+
+/** What is left of a run, found by its names rather than by ids learned during the run. */
+export function residue(scope: RunScope) {
+  const users = `(select id from auth.users where email = any(${textArray(scope.emails)}))`;
+  const orgs = `(select id from public.orgs where slug = any(${textArray(scope.slugs)}))`;
+  const [row] = sql(`select
+    (select count(*) from ${users} u),
+    (select count(*) from auth.sessions where user_id in ${users}),
+    (select count(*) from auth.refresh_tokens where user_id::uuid in ${users}),
+    (select count(*) from ${orgs} o),
+    (select count(*) from public.memberships where org_id in ${orgs} or user_id in ${users}),
+    (select count(*) from public.invites where org_id in ${orgs}),
+    (select count(*) from storage.objects where ${scope.objects})`);
+  const [authUsers, sessions, refreshTokens, orgRows, memberships, invites, runObjects] = row!.map(Number);
+  return { authUsers, sessions, refreshTokens, orgs: orgRows, memberships, invites, runObjects };
+}
+
 /**
  * Removes a run's fixtures in dependency order: storage objects, sessions,
- * orgs, then users. Every step is attempted; failures are collected and
- * reported with the exact residue, and any failure or residue throws.
+ * orgs, then users. Every step, and every bucket and user within a step, is
+ * attempted on its own; failures are collected and reported with the exact
+ * residue, and any failure or residue throws.
  */
 export async function cleanupRun(scope: RunScope): Promise<void> {
   const errors: string[] = [];
@@ -119,25 +122,39 @@ export async function cleanupRun(scope: RunScope): Promise<void> {
       errors.push(`${step}: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
-  const userIds = userIdsByEmail(scope.emails);
-  const orgIds = orgIdsBySlug(scope.slugs);
-  const service = serviceClient();
-
-  await attempt("objects", async () => {
-    const rows = sql(`select bucket_id, name from storage.objects where ${scope.objects}`);
-    for (const bucket of new Set(rows.map(([bk]) => bk!))) {
-      const names = rows.filter(([bk]) => bk === bucket).map(([, name]) => name!);
-      const { data, error } = await service.storage.from(bucket).remove(names);
-      if (error) throw new Error(`${bucket}: ${error.message}`);
-      if (data?.length !== names.length) throw new Error(`${bucket}: removed ${data?.length} of ${names.length}`);
-    }
+  let service: SupabaseClient | undefined;
+  let users: { id: string; email: string }[] = [];
+  let orgIds: string[] = [];
+  let objects: string[][] = [];
+  await attempt("service client", async () => {
+    service = serviceClient();
   });
+  await attempt("resolve users", async () => {
+    users = sql(`select id, email from auth.users where email = any(${textArray(scope.emails)}) order by id`).map(
+      ([id, email]) => ({ id: id!, email: email! }),
+    );
+  });
+  await attempt("resolve orgs", async () => {
+    orgIds = orgIdsBySlug(scope.slugs);
+  });
+  await attempt("resolve objects", async () => {
+    objects = sql(`select bucket_id, name from storage.objects where ${scope.objects}`);
+  });
+
+  for (const bucket of new Set(objects.map(([bk]) => bk!))) {
+    await attempt(`objects ${bucket}`, async () => {
+      const names = objects.filter(([bk]) => bk === bucket).map(([, name]) => name!);
+      const { data, error } = await service!.storage.from(bucket).remove(names);
+      if (error) throw new Error(error.message);
+      if (data?.length !== names.length) throw new Error(`removed ${data?.length} of ${names.length}`);
+    });
+  }
 
   // Revoke every session: sign each user in once more through a one-time link
   // (no mail is sent) and sign out with global scope.
-  for (const email of scope.emails.filter((e) => userIdsByEmail([e]).length > 0)) {
+  for (const { email } of users) {
     await attempt(`revoke ${email}`, async () => {
-      const link = await service.auth.admin.generateLink({ type: "magiclink", email });
+      const link = await service!.auth.admin.generateLink({ type: "magiclink", email });
       if (link.error) throw new Error(link.error.message);
       const client = anonClient();
       const verified = await client.auth.verifyOtp({ token_hash: link.data.properties.hashed_token, type: "magiclink" });
@@ -147,37 +164,33 @@ export async function cleanupRun(scope: RunScope): Promise<void> {
     });
   }
   await attempt("sessions revoked", async () => {
-    const { sessions, refreshTokens } = residue(userIds, []);
+    const { sessions, refreshTokens } = residue(scope);
     if (sessions + refreshTokens > 0) throw new Error(`${sessions} sessions, ${refreshTokens} refresh tokens remain`);
   });
 
   if (orgIds.length > 0) {
     await attempt("orgs", async () => {
-      const { error, count } = await service.from("orgs").delete({ count: "exact" }).in("id", orgIds);
+      const { error, count } = await service!.from("orgs").delete({ count: "exact" }).in("id", orgIds);
       if (error) throw new Error(error.message);
       if (count !== orgIds.length) throw new Error(`removed ${count} of ${orgIds.length}`);
     });
   }
-  for (const id of userIds) {
+  for (const { id } of users) {
     await attempt(`user ${id}`, async () => {
-      const { error } = await service.auth.admin.deleteUser(id);
+      const { error } = await service!.auth.admin.deleteUser(id);
       if (error) throw new Error(error.message);
     });
   }
 
-  const [[objects]] = sql(`select count(*) from storage.objects where ${scope.objects}`) as [[string]];
-  const left = { ...residue(userIds, orgIds), runObjects: Number(objects) };
-  if (errors.length > 0 || Object.values(left).some((n) => n !== 0)) {
+  let left: ReturnType<typeof residue> | string;
+  try {
+    left = residue(scope);
+  } catch (error) {
+    left = `unknown: ${error instanceof Error ? error.message : String(error)}`;
+  }
+  if (errors.length > 0 || typeof left === "string" || Object.values(left).some((n) => n !== 0)) {
     throw new Error(`cleanup incomplete: ${JSON.stringify({ errors, residue: left })}`);
   }
-}
-
-/** Ids of existing users with exactly these addresses (no pattern matching). */
-export function userIdsByEmail(emails: string[]): string[] {
-  if (emails.length === 0) return [];
-  return sql(`select id from auth.users where email = any(array[${emails.map(lit).join(",")}]) order by id`).map(
-    ([id]) => id!,
-  );
 }
 
 /** Ids of existing orgs with exactly these slugs. */
