@@ -51,35 +51,12 @@ function decodeEntity(match: string, dec?: string, hex?: string, name?: string):
 }
 
 // One tag grammar (XML-like): "<", an optional "/", an element name (optionally namespaced),
-// attributes that each carry a quoted value, an optional "/", then ">". Anything else that
-// starts with "<" ("P<alpha; pooled effect>0.5", "n<5") is text (Sol R2 R05).
+// attributes that each carry a quoted value without "<", an optional "/", then ">". Anything
+// else that starts with "<" ("P<alpha; pooled effect>0.5", "n<5") is text.
 const NAME = String.raw`[A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?`;
 const TAG = new RegExp(String.raw`<\/?${NAME}(?:\s+${NAME}\s*=\s*(?:"[^"<]*"|'[^'<]*'))*\s*\/?>`, "y");
-const DECLARATION = /<![A-Za-z][^<>]*>/y;
-
-// Escaped markup ("&lt;jats:p&gt;", "&#60;break/&#62;"), which some publishers double-encode.
-// Delimiters and quotes may be named or numeric entities. Only namespaced names or known
-// HTML/JATS element names count, with the same attribute grammar, so an escaped comparison
-// such as "x &lt;y and z &gt; 0" stays text (Sol R2 R04).
-const LT = String.raw`(?:&lt;|&#0*60;|&#x0*3c;)`;
-const GT = String.raw`(?:&gt;|&#0*62;|&#x0*3e;)`;
-const DQ = String.raw`(?:"|&quot;|&#0*34;|&#x0*22;)`;
-const SQ = String.raw`(?:'|&apos;|&#0*39;|&#x0*27;)`;
-const KNOWN = [
-  "p", "i", "b", "u", "em", "strong", "small", "sup", "sub", "br", "hr", "span", "div", "a", "h[1-6]", "ul", "ol", "li",
-  "sec", "title", "break", "italic", "bold", "sc", "underline", "overline", "strike", "monospace", "roman", "sans-serif",
-  "list", "list-item", "label", "caption", "xref", "ext-link", "uri", "email", "inline-formula", "disp-formula",
-  "named-content", "styled-content", "abstract", "trans-abstract", "fig", "table-wrap", "table", "thead", "tbody", "tr",
-  "td", "th", "graphic", "inline-graphic", "def-list", "def-item", "term", "def", "kwd", "kwd-group",
-].join("|");
-const ESC_VALUE = String.raw`(?:${DQ}(?:(?!${DQ})[^<>])*${DQ}|${SQ}(?:(?!${SQ})[^<>])*${SQ})`;
-const ESCAPED_TAG = new RegExp(
-  String.raw`${LT}\/?(?:[A-Za-z_][\w.-]*:[A-Za-z_][\w.-]*|(?:${KNOWN})(?![\w.:-]))(?:\s+${NAME}\s*=\s*${ESC_VALUE})*\s*\/?${GT}`,
-  "gi",
-);
-
-/** Decodes entities once in a run of text, after removing escaped markup. */
-const textRun = (t: string) => t.replace(ESCAPED_TAG, " ").replace(ENTITY, decodeEntity);
+// A declaration ("<!DOCTYPE …>") ends at the first ">" outside quotes; quoted parts cannot hold "<".
+const DECLARATION = /<![A-Za-z](?:[^<>"']|"[^"<]*"|'[^'<]*')*>/y;
 
 function matchAt(re: RegExp, text: string, i: number): number {
   re.lastIndex = i;
@@ -87,18 +64,21 @@ function matchAt(re: RegExp, text: string, i: number): number {
 }
 
 /**
- * Plain text from an abstract or title. A small tokenizer: comments, processing instructions
- * (through "?>") and declarations are dropped; CDATA bodies are kept literally; a tag must
- * match the full tag grammar, so any other "<" or ">" ("p < 0.05", "(<93°)") is text. Text
- * runs are decoded once (Sol R1 and R2 on PR #24).
+ * Plain text from an abstract or title. A small tokenizer, linear in the input: comments,
+ * processing instructions (through "?>") and declarations are dropped; CDATA bodies are kept
+ * literally; a tag must match the full tag grammar, so any other "<" or ">" ("p < 0.05",
+ * "(<93°)") is text. Text is decoded once. Escaped markup ("&lt;p&gt;") is not markup: it
+ * decodes to literal text, which review packets fence as data.
  */
 export function stripTags(text: string): string {
   const out: string[] = [];
   let run = "";
   const flush = (replacement: string) => {
-    out.push(textRun(run), replacement);
+    out.push(run.replace(ENTITY, decodeEntity), replacement);
     run = "";
   };
+  // Once a terminator is missing from the rest of the text, later candidates are text at once.
+  let noPiEnd = false;
   let i = 0;
   while (i < text.length) {
     if (text[i] !== "<") {
@@ -119,8 +99,11 @@ export function stripTags(text: string): string {
     }
     let end = -1;
     if (text.startsWith("<?", i)) {
-      const close = text.indexOf("?>", i + 2);
-      end = close < 0 ? -1 : close + 2;
+      if (!noPiEnd) {
+        const close = text.indexOf("?>", i + 2);
+        if (close < 0) noPiEnd = true;
+        else end = close + 2;
+      }
     } else if (text[i + 1] === "!") end = matchAt(DECLARATION, text, i);
     else end = matchAt(TAG, text, i);
     if (end > 0) {

@@ -42,9 +42,9 @@ describe("stripTags", () => {
     expect(stripTags('a<img alt="1 > 0"/>b')).toBe("a b");
   });
 
-  it("removes escaped markup but keeps escaped comparisons, decoding once (Sol R04)", () => {
-    expect(stripTags("&lt;jats:p&gt;Result&lt;/jats:p&gt;")).toBe("Result");
-    expect(stripTags('&lt;p class="x"&gt;A&lt;/p&gt; &lt;i&gt;B&lt;/i&gt;')).toBe("A B");
+  it("leaves escaped markup as literal text, decoding once (LEAD decision after Sol R3)", () => {
+    expect(stripTags("&lt;jats:p&gt;Result&lt;/jats:p&gt;")).toBe("<jats:p>Result</jats:p>");
+    expect(stripTags("A&#60;break/&#62;B")).toBe("A<break/>B");
     expect(stripTags("x &lt;y and z &gt; 0")).toBe("x <y and z > 0");
     expect(stripTags("&amp;lt;p&amp;gt;")).toBe("&lt;p&gt;");
   });
@@ -54,14 +54,6 @@ describe("stripTags", () => {
     const out = normalizeCrossref({ ...work.message, title: ["<!-- note -->RETRACTED: Synthetic review"], "updated-by": [], relation: {} });
     expect(out.isRetracted).toBe(true);
     expect(out.retractionEvidence).toContain("title:retraction");
-  });
-
-  it("removes escaped markup written with numeric delimiters or unnamespaced JATS names (Sol R2 R04)", () => {
-    expect(stripTags("A&lt;break/&gt;B")).toBe("A B");
-    expect(stripTags("&#60;jats:p&#62;Result&#60;/jats:p&#62;")).toBe("Result");
-    expect(stripTags("&#x3C;italic&#x3E;Result&#x3c;/italic&#x3e;")).toBe("Result");
-    expect(stripTags('&lt;named-content content-type=&#34;x&#34;&gt;Text&lt;/named-content&gt;')).toBe("Text");
-    expect(stripTags("a &#60; b and c &#62; d")).toBe("a < b and c > d");
   });
 
   it("keeps text that only looks like a tag (Sol R2 R05)", () => {
@@ -74,6 +66,19 @@ describe("stripTags", () => {
   it("removes a processing instruction through its ?> (Sol R2 R06)", () => {
     expect(stripTags("a<?tex x > y?>b")).toBe("a b");
     expect(stripTags("a <?unterminated x > y")).toBe("a <?unterminated x > y");
+  });
+
+  it("ends a declaration at a > outside quotes (Sol R3 R09)", () => {
+    expect(stripTags('<!DOCTYPE article SYSTEM "a>b.dtd"><p>Result</p>')).toBe("Result");
+    expect(stripTags("<!DOCTYPE article SYSTEM 'a>b.dtd'><p>Result</p>")).toBe("Result");
+  });
+
+  it("stays linear on many unterminated processing instructions and tag starts (Sol R3 R07)", () => {
+    for (const input of ["<?x".repeat(100_000), "<!a \"".repeat(50_000), "<a b=\"".repeat(50_000)]) {
+      const t = performance.now();
+      expect(stripTags(input)).toBe(input.replace(/\s+/g, " ").trim());
+      expect(performance.now() - t).toBeLessThan(1000);
+    }
   });
 });
 
