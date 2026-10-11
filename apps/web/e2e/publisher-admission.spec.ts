@@ -43,10 +43,10 @@ test("is a hard 404 for anyone who is not a content publisher", async ({ browser
 test("a publisher sees each pending text in full, with its slot, gym and hash", async ({ browser }) => {
   const page = await signIn(browser, actors.pub!, PATH);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Held texts awaiting admission");
-  const row = page.locator(`[data-text-id="${texts.headline}"]`);
+  // Texts are grouped by gym: the row sits in its gym's group.
+  const row = page.getByRole("region", { name: "Synthetic gym ADMIT" }).locator(`[data-text-id="${texts.headline}"]`);
   await expect(row).toContainText("Lift well. Coach better.");
   await expect(row).toContainText("catalog_headline");
-  await expect(row).toContainText("Synthetic gym ADMIT");
   const hash = await row.locator("[data-text-hash]").textContent();
   expect(hash).toMatch(/^[0-9a-f]{64}$/);
   await expect(row.getByRole("button", { name: "Admit" })).toBeVisible();

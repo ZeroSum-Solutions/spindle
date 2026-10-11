@@ -45,34 +45,34 @@ select throws_ok($$ select public.is_content_publisher() $$, '42501', null, 'ano
 
 -- Listing: publishers only.
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
-select throws_ok($$ select * from public.publisher_tenant_texts() $$, '42501', 'not a content publisher', 'an owner cannot list held texts');
+select throws_ok($$ select * from public.admission_tenant_texts() $$, '42501', 'not a content publisher', 'an owner cannot list held texts');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
-select throws_ok($$ select * from public.publisher_tenant_texts() $$, '42501', 'not a content publisher', 'a trainer cannot list held texts');
+select throws_ok($$ select * from public.admission_tenant_texts() $$, '42501', 'not a content publisher', 'a trainer cannot list held texts');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000c1');
-select is((select count(*)::int from public.publisher_tenant_texts() where status = 'pending' and org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 2,
+select is((select count(*)::int from public.admission_tenant_texts() where status = 'pending' and org_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 2,
   'the publisher sees both pending texts');
-select is((select text from public.publisher_tenant_texts() where text_id = current_setting('test.t1')::uuid), 'Lift well. Coach better.',
+select is((select text from public.admission_tenant_texts() where text_id = current_setting('test.t1')::uuid), 'Lift well. Coach better.',
   'the full text is listed');
-select is((select text_hash from public.publisher_tenant_texts() where text_id = current_setting('test.t1')::uuid), current_setting('test.h1'),
+select is((select text_hash from public.admission_tenant_texts() where text_id = current_setting('test.t1')::uuid), current_setting('test.h1'),
   'the hash is listed with the text');
-select is((select org_name from public.publisher_tenant_texts() where text_id = current_setting('test.t1')::uuid), 'Gym A', 'the gym is named');
+select is((select org_name from public.admission_tenant_texts() where text_id = current_setting('test.t1')::uuid), 'Gym A', 'the gym is named');
 
 -- Deciding: publishers only, with the reviewed hash, as themselves.
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
-select throws_ok(format($$ select public.publisher_decide_my_tenant_text(%L, jsonb_build_object('decision', 'admitted', 'reason', 'x', 'textHash', %L)) $$,
+select throws_ok(format($$ select public.admission_decide_tenant_text(%L, jsonb_build_object('decision', 'admitted', 'reason', 'x', 'textHash', %L)) $$,
   current_setting('test.t1'), current_setting('test.h1')), '42501', 'actor is not a content publisher', 'an owner cannot admit their own text');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000c1');
-select throws_ok(format($$ select public.publisher_decide_my_tenant_text(%L, jsonb_build_object('decision', 'admitted', 'reason', 'x', 'textHash', %L)) $$,
+select throws_ok(format($$ select public.admission_decide_tenant_text(%L, jsonb_build_object('decision', 'admitted', 'reason', 'x', 'textHash', %L)) $$,
   current_setting('test.t1'), repeat('0', 64)), 'P0001', null, 'a stale hash is refused');
-select is(public.publisher_decide_my_tenant_text(current_setting('test.t1')::uuid,
+select is(public.admission_decide_tenant_text(current_setting('test.t1')::uuid,
   jsonb_build_object('decision', 'admitted', 'reason', 'Reviewed on the admission screen.', 'textHash', current_setting('test.h1'))), 'admitted',
   'the publisher admits with the reviewed hash');
-select is(public.publisher_decide_my_tenant_text(current_setting('test.t2')::uuid,
+select is(public.admission_decide_tenant_text(current_setting('test.t2')::uuid,
   jsonb_build_object('decision', 'rejected', 'reason', 'Reads as an outcome claim.', 'textHash', current_setting('test.h2'))), 'rejected',
   'the publisher rejects with a reason');
-select is((select decided_by from public.publisher_tenant_texts() where text_id = current_setting('test.t1')::uuid), '00000000-0000-0000-0000-0000000000c1'::uuid,
+select is((select decided_by from public.admission_tenant_texts() where text_id = current_setting('test.t1')::uuid), '00000000-0000-0000-0000-0000000000c1'::uuid,
   'the decision records the signed-in publisher');
-select is((select status from public.publisher_tenant_texts() where text_id = current_setting('test.t2')::uuid), 'rejected', 'history shows the rejection');
+select is((select status from public.admission_tenant_texts() where text_id = current_setting('test.t2')::uuid), 'rejected', 'history shows the rejection');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
 select is((select text from public.member_tenant_texts('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') where slot = 'catalog_headline' and admitted),
   'Lift well. Coach better.', 'a member now reads the admitted headline');

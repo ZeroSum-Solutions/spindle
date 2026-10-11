@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalPath, isTestOnlyPath, previewPagesEnabled } from "./preview-pages";
+import { canonicalPath, isPublisherPath, isTestOnlyPath, previewPagesEnabled } from "./preview-pages";
 
 describe("previewPagesEnabled", () => {
   it("is off in a production build unless the test server turns it on", () => {
@@ -37,5 +37,14 @@ describe("canonicalPath and isTestOnlyPath", () => {
   it("collapses slashes and dot segments", () => {
     expect(canonicalPath("//a/./b/../c/")).toBe("/a/c");
     expect(canonicalPath("/../..")).toBe("/");
+  });
+});
+
+describe("isPublisherPath", () => {
+  it.each(["/publisher/tenant-texts", "/%70ublisher/tenant-texts", "//publisher/tenant-texts/", "/x/../publisher", "/Publisher/Tenant-Texts", "/publisher.rsc"])("%s is publisher-only", (p) => {
+    expect(isPublisherPath(p)).toBe(true);
+  });
+  it.each(["/", "/gyms", "/publishers", "/gyms/publisher"])("%s is not", (p) => {
+    expect(isPublisherPath(p)).toBe(false);
   });
 });
