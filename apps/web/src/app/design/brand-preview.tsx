@@ -36,7 +36,7 @@ function BrandFrame({ theme, checks }: { theme: TenantTheme; checks: ContrastChe
                 aria-current={i === 0 ? "page" : undefined}
                 className={`rounded-small px-3 py-2 ${i === 0 ? "bg-[var(--tenant-accent-soft)] font-medium text-[var(--tenant-accent)]" : "text-text"}`}
               >
-                <span className="font-mono text-code opacity-80">{String(i + 1).padStart(2, "0")}</span> {title}
+                <span className="font-mono text-code">{String(i + 1).padStart(2, "0")}</span> {title}
               </li>
             ))}
           </ol>
@@ -52,7 +52,7 @@ function BrandFrame({ theme, checks }: { theme: TenantTheme; checks: ContrastChe
               Three bones make the shoulder: the upper arm bone, the shoulder blade and the collarbone. The ball-and-socket joint joins the arm to the
               shoulder blade.
             </p>
-            <a href="#brand-preview" className="self-start text-label font-medium text-[var(--tenant-accent)] underline underline-offset-2 hover:text-[var(--tenant-accent-hover)]">
+            <a href="#brand-preview" data-themed="link" className="self-start text-label font-medium text-[var(--tenant-accent)] underline underline-offset-2 hover:text-[var(--tenant-accent-hover)]">
               Show sources (1 claim)
             </a>
           </section>
@@ -63,9 +63,18 @@ function BrandFrame({ theme, checks }: { theme: TenantTheme; checks: ContrastChe
           <div className="flex flex-col gap-2">
             <p className="text-label text-text-muted">Themed states</p>
             <div className="flex flex-wrap items-center gap-3 text-label">
-              <span className="rounded-control bg-[var(--tenant-accent)] px-3 py-2 font-medium text-[var(--tenant-on-accent)]">Selected</span>
-              <span className="rounded-control bg-[var(--tenant-accent-hover)] px-3 py-2 font-medium text-[var(--tenant-on-accent)]">Selected, hover</span>
-              <span className="rounded-control px-3 py-2 font-medium text-[var(--tenant-accent)] outline-3 outline-offset-4 outline-[var(--focus-ring)]">Focus</span>
+              {/* Real controls, so hover and keyboard focus render the states the validator checks. */}
+              <button
+                type="button"
+                aria-pressed="true"
+                data-themed="selected"
+                className="min-h-11 rounded-control bg-[var(--tenant-accent)] px-3 py-2 font-medium text-[var(--tenant-on-accent)] hover:bg-[var(--tenant-accent-hover)]"
+              >
+                Selected (hover me)
+              </button>
+              <a href="#brand-preview" data-themed="focus" className="inline-flex min-h-11 items-center rounded-control px-3 font-medium text-[var(--tenant-accent)]">
+                Focus me with Tab
+              </a>
             </div>
             <p className="flex items-start gap-2 rounded-small bg-danger-soft px-3 py-2 text-label text-danger">
               <TriangleAlert aria-hidden strokeWidth={1.75} className="mt-0.5 size-4 shrink-0" />
@@ -93,7 +102,7 @@ function BrandFrame({ theme, checks }: { theme: TenantTheme; checks: ContrastChe
                 <td className="px-3 py-1">{c.role}</td>
                 <td className="px-3 py-1">{c.state}</td>
                 <td className="px-3 py-1 text-right font-mono text-code">
-                  {c.ratio.toFixed(2)}:1 {c.pass ? "pass" : "FAIL"} (needs {c.minimum})
+                  {c.shown}:1 {c.pass ? "pass" : "FAIL"} (needs {c.minimum})
                 </td>
               </tr>
             ))}

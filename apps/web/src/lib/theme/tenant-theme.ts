@@ -31,8 +31,14 @@ export const BASE_ATTRIBUTION = "Base curriculum by Spindle, cited";
 /** Bundled fonts only, each self-hosted through next/font with its licence recorded. */
 export const TENANT_FONTS = {
   geist: { label: "Geist", rights: "SIL Open Font License 1.1 (Vercel); bundled with the app" },
-  "barlow-condensed": { label: "Barlow Condensed", rights: "SIL Open Font License 1.1 (Jeremy Tribby); self-hosted by next/font" },
-  fraunces: { label: "Fraunces", rights: "SIL Open Font License 1.1 (Undercase Type); self-hosted by next/font" },
+  "barlow-condensed": {
+    label: "Barlow Condensed",
+    rights: "Copyright 2017 The Barlow Project Authors; SIL Open Font License 1.1 (docs/design/spindle/assets/barlow-condensed-OFL.txt); self-hosted by next/font",
+  },
+  fraunces: {
+    label: "Fraunces",
+    rights: "Copyright 2018 The Fraunces Project Authors; SIL Open Font License 1.1 (docs/design/spindle/assets/fraunces-OFL.txt); self-hosted by next/font",
+  },
 } as const;
 export type TenantFont = keyof typeof TENANT_FONTS;
 
@@ -87,7 +93,10 @@ export interface ContrastCheck {
   state: "default" | "hover" | "selected" | "focus" | "error";
   foreground: string;
   background: string;
+  /** The exact ratio. Pass and fail are decided on this value, never on a rounded one. */
   ratio: number;
+  /** The ratio for display, rounded down to two decimals so a fail never reads as the minimum. */
+  shown: string;
   /** 4.5 for text, 3 for large text and non-text indicators (WCAG 2.2 AA). */
   minimum: number;
   pass: boolean;
@@ -96,7 +105,7 @@ export interface ContrastCheck {
 /** Every foreground and background pair the theme renders, in every state. */
 export function contrastChecks(theme: Pick<TenantTheme, "accent" | "onAccent" | "mark">): ContrastCheck[] {
   const t = derived(theme);
-  const pairs: Omit<ContrastCheck, "ratio" | "pass">[] = [
+  const pairs: Omit<ContrastCheck, "ratio" | "shown" | "pass">[] = [
     { role: "Link on surface", state: "default", foreground: t.accent, background: FIXED.surface, minimum: 4.5 },
     { role: "Link on canvas", state: "default", foreground: t.accent, background: FIXED.canvas, minimum: 4.5 },
     { role: "Link on surface", state: "hover", foreground: t.accentHover, background: FIXED.surface, minimum: 4.5 },
@@ -108,12 +117,13 @@ export function contrastChecks(theme: Pick<TenantTheme, "accent" | "onAccent" | 
     { role: "Focus ring on surface", state: "focus", foreground: t.accent, background: FIXED.surface, minimum: 3 },
     { role: "Focus ring on a muted panel", state: "focus", foreground: t.accent, background: FIXED.surfaceMuted, minimum: 3 },
     { role: "Focus ring on a field in error", state: "error", foreground: t.accent, background: FIXED.dangerSoft, minimum: 3 },
-    { role: "Error text beside themed controls", state: "error", foreground: FIXED.danger, background: FIXED.surface, minimum: 4.5 },
+    { role: "Error text on its panel", state: "error", foreground: FIXED.danger, background: FIXED.dangerSoft, minimum: 4.5 },
   ];
   if (theme.mark.kind === "text") pairs.push({ role: "Text mark in the header", state: "default", foreground: t.accent, background: FIXED.surface, minimum: 3 });
   return pairs.map((p) => {
-    const ratio = Math.round(contrast(p.foreground, p.background) * 100) / 100;
-    return { ...p, ratio, pass: ratio >= p.minimum };
+    // WCAG: a ratio may not be rounded up to meet a minimum, so compare the exact value.
+    const ratio = contrast(p.foreground, p.background);
+    return { ...p, ratio, shown: (Math.floor(ratio * 100) / 100).toFixed(2), pass: ratio >= p.minimum };
   });
 }
 
@@ -130,7 +140,7 @@ export function validateTheme(input: unknown): ThemeResult {
   const checks = contrastChecks(parsed.data);
   const failing = checks.filter((c) => !c.pass);
   if (failing.length > 0) {
-    return { ok: false, problems: failing.map((c) => `${c.role} (${c.state}): ${c.ratio}:1, needs ${c.minimum}:1`), checks };
+    return { ok: false, problems: failing.map((c) => `${c.role} (${c.state}): ${c.shown}:1, needs ${c.minimum}:1`), checks };
   }
   return { ok: true, theme: parsed.data, checks };
 }
