@@ -27,4 +27,13 @@ describe("ProgressTrack", () => {
     expect(out.match(/aria-hidden="true"/g)).toHaveLength(3);
     expect(out).toContain('class="sr-only">Lesson 1 of 2, 0 done');
   });
+
+  it("keeps completion separate from position: revisiting a done lesson still counts it (Sol R1 on #53)", () => {
+    const out = html(segmentsOf([{ state: "done" }, { state: "done" }, { state: "credited" }, { state: "done" }], 1));
+    expect(out).toContain("02 / 04");
+    expect(out).toContain("100%");
+    expect(out).toContain("Lesson 2 of 4, 4 done");
+    // The open lesson still shows as the current place.
+    expect(out.match(/data-current="true"/g)).toHaveLength(1);
+  });
 });
