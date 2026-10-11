@@ -69,6 +69,13 @@ const asUser = (id: string) =>
   `select set_config('role', 'authenticated', true), set_config('request.jwt.claims', ${lit(JSON.stringify({ sub: id, role: "authenticated" }))}, true);`;
 const asService = `select set_config('role', 'service_role', true), set_config('request.jwt.claims', '{"role":"service_role"}', true);`;
 
+/**
+ * A synthetic review run (ADR 0007): CI records receipts through the real RPCs and never calls
+ * a model. The session is unique per test run, so each run's cleanup removes only its own run row.
+ */
+const runReceipt = (run: string) =>
+  `${lit(JSON.stringify({ model: "synthetic-fixture", session: `ci-player-${run}`, packetDigest: "0".repeat(63) + "4", reviewedAt: "2026-10-01T00:00:00Z" }))}::jsonb`;
+
 /** The app's public Supabase settings: CI exports them; locally they come from the ignored .env.local. */
 export function publicEnv(): { url: string; key: string } {
   let url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -242,9 +249,11 @@ export class PlayerWorld {
       select public.publisher_add_claim(${lit(this.publisherId)}, jsonb_build_object('statement', ${lit(`Synthetic claim ${this.run}.`)},
         'evidenceLevel', 'Synthetic level', 'population', 'Synthetic population',
         'sourceIds', jsonb_build_array((select id from public.sources where doi = ${lit(this.doi)}))));
-      select public.publisher_review_claim(${lit(this.publisherId)}, (select id from public.claims where statement = ${lit(`Synthetic claim ${this.run}.`)}),
-        jsonb_build_object('decision', 'approved', 'expiresAt', '2035-01-01T00:00:00Z',
-          'receipt', '{"existenceCheckedAt": "2026-10-01T00:00:00Z", "faithfulness": "faithful", "retractionCheckedAt": "2026-10-01T00:00:00Z"}'::jsonb));
+      select public.publisher_review_claim(${lit(this.publisherId)}, c.id,
+        jsonb_build_object('decision', 'approved', 'expiresAt', to_char(now() + interval '1 year', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+          'expectedHash', public.publisher_claim_target(${lit(this.publisherId)}, c.id) ->> 'hash', 'run', ${runReceipt(this.run)},
+          'receipt', '{"existenceCheckedAt": "2026-10-01T00:00:00Z", "faithfulness": "faithful", "retractionCheckedAt": "2026-10-01T00:00:00Z"}'::jsonb))
+      from public.claims c where c.statement = ${lit(`Synthetic claim ${this.run}.`)};
       commit;`).split("\n");
     const claim = sql(`select id from public.claims where statement = ${lit(`Synthetic claim ${this.run}.`)}`);
     const source = sql(`select id from public.sources where doi = ${lit(this.doi)}`);
@@ -252,16 +261,27 @@ export class PlayerWorld {
     return [claim, source];
   }
 
-  /** Saves and publishes a global course as the publisher. Returns the version id. */
+  /**
+   * Saves and publishes a global course as the publisher, recording synthetic block, lesson
+   * and course receipts against the hashes and claim sets the database reports. Returns the version id.
+   */
   publishGlobal(course: Json): string {
     if (!this.courses.includes(String(course.id))) this.courses.push(String(course.id));
     const p = lit(this.publisherId);
+    const c = lit(String(course.id));
     return sql(`begin; ${asService}
       select public.publisher_save_course_draft(${p}, ${lit(JSON.stringify(course))}::jsonb);
-      select public.publisher_review_block(${p}, b.id, '{"verdict": "supported"}')
-        from public.lesson_blocks b join public.lessons l on l.id = b.lesson_id
-        where l.course_id = ${lit(String(course.id))} and exists (select 1 from public.block_claims bc where bc.block_id = b.id);
-      select public.publisher_publish_course(${p}, ${lit(String(course.id))});
+      select public.publisher_review_block(${p}, (b ->> 'blockId')::uuid, jsonb_build_object('verdict', 'supported',
+          'expectedHash', b -> 'hash', 'claimIds', b -> 'claimIds', 'run', ${runReceipt(this.run)}))
+        from jsonb_path_query(public.publisher_review_targets(${p}, ${c}), '$.lessons[*].blocks[*] ? (@.claimIds.size() > 0)') b;
+      select public.publisher_review_lesson(${p}, (l ->> 'lessonId')::uuid, jsonb_build_object('verdict', 'clean',
+          'expectedHash', l -> 'hash', 'claimIds', l -> 'claimIds', 'checks', '{"safety": "pass", "originality": "pass"}'::jsonb,
+          'findings', '[]'::jsonb, 'run', ${runReceipt(this.run)}))
+        from jsonb_path_query(public.publisher_review_targets(${p}, ${c}), '$.lessons[*]') l;
+      select public.publisher_review_course(${p}, ${c}, jsonb_build_object('verdict', 'clean',
+          'expectedHash', public.publisher_review_targets(${p}, ${c}) -> 'course' -> 'hash',
+          'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', ${runReceipt(this.run)}));
+      select public.publisher_publish_course(${p}, ${c});
       commit;`)
       .split("\n")
       .at(-1)!;
@@ -312,18 +332,21 @@ export class PlayerWorld {
     const orgs = [...this.orgs.values()].map((o) => lit(o.id)).join(", ") || "null";
     const courses = this.courses.map(lit).join(", ") || "null";
     const p = lit(this.publisherId);
-    const tables = ["sources", "claims", "claim_sources", "claim_reviews", "source_retractions", "binding_reviews", "curriculum_versions", "version_lessons", "version_claims", "version_flags"];
+    const tables = ["sources", "claims", "claim_sources", "claim_reviews", "source_retractions", "binding_reviews", "lesson_reviews", "course_reviews", "review_runs", "curriculum_versions", "version_lessons", "version_claims", "version_flags"];
     sql(`begin;
       ${tables.map((t) => `alter table public.${t} disable trigger user;`).join("\n")}
       delete from public.orgs where id in (${orgs});
       delete from public.courses where id in (${courses});
       delete from public.binding_reviews where reviewer = ${p};
+      delete from public.lesson_reviews where reviewer = ${p};
+      delete from public.course_reviews where reviewer = ${p};
       delete from public.claim_reviews where reviewer = ${p};
       delete from public.version_flags where source_id in (select id from public.sources where created_by = ${p});
       delete from public.source_retractions where recorded_by = ${p};
       delete from public.claim_sources where claim_id in (select id from public.claims where created_by = ${p});
       delete from public.claims where created_by = ${p};
       delete from public.sources where created_by = ${p};
+      delete from public.review_runs where recorded_by = ${p};
       delete from private.content_audit where actor in (${users});
       delete from auth.users where id in (${users});
       ${tables.map((t) => `alter table public.${t} enable trigger user;`).join("\n")}
@@ -335,6 +358,9 @@ export class PlayerWorld {
       + (select count(*) from public.claims where created_by = ${p})
       + (select count(*) from public.claim_reviews where reviewer = ${p})
       + (select count(*) from public.binding_reviews where reviewer = ${p})
+      + (select count(*) from public.lesson_reviews where reviewer = ${p})
+      + (select count(*) from public.course_reviews where reviewer = ${p})
+      + (select count(*) from public.review_runs where recorded_by = ${p})
       + (select count(*) from public.source_retractions where recorded_by = ${p})
       + (select count(*) from public.curriculum_versions where course_id in (${courses}))
       + (select count(*) from public.assignments where user_id in (${users}))

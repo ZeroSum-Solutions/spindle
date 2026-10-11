@@ -1,6 +1,6 @@
 # ADR 0005: Content publishing in the database
 
-- Status: accepted, 2026-10-11
+- Status: accepted, 2026-10-11. The receipt and publish rules are superseded by [ADR 0007](0007-review-receipts-media-and-quizzes.md).
 
 ## Decision
 - **Drafts and versions.** `courses`, `course_parts`, `lessons` and `lesson_blocks` hold editable drafts in the existing Course → Part → Lesson → Block vocabulary. Publishing freezes the whole tree into one immutable `curriculum_versions` row (a JSON snapshot in the `@spindle/schema` `Course` shape), plus one `version_lessons` row per lesson.

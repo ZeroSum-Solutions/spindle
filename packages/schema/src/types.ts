@@ -24,6 +24,24 @@ export interface Supported {
   claimIds: string[];
 }
 
+/**
+ * A coaching clip from the practice-media registry (ADR 0007). The lesson
+ * freezes these fields, so its hash seals the reference. A video is always
+ * practice-based: it carries no support field and can never bind claims.
+ */
+export interface VideoSegment {
+  /** The practice-media registry id. */
+  mediaId: string;
+  provider: "youtube";
+  /** The 11-character YouTube video id. */
+  videoId: string;
+  startSeconds: number;
+  endSeconds: number;
+  /** Why the clip supports the section. */
+  rationale: string;
+  caption: string;
+}
+
 export type LessonBlock =
   | { kind: "heading"; content: string }
   | ({ kind: "paragraph"; content: string } & Supported)
@@ -34,7 +52,8 @@ export type LessonBlock =
   | ({
       kind: "quiz";
       content: { prompt: string; options: string[]; answerIndex: number; explanation: string };
-    } & Supported);
+    } & Supported)
+  | { kind: "video"; content: VideoSegment };
 
 export interface LessonResource {
   label: string;

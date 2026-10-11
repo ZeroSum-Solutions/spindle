@@ -3,11 +3,20 @@
 # runs its operation, signals ready and stays open. The second operation then
 # starts, and the case counts only if that second backend is seen waiting on
 # the content advisory lock held by the first one (proven overlap). Then the
-# first commits and the committed state is checked:
+# first commits and the committed state is checked (cases 5-6 wait on the
+# course row lock instead of an advisory lock):
 #   1. publish, then retract a cited source: the new version gets flagged.
 #   2. retract, then publish a course citing it: the publish is refused.
 #   3. complete a lesson in v1, then assign v2: v2 gets the carried credit.
 #   4. assign v2, then complete the lesson in v1: v2 gets the carried credit.
+#   5. save a new draft, then record a lesson review of the old packet: the
+#      review waits for the save and is refused as stale.
+#   6. record a lesson review, then save a new draft: the review stays bound to
+#      the old hash, so the new draft cannot publish on it.
+#   7. retire a registry clip, then refresh its metadata: the refresh waits and
+#      is refused, and no metadata survives the retirement.
+#   8. retire a clip, then reactivate it: the activation waits and is refused,
+#      and the clip stays retired.
 # It commits synthetic rows, so it refuses the shared local stack: point
 # RACE_DB_URL at an isolated database, or run it in CI's ephemeral stack.
 # Every connection, statement and wait is bounded. On exit or interruption it
@@ -30,6 +39,7 @@ ORG=7ace0000-0000-4000-8000-00000000a000
 C1=7ace0001-0000-4000-8000-000000000000  # global courses citing K1, K2
 C2=7ace0002-0000-4000-8000-000000000000
 C3=7ace0003-0000-4000-8000-000000000000  # gym method course
+C4=7ace0004-0000-4000-8000-000000000000  # global course for the stale-review cases
 RUN="content-race-$$"                     # application_name prefix of every backend this run owns
 TMP="${TMPDIR:-/tmp}/$RUN"
 OWNED=""                                  # pids of this run's child processes
@@ -82,14 +92,25 @@ alter table public.claim_sources disable trigger user; alter table public.claim_
 alter table public.source_retractions disable trigger user; alter table public.binding_reviews disable trigger user;
 alter table public.curriculum_versions disable trigger user; alter table public.version_lessons disable trigger user;
 alter table public.version_claims disable trigger user; alter table public.version_flags disable trigger user;
+alter table public.review_runs disable trigger user; alter table public.lesson_reviews disable trigger user;
+alter table public.course_reviews disable trigger user;
+alter table public.practice_media disable trigger user; alter table public.practice_media_checks disable trigger user;
+alter table public.practice_media_status disable trigger user;
+delete from public.practice_media_metadata where recorded_by = '$P';
+delete from public.practice_media_status where recorded_by = '$P';
+delete from public.practice_media_checks where recorded_by = '$P';
+delete from public.practice_media where admitted_by = '$P';
 delete from public.orgs where id = '$ORG';
-delete from public.courses where id in ('$C1', '$C2');
+delete from public.courses where id in ('$C1', '$C2', '$C4');
 delete from public.binding_reviews where reviewer = '$P';
+delete from public.lesson_reviews where reviewer = '$P';
+delete from public.course_reviews where reviewer = '$P';
 delete from public.claim_reviews where reviewer = '$P';
 delete from public.source_retractions where recorded_by = '$P';
 delete from public.claim_sources where claim_id in (select id from public.claims where created_by = '$P');
 delete from public.claims where created_by = '$P';
 delete from public.sources where created_by = '$P';
+delete from public.review_runs where recorded_by = '$P';
 delete from private.content_audit where actor in ('$P', '$O', '$T1', '$T2');
 delete from auth.users where id in ('$P', '$O', '$T1', '$T2');
 alter table public.sources enable trigger user; alter table public.claims enable trigger user;
@@ -97,6 +118,10 @@ alter table public.claim_sources enable trigger user; alter table public.claim_r
 alter table public.source_retractions enable trigger user; alter table public.binding_reviews enable trigger user;
 alter table public.curriculum_versions enable trigger user; alter table public.version_lessons enable trigger user;
 alter table public.version_claims enable trigger user; alter table public.version_flags enable trigger user;
+alter table public.review_runs enable trigger user; alter table public.lesson_reviews enable trigger user;
+alter table public.course_reviews enable trigger user;
+alter table public.practice_media enable trigger user; alter table public.practice_media_checks enable trigger user;
+alter table public.practice_media_status enable trigger user;
 commit;
 SQL
   [ "$(q "select count(*) from auth.users where id in ('$P', '$O', '$T1', '$T2')")" = 0 ]
@@ -131,6 +156,13 @@ course() { # $1 course id, $2 layer, $3 block json
 science() { echo "jsonb_build_object('kind', 'paragraph', 'content', 'Synthetic race claim $1.', 'support', 'science',
   'claimIds', jsonb_build_array((select id from public.claims where statement = 'Race claim $1')))"; }
 L3=7ace0003-0000-4000-8000-000000000011
+L4=7ace0004-0000-4000-8000-000000000011
+# Synthetic review receipts (ADR 0007): a fixture run, never a model call.
+RUNJ='{"model": "synthetic-fixture", "session": "ci-race", "packetDigest": "0000000000000000000000000000000000000000000000000000000000000002", "reviewedAt": "2026-10-01T00:00:00Z"}'
+lesson_review() { # $1 lesson id, $2 expected hash, $3 claim ids json
+  echo "public.publisher_review_lesson('$P', $1, jsonb_build_object('verdict', 'clean', 'expectedHash', $2,
+    'claimIds', $3, 'checks', '{\"safety\": \"pass\", \"originality\": \"pass\"}'::jsonb, 'findings', '[]'::jsonb, 'run', '$RUNJ'::jsonb))"
+}
 
 psql >/dev/null <<SQL
 insert into auth.users (id, email, email_confirmed_at) values
@@ -147,13 +179,23 @@ select public.publisher_add_source('$P', '{"kind": "systematic_review", "title":
 select public.publisher_add_claim('$P', jsonb_build_object('statement', 'Race claim ' || n, 'evidenceLevel', 'synthetic',
   'population', 'synthetic', 'sourceIds', jsonb_build_array((select id from public.sources where doi = '10.5555/race.' || n))))
 from generate_series(1, 2) n;
-select public.publisher_review_claim('$P', id, jsonb_build_object('decision', 'approved', 'expiresAt', '2030-01-01T00:00:00Z',
+select public.publisher_review_claim('$P', id, jsonb_build_object('decision', 'approved',
+  'expiresAt', to_char(now() + interval '1 year', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+  'expectedHash', public.publisher_claim_target('$P', id) ->> 'hash', 'run', '$RUNJ'::jsonb,
   'receipt', '{"existenceCheckedAt": "2026-10-01T00:00:00Z", "faithfulness": "faithful", "retractionCheckedAt": "2026-10-01T00:00:00Z"}'::jsonb))
 from public.claims where created_by = '$P';
 select public.publisher_save_course_draft('$P', $(course "$C1" base "$(science 1)"));
 select public.publisher_save_course_draft('$P', $(course "$C2" base "$(science 2)"));
-select public.publisher_review_block('$P', b.id, '{"verdict": "supported"}')
-from public.lesson_blocks b join public.lessons l on l.id = b.lesson_id where l.course_id in ('$C1', '$C2');
+select public.publisher_save_course_draft('$P', $(course "$C4" base "jsonb_build_object('kind', 'paragraph', 'content', 'Cue A.', 'support', 'practice-based', 'claimIds', '[]'::jsonb)"));
+select public.publisher_review_block('$P', (b ->> 'blockId')::uuid, jsonb_build_object('verdict', 'supported',
+  'expectedHash', b -> 'hash', 'claimIds', b -> 'claimIds', 'run', '$RUNJ'::jsonb))
+from unnest(array['$C1', '$C2']::uuid[]) c, jsonb_path_query(public.publisher_review_targets('$P', c), '\$.lessons[*].blocks[*]') b;
+select $(lesson_review "(l ->> 'lessonId')::uuid" "l -> 'hash'" "l -> 'claimIds'")
+from unnest(array['$C1', '$C2']::uuid[]) c, jsonb_path_query(public.publisher_review_targets('$P', c), '\$.lessons[*]') l;
+select public.publisher_review_course('$P', c, jsonb_build_object('verdict', 'clean',
+  'expectedHash', public.publisher_review_targets('$P', c) -> 'course' -> 'hash',
+  'checks', '{"safety": "pass", "originality": "pass"}'::jsonb, 'findings', '[]'::jsonb, 'run', '$RUNJ'::jsonb))
+from unnest(array['$C1', '$C2']::uuid[]) c;
 commit;
 begin;
 $(as_user "$O")
@@ -174,7 +216,8 @@ check() { # $1 description, $2 condition (0 = pass)
   if [ "$2" -eq 0 ]; then echo "ok - $1"; else echo "not ok - $1" >&2; fails=$((fails + 1)); fi
 }
 
-# race NAME FIRST_SQL SECOND_SQL. Sets OVERLAP (0 = proven), FIRST_EXIT, SECOND_EXIT.
+# race NAME FIRST_SQL SECOND_SQL [row]. Sets OVERLAP (0 = proven), FIRST_EXIT, SECOND_EXIT.
+# With "row", the wait proven is on the first transaction's row lock, not an advisory lock.
 race() {
   local name=$1 fifo="$TMP/$1.fifo" first second fpid
   mkfifo "$fifo"
@@ -197,8 +240,10 @@ SQL
   # Overlap: the second backend waits on a content advisory lock (7101 publishing,
   # 7102 learner) and the first, still-open transaction is what blocks it.
   OVERLAP=1
+  local kind="l.locktype = 'advisory' and l.classid in (7101, 7102)"
+  [ "${4:-}" = row ] && kind="l.locktype in ('transactionid', 'tuple')"
   poll "select exists (select 1 from pg_stat_activity a join pg_locks l on l.pid = a.pid and not l.granted
-        where a.application_name = '$RUN-second' and l.locktype = 'advisory' and l.classid in (7101, 7102)
+        where a.application_name = '$RUN-second' and $kind
           and $fpid = any (pg_blocking_pids(a.pid)))" 200 && OVERLAP=0
   printf 'commit;\n' >&3
   exec 3>&-
@@ -240,6 +285,44 @@ race assign-first \
   "$(as_user "$T2") select public.complete_lesson('$A2', '$L3');"
 check "assign v2 then complete in v1: overlap proven and v2 carries the credit to the original completion" \
   $(( OVERLAP == 0 && FIRST_EXIT == 0 && SECOND_EXIT == 0 && $(carried "$T2") == 1 ? 0 : 1 ))
+
+# Cases 5-6: the review packet for C4 is built from version A of its lesson.
+HASH_A=$(q "select public.publisher_review_targets('$P', '$C4') #>> '{lessons,0,hash}'")
+save_b() { echo "$(as_service) select public.publisher_save_course_draft('$P', $(course "$C4" base "jsonb_build_object('kind', 'paragraph', 'content', 'Cue $1.', 'support', 'practice-based', 'claimIds', '[]'::jsonb)"));"; }
+race save-first "$(save_b B)" "$(as_service) select $(lesson_review "'$L4'" "'$HASH_A'" "'[]'::jsonb");" row
+stale=1; grep -q 'stale review: lesson' "$TMP/save-first.second" && stale=0
+reviews=$(q "select count(*) from public.lesson_reviews where lesson_id = '$L4'")
+check "save then record an old review: overlap proven, the review is refused as stale and nothing is recorded" \
+  $(( OVERLAP == 0 && FIRST_EXIT == 0 && SECOND_EXIT != 0 && stale == 0 && reviews == 0 ? 0 : 1 ))
+
+HASH_B=$(q "select public.publisher_review_targets('$P', '$C4') #>> '{lessons,0,hash}'")
+race review-first "$(as_service) select $(lesson_review "'$L4'" "'$HASH_B'" "'[]'::jsonb");" "$(save_b C)" row
+gate=1
+out=$(PGAPPNAME="$RUN-probe" psql -At -c "$(as_service) select public.publisher_publish_course('$P', '$C4');" 2>&1) \
+  || { echo "$out" | grep -q 'has no clean lesson review' && gate=0; }
+bound=$(q "select count(*) from public.lesson_reviews where lesson_id = '$L4' and lesson_hash = '$HASH_B'")
+check "record a review then save: overlap proven, the review stays on the old hash and the new draft cannot publish" \
+  $(( OVERLAP == 0 && FIRST_EXIT == 0 && SECOND_EXIT == 0 && gate == 0 && bound == 1 ? 0 : 1 ))
+
+# Cases 7-8: two registry clips, each with fresh provider metadata.
+media() { q "begin; $(as_service) select public.publisher_admit_media('$P', jsonb_build_object('provider', 'youtube', 'videoId', '$1',
+  'startSeconds', 0, 'endSeconds', 30, 'rationale', 'Race clip.', 'embedCheckedAt', to_char(now(), 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'))); commit;" | tail -1; }
+meta() { echo "$(as_service) select public.publisher_refresh_media_metadata('$P', '$1', jsonb_build_object('title', 'Race clip', 'channel', 'Race', 'available', true, 'fetchedAt', to_char(now(), 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"')));"; }
+status() { echo "$(as_service) select public.publisher_set_media_status('$P', '$1', '{\"status\": \"$2\", \"reason\": \"race\"}');"; }
+M7=$(media RaceClip007); M8=$(media RaceClip008)
+q "begin; $(meta "$M7") commit;" >/dev/null
+race retire-refresh "$(status "$M7" retired)" "$(meta "$M7")" row
+refused=1; grep -q "is retired" "$TMP/retire-refresh.second" && refused=0
+left=$(q "select count(*) from public.practice_media_metadata where media_id = '$M7'")
+check "retire then refresh metadata: overlap proven, the refresh is refused and no metadata survives" \
+  $(( OVERLAP == 0 && FIRST_EXIT == 0 && SECOND_EXIT != 0 && refused == 0 && left == 0 ? 0 : 1 ))
+
+race retire-activate "$(status "$M8" retired)" "$(status "$M8" active)" row
+refused=1; grep -q "is retired" "$TMP/retire-activate.second" && refused=0
+final=$(q "select status from public.practice_media_status where media_id = '$M8' order by seq desc limit 1")
+check "retire then reactivate: overlap proven, the activation is refused and the clip stays retired" \
+  $(( OVERLAP == 0 && FIRST_EXIT == 0 && SECOND_EXIT != 0 && refused == 0 ? 0 : 1 ))
+[ "$final" = retired ] || { echo "not ok - the clip's final status is $final" >&2; fails=$((fails + 1)); }
 
 if [ "$fails" -ne 0 ]; then
   for f in "$TMP"/*.first "$TMP"/*.second; do echo "== $(basename "$f")" >&2; cat "$f" >&2; done

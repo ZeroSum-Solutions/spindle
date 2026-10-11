@@ -1,7 +1,7 @@
 import { ExternalLink, ImageOff, TriangleAlert } from "lucide-react";
 import type { LessonBlock, LessonResource, MediaAsset } from "@spindle/schema";
 import type { ClaimView } from "@/lib/learning/load";
-import { resolveContentUrl } from "@/lib/learning/media";
+import { resolveContentUrl, resolveMediaUrl } from "@/lib/learning/media";
 import { ClaimDisclosure } from "./claim-disclosure";
 import { DIAGRAMS, DiagramFigure } from "./diagrams";
 import { SupportLabel } from "./labels";
@@ -53,6 +53,9 @@ function Block({ block, index, ctx, showLabel }: { block: LessonBlock; index: nu
         </figure>
       );
     }
+    case "video":
+      // Registry clips get the click-to-load player in P3-B; until then nothing loads or renders.
+      return null;
     default:
       return <Supported block={block} index={index} ctx={ctx} showLabel={showLabel} />;
   }
@@ -114,7 +117,7 @@ function BlockBody({ block, index }: { block: SupportedBlock; index: number }) {
 }
 
 function Figure({ asset, orgId }: { asset: MediaAsset; orgId: string | null }) {
-  const link = resolveContentUrl(asset.src, { orgId });
+  const link = resolveMediaUrl(asset.src, { orgId });
   return (
     <figure data-block="image" className="flex flex-col gap-2">
       {link.kind === "unavailable" ? (

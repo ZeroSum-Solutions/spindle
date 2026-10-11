@@ -1,3 +1,5 @@
+import { isVideoHostUrl } from "@spindle/schema";
+
 // Where lesson media and resource links may point. Ingress (parseCourse) already
 // limits them to root-relative paths or https URLs; this narrows site paths to the
 // authenticated media handler and to the storage area the content may use.
@@ -57,4 +59,15 @@ export const VIDEO_URL_SECONDS = 60;
 /** Video is redirected to a short-lived signed Storage URL instead of streamed. Decided by the object's stored MIME type. */
 export function isVideoType(contentType: string | undefined): boolean {
   return /^video\/(mp4|webm)$/.test((contentType ?? "").toLowerCase().split(";")[0]!.trim());
+}
+
+/**
+ * Like resolveContentUrl, for media the player loads on its own (images, video files). Video hosts
+ * load only through the click-to-load registry player (ADR 0007), so legacy video-host media renders
+ * as unavailable and nothing is requested from YouTube. Resource links keep resolveContentUrl: a
+ * link is followed only on a click.
+ */
+export function resolveMediaUrl(src: string, owner: { orgId: string | null }): ResolvedLink {
+  if (isVideoHostUrl(src)) return { kind: "unavailable" };
+  return resolveContentUrl(src, owner);
 }
