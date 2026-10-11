@@ -10,3 +10,5 @@ Each file holds one lesson:
 - `reviewNotes`: open points for review.
 
 Science blocks bind `claim-slot:` ids. These are placeholders, not approved claim records, so the publish gate rejects them until each slot is replaced by an approved claim id. Practice-based blocks bind no claims. Graded quiz candidates are the `quiz` blocks, and every one of them is science-bound.
+
+`build_drafts.py` writes every draft file in this folder. Edit the script, not the JSON, and run it from the repo root: `python3 content/shoulder/drafts/build_drafts.py content/shoulder/drafts`. Lesson 8's tier, stop-rule and exclusion lists are parsed from `docs/curriculum/SAFETY.md`, so run the script again whenever SAFETY.md changes.

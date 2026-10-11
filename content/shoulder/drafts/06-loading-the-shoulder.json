@@ -1,0 +1,369 @@
+{
+  "draft": true,
+  "status": "provisional: written before the outline review; not publishable (claim slots are not approved claims)",
+  "module": "shoulder",
+  "lessonNumber": 6,
+  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words from general anatomy knowledge; the candidate sources were used only to choose which facts need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
+  "reviewNotes": [
+    "Every progression has a stop block beside it.",
+    "The cue definitions are practice-based."
+  ],
+  "claimSlots": [
+    {
+      "slot": "claim-slot:l6-progression",
+      "statement": "Progressive resistance training protocols are necessary to stimulate further adaptation toward strength goals in healthy adults.",
+      "candidateSources": [
+        {
+          "kind": "position_stand",
+          "citation": "American College of Sports Medicine. American College of Sports Medicine position stand. Progression models in resistance training for healthy adults. Med Sci Sports Exerc. 2009;41(3):687-708.",
+          "doi": "10.1249/MSS.0b013e3181915670",
+          "pmid": "19204579"
+        }
+      ],
+      "note": "Position stand for healthy adults; keep the population."
+    },
+    {
+      "slot": "claim-slot:l6-overhead-upward",
+      "statement": "Full humeral elevation involves scapular upward rotation.",
+      "candidateSources": [
+        {
+          "kind": "paper",
+          "citation": "Ludewig PM, Reynolds JF. The association of scapular kinematics and glenohumeral joint pathologies. J Orthop Sports Phys Ther. 2009;39(2):90-104.",
+          "doi": "10.2519/jospt.2009.2808",
+          "pmid": "19194022"
+        },
+        {
+          "kind": "paper",
+          "citation": "McClure PW, Michener LA, Sennett BJ, Karduna AR. Direct 3-dimensional measurement of scapular kinematics during dynamic movements in vivo. J Shoulder Elbow Surg. 2001;10(3):269-277.",
+          "doi": "10.1067/mse.2001.112954",
+          "pmid": "11408911"
+        }
+      ],
+      "note": "Same evidence as l2-scapular-motions; may reuse that approved claim."
+    },
+    {
+      "slot": "claim-slot:l6-volume",
+      "statement": "Higher weekly resistance training volume (sets) is associated with greater increases in muscle size in a graded dose-response relationship.",
+      "candidateSources": [
+        {
+          "kind": "meta_analysis",
+          "citation": "Schoenfeld BJ, Ogborn D, Krieger JW. Dose-response relationship between weekly resistance training volume and increases in muscle mass: a systematic review and meta-analysis. J Sports Sci. 2017;35(11):1073-1082.",
+          "doi": "10.1080/02640414.2016.1210197",
+          "pmid": "27433992"
+        }
+      ]
+    },
+    {
+      "slot": "claim-slot:l6-failure",
+      "statement": "There is no evidence that resistance training to momentary muscular failure is superior to non-failure training for muscle hypertrophy.",
+      "candidateSources": [
+        {
+          "kind": "meta_analysis",
+          "citation": "Refalo MC, Helms ER, Trexler ET, Hamilton DL, Fyfe JJ. Influence of resistance training proximity-to-failure on skeletal muscle hypertrophy: a systematic review with meta-analysis. Sports Med. 2023;53(3):649-665.",
+          "doi": "10.1007/s40279-022-01784-y",
+          "pmid": "36334240",
+          "pmcid": "PMC9935748",
+          "license": "CC BY 4.0"
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "prompt": "Ache at the bottom of a deep dumbbell bench press during the set; push-ups fine.",
+      "goodAnswer": "Now: stop shoulder loading for the session. Next session, only if no warning sign remains: shorter range or another variation, stop again if pain comes on. Refer routinely if getting worse, or not improved after 2 weeks.",
+      "safety": "SAFETY.md sections 3 and 4"
+    }
+  ],
+  "lesson": {
+    "id": "shoulder-06-loading",
+    "slug": "loading-the-shoulder",
+    "title": "Loading the shoulder: pressing, pulling, overhead, progressions",
+    "summary": "Shoulders get stronger the way everything else does: progressive load through a range the client controls. Choose variations, progress one thing at a time, and know the signs that mean do not progress.",
+    "durationMinutes": 15,
+    "format": "article",
+    "objectives": [
+      "Choose pressing, pulling and overhead variations by range, control and goal.",
+      "Progress load, range or difficulty one at a time.",
+      "Use and define cues for the press, the row and the overhead press.",
+      "Recognise the signs that mean do not progress, at every step."
+    ],
+    "anatomyIds": [
+      "UBERON:0001467",
+      "UBERON:0001470",
+      "UBERON:0006849"
+    ],
+    "blocks": [
+      {
+        "kind": "paragraph",
+        "content": "This lesson is for healthy adults whose shoulders tolerate training. Every progression below has its own stop rule beside it; read it before you use the progression.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Why progression matters"
+      },
+      {
+        "kind": "paragraph",
+        "content": "For continued gains in strength, resistance training has to progress: load, volume or difficulty increases over time.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l6-progression"
+        ]
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Spindle policy",
+          "text": "Your training is not treatment for a diagnosed condition. A client with diagnosed shoulder pain, or one recovering from surgery, a dislocation or a fracture, trains within the treating clinician's plan, and you do not progress that plan on your own. This is Spindle's rule for trainers, not a research finding."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Before any progression"
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Check first: no pain during the current level, full control of the range, and no warning sign since the last session. If pain comes on or rises with load, stop shoulder loading for the rest of the session. Pain that is getting worse: routine referral now. Pain that has not improved after 2 weeks: routine referral. Anything in the urgent or emergency tiers: refer at that tier."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Pressing"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Push-ups, presses with dumbbells or a bar, and the landmine press load the shoulder from different angles. Choose by the range the client controls without pain and by the goal. Define your cue before you use it: \"push the floor away\" asks the shoulder blades to move around the ribs at the top of a push-up; \"bend the bar\" asks for tension through the upper back before the press.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "checklist",
+        "content": [
+          "Progression: push-up from a raised surface, then a lower surface, then the floor.",
+          "Progression: dumbbell press through a shorter range first (stopping before the bottom), then the full range the client controls.",
+          "Progression: add load only after the current range is controlled for all reps."
+        ],
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Do not progress, and stop shoulder loading for the rest of the session, if pain comes on or rises with load, if the client cannot control the range, or if any warning sign appears. Pain at the bottom of a press is a reason to stop for the session, not to push through. Next session, if no warning sign remains, try a shorter range or another variation."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Pulling"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Rows and pulldowns train the muscles that move the shoulder blade and the arm back and down. Let the shoulder blades move with the arm rather than locking them, and keep pulling work in the programme alongside pressing.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "checklist",
+        "content": [
+          "Progression: supported row (chest on a bench), then an unsupported row, then heavier load.",
+          "Progression: band pulldown, then a cable or machine pulldown, then a pull-up with assistance."
+        ],
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Do not progress, and stop shoulder loading for the rest of the session, if pain comes on or rises with load, if the client cannot control the range, or if any warning sign appears. Pins and needles in the arm or hand that do not go away: urgent, today."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Overhead"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Reaching fully overhead involves the shoulder blade rotating upward as the arm rises.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l6-overhead-upward"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "content": "Pick an overhead variation from what the client can reach and control. A landmine press asks for less overhead range than a vertical press; a half-kneeling press removes some help from the legs and lower back; a standing press asks for the most.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "checklist",
+        "content": [
+          "Progression: landmine press, then half-kneeling single-arm press, then standing press.",
+          "Do not progress to a vertical press until the client reaches overhead without pain and without arching the lower back to get there."
+        ],
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Do not progress, and stop shoulder loading for the rest of the session, if pain comes on or rises with load, if the client cannot control the range, or if any warning sign appears. A new inability to lift the arm themselves: urgent, today. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Building muscle"
+      },
+      {
+        "kind": "paragraph",
+        "content": "In a meta-analysis, more weekly sets per muscle were associated with greater gains in muscle size, in a dose-response pattern.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l6-volume"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "content": "A meta-analysis found no evidence that training to momentary muscular failure is better than stopping short of failure for muscle growth.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l6-failure"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "content": "For shoulders, add weekly sets gradually and keep a few reps in reserve on most sets; you can always add more next week.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Do not progress, and stop shoulder loading for the rest of the session, if pain comes on or rises with load, if the client cannot control the range, or if any warning sign appears. If adding volume brings on pain that persists between sessions, go back to the last pain-free volume and refer if the pain is getting worse or has not improved after 2 weeks."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Progress one thing at a time"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Change range, then load, then difficulty, one at a time, and re-check the client's control at each step in a later session. If two things change and pain appears, you will not know which caused it.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Do not progress, and stop shoulder loading for the rest of the session, if pain comes on or rises with load, if the client cannot control the range, or if any warning sign appears. Severe pain in both shoulders, or several joints newly painful or swollen: urgent, today."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Check your understanding"
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "What does continued strength gain require over time?",
+          "options": [
+            "Repeating the same load indefinitely",
+            "Progressive resistance training: load, volume or difficulty increases over time",
+            "Training to failure on every set"
+          ],
+          "answerIndex": 1,
+          "explanation": "Continued strength gains need progression in load, volume or difficulty."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l6-progression"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "Which shoulder blade movement is part of reaching fully overhead?",
+          "options": [
+            "Upward rotation",
+            "Downward rotation",
+            "None: the shoulder blade stays still"
+          ],
+          "answerIndex": 0,
+          "explanation": "Reaching fully overhead involves upward rotation of the shoulder blade."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l6-overhead-upward"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "What did a meta-analysis find about weekly sets and muscle growth?",
+          "options": [
+            "More weekly sets were associated with greater gains, in a dose-response pattern",
+            "Volume made no difference",
+            "Fewer sets always gave more growth"
+          ],
+          "answerIndex": 0,
+          "explanation": "The meta-analysis found a graded dose-response: more weekly sets were associated with greater gains in muscle size."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l6-volume"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "Is training to momentary failure better than stopping short of failure for muscle growth?",
+          "options": [
+            "Yes, always",
+            "No evidence that it is better",
+            "It prevents growth"
+          ],
+          "answerIndex": 1,
+          "explanation": "A meta-analysis found no evidence that training to momentary failure is superior to non-failure training for muscle growth."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l6-failure"
+        ]
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Talk it through",
+          "text": "During a deep dumbbell bench press, a client's shoulder starts to ache at the bottom of the set; push-ups earlier felt fine. What do you do now, and what might change next session?"
+        },
+        "support": "practice-based",
+        "claimIds": []
+      }
+    ],
+    "media": [],
+    "resources": []
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "draft": true,
+  "status": "provisional: written before the outline review; not publishable (claim slots are not approved claims)",
+  "module": "shoulder",
+  "lessonNumber": 7,
+  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words from general anatomy knowledge; the candidate sources were used only to choose which facts need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
+  "reviewNotes": [
+    "Throwing workload is stated as Spindle policy, not science.",
+    "The adaptation claim is limited to professional pitchers."
+  ],
+  "claimSlots": [
+    {
+      "slot": "claim-slot:l7-load-peaks",
+      "statement": "In skilled healthy adult pitchers, critical shoulder kinetics occur shortly before maximum shoulder external rotation (arm cocking) and shortly after ball release (high compressive force).",
+      "candidateSources": [
+        {
+          "kind": "paper",
+          "citation": "Fleisig GS, Andrews JR, Dillman CJ, Escamilla RF. Kinetics of baseball pitching with implications about injury mechanisms. Am J Sports Med. 1995;23(2):233-239.",
+          "doi": "10.1177/036354659502300218",
+          "pmid": "7778711"
+        }
+      ]
+    },
+    {
+      "slot": "claim-slot:l7-adaptation",
+      "statement": "In professional baseball pitchers, the throwing shoulder shows on average less internal rotation and more external rotation than the non-throwing shoulder, with a bilateral difference in humeral retroversion contributing.",
+      "candidateSources": [
+        {
+          "kind": "systematic_review",
+          "citation": "Paul RW, Sirch FR, Vata A, Zhu E, Alberta FG, et al. Chronic adaptations of the shoulder in baseball pitchers: a systematic review. Am J Sports Med. 2025;53(12):2984-2994.",
+          "doi": "10.1177/03635465251317202",
+          "pmid": "40029165"
+        }
+      ],
+      "note": "Population is mostly professional pitchers; keep it."
+    },
+    {
+      "slot": "claim-slot:l7-injury-risk",
+      "statement": "Evidence on shoulder range of motion as a predictor of injury in overhead athletes is uncertain and sport-specific: no significant pooled predictor in a 2018 meta-analysis; external rotation insufficiency associated with injury in professional pitchers (three pooled studies, caution) in a 2020 meta-analysis of prospective cohorts; range among several risk factors in a 2025 systematic review with inconsistent injury definitions.",
+      "candidateSources": [
+        {
+          "kind": "meta_analysis",
+          "citation": "Keller RA, De Giacomo AF, Neumann JA, et al. Glenohumeral internal rotation deficit and risk of upper extremity injury in overhead athletes: a meta-analysis and systematic review. Sports Health. 2018;10(2):125-132.",
+          "doi": "10.1177/1941738118756577",
+          "pmid": "29381423",
+          "pmcid": "PMC5857737"
+        },
+        {
+          "kind": "meta_analysis",
+          "citation": "Pozzi F, Plummer HA, Shanley E, et al. Preseason shoulder range of motion screening and in-season risk of shoulder and elbow injuries in overhead athletes: systematic review and meta-analysis. Br J Sports Med. 2020.",
+          "doi": "10.1136/bjsports-2019-100698",
+          "pmid": "31937577",
+          "pmcid": "PMC7456673",
+          "license": "CC BY"
+        },
+        {
+          "kind": "systematic_review",
+          "citation": "Salamh P, Bullock G, Chester R, Daniell H, et al. Risk factors associated with new onset of shoulder pain and injury among the athletic population: a systematic review of the literature. Int J Sports Phys Ther. 2025;20(3).",
+          "doi": "10.26603/001c.129462",
+          "license": "CC BY-NC 4.0"
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "prompt": "A 15-year-old pitcher says the shoulder hurts after games.",
+      "goodAnswer": "Stop throwing and shoulder loading in the session; urgent: tell the athlete and a parent or carer to get an urgent GP appointment or NHS 111 the same day for referral to trauma and orthopaedics; emergency if any emergency sign.",
+      "safety": "SAFETY.md sections 2 and 4"
+    }
+  ],
+  "lesson": {
+    "id": "shoulder-07-throwing",
+    "slug": "throwing-and-rotation",
+    "title": "Throwing and rotation",
+    "summary": "Throwing puts the shoulder through fast, large rotations. Support throwers with strength and sensible workload, compare range over time, and know the warning signs.",
+    "durationMinutes": 12,
+    "format": "article",
+    "objectives": [
+      "Describe when shoulder loads peak during a pitch.",
+      "Describe the range differences pitchers' throwing shoulders typically show.",
+      "Explain why range is not a reliable injury screen on its own.",
+      "Know the warning signs in throwers, and refer young throwers with shoulder pain urgently."
+    ],
+    "anatomyIds": [
+      "UBERON:0001467",
+      "UBERON:0001470",
+      "UBERON:0000976"
+    ],
+    "blocks": [
+      {
+        "kind": "paragraph",
+        "content": "This lesson gives a strength coach's view of the throwing shoulder. Throwing workload and return-to-throwing decisions belong to the athlete's sport coach and clinician.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Where the load peaks"
+      },
+      {
+        "kind": "paragraph",
+        "content": "In skilled adult pitchers, the largest shoulder loads come at two moments: shortly before the arm reaches its maximum external rotation during arm cocking, and shortly after ball release, when the shoulder must slow the arm down.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l7-load-peaks"
+        ]
+      },
+      {
+        "kind": "heading",
+        "content": "How pitchers' shoulders adapt"
+      },
+      {
+        "kind": "paragraph",
+        "content": "In professional baseball pitchers, the throwing shoulder typically has less internal rotation and more external rotation than the other shoulder. Part of that difference comes from a twist in the upper arm bone itself (humeral retroversion), not only from the soft tissues.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l7-adaptation"
+        ]
+      },
+      {
+        "kind": "heading",
+        "content": "Range and injury risk: still uncertain"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Whether shoulder range predicts injury is uncertain and depends on the sport. A 2018 meta-analysis found no range measure that significantly predicted injury in overhead athletes. A 2020 meta-analysis of prospective studies linked too little extra external rotation in the throwing arm to injury in professional pitchers, from three pooled studies, with a caution about the small number of studies, and found range screening may not identify risk in some other overhead sports. A 2025 review listed range among several risk factors, alongside reduced strength, previous pain or injury and training load.",
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l7-injury-risk"
+        ]
+      },
+      {
+        "kind": "paragraph",
+        "content": "So do not set out to make a thrower's two shoulders match, and do not treat one range number as a verdict. Compare total rotation between sides and over time, measured the same way.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "How to see it"
+      },
+      {
+        "kind": "checklist",
+        "content": [
+          "Measure rotation the same way each time: same position, same time of day, before training.",
+          "Record both sides and the total (outward plus inward) for each.",
+          "Look for change across the season, not for a single number."
+        ],
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Stop the measurement if it hurts. Pain at rest or at night, pins and needles, or a new inability to lift the arm: urgent, today. Any thrower under 18 with shoulder pain: urgent, today; tell a parent or carer."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "What to do"
+      },
+      {
+        "kind": "paragraph",
+        "content": "Build strength for the rotator cuff and the shoulder blade muscles, rotation strength through the trunk and hips, and the ability to slow the arm down. Progress one thing at a time, with the same stop rules as lesson 6.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Spindle policy",
+          "text": "Throwing workload, pitch counts and return-to-throwing decisions are for the athlete's sport coach and treating clinician. Your strength work supports that plan; it does not replace it. Your training is not treatment for a diagnosed condition. A client with diagnosed shoulder pain, or one recovering from surgery, a dislocation or a fracture, trains within the treating clinician's plan, and you do not progress that plan on your own. This is Spindle's rule for trainers, not a research finding."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "Stop throwing and shoulder loading for the session if the athlete has pain while throwing, loses velocity with pain, describes a \"dead arm\", or has numbness or tingling. Refer at the tier that matches (see \"When to refer out\"). A thrower under 18 with shoulder pain: urgent, an urgent GP appointment or NHS 111 the same day, for referral to trauma and orthopaedics, with a parent or carer told."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "paragraph",
+        "content": "Other rotational sports, such as racquet sports, swimming and combat sports, load the shoulder in related ways. Use the same approach: compare over time, build strength, and follow the stop rules.",
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
+        "kind": "heading",
+        "content": "Check your understanding"
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "In skilled adult pitchers, when are shoulder loads highest?",
+          "options": [
+            "Just before maximum external rotation in arm cocking, and just after ball release",
+            "During the wind-up",
+            "During the follow-through only"
+          ],
+          "answerIndex": 0,
+          "explanation": "The largest shoulder loads occur shortly before maximum external rotation in arm cocking and shortly after ball release."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l7-load-peaks"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "What range pattern does a professional pitcher's throwing shoulder typically show?",
+          "options": [
+            "Less internal rotation and more external rotation than the other side",
+            "More internal rotation and less external rotation",
+            "Identical range on both sides"
+          ],
+          "answerIndex": 0,
+          "explanation": "The throwing shoulder typically shows less internal and more external rotation, partly from a bony twist in the upper arm bone."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l7-adaptation"
+        ]
+      },
+      {
+        "kind": "quiz",
+        "content": {
+          "prompt": "Can shoulder range alone tell you which overhead athletes will be injured?",
+          "options": [
+            "Yes, reliably in every sport",
+            "No: the evidence is uncertain and differs by sport",
+            "Only in swimmers"
+          ],
+          "answerIndex": 1,
+          "explanation": "Syntheses disagree and differ by sport; range is one possible factor among several, not a reliable screen on its own."
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l7-injury-risk"
+        ]
+      },
+      {
+        "kind": "callout",
+        "content": {
+          "label": "Talk it through",
+          "text": "A 15-year-old pitcher says the shoulder hurts after games. What do you do in your session, and who do you tell?"
+        },
+        "support": "practice-based",
+        "claimIds": []
+      }
+    ],
+    "media": [],
+    "resources": []
+  }
+}
