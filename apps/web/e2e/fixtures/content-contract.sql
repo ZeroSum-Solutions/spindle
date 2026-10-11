@@ -102,6 +102,9 @@ select set_config('c2.method_version', public.publish_course('c2c2c2c2-0000-4000
 
 select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
 select '@@CLAIM@@' || current_setting('c2.claim');
+-- P4-A2 W9: a gym version freezes the receipt of its admitted title.
+select '@@TITLERECEIPT@@' || a.id from private.tenant_text_admissions a join private.tenant_texts t on t.id = a.text_id
+where t.course_id = 'c2c2c2c2-0000-4000-8000-000000000c02' and t.slot = 'course_title';
 select '@@SNAPSHOT@@' || snapshot::text from public.curriculum_versions
 where id in (current_setting('c2.base_version')::uuid, current_setting('c2.method_version')::uuid)
 order by snapshot ->> 'layer';

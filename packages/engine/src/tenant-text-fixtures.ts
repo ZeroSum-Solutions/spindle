@@ -111,6 +111,12 @@ export const TENANT_TEXT_FIXTURES: readonly TenantTextFixture[] = [
   no("catalog_headline", "s c i \u1971 n c \u1971", "denied", "mixed script"),
   ok("welcome", "Rest 3 min, then 5 x 5 at 80% of 1RM."),
   ok("welcome", "R e s t day: walk 30 min."),
+  // Sol R3 on #38: several spaced-out words, and page locators.
+  no("course_summary", "r e d u c e s   p a i n   b y   3 0 %", "claim", "outcome claim"),
+  no("course_summary", "R e d u c e s p a i n b y 30%", "claim", "outcome claim"),
+  no("welcome", "As shown on p. 23.", "claim", "citation"),
+  no("welcome", "Read pp. 715-716 first.", "claim", "citation"),
+  ok("welcome", "Pause 2 s at the bottom, then up."),
   // Hidden characters (the #34 core's rules) and blanks.
   no("brand_name", "Sci\u200bence", "control"),
   no("brand_name", "Gym\u202e", "control"),
