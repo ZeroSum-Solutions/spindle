@@ -4,7 +4,7 @@
 -- every version and every member read, until LEAD records an admission bound to it. Synthetic only.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(79);
+select plan(96);
 
 -- Gym A: Alice owner, Lee lead, Tess trainer. Gym B ("Science Gym"): Bob owner. Pat publishes.
 insert into auth.users (id, email, email_confirmed_at) values
@@ -119,7 +119,7 @@ select throws_ok($$select pg_temp.save(pg_temp.course('a1000000-0000-4000-8000-0
   jsonb_build_object('welcome', jsonb_build_object('text', 'Hi'))))$$, '22023', 'invalid course: unknown key welcome',
   'the draft cannot carry a welcome note; it is a held tenant text');
 select throws_ok($$select pg_temp.save(pg_temp.course('a1000000-0000-4000-8000-000000000000', 'method', '{}', 'Backed by science'))$$,
-  '22023', 'invalid course.title: science (denied)', 'a method course title passes text admission at save');
+  '22023', 'invalid course.title: backed by (denied)', 'a method course title passes text admission at save');
 select throws_ok($$select pg_temp.save(pg_temp.course('a1000000-0000-4000-8000-000000000000', 'method',
   '{"subtitle": "Visit www.example.org"}'))$$, '22023',
   'invalid course.subtitle: must be plain text, without links, addresses or markup (link)', 'so does its summary');
@@ -140,6 +140,14 @@ select throws_ok($$update public.courses set cover = pg_temp.cover('dots', '#000
   '23514', null, 'even the table owner cannot give a base course a cover');
 select throws_ok($$update public.courses set tags = array['strength', 'strength'] where id = pg_temp.id('m')$$, '23514', null,
   'nor store duplicate tags');
+
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.save(pg_temp.course('a2000000-0000-4000-8000-000000000000', 'method', '{"subtitle": "  Cafe\u0301 hinges "}', E'Cafe\u0301 hinge '));
+select pg_temp.reset_role();
+select is((select title || '|' || subtitle from public.courses where id = 'a2000000-0000-4000-8000-000000000000'), E'Caf\u00e9 hinge|Caf\u00e9 hinges',
+  'a gym title and summary are stored as admission normalizes them (NFC, trimmed)');
+select throws_ok($$update public.courses set cover = '{"kind": null, "pattern": null, "background": "#000000", "foreground": "#ffffff"}'
+  where id = pg_temp.id('m')$$, '23514', null, 'a cover with null fields fails the column check');
 
 -- 2. Snapshot, hash and learner projection ------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
@@ -191,17 +199,22 @@ select pg_temp.reset_role();
 select is(private.course_snapshot('b1000000-0000-4000-8000-000000000000') ?| array['cover', 'tags', 'welcome'], false,
   'a course without them has no cover, tags or welcome keys, so earlier hashes stay valid');
 
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select pg_temp.keep('v2b', public.publish_course(pg_temp.id('m')));
+select pg_temp.reset_role();
+select isnt(pg_temp.snap(pg_temp.id('v2b')) ->> 'titleReceiptId', pg_temp.snap(pg_temp.id('v1')) ->> 'titleReceiptId',
+  'a re-admitted title is a new receipt in the version');
+
 -- 3. Held tenant texts: saved pending, admitted only by LEAD, bound to org, slot and text hash -------
 create function pg_temp.save_text(slot text, txt text, course uuid default null) returns uuid language sql as $$
   select public.save_tenant_text('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', slot, course, txt)
 $$;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
 select pg_temp.keep('w1', pg_temp.save_text('welcome', '  Welcome! We start with drills for the hips.  ', pg_temp.id('m')));
-select is((select status || ':' || text || ':' || display_name from public.tenant_text_status('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'welcome', pg_temp.id('m'))),
-  'pending:Welcome! We start with drills for the hips.:Your gym',
-  'a lead saves a welcome note; it is pending and trimmed, and with no admitted coach or brand name it is signed with the fallback');
+select is((select status || ':' || text from public.tenant_text_status('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'welcome', pg_temp.id('m'))),
+  'pending:Welcome! We start with drills for the hips.', 'a lead saves a welcome note; it is pending and trimmed');
 select throws_ok($$select pg_temp.save_text('welcome', 'Backed by science.', pg_temp.id('m'))$$, '22023',
-  'invalid welcome: science (denied)', 'text admission still filters at save');
+  'invalid welcome: backed by (denied)', 'text admission still filters at save');
 select throws_ok($$select pg_temp.save_text('catalog_tagline', 'Read more at coach.example')$$, '22023',
   'invalid catalog_tagline: must be plain text, without links, addresses or markup (link)', 'for every held slot');
 select throws_ok(format($$select pg_temp.save_text('welcome', %L, %L)$$, 'Sci' || chr(8203) || 'ence', pg_temp.id('m')), '22023',
@@ -228,7 +241,7 @@ select throws_ok($$select * from public.member_tenant_texts('aaaaaaaa-aaaa-4aaa-
 -- Pending text never reaches a version.
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
 select pg_temp.keep('v3', public.publish_course(pg_temp.id('m')));
-select is(pg_temp.id('v3'), pg_temp.id('v2'), 'a pending note changes nothing: the same version');
+select is(pg_temp.id('v3'), pg_temp.id('v2b'), 'a pending note changes nothing: the same version');
 -- The tenant cannot admit its own text.
 select throws_ok($$select pg_temp.decide(pg_temp.id('w1'), 'admitted')$$, '42501', null, 'an owner cannot call the admission RPC');
 select throws_ok(format($$insert into private.tenant_text_admissions (text_id, org_id, slot, course_id, text_hash, decision, reason,
@@ -255,13 +268,16 @@ select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
 select pg_temp.keep('v4', public.publish_course(pg_temp.id('m')));
 select pg_temp.reset_role();
 select is(pg_temp.snap(pg_temp.id('v4')) -> 'welcome', jsonb_build_object('text', 'Welcome! We start with drills for the hips.',
+  'receiptId', (select id from private.tenant_text_admissions where text_id = pg_temp.id('w1')),
   'author', jsonb_build_object('authorUserId', '00000000-0000-0000-0000-0000000000a2', 'displayName', 'Your gym',
     'orgId', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     'savedAt', (select to_char(saved_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') from private.tenant_texts where id = pg_temp.id('w1')))),
-  'once admitted, the next version freezes the note with its author');
+  'once admitted, the next version freezes the note with its receipt, author and the signature in force at publish');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
-select is((select learner_snapshot -> 'welcome' ->> 'text' from public.curriculum_versions where id = pg_temp.id('v4')),
-  'Welcome! We start with drills for the hips.', 'a member reads it in the learner projection');
+select is((select learner_snapshot ? 'welcome' from public.curriculum_versions where id = pg_temp.id('v4')), false,
+  'the learner projection carries no held course text');
+select is((select state || ':' || text || ':' || display_name from public.version_tenant_texts(pg_temp.id('v4')) where slot = 'welcome'),
+  'live:Welcome! We start with drills for the hips.:Your gym', 'a member reads the note through the receipt-checked read');
 select pg_temp.reset_role();
 select isnt((select content_hash from public.curriculum_versions where id = pg_temp.id('v4')),
   (select content_hash from public.curriculum_versions where id = pg_temp.id('v2')), 'the note is part of the content hash');
@@ -298,7 +314,19 @@ select pg_temp.decide(pg_temp.id('w3'), 'admitted');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
 select pg_temp.keep('v6', public.publish_course(pg_temp.id('m')));
 select pg_temp.reset_role();
-select is(pg_temp.snap(pg_temp.id('v6')) ->> 'blurb', 'Hinge patterns for new lifters.', 'an admitted blurb is frozen into the version');
+select is((pg_temp.snap(pg_temp.id('v6')) -> 'blurb') - 'author', jsonb_build_object('text', 'Hinge patterns for new lifters.',
+  'receiptId', (select id from private.tenant_text_admissions where text_id = pg_temp.id('b1'))),
+  'an admitted blurb is frozen into the version with its receipt');
+select is(pg_temp.snap(pg_temp.id('v6')) -> 'blurb' -> 'author' ->> 'authorUserId', '00000000-0000-0000-0000-0000000000a1', 'and its author');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
+select pg_temp.keep('b2', pg_temp.save_text('course_blurb', 'Hinge patterns for new lifters.', pg_temp.id('m')));
+select pg_temp.reset_role();
+select pg_temp.hash(pg_temp.id('b2'));
+select pg_temp.as_service();
+select pg_temp.decide(pg_temp.id('b2'), 'admitted');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select isnt(public.publish_course(pg_temp.id('m')), pg_temp.id('v6'),
+  'the same blurb admitted again from another author is a new receipt and a new version');
 
 -- Gym texts: members read admitted ones only.
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
@@ -326,23 +354,67 @@ select pg_temp.as_service();
 select pg_temp.decide(pg_temp.id('bn'), 'admitted');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
 select is(pg_temp.brand(), 'Andrew Fitness:true', 'once admitted, members see the brand name');
--- Welcome signature order: admitted coach name, then admitted brand name, then the fallback.
+-- The welcome signature is resolved at publish: admitted coach name, then admitted brand name, then the fallback.
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
-create function pg_temp.signed() returns text language sql as $$
-  select display_name from public.tenant_text_status('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'welcome', pg_temp.id('m'))
-$$;
-select pg_temp.save_text('welcome', 'Hips first.', pg_temp.id('m'));
-select is(pg_temp.signed(), 'Andrew Fitness', 'a note saved with an admitted brand name and no coach name is signed with the brand');
+select pg_temp.keep('v7', public.publish_course(pg_temp.id('m')));
+select pg_temp.reset_role();
+select is(pg_temp.snap(pg_temp.id('v7')) -> 'welcome' -> 'author' ->> 'displayName', 'Andrew Fitness',
+  'with an admitted brand name and no coach name, the next version signs the note with the brand');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
 select pg_temp.keep('cn', pg_temp.save_text('coach_name', 'Coach Dre'));
-select pg_temp.save_text('welcome', 'Hips first.', pg_temp.id('m'));
-select is(pg_temp.signed(), 'Andrew Fitness', 'a pending coach name does not sign it');
+select is(public.publish_course(pg_temp.id('m')), pg_temp.id('v7'), 'a pending coach name changes nothing');
 select pg_temp.reset_role();
 select pg_temp.hash(pg_temp.id('cn'));
 select pg_temp.as_service();
 select pg_temp.decide(pg_temp.id('cn'), 'admitted');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
-select pg_temp.save_text('welcome', 'Hips first.', pg_temp.id('m'));
-select is(pg_temp.signed(), 'Coach Dre', 'an admitted coach name signs it first');
+select pg_temp.keep('v8', public.publish_course(pg_temp.id('m')));
+select pg_temp.reset_role();
+select is(pg_temp.snap(pg_temp.id('v8')) -> 'welcome' -> 'author' ->> 'displayName', 'Coach Dre',
+  'once a coach name is admitted, the next version signs with it, though the note was saved before');
+select is(pg_temp.snap(pg_temp.id('v6')) -> 'welcome' -> 'author' ->> 'displayName', 'Your gym', 'earlier versions keep their signature');
+
+-- Revocation (Sol R1 B1): LEAD withdraws an admission; it leaves member reads at once and the next version.
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select throws_ok($$select public.publisher_revoke_tenant_text('00000000-0000-0000-0000-0000000000a1', pg_temp.id('w3'), '{"reason": "x"}')$$,
+  '42501', null, 'a gym cannot revoke');
+select pg_temp.as_service();
+select throws_ok($$select public.publisher_revoke_tenant_text('00000000-0000-0000-0000-0000000000c1', pg_temp.id('t1'), '{"reason": "x"}')$$,
+  'P0001', format('tenant text %s is pending, not admitted', pg_temp.id('t1')), 'only an admitted text can be revoked');
+select is(public.publisher_revoke_tenant_text('00000000-0000-0000-0000-0000000000c1', pg_temp.id('w3'),
+  '{"reason": "Implies an outcome on reflection."}'), 'revoked', 'LEAD revokes the admitted note');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select is((select state || ':' || coalesce(text, '-') from public.version_tenant_texts(pg_temp.id('v8')) where slot = 'welcome'), 'revoked:-',
+  'members of an already-published version no longer get the note');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select is((select status || ':' || reason from public.tenant_text_status('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'welcome', pg_temp.id('m'))),
+  'revoked:Implies an outcome on reflection.', 'the owner sees the revocation and its reason');
+select pg_temp.keep('v9', public.publish_course(pg_temp.id('m')));
+select pg_temp.reset_role();
+select is(pg_temp.snap(pg_temp.id('v9')) ? 'welcome', false, 'the next version leaves the revoked note out');
+select pg_temp.as_service();
+select public.publisher_revoke_tenant_text('00000000-0000-0000-0000-0000000000c1', pg_temp.id('h1'), '{"reason": "x"}');
+select public.publisher_revoke_tenant_text('00000000-0000-0000-0000-0000000000c1', pg_temp.id('bn'), '{"reason": "x"}');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq($$select slot, text, admitted from public.member_tenant_texts('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') where slot in ('brand_name', 'catalog_headline')$$,
+  $$values ('brand_name'::text, 'Your gym'::text, false)$$, 'a revoked brand name falls back and a revoked headline disappears');
+select pg_temp.reset_role();
+select pg_temp.keep('tt', (select id from private.tenant_texts where course_id = pg_temp.id('m') and slot = 'course_title' order by seq desc limit 1));
+select pg_temp.as_service();
+select public.publisher_revoke_tenant_text('00000000-0000-0000-0000-0000000000c1', pg_temp.id('tt'), '{"reason": "x"}');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select is((select state || ':' || text from public.version_tenant_texts(pg_temp.id('v9')) where slot = 'course_title'), 'revoked:Untitled course',
+  'a revoked title reads as the fallback in published versions');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select throws_ok($$select public.publish_course(pg_temp.id('m'))$$, 'P0001',
+  'publish gate: course a1000000-0000-4000-8000-000000000000 has no admitted title (LEAD admits held tenant text)',
+  'a revoked title blocks publishing');
+select pg_temp.save(pg_temp.course('a1000000-0000-4000-8000-000000000000', 'method',
+  jsonb_build_object('cover', pg_temp.cover('rings', '#0b3d2e', '#f5f5f5'), 'tags', '["strength"]'::jsonb)));
+select pg_temp.reset_role();
+select is(private.tenant_text_status((select id from private.tenant_texts where course_id = pg_temp.id('m') and slot = 'course_title'
+  order by seq desc limit 1)), 'pending', 'saving the draft again asks for the title anew');
+select pg_temp.admit_titles();
 select pg_temp.reset_role();
 set local role anon;
 select throws_ok($$select * from public.member_tenant_texts('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')$$, '42501', null,

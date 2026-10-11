@@ -5,6 +5,7 @@
 //   blank    characters that draw nothing: [\p{Default_Ignorable_Code_Point}\u2800]
 //   visible  letters, digits, punctuation and symbols: [\p{L}\p{N}\p{P}\p{S}]
 //   marks    combining marks, dropped when folding: \p{M}
+//   letters  letters, for the mixed-script check: \p{L}
 // Usage: node packages/engine/scripts/gen-tenant-text-charsets.ts > /tmp/charsets.json
 // tenant-text.test.ts checks the committed rule set against the same derivation.
 const CLASSES: Record<string, (s: string) => boolean> = {
@@ -13,6 +14,7 @@ const CLASSES: Record<string, (s: string) => boolean> = {
   blank: (s) => /[\p{Default_Ignorable_Code_Point}\u2800]/u.test(s),
   visible: (s) => /[\p{L}\p{N}\p{P}\p{S}]/u.test(s),
   marks: (s) => /\p{M}/u.test(s),
+  letters: (s) => /\p{L}/u.test(s),
 };
 
 function ranges(test: (s: string) => boolean): [number, number][] {

@@ -6,6 +6,7 @@
 // The database function private.admit_tenant_text is authoritative; this mirror gives editors the
 // same answer before they save. Both run the same versioned rule set (tenant-text-rules.ts, inserted
 // by a migration into private.tenant_text_rules), step by step:
+//   0. Refuse raw input over rules.rawMax code points before any other work.
 //   1. NFC, then trim what String.prototype.trim removes (as the #34 core's zod .trim() does).
 //   2. Refuse control, format and separator characters (\p{Cc}\p{Cf}\p{Zl}\p{Zp}): zero-width
 //      spaces and joiners, word joiners, bidi controls, the byte-order mark, line separators.
@@ -19,7 +20,8 @@
 //      word, matched as a whole token after folding (NFKC, blanks dropped, camelCase split, ASCII
 //      lowercase, marks dropped, confusables mapped). Tokens are checked plain and with leet
 //      digits and symbols mapped (1 as i, then as l); runs of single letters are joined first
-//      ("s c i e n c e"); multi-word terms match as token sequences.
+//      ("s c i e n c e") and also searched inside; multi-word terms match as token sequences. A token
+//      mixing ASCII letters with unmapped letters of another script is refused ("mixed script").
 // Otherwise years and percentages are ordinary practice copy and pass ("Est. 2015", "80% of 1RM").
 import { TENANT_TEXT_RULES } from "./tenant-text-rules";
 
@@ -39,7 +41,9 @@ type Ranges = readonly (readonly [number, number])[];
 export interface TenantTextRules {
   version: string;
   slots: Record<TenantTextSlot, readonly [number, number]>;
-  chars: { trim: Ranges; refuse: Ranges; blank: Ranges; visible: Ranges; marks: Ranges };
+  /** Raw inputs longer than this (code points) are refused before any other work. */
+  rawMax: number;
+  chars: { trim: Ranges; refuse: Ranges; blank: Ranges; visible: Ranges; marks: Ranges; letters: Ranges };
   /** Regular expressions over the folded-for-links copy; the same source runs in Postgres (ARE) and JavaScript. */
   links: readonly string[];
   /** Citation and outcome-claim shapes over the same copy as the links (years and percentages pass elsewhere). Never overridden. */
@@ -77,6 +81,9 @@ export interface TenantTextOverride {
 const hex = (cp: number) => `\\u{${cp.toString(16)}}`;
 const charClass = (ranges: Ranges) => ranges.map(([a, b]) => (a === b ? hex(a) : `${hex(a)}-${hex(b)}`)).join("");
 
+const nonAscii = (ranges: Ranges) =>
+  charClass(ranges.flatMap(([a, b]): [number, number][] => (b < 0x80 ? [] : [[Math.max(a, 0x80), b]])));
+
 function compile(rules: TenantTextRules) {
   const cls = (r: Ranges, flags = "u") => new RegExp(`[${charClass(r)}]`, flags);
   return {
@@ -88,6 +95,8 @@ function compile(rules: TenantTextRules) {
     links: rules.links.map((l) => new RegExp(l)),
     claims: rules.claims.map((c) => ({ name: c.name, re: new RegExp(c.re) })),
     deny: new Set(rules.deny),
+    // An ASCII letter next to a letter of another script in the folded copy: an unresolved disguise.
+    mixed: new RegExp(`[a-z][${nonAscii(rules.chars.letters)}]|[${nonAscii(rules.chars.letters)}][a-z]`, "u"),
   };
 }
 
@@ -138,8 +147,9 @@ export function tokenReadings(folded: string, rules: TenantTextRules = TENANT_TE
 function joinSingles(tokens: string[]): string[] {
   const out: string[] = [];
   let run = "";
+  // A joined run is marked with "~": reserved terms are also searched inside it (Sol R1 W4).
   const flush = () => {
-    if (run) out.push(run);
+    if (run) out.push(`~${run}`);
     run = "";
   };
   tokens.forEach((t, i) => {
@@ -156,17 +166,32 @@ function joinSingles(tokens: string[]): string[] {
   return out;
 }
 
-/** The first reserved word or phrase found, or null. */
+/**
+ * The first reserved word or phrase found, or null. Whole tokens and token sequences; inside a run of
+ * spaced single letters, also any reserved word of three or more letters or any phrase written
+ * together ("S C I E N C E B A S E D"). A token that mixes ASCII letters with letters of another
+ * script that no confusable maps is refused as "mixed script".
+ */
 export function reservedTerm(text: string, rules: TenantTextRules = TENANT_TEXT_RULES): string | null {
   const c = compiledFor(rules);
-  for (const tokens of tokenReadings(foldedCopy(text, rules), rules)) {
+  const folded = foldedCopy(text, rules);
+  for (const marked of tokenReadings(folded, rules)) {
+    const tokens = marked.map((t) => (t.startsWith("~") ? t.slice(1) : t));
     for (let i = 0; i < tokens.length; i++) {
       if (c.deny.has(tokens[i]!)) return tokens[i]!;
       for (const phrase of rules.denyPhrases) {
         if (phrase.every((w, k) => tokens[i + k] === w)) return phrase.join(" ");
       }
+      if (marked[i]!.startsWith("~")) {
+        const run = tokens[i]!;
+        const word = rules.deny.find((w) => w.length >= 3 && run.includes(w));
+        if (word) return word;
+        const phrase = rules.denyPhrases.find((p) => run.includes(p.join("")));
+        if (phrase) return phrase.join(" ");
+      }
     }
   }
+  if (c.mixed.test(folded)) return "mixed script";
   return null;
 }
 
@@ -178,9 +203,11 @@ export function admitTenantText(
 ): TenantTextAdmission {
   const version = rules.version;
   const no = (reason: AdmissionReason, detail: string): TenantTextAdmission => ({ ok: false, reason, detail, version });
-  const bounds = (rules.slots as Record<string, readonly [number, number]>)[input.slot];
-  if (!bounds) return no("unknown-slot", input.slot);
+  if (!Object.hasOwn(rules.slots, input.slot)) return no("unknown-slot", input.slot);
+  const bounds = (rules.slots as Record<string, readonly [number, number]>)[input.slot]!;
   if (input.text === null || input.text === undefined) return no("required", "text is required");
+  // Bound the work before normalizing or trimming (Sol R1 W11).
+  if (codePoints(input.text) > rules.rawMax) return no("length", `must be ${bounds[0]} to ${bounds[1]} characters`);
   const c = compiledFor(rules);
   if (LONE_SURROGATE.test(input.text)) return no("control", "must not contain control, format or invisible characters");
   const text = input.text.normalize("NFC").replace(c.trimEdges, "");

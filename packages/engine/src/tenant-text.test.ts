@@ -15,6 +15,18 @@ describe("admitTenantText on the shared fixtures", () => {
     }
   });
 
+  it("refuses inherited slot names", () => {
+    for (const slot of ["constructor", "toString", "__proto__"]) {
+      expect(admitTenantText({ orgId: ORG, slot, text: "Andrew Fitness" })).toMatchObject({ ok: false, reason: "unknown-slot" });
+    }
+  });
+
+  it("bounds the work on long padded input", () => {
+    const t = Date.now();
+    expect(admitTenantText({ orgId: ORG, slot: "welcome", text: `a${" ".repeat(60_000)}a` })).toMatchObject({ ok: false, reason: "length" });
+    expect(Date.now() - t).toBeLessThan(200);
+  });
+
   it("refuses a missing text and a lone surrogate", () => {
     expect(admitTenantText({ orgId: ORG, slot: "welcome", text: null })).toMatchObject({ ok: false, reason: "required" });
     expect(admitTenantText({ orgId: ORG, slot: "welcome", text: "Gym \ud800" })).toMatchObject({ ok: false, reason: "control" });
@@ -63,6 +75,7 @@ describe("the rule set", () => {
       blank: derive((s) => /[\p{Default_Ignorable_Code_Point}\u2800]/u.test(s)),
       visible: derive((s) => /[\p{L}\p{N}\p{P}\p{S}]/u.test(s)),
       marks: derive((s) => /\p{M}/u.test(s)),
+      letters: derive((s) => /\p{L}/u.test(s)),
     });
   });
 

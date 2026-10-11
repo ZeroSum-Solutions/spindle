@@ -138,14 +138,35 @@ export interface CourseCover {
  */
 export interface CourseWelcome {
   text: string;
+  /** LEAD's admission receipt. Members get the note only while it is live (version_tenant_texts). */
+  receiptId: string;
   author: {
     authorUserId: string;
-    /** Frozen at save: the gym's admitted coach name, else the gym name. */
+    /** Resolved at publish: the gym's admitted coach name, else its admitted brand name, else "Your gym". */
     displayName: string;
     orgId: string;
     /** ISO 8601, UTC, microseconds. */
     savedAt: string;
   };
+}
+
+export interface CourseBlurb {
+  text: string;
+  receiptId: string;
+  author: { authorUserId: string; savedAt: string };
+}
+
+/**
+ * A held course text of one published version as a member may see it now (version_tenant_texts):
+ * "revoked" when LEAD withdrew the admission after publishing. A revoked title reads as the fallback.
+ */
+export interface VersionTenantText {
+  slot: "course_title" | "welcome" | "course_blurb";
+  state: "live" | "revoked";
+  text: string | null;
+  displayName: string | null;
+  authorUserId: string | null;
+  savedAt: string | null;
 }
 
 export interface Course<B = LessonBlock> {
@@ -165,7 +186,9 @@ export interface Course<B = LessonBlock> {
   /** Published versions of gym method courses only, once LEAD admitted it. */
   welcome?: CourseWelcome;
   /** The course card's one-line blurb: published versions of gym method courses only, once LEAD admitted it. */
-  blurb?: string;
+  blurb?: CourseBlurb;
+  /** Gym method courses: the admission receipt of the published title. */
+  titleReceiptId?: string;
 }
 
 export interface Catalog {

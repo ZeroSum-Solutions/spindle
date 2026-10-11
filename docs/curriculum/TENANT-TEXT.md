@@ -9,11 +9,13 @@ Gyms write a few texts that members see next to Spindle's own labels. Most of th
 | `brand_name` | the gym | through `member_tenant_texts`; "Your gym" until one is admitted |
 | `catalog_headline`, `catalog_tagline`, `coach_name`, `coach_role` | the gym | through `member_tenant_texts`, once admitted |
 | `course_title` | one gym method course | in versions only; publish refuses a gym course whose current title is not admitted |
-| `welcome`, `course_blurb` | one gym method course | in the next version published after admission |
+| `welcome`, `course_blurb` | one gym method course | through `version_tenant_texts`, in versions published after admission |
+
+Versions freeze each held course text with its receipt id. Members read welcome notes and blurbs only through `version_tenant_texts`, which checks that the receipt is still live; the learner projection leaves them out.
 
 A gym saves a course title with the course draft: a new or changed title becomes a pending `course_title` row by itself. Course subtitles and lesson bodies are not held. Text admission checks them at save and again at publish.
 
-A welcome note is signed with a name frozen at save: the gym's admitted coach name, else its admitted brand name, else "Your gym".
+A welcome note is signed with a name resolved when the course is published: the gym's admitted coach name, else its admitted brand name, else "Your gym". Each version keeps the name it was published with.
 
 Every save is a new row, so an edit always sends a slot back to pending. An edited welcome note or blurb is left out of the next published version until its new text is admitted. Versions published earlier keep their text.
 
@@ -38,7 +40,7 @@ Use this rule: a held text is introductory coaching practice only. That covers w
 - addresses minors as participants (`youth` means youth coaching education only);
 - includes personal data about anyone other than the coach.
 
-For a welcome note, also read the name it is signed with.
+For a welcome note, also check the gym's admitted coach name or brand name: the next publish signs the note with it.
 
 ### List what is pending
 
@@ -77,6 +79,28 @@ commit;
   - an admission no longer passes text admission under the rules in force.
 
 **Verify.** `private.tenant_text_status('<text_id>')` returns `admitted` or `rejected`. For a gym slot, a member of that gym now sees the text through `member_tenant_texts`. For a course slot, it appears in the snapshot only after the gym's next publish. For a course title, that publish is now allowed.
+
+## Revoke an admission
+
+Revoke an admitted text that should not have been admitted, or that the gym asks to withdraw:
+
+```sql
+begin;
+select set_config('role', 'service_role', true), set_config('request.jwt.claims', '{"role":"service_role"}', true);
+select public.publisher_revoke_tenant_text('<publisher id>', '<text_id>', '{"reason": "<why, for the gym>"}');
+commit;
+```
+
+The effects are immediate:
+
+- Gym texts leave `member_tenant_texts`. A revoked brand name reads as "Your gym".
+- In versions already published, `version_tenant_texts` reports a revoked welcome note or blurb as `revoked`, with no text, and a revoked title as "Untitled course".
+- The next publish leaves a revoked welcome note or blurb out. A revoked title blocks publishing until the gym saves the draft again and you admit the title anew.
+- The owner and lead see `revoked` and your reason through `tenant_text_status`.
+
+Only an admitted text can be revoked, and a revocation is final. A gym's new save is a new text that needs a new decision.
+
+One limit: a revoked gym title stays inside the stored learner projection of versions published before the revocation, where a member can still read it directly. The player must take gym titles from `version_tenant_texts`, which shows the fallback.
 
 ## Overrides
 
