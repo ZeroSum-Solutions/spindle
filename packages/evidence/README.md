@@ -77,4 +77,13 @@ Environment:
 - `SPINDLE_EVIDENCE_DIR` and `SPINDLE_REVIEW_DIR` must be absolute paths outside the repository. Abstracts, packets and raw answers are private and copyrighted, and never committed.
 - `SPINDLE_CONTACT_EMAIL` is required, as above.
 
-Video segments: `codex exec` takes text and still images only, and Gemini through the `agy` subscription lane reports no native video input (it can only try page-reading or shell tools, and downloading is not allowed). So no authorized route lets a reviewer see a segment's speech and demonstration. Registry clips stay deferred until a reviewer route is decided (plan section 6).
+Video segments (D-11): `codex exec` takes text and still images only, and Gemini on the `agy` subscription lane has no native video input. The approved route is the metered Gemini API, whose native YouTube input lets a describer report a segment's speech and demonstration.
+
+`segment-review.ts --media <id> --safety <SAFETY.md>` checks that the clip is active and embedded by a global lesson. Under the lock `SPINDLE_REVIEW_DIR/gemini-spend.jsonl.lock` it refuses a clip described or sent in the last 90 days and a call that could pass the $5-per-month cap, then reserves the call's upper bound in the private ledger `SPINDLE_REVIEW_DIR/gemini-spend.jsonl`. `gemini-3.8-flash` describes the segment plus 15 s of context, and the reservation is settled with the reported cost (an unknown cost keeps the full bound). A lock file left by a crashed run blocks every call until someone removes it. Then:
+- A describer failure records nothing.
+- Uncertain content records a failed segment check.
+- Otherwise Sol reviews the description, lessons and SAFETY.md, and `record-review.ts` records Sol's run with the describer run and the lessons' hashes.
+
+After a lesson that embeds the clip changes, `--reuse <earlier packet dir>` sends the same description (if under 90 days old) to Sol with the current lessons, without a describer call.
+
+The key comes from `GEMINI_API_KEY` or `GOOGLE_API_KEY`, travels only in a request header and is never printed.

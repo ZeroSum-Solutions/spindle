@@ -11,7 +11,7 @@ const findingSchema = z.strictObject({
 
 const itemSchema = z.strictObject({
   id: z.string().min(1).max(300),
-  verdict: z.enum(["approve", "reject", "supported", "unsupported", "clean", "changes_required"]),
+  verdict: z.enum(["approve", "reject", "supported", "unsupported", "clean", "changes_required", "pass", "fail"]),
   faithfulness: z.enum(["faithful", "unfaithful"]).nullable(),
   checks: z.strictObject({ safety: z.enum(["pass", "fail"]), originality: z.enum(["pass", "fail"]) }).nullable(),
   findings: z.array(findingSchema).max(200),
@@ -27,6 +27,7 @@ const VERDICTS: Record<ItemKind, readonly string[]> = {
   block: ["supported", "unsupported"],
   lesson: ["clean", "changes_required"],
   course: ["clean", "changes_required"],
+  segment: ["pass", "fail"],
 };
 
 export type ParsedResult = { ok: true; items: Map<string, ReviewedItem> } | { ok: false; errors: string[] };
@@ -107,13 +108,14 @@ export function parseReviewResult(raw: string, packet: ReviewPacket): ParsedResu
     if (kind === "block" && item.verdict === "supported" && item.findings.some((f) => f.severity !== "NIT")) {
       errors.push(`${item.id}: "supported" cannot carry a BLOCK or WARN finding`);
     }
-    if (kind === "lesson" || kind === "course") {
+    if (kind === "lesson" || kind === "course" || kind === "segment") {
+      const positive = item.verdict === "clean" || item.verdict === "pass";
       if (!item.checks) errors.push(`${item.id}: a ${kind} needs safety and originality checks`);
-      else if (item.verdict === "clean" && (item.checks.safety !== "pass" || item.checks.originality !== "pass")) {
-        errors.push(`${item.id}: "clean" needs both checks to pass`);
+      else if (positive && (item.checks.safety !== "pass" || item.checks.originality !== "pass")) {
+        errors.push(`${item.id}: "${item.verdict}" needs both checks to pass`);
       }
-      if (item.verdict === "clean" && item.findings.some((f) => f.severity !== "NIT")) {
-        errors.push(`${item.id}: "clean" cannot carry a BLOCK or WARN finding`);
+      if (positive && item.findings.some((f) => f.severity !== "NIT")) {
+        errors.push(`${item.id}: "${item.verdict}" cannot carry a BLOCK or WARN finding`);
       }
     }
   }
