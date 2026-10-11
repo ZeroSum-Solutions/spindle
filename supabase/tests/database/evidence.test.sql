@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(170);
+select plan(174);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -921,6 +921,22 @@ select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
 select is(public.publish_course('73000000-0000-4000-8000-000000000000'), pg_temp.id('m_v2_legacy'),
   'republishing an unchanged gym course returns its latest version, whatever rules it was published under');
 select pg_temp.reset_role();
+
+-- 9c. The lesson slug "quiz" is reserved for the module quiz route -----------------------------------
+select pg_temp.as_service();
+select throws_ok($$select pg_temp.save(pg_temp.course('7c000000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('7c000000-0000-4000-8000-000000000011', 'quiz', jsonb_build_array(pg_temp.prac('x'))))))$$,
+  '22023', 'invalid course: the lesson slug "quiz" is reserved', 'a global lesson cannot use the slug quiz');
+select lives_ok($$select pg_temp.save(pg_temp.course('7c000000-0000-4000-8000-000000000000', 'base', jsonb_build_array(
+  pg_temp.lesson('7c000000-0000-4000-8000-000000000011', 'quizzes', jsonb_build_array(pg_temp.prac('x'))))))$$,
+  'a lesson slug that only starts with quiz is fine');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select throws_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', pg_temp.course('7d000000-0000-4000-8000-000000000000',
+  'method', jsonb_build_array(pg_temp.lesson('7d000000-0000-4000-8000-000000000011', 'quiz', jsonb_build_array(pg_temp.prac('x')))))) $$,
+  '22023', 'invalid course: the lesson slug "quiz" is reserved', 'a gym lesson cannot use the slug quiz either');
+select pg_temp.reset_role();
+select throws_ok($$update public.lessons set slug = 'quiz' where id = '7c000000-0000-4000-8000-000000000011'$$,
+  '22023', 'invalid course: the lesson slug "quiz" is reserved', 'not even the table owner can write the reserved slug');
 
 -- 10. Privileges and hygiene -------------------------------------------------------------------
 create temp table p3_tables (name text);

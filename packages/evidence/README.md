@@ -76,4 +76,4 @@ Environment:
 - `SPINDLE_EVIDENCE_DIR` and `SPINDLE_REVIEW_DIR` must be absolute paths outside the repository. Abstracts, packets and raw answers are private and copyrighted, and never committed.
 - `SPINDLE_CONTACT_EMAIL` is required, as above.
 
-Video segments: `codex exec` takes text and still images only, so no authorized route gives it a segment's speech and demonstration. Registry clips stay deferred until a reviewer route is decided (plan section 6).
+Video segments: `codex exec` takes text and still images only, and Gemini through the `agy` subscription lane reports no native video input (it can only try page-reading or shell tools, and downloading is not allowed). So no authorized route lets a reviewer see a segment's speech and demonstration. Registry clips stay deferred until a reviewer route is decided (plan section 6).
