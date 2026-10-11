@@ -3,7 +3,7 @@
 ## Curriculum layers
 | Layer | Owner | Visibility | Support |
 |---|---|---|---|
-| base | Spindle | all tenants, read-only | science (claim-bound), reviewed by a physical therapist |
+| base | Spindle | all tenants, read-only | science (claim-bound); model-reviewed during development, licensed-PT review required before launch (D-08) |
 | modality | Spindle | all tenants, read-only | science where evidence exists, otherwise practice-based |
 | method | a tenant (gym) | that tenant only | practice-based |
 
