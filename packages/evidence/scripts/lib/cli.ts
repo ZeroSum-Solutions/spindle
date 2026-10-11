@@ -39,7 +39,7 @@ export function publisherId(): string {
   return requireUuid(process.env.SPINDLE_PUBLISHER_ID, "SPINDLE_PUBLISHER_ID");
 }
 
-export function dir(name: "SPINDLE_EVIDENCE_DIR" | "SPINDLE_REVIEW_DIR"): string {
+export function dir(name: "SPINDLE_EVIDENCE_DIR" | "SPINDLE_REVIEW_DIR" | "SPINDLE_EXCERPT_DIR" | "SPINDLE_MODULE_STATE_DIR"): string {
   const d = privateDir(process.env[name], REPO_ROOT, name);
   mkdirSync(d, { recursive: true, mode: 0o700 });
   return d;
