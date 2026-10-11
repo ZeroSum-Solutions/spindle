@@ -155,7 +155,9 @@ Geist for everything readable, Geist Mono only for identifiers and versions (`v2
 
 ## Layout
 
-- App frame up to 1440px; content columns up to 768px for lists and overviews.
+- App frame up to 1440px; content columns up to 768px for lists and overviews, centred in the frame on wide screens (`LearnShell`, asserted at 1024, 1280 and 1440px in `e2e/player.spec.ts`).
+- The player's outline and reading column are centred together as one 1008px frame (240px outline, 32px gap, 736px reading track).
+- The signed-out home page (`components/landing/`) is a brand surface: 1200px frame, the 64px display step, one ink primary action (Sign in) in the hero, and a reverse ink band at the end. It renders from a `Brand` object (`lib/brand.ts`) so a gym or creator brand can replace Spindle's later. Copy stays honest: no testimonials, counts, or science statements without a claim.
 - Player at 1024px and wider: a 240px course outline beside the reading column. Below 1024px the same outline, in the same order with the same current item, sits in a native disclosure above the lesson.
 - One column below 768px, 16px gutters. No horizontal scrolling at 320px (asserted in `e2e/player.spec.ts`).
 - The course list leads with a single "Resume lesson" action, taken from the newest assigned version of each course. Older versions of a course stay reachable from its row.
