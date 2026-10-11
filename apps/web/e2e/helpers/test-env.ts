@@ -4,7 +4,7 @@
 const LOOPBACK = new Set(["127.0.0.1", "localhost", "[::1]"]);
 
 /** The Mailpit base URL (default the shared stack's :54324). Only http(s) on loopback is accepted. */
-export function mailpitUrl(env: NodeJS.ProcessEnv = process.env): string {
+export function mailpitUrl(env: Readonly<Record<string, string | undefined>> = process.env): string {
   const raw = env.MAILPIT_URL ?? "http://127.0.0.1:54324";
   let url: URL;
   try {
@@ -19,7 +19,7 @@ export function mailpitUrl(env: NodeJS.ProcessEnv = process.env): string {
 }
 
 /** The app port for this run (default 3100). Only an integer from 1024 to 65535 is accepted. */
-export function e2ePort(env: NodeJS.ProcessEnv = process.env): number {
+export function e2ePort(env: Readonly<Record<string, string | undefined>> = process.env): number {
   const raw = env.E2E_PORT ?? "3100";
   if (!/^\d{4,5}$/.test(raw) || Number(raw) < 1024 || Number(raw) > 65535) throw new Error("E2E_PORT must be an integer from 1024 to 65535");
   return Number(raw);
