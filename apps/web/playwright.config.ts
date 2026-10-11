@@ -17,5 +17,11 @@ export default defineConfig({
     url: "http://127.0.0.1:3100",
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,
+    // The app never gets the test-only service key; only test code uses it.
+    env: Object.fromEntries(
+      Object.entries(process.env).filter(
+        (entry): entry is [string, string] => entry[0] !== "SPINDLE_TEST_SERVICE_ROLE_KEY" && entry[1] !== undefined,
+      ),
+    ),
   },
 });

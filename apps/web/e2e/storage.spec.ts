@@ -3,6 +3,7 @@
 import { randomBytes } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import config from "../playwright.config";
 import { anonClient, deleteRunRows, lit, residue, serviceClient, sql, sqlErrorInRollback } from "./helpers/local-supabase";
 
 // Traces record request headers, which carry the service key and access tokens.
@@ -119,6 +120,13 @@ test.afterAll(async () => {
   expect({ ...residue(actors.map((x) => x.id), orgIds), runObjects: Number(runObjects) }).toEqual({
     authUsers: 0, sessions: 0, refreshTokens: 0, orgs: 0, memberships: 0, invites: 0, orgObjects: 0, runObjects: 0,
   });
+});
+
+test("the app server does not receive the service key", () => {
+  expect(process.env.SPINDLE_TEST_SERVICE_ROLE_KEY).toBeTruthy();
+  const server = config.webServer as { env?: Record<string, string> };
+  expect(server.env?.PATH).toBe(process.env.PATH); // the rest of the environment passes through
+  expect("SPINDLE_TEST_SERVICE_ROLE_KEY" in (server.env ?? {}), "service key in the app server's env").toBe(false);
 });
 
 test("the Storage API is up and both media buckets are private", async () => {
