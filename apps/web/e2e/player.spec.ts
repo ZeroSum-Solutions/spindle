@@ -66,6 +66,33 @@ async function signIn(browser: Browser, who: Actor, next: string): Promise<Page>
 const learn = (gym: { slug: string }, assignment?: string, lessonSlug?: string) =>
   `/gyms/${gym.slug}/learn${assignment ? `/${assignment}` : ""}${lessonSlug ? `/${lessonSlug}` : ""}`;
 
+/**
+ * Publish v2 and assign it to the partial and full learners, once. The v2 test and the
+ * capture test both call it, so either one also runs on its own (`-g`).
+ */
+function ensureV2(): void {
+  if (versions.v2) return;
+  versions.v2 = world.publishGlobal(v2());
+  assignments.partial2 = world.assign(gymA, actors.owner!, versions.v2, actors.partial!);
+  assignments.full2 = world.assign(gymA, actors.owner!, versions.v2, actors.full!);
+}
+
+/** Horizontal centre of everything rendered inside <main>, against the viewport's centre. */
+async function contentOffCentre(page: Page): Promise<{ offset: number; left: number; right: number }> {
+  return page.evaluate(() => {
+    let left = Infinity;
+    let right = -Infinity;
+    for (const el of document.querySelectorAll("main *")) {
+      const r = el.getBoundingClientRect();
+      if (r.width <= 1 || r.height <= 1) continue;
+      left = Math.min(left, r.left);
+      right = Math.max(right, r.right);
+    }
+    const width = document.documentElement.clientWidth;
+    return { offset: Math.round((left + right) / 2 - width / 2), left: Math.round(left), right: Math.round(width - right) };
+  });
+}
+
 async function expectNotFound(page: Page, path: string) {
   // Pages stream, so the status is sent before notFound(); assert content instead.
   await page.goto(path);
@@ -189,6 +216,19 @@ test.describe.serial("learner flow", () => {
     expect(await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), "sources open at 320px").toBe(0);
   });
 
+  test("learner pages centre their column on wide screens", async ({ browser }) => {
+    const p = await signIn(browser, actors.partial!, learn(gymA));
+    for (const width of [1440, 1280, 1024]) {
+      await p.setViewportSize({ width, height: 900 });
+      for (const path of [learn(gymA), learn(gymA, assignments.partial), learn(gymA, assignments.partial, "lesson-one")]) {
+        await p.goto(path);
+        await expect(p.getByRole("heading", { level: 1 })).toBeVisible();
+        const { offset, left, right } = await contentOffCentre(p);
+        expect(Math.abs(offset), `${path} at ${width}px: content is ${offset}px off centre (left ${left}, right ${right})`).toBeLessThanOrEqual(4);
+      }
+    }
+  });
+
   test("method course is practice-based only and serves its gym's media to members", async ({ browser }) => {
     const p = await signIn(browser, actors.partial!, learn(gymA, assignments.method, "house-cues"));
     await expect(p.getByText("Gym method").first()).toBeVisible();
@@ -271,9 +311,7 @@ test.describe.serial("learner flow", () => {
   });
 
   test("v2 carries unchanged credit, reopens changed lessons, retires removed ones", async ({ browser }) => {
-    versions.v2 = world.publishGlobal(v2());
-    assignments.partial2 = world.assign(gymA, actors.owner!, versions.v2, actors.partial!);
-    assignments.full2 = world.assign(gymA, actors.owner!, versions.v2, actors.full!);
+    ensureV2();
 
     // The list leads with v2; v1 stays reachable; Resume points into v2, never into a removed lesson.
     const list = await signIn(browser, actors.partial!, learn(gymA));
@@ -372,6 +410,8 @@ test.describe.serial("learner flow", () => {
   test("captures rendered learner states for design review", async ({ browser }) => {
     const dir = process.env.PLAYER_CAPTURE_DIR;
     test.skip(!dir, "set PLAYER_CAPTURE_DIR to capture design evidence");
+    // Seed the v2 state here too, so `-g "captures rendered"` works without the v2 test.
+    ensureV2();
     const shots: [string, string][] = [
       ["list", learn(gymA)],
       ["overview-v2", learn(gymA, assignments.partial2)],
