@@ -845,6 +845,7 @@ export type Database = {
       practice_media_checks: {
         Row: {
           checked_at: string
+          context: Json | null
           described_at: string | null
           describer_cost_usd: number | null
           describer_model: string | null
@@ -861,6 +862,7 @@ export type Database = {
         }
         Insert: {
           checked_at: string
+          context?: Json | null
           described_at?: string | null
           describer_cost_usd?: number | null
           describer_model?: string | null
@@ -877,6 +879,7 @@ export type Database = {
         }
         Update: {
           checked_at?: string
+          context?: Json | null
           described_at?: string | null
           describer_cost_usd?: number | null
           describer_model?: string | null

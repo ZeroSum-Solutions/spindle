@@ -185,7 +185,7 @@ begin
         raise exception 'publish gate: lesson % is gym method content, which cannot embed registry videos', b.lesson_id
           using errcode = 'P0001';
       end if;
-      status := private.video_block_status(b.content);
+      status := private.video_block_status(b.content, b.lesson_id);
       if status <> 'ok' then
         raise exception 'publish gate: lesson % has a video whose registry entry is %', b.lesson_id, status
           using errcode = 'P0001';
