@@ -116,8 +116,30 @@
         "kind": "diagram",
         "content": {
           "diagramId": "scapula-upward-rotation",
-          "caption": "The shoulder blade at three arm positions: by the side, level with the shoulder, and overhead. Schematic; angles are illustrative."
-        }
+          "alt": "Three schematic drawings of a right shoulder blade seen from behind, in a person without shoulder pain, with the arm by the side, level with the shoulder and overhead. The shoulder blade is rotated upward more at each position.",
+          "caption": "The shoulder blade at three arm positions in a person without shoulder pain, right shoulder blade seen from behind. Schematic; angles are illustrative.",
+          "legend": [
+            {
+              "key": "arm-by-side",
+              "label": "Arm by the side.",
+              "text": ""
+            },
+            {
+              "key": "arm-level",
+              "label": "Arm level with the shoulder.",
+              "text": "The shoulder blade has rotated upward."
+            },
+            {
+              "key": "arm-overhead",
+              "label": "Arm overhead.",
+              "text": "It has rotated upward further."
+            }
+          ]
+        },
+        "support": "science",
+        "claimIds": [
+          "claim-slot:l2-scapular-motions"
+        ]
       },
       {
         "kind": "heading",

@@ -7,7 +7,7 @@ We studied how strength, rehabilitation, hypertrophy and movement coaches teach 
 ## Voice
 
 - **Coach to coach.** Write to a working trainer between sessions: direct, warm, no lecture tone.
-- **Plain words first, the term second.** "The ball-and-socket joint (glenohumeral joint)". Keep the proper term: trainers meet it with clients and clinicians.
+- **Plain words first, the term second.** "The shoulder joint (glenohumeral joint)". Keep the proper term: trainers meet it with clients and clinicians. Choose plain words that stay accurate: a teaching image (a ball on a saucer) is labelled as an image, never used as the name.
 - **Short sentences, active voice.** One idea per sentence.
 - **Calm about pain.** Most shoulder pain settles. We name warning signs clearly and never use fear to sell an exercise.
 - **No hype.** No "fix", "bulletproof", "forever", "the only exercise you need", "never do X". Say what the evidence supports and for whom.

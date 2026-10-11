@@ -11,8 +11,9 @@ import { YouTubeSegment } from "@/components/learn/youtube-segment";
 import { ErrorNote } from "@/components/ui";
 import type { ClaimView } from "@/lib/learning/load";
 import type { CourseView, LessonView } from "@/lib/learning/view";
+import { ReviewedDiagram } from "@/components/learn/diagrams";
+import { DIAGRAM_SAMPLES } from "./diagram-samples";
 import { CompletionBoard, LogoReveal } from "./motion-board";
-import { BrandPreview } from "./brand-preview";
 import { QuizBoard } from "./quiz-board";
 import { ModuleStatusCard } from "@/components/learn/module-status";
 
@@ -65,8 +66,37 @@ const blocks: LessonBlock[] = [
   { kind: "checklist", content: ["First synthetic step", "Second synthetic step"], support: "science", claimIds: [FLAGGED] },
   { kind: "image", content: { kind: "image", src: "/media/content/synthetic/missing.png", alt: "Synthetic missing figure", caption: "A storage figure that is not available.", provenanceId: "synthetic" } },
   { kind: "diagram", content: { diagramId: "synthetic-diagram", caption: "A diagram block without an asset yet." } },
-  { kind: "diagram", content: { diagramId: "shoulder-complex-front", caption: "Original diagram: the shoulder complex from the front." } },
-  { kind: "diagram", content: { diagramId: "scapula-upward-rotation", caption: "Original diagram: upward rotation of the shoulder blade." } },
+  {
+    kind: "diagram",
+    content: {
+      diagramId: "shoulder-complex-front",
+      alt: "Synthetic alt text: a schematic left shoulder from the front.",
+      caption: "Synthetic caption for a reviewed science diagram. Schematic, not to scale.",
+      legend: [
+        { key: "sternoclavicular", label: "Synthetic place one.", text: "Synthetic legend text." },
+        { key: "acromioclavicular", label: "Synthetic place two.", text: "" },
+        { key: "glenohumeral", label: "Synthetic place three.", text: "" },
+        { key: "scapula", label: "Synthetic place four.", text: "" },
+      ],
+    },
+    support: "science",
+    claimIds: [CLAIM],
+  },
+  {
+    kind: "diagram",
+    content: {
+      diagramId: "scapula-upward-rotation",
+      alt: "Synthetic alt text: three positions of a shoulder blade.",
+      caption: "Synthetic caption for a reviewed practice diagram. Schematic, not to scale.",
+      legend: [
+        { key: "arm-by-side", label: "Synthetic panel one.", text: "" },
+        { key: "arm-level", label: "Synthetic panel two.", text: "" },
+        { key: "arm-overhead", label: "Synthetic panel three.", text: "" },
+      ],
+    },
+    support: "practice-based",
+    claimIds: [],
+  },
   {
     kind: "quiz",
     content: { prompt: "Synthetic self-check: which option is right?", options: ["Option A", "Option B", "Option C"], answerIndex: 1, explanation: "Option B is the synthetic answer." },
@@ -208,8 +238,19 @@ export default function DesignSpecimen() {
         </div>
       </Section>
 
+      <Section title="Reviewed diagrams (sample text)">
+        <div data-specimen="diagrams" className="mx-auto flex w-full max-w-[68ch] flex-col gap-8">
+          {DIAGRAM_SAMPLES.map((content) => (
+            <ReviewedDiagram key={content.diagramId} content={content} />
+          ))}
+          <ReviewedDiagram content={{ diagramId: "synthetic-missing", alt: "Synthetic", caption: "Sample text. A reviewed diagram id with no drawing.", legend: [{ key: "a", label: "Synthetic legend item.", text: "" }] }} />
+        </div>
+      </Section>
+
       <Section title="Brand preview">
-        <BrandPreview />
+        <p className="text-label text-text-muted">
+          Tenant brands render on their own test-only page, <a href="/brand-preview" className="text-brand underline underline-offset-2 hover:text-brand-hover">/brand-preview</a>.
+        </p>
       </Section>
 
       <Section title="Module status and graded quiz">
