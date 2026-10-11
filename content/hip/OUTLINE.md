@@ -344,9 +344,9 @@ Every NHS page below returned HTTP 200 on 2026-10-11, and we read its wording th
 | The client cannot walk or put weight on the leg (with or without a fall or injury) | Stop. Do not move the leg. **Emergency.** | NHS hip pain and NHS broken hip: 999 or A&E if you're unable to walk or put weight on your leg (no injury qualifier): https://www.nhs.uk/conditions/broken-hip/ |
 | After a fall or injury: severe hip pain, the leg looks shorter or at an odd angle, or tingling or loss of feeling in the hip or leg | Stop. Do not move the leg. **Emergency.** | NHS hip pain and NHS broken hip. |
 | Back pain with any of: pain, tingling, weakness or numbness in both legs; loss of feeling around the genitals or anus; changes in the bladder or bowels; new changes in sexual sensation or function (the client may report these) | Stop all exercise. **Emergency.** | NHS back pain, 999 or A&E list: https://www.nhs.uk/conditions/back-pain/ |
-| Signs of possible DVT in one leg: throbbing pain (usually the calf or thigh), swelling, warm skin, or red or darker skin. Colour change is not required. | Stop. **Urgent**; **emergency** with breathlessness or chest pain. | NHS DVT (urgent if you think you have DVT; 999 with shortness of breath or chest pain): https://www.nhs.uk/conditions/deep-vein-thrombosis-dvt/ |
+| Signs of possible DVT, usually in one leg: throbbing pain (usually in the calf or thigh), swelling, red, blue or darkened skin around the painful area, or swollen veins. Any one is enough; colour change is not required. | Stop. **Urgent**; **emergency** with breathlessness or chest pain. | NHS DVT (urgent if you think you have DVT; 999 with shortness of breath or chest pain): https://www.nhs.uk/conditions/deep-vein-thrombosis-dvt/ |
 | Suspected joint infection: the hip is suddenly very painful **and** hot, swollen or discoloured, **or** hip pain with a high temperature or feeling hot, cold, shivery or unwell | Stop. **Emergency** (Spindle policy, stricter than NHS, matching SAFETY §4's infection note). | NHS hip pain and NHS septic arthritis list these as urgent: https://www.nhs.uk/conditions/septic-arthritis/ |
-| A hip that is swollen and feels hot, or skin around the hip that has changed colour, without the infection signs above | Stop. **Urgent.** | NHS hip pain, urgent list. |
+| Without the infection signs above, any one of: swelling around the hip; difficulty moving the hip; a hip that is swollen and feels hot; skin around the hip that has changed colour | Stop. **Urgent.** Swelling on its own and difficulty moving on their own are each enough; warmth, fever, severe pain or colour change are not required. | NHS septic arthritis, urgent list (swelling around a joint; difficulty moving a joint; changed skin colour, each listed separately): https://www.nhs.uk/conditions/septic-arthritis/ ; NHS hip pain, urgent list. |
 
 **Hip §4. Referral tiers.** These use the same structure as SAFETY §4: use the highest tier any sign matches.
 - **Emergency (999 or A&E):**
@@ -359,8 +359,8 @@ Every NHS page below returned HTTP 200 on 2026-10-11, and we read its wording th
   - a child's emergency signs (hip §2).
 - **Urgent (an urgent GP appointment or NHS 111 today):**
   - severe hip pain that started suddenly, without a fall or injury;
-  - a hip that is swollen and hot, or skin around it that has changed colour (hip §3);
-  - possible DVT in one leg;
+  - swelling around the hip, difficulty moving the hip, a hip that is swollen and hot, or skin around it that has changed colour: each on its own (hip §3);
+  - possible DVT: throbbing pain, swelling, red, blue or darkened skin, or swollen veins, usually in one leg (hip §3);
   - any other child or adolescent with hip, thigh or knee pain or a limp;
   - a groin lump or hernia with any of: pain in or around it, a bloated tummy, feeling or being sick, vomiting blood, constipation, a high temperature or feeling hot, cold or shivery, or sudden confusion (NHS hernia, 111 list: https://www.nhs.uk/conditions/hernia/ ).
 - **Routine (a GP or physiotherapist):**

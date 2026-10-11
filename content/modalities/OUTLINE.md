@@ -85,7 +85,7 @@ A 2025 systematic review in healthy adults found low-certainty balance gains, wi
   - Source: de Campos Júnior JF, et al. Effects of Pilates exercises on postural balance and reduced risk of falls in older adults: a systematic review and meta-analysis. *Complement Ther Clin Pract* 2024;57:101888. PMID 39068875, doi:10.1016/j.ctcp.2024.101888. Licence: none stated.
   - Evidence: 39 studies, 1,770 participants.
 - **P4. Strength, endurance and power in older adults (insufficient evidence).** The authors conclude that Pilates cannot currently be recommended to improve strength, endurance or power in older adults. The outcomes differ:
-  - Strength: no significant improvement compared with control (low quality), and no difference compared with other exercise (moderate quality).
+  - Strength: compared with control, the evidence is uncertain (low quality; the pooled estimate was not statistically significant and its interval was wide), so it neither shows nor rules out an effect. Compared with other exercise, there was little or no difference (moderate quality).
   - Endurance: some improvement, in the upper limbs compared with control and the lower limbs compared with other exercise (very low quality).
   - Power: too few studies to pool.
   - Source: Oliveira LS, et al. Effects of pilates exercises on strength, endurance and muscle power in older adults: systematic review and meta-analysis. *J Bodyw Mov Ther* 2024;39:615-634. PMID 38876695, doi:10.1016/j.jbmt.2024.02.021. Licence: none stated.
