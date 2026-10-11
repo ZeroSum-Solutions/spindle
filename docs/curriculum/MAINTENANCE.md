@@ -78,7 +78,7 @@ Renew before the expiry. After it, learners see "Evidence due for recheck" and n
 
 ### Renewing a clip's segment review
 
-A segment review counts for 90 days, and so does the description it rests on. The describer ledger allows one new description per clip per 90 days, counted from the last description or the last attempted call. So a description cannot be renewed early, and every renewal has a gap:
+A segment review counts for 90 days, and so does the description it rests on. The describer ledger allows one new description per clip per 90 days, counted from the last description or the last attempted call. A call the provider refused before doing any work (HTTP 429 or 5xx, no usage) does not count: retry once the describer is available. So a description cannot be renewed early, and every renewal has a gap:
 
 - On day 90 the description runs out. The clip turns off in every version and new publishes that embed it are refused.
 - On or after that day, `scripts/segment-review.ts --media <id> --safety ../../docs/curriculum/SAFETY.md` gets a new Gemini description and sends it to Sol.

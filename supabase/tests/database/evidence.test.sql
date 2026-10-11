@@ -3,7 +3,9 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(284);
+select plan(286);
+-- This suite records synthetic-fixture review receipts; outside tests they are refused for segment passes.
+select set_config('spindle.fixture_receipts', 'on', true);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -583,6 +585,14 @@ select throws_ok($$select pg_temp.publish('78000000-0000-4000-8000-000000000000'
 select throws_ok(format($$select public.publisher_record_media_check(pg_temp.pat(), %L,
   jsonb_build_object('kind', 'segment', 'outcome', 'pass', 'checkedAt', %L))$$, pg_temp.id('mv'), pg_temp.iso(now())),
   '22023', 'invalid check.run: a passing segment review needs a model run receipt', 'a passing segment review needs a model run');
+-- T15: a fixture review can never pass a real clip outside a test session.
+select set_config('spindle.fixture_receipts', 'off', true);
+select throws_ok(format($$select public.publisher_record_media_check(pg_temp.pat(), %L, pg_temp.seg_pass(%L, 'fixture-guard', now()))$$,
+  pg_temp.id('mv'), pg_temp.id('mv')), '22023', 'invalid check.run: a synthetic-fixture review cannot pass a segment outside tests',
+  'a synthetic-fixture segment pass is refused unless the session declares fixture receipts');
+select is((select count(*) from public.practice_media_checks where media_id = pg_temp.id('mv') and kind = 'segment'), 0::bigint,
+  'and nothing is recorded');
+select set_config('spindle.fixture_receipts', 'on', true);
 select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'), pg_temp.seg_pass(pg_temp.id('mv'), 'segment', now()));
 select lives_ok($$select pg_temp.keep('v_v1', pg_temp.publish('78000000-0000-4000-8000-000000000000'))$$,
   'a reviewed, embeddable clip publishes inside a reviewed lesson');

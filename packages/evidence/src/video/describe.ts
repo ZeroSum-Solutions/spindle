@@ -114,8 +114,12 @@ export function costUsd(usage: z.input<typeof usageSchema>, at: Date): number {
 
 export type DescribeResult =
   | { ok: true; description: SegmentDescription; run: RunReceipt; costUsd: number; uncertain: boolean }
-  /** costUsd is null when the charge is unknown: the call may have been billed (Sol PR20-02). */
-  | { ok: false; error: string; costUsd: number | null };
+  /**
+   * costUsd is null when the charge is unknown: the call may have been billed (Sol PR20-02).
+   * `refused` marks an HTTP 429 or 5xx that reported no usage: the provider did no work, so the
+   * caller may release its reservation (T15). Anything else keeps the reservation.
+   */
+  | { ok: false; error: string; costUsd: number | null; refused?: boolean; status?: number };
 
 const responseSchema = z.object({
   modelVersion: z.string().optional(),
@@ -161,7 +165,10 @@ export async function describeSegment(seg: SegmentRef, deps: DescribeDeps): Prom
   }
   const usage = usageSchema.safeParse((json as { usageMetadata?: unknown } | null)?.usageMetadata);
   const cost = usage.success ? costUsd(usage.data, at) : null;
-  if (!res.ok) return fail(`describer HTTP ${res.status}`, cost);
+  if (!res.ok) {
+    const refused = cost === null && (res.status === 429 || (res.status >= 500 && res.status <= 599));
+    return { ...fail(`describer HTTP ${res.status}`, cost), ...(refused ? { refused: true, status: res.status } : {}) };
+  }
   const parsed = responseSchema.safeParse(json);
   if (!parsed.success) return fail("describer response is malformed", cost);
   if (cost === null) return fail("describer response reports no usage, so its cost is unknown", null);
