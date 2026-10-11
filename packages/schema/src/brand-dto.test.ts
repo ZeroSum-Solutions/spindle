@@ -7,7 +7,7 @@ const dto = {
   revision: 4,
   name: "Andrew Fitness",
   nameAdmitted: true,
-  brand: { mark: { kind: "text" }, colors: { accent: "#506e4b", onAccent: "#ffffff", band: "#0b3d2e" }, font: "geist" },
+  brand: { mark: { kind: "text" }, colors: { accent: "#1f4e8c", onAccent: "#ffffff", accentDark: "#7ab8ff", onAccentDark: "#0b0d12", band: "#0b3d2e" }, font: "geist" },
   texts: { headline: "Lift well for life" },
 };
 const card = {
