@@ -21,7 +21,7 @@ function epmc(overrides: Record<string, unknown> = {}) {
   };
 }
 const esummary = (doi = DOI, pubtype = ["Meta-Analysis"]) => ({
-  result: { uids: [PMID], [PMID]: { uid: PMID, title: "Synthetic review.", pubtype, articleids: [{ idtype: "doi", value: doi }] } },
+  result: { uids: [PMID], [PMID]: { uid: PMID, title: "Synthetic review.", pubtype, pubdate: "2020 Jun", articleids: [{ idtype: "doi", value: doi }] } },
 });
 const clean = (extra: [string, unknown][] = []) => [
   ...extra,

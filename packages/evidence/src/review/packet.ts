@@ -4,6 +4,7 @@
 import { createHash } from "node:crypto";
 import { lessonBlockSchema, lessonSchema } from "@spindle/schema";
 import { z } from "zod";
+import { GUIDANCE_TYPES, overrideKind, REFERENCE_TYPES, type KindOverrideType } from "../ingest";
 import type { RetractionState } from "../retraction";
 
 export const PACKET_VERSION = 1;
@@ -29,7 +30,7 @@ export interface PacketItem {
 /** Source text a reviewer may read. Papers: the full abstract with matching identifiers. */
 export interface EvidenceEntry {
   sourceId: string;
-  kind: "systematic_review" | "meta_analysis" | "position_stand" | "textbook" | "nomenclature";
+  kind: "systematic_review" | "meta_analysis" | "position_stand" | "textbook" | "nomenclature" | "foundation_reference";
   title: string;
   identifiers: { doi?: string; pmid?: string; url?: string };
   /** The full abstract, open-access text or official entry. A drafter's summary is not evidence. */
@@ -38,6 +39,11 @@ export interface EvidenceEntry {
   retraction: RetractionState;
   /** When existence and retraction status were last checked (ISO 8601). */
   checkedAt: string;
+  /** Publication year and journal from the PubMed (or Europe PMC MED) record, so a claim may cite them. */
+  year?: number;
+  journal?: string;
+  /** D-12: the kind was recorded by a publisher override of PubMed's labels; the reviewer sees why. */
+  kindOverride?: { documentType: KindOverrideType; justification: string; publicationTypes: string[] };
 }
 
 export interface ReviewPacket {
@@ -70,20 +76,32 @@ const uuid = z.string().regex(UUID);
 
 export const evidenceEntrySchema = z.strictObject({
   sourceId: uuid,
-  kind: z.enum(["systematic_review", "meta_analysis", "position_stand", "textbook", "nomenclature"]),
+  kind: z.enum(["systematic_review", "meta_analysis", "position_stand", "textbook", "nomenclature", "foundation_reference"]),
   title: z.string().min(1),
   identifiers: z.strictObject({ doi: z.string().optional(), pmid: z.string().optional(), url: z.string().optional() }),
   text: z.string().min(1),
   textOrigin: z.string().min(1),
   retraction: z.enum(["retracted", "not_retracted", "unknown"]),
   checkedAt: z.string(),
-}) satisfies z.ZodType<EvidenceEntry>;
+  year: z.number().int().min(1800).max(2100).optional(),
+  journal: z.string().min(1).max(500).optional(),
+  kindOverride: z
+    .strictObject({
+      documentType: z.enum([...GUIDANCE_TYPES, ...REFERENCE_TYPES]),
+      justification: z.string().min(40).max(2000),
+      publicationTypes: z.array(z.string().min(1).max(200)).min(1).max(30),
+    })
+    .optional(),
+})
+  .refine((e) => !e.kindOverride || e.kind === overrideKind(e.kindOverride.documentType), { message: "the kind override does not match the source kind" })
+  .refine((e) => e.kind !== "foundation_reference" || e.kindOverride !== undefined, { message: "a foundation reference needs its kind override" }) satisfies z.ZodType<EvidenceEntry>;
 
 const claimContentSchema = z.strictObject({
   statement: z.string().min(1).max(2000),
   evidenceLevel: z.string().min(1),
   population: z.string().min(1),
   sourceIds: z.array(uuid).min(1).max(20),
+  domain: z.enum(["foundation", "applied"]).optional(),
 });
 
 const claimView = z.array(z.strictObject({ claimId: uuid, statement: z.string().min(1), population: z.string().min(1) }));
@@ -167,6 +185,8 @@ export interface ClaimTarget {
   population: string;
   sourceIds: string[];
   status: string;
+  /** D-12: "foundation" claims may cite open foundation references; absent on older targets means applied. */
+  domain?: "foundation" | "applied";
 }
 
 /**
@@ -181,6 +201,8 @@ export const MAX_EVIDENCE_AGE_DAYS = 30;
 export interface SourceIdentity {
   doi: string | null;
   pmid: string | null;
+  /** D-12: whether the database records a kind override; when known, the evidence must show it. */
+  overridden?: boolean;
   url?: string | null;
   kind: string;
 }
@@ -189,6 +211,7 @@ export interface SourceIdentity {
 export function evidenceMatchesSource(e: EvidenceEntry, s: SourceIdentity | undefined): boolean {
   if (!s || e.kind !== s.kind) return false;
   if (!s.doi && !s.pmid && !s.url) return false;
+  if (s.overridden !== undefined && (e.kindOverride !== undefined) !== s.overridden) return false;
   if (s.doi && (e.identifiers.doi ?? "").toLowerCase() !== s.doi.toLowerCase()) return false;
   if (s.pmid && e.identifiers.pmid !== s.pmid) return false;
   if (!s.doi && !s.pmid && s.url && e.identifiers.url !== s.url) return false;
@@ -245,7 +268,7 @@ export function buildClaimPacket(
       kind: "claim",
       target: c.claimId,
       expectedHash: c.hash,
-      content: { statement: c.statement, evidenceLevel: c.evidenceLevel, population: c.population, sourceIds: c.sourceIds },
+      content: { statement: c.statement, evidenceLevel: c.evidenceLevel, population: c.population, sourceIds: c.sourceIds, domain: c.domain ?? "applied" },
     });
   }
   if (items.length === 0) return { packet: null, blocked };

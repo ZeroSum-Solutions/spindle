@@ -238,6 +238,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          domain: string
           evidence_level: string
           id: string
           population: string
@@ -246,6 +247,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          domain?: string
           evidence_level: string
           id?: string
           population: string
@@ -254,6 +256,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          domain?: string
           evidence_level?: string
           id?: string
           population?: string
@@ -1045,6 +1048,44 @@ export type Database = {
           session_id?: string
         }
         Relationships: []
+      }
+      source_kind_overrides: {
+        Row: {
+          document_type: string
+          justification: string
+          kind: string
+          publication_types: string[]
+          recorded_at: string
+          recorded_by: string
+          source_id: string
+        }
+        Insert: {
+          document_type: string
+          justification: string
+          kind: string
+          publication_types: string[]
+          recorded_at?: string
+          recorded_by: string
+          source_id: string
+        }
+        Update: {
+          document_type?: string
+          justification?: string
+          kind?: string
+          publication_types?: string[]
+          recorded_at?: string
+          recorded_by?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_kind_overrides_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: true
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       source_retractions: {
         Row: {
