@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 # Two co-owners demote themselves at the same time. Without per-org locking
 # both commits succeed and the gym has no owner. Expect exactly one failure.
-# Needs the local stack (`supabase start`). Leaves no data behind.
+# It commits synthetic rows (and deletes fixed ids on start and exit), so
+# outside CI it refuses the shared local stack: set DB_URL to an isolated
+# database. CI uses its ephemeral stack. Leaves no data behind.
 set -euo pipefail
 
-DB="${DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
+DB="${DB_URL:-}"
+if [ -z "$DB" ]; then
+  if [ "${CI:-}" = "true" ]; then DB=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+  else echo "set DB_URL to an isolated database (this test commits rows)" >&2; exit 2; fi
+fi
+case "$DB" in *:54322/*) [ "${CI:-}" = "true" ] || { echo "refusing the shared local stack on :54322 outside CI" >&2; exit 2; } ;; esac
 A=00000000-0000-0000-0000-0000000000a1
 B=00000000-0000-0000-0000-0000000000b1
 psql() { command psql "$DB" -X -q -v ON_ERROR_STOP=1 "$@"; }
