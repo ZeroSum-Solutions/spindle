@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ErrorNote, Page } from "@/components/ui";
@@ -51,6 +52,13 @@ async function Gym({ params, searchParams }: PageProps<"/gyms/[slug]">) {
   return (
     <Page title={org.name}>
       <ErrorNote message={typeof query.error === "string" ? query.error : undefined} />
+
+      <Link
+        href={`/gyms/${org.slug}/learn`}
+        className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-white hover:bg-ink-hover"
+      >
+        Your courses
+      </Link>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Members</h2>

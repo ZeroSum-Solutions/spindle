@@ -1,26 +1,139 @@
 @import "tailwindcss";
 
+/*
+ * Spindle Atlas tokens. Root DESIGN.md is the contract; keep these values in sync
+ * with its front matter. Light only for now: a dark theme is deferred until it is
+ * designed and checked, so the OS dark setting must not half-invert the UI.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --background: #f6f8fb;
+  --foreground: #17232b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
+@theme {
+  --color-ink: #17232b;
+  --color-ink-hover: #2c3c47;
+  --color-canvas: #f6f8fb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #edf1f5;
+  --color-text: #17232b;
+  --color-text-muted: #52616d;
+  --color-border: #d8e0e7;
+  --color-control: #758491;
+  --color-brand: #2453d4;
+  --color-brand-hover: #1b40a6;
+  --color-brand-soft: #eaf0ff;
+  --color-science: #0b6b50;
+  --color-science-soft: #eaf5f0;
+  --color-practice: #8a4b10;
+  --color-practice-soft: #fff3e6;
+  --color-danger: #b42318;
+  --color-danger-soft: #fff0ee;
+
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.08;
+  --text-display--letter-spacing: -0.04em;
+  --text-heading: 1.75rem;
+  --text-heading--line-height: 1.15;
+  --text-heading--letter-spacing: -0.03em;
+  --text-reading: 1.125rem;
+  --text-reading--line-height: 1.65;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.5;
+  --text-code: 0.8125rem;
+  --text-code--line-height: 1.5;
+
+  --radius-small: 4px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+
+  --ease-interface: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+@media (min-width: 768px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --text-display: 4rem;
+    --text-heading: 2rem;
   }
+}
+
+:root {
+  --duration-feedback: 120ms;
+  --duration-disclosure: 180ms;
+  --duration-drawer: 240ms;
+  --duration-confirm: 320ms;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* One visible focus treatment everywhere: 3px brand ring, offset from the control. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 4px;
+}
+
+/* Native disclosure: rotate the chevron, never animate the reading text itself. */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details > summary .disclosure-chevron {
+  transition: transform var(--duration-disclosure) var(--ease-interface);
+}
+details[open] > summary .disclosure-chevron {
+  transform: rotate(180deg);
+}
+
+/* Confirmed-save check: drawn once, only when the server has confirmed. */
+.confirm-check path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: draw-check var(--duration-confirm) var(--ease-interface) forwards;
+}
+.confirm-appear {
+  animation: appear var(--duration-feedback) var(--ease-interface);
+}
+@keyframes draw-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-feedback: 0ms;
+    --duration-disclosure: 0ms;
+    --duration-drawer: 0ms;
+    --duration-confirm: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+  .confirm-check path {
+    stroke-dashoffset: 0;
+  }
 }
