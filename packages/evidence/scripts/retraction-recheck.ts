@@ -7,6 +7,7 @@
  * Exit 0 all verified, 1 retractions recorded or unknowns remain, 2 error.
  */
 import { createContext } from "../src/context";
+import { getCrossrefWork } from "../src/crossref";
 import { recheckAction } from "../src/retraction";
 import { verifySource } from "../src/verify";
 import { args, lit, main, publisherId, serviceValue, sql } from "./lib/cli";
@@ -30,8 +31,11 @@ main(async () => {
       console.log(`UNKNOWN  ${s.doi}: ${action.issues.join("; ")}`);
     } else {
       recorded++;
-      const flagged = dry ? "dry run" : serviceValue(`public.publisher_record_retraction(${lit(publisherId())}, ${lit(s.id)}, ${lit(JSON.stringify(action.notice))}::jsonb)`);
-      console.log(`RETRACTED ${s.doi}: recorded (${action.notice.origin}); versions flagged: ${flagged}`);
+      // Prefer the retraction notice's own DOI as the reference when Crossref lists one.
+      const cr = action.notice.origin === "crossref" ? await getCrossrefWork(ctx, s.doi).catch(() => null) : null;
+      const notice = cr?.retractionNotices[0] ? { ...action.notice, reference: cr.retractionNotices[0] } : action.notice;
+      const flagged = dry ? "dry run" : serviceValue(`public.publisher_record_retraction(${lit(publisherId())}, ${lit(s.id)}, ${lit(JSON.stringify(notice))}::jsonb)`);
+      console.log(`RETRACTED ${s.doi}: recorded (${notice.origin}, ${notice.reference}); versions flagged: ${flagged}`);
     }
   }
   if (noDoi !== "0") console.log(`${noDoi} cited sources have no DOI (textbook or nomenclature): check them by hand`);
