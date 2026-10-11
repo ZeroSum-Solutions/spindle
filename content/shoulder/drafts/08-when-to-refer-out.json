@@ -11,7 +11,7 @@
   "claimSlots": [
     {
       "slot": "claim-slot:l8-subacromial-course",
-      "statement": "BESS 2025 describes subacromial pain as usually self-limiting, with most symptoms responding within three months, in the context of initial primary-care management.",
+      "statement": "The British Elbow & Shoulder Society subacromial pain care pathway describes subacromial pain as usually self-limiting, with most symptoms responding within three months, in the context of initial primary-care management.",
       "evidenceLevel": "Clinical guideline (GRADE), British Elbow & Shoulder Society",
       "population": "\"Subacromial Shoulder Pain\" (BESS 2025 patient care pathway).",
       "candidateSources": [
@@ -220,7 +220,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "For subacromial shoulder pain, 2025 UK specialist guidance describes the condition as usually self-limiting, with most symptoms responding to initial care within about three months.",
+        "content": "For subacromial shoulder pain, UK specialist guidance from the British Elbow & Shoulder Society describes the condition as usually self-limiting, with most symptoms responding to initial care within about three months.",
         "support": "science",
         "claimIds": [
           "claim-slot:l8-subacromial-course"
@@ -264,7 +264,7 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "For subacromial shoulder pain, what does 2025 UK specialist guidance say about how symptoms usually go?",
+          "prompt": "For subacromial shoulder pain, what does UK specialist guidance say about how symptoms usually go?",
           "options": [
             "Most symptoms respond to initial care within about three months",
             "Symptoms never improve without surgery",
