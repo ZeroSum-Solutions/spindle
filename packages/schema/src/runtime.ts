@@ -2,7 +2,7 @@
 // API bodies). They check shape only: whether a cited claim is approved and
 // relevant is the publish gate's job (validateCatalog and the database receipt).
 import { z } from "zod";
-import type { Catalog, Course, LearnerCourse, LearnerLessonBlock, Lesson, LessonBlock, LessonViewBlock, LessonViewCourse, MediaAsset, RedactedGradedQuiz, VideoSegment } from "./types";
+import type { Catalog, Course, CourseCover, CourseWelcome, LearnerCourse, LearnerLessonBlock, Lesson, LessonBlock, LessonViewBlock, LessonViewCourse, MediaAsset, ModalityTag, RedactedGradedQuiz, VideoSegment } from "./types";
 
 export class ContentParseError extends Error {
   constructor(
@@ -172,6 +172,49 @@ function lessonSchemaFor<B extends z.ZodType>(block: B) {
   });
 }
 
+export const MODALITY_TAGS = [
+  "strength",
+  "powerlifting",
+  "weightlifting",
+  "hypertrophy",
+  "speed",
+  "mobility",
+  "yoga",
+  "pilates",
+  "running",
+  "endurance",
+  "combat",
+  "team-sport",
+  "youth",
+] as const satisfies readonly ModalityTag[];
+export const COVER_PATTERNS = ["solid", "diagonal", "grid", "dots", "rings", "waves"] as const;
+
+const hexColour = z.string().regex(/^#[0-9a-fA-F]{6}$/, "must be a #RRGGBB colour");
+
+export const courseCoverSchema = z.strictObject({
+  kind: z.literal("pattern"),
+  pattern: z.enum(COVER_PATTERNS),
+  background: hexColour,
+  foreground: hexColour,
+}) satisfies z.ZodType<CourseCover>;
+
+export const courseTagsSchema = z
+  .array(z.enum(MODALITY_TAGS))
+  .max(2)
+  .refine((tags) => new Set(tags).size === tags.length, "has a duplicate tag");
+
+const uuidSchema = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, "must be a lowercase uuid");
+
+export const courseWelcomeSchema = z.strictObject({
+  text: requiredText.max(280),
+  author: z.strictObject({
+    authorUserId: uuidSchema,
+    displayName: requiredText.max(60),
+    orgId: uuidSchema,
+    savedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/, "must be a UTC timestamp with microseconds"),
+  }),
+}) satisfies z.ZodType<CourseWelcome>;
+
 function courseSchemaFor<L extends z.ZodType>(lesson: L) {
   return z.strictObject({
     id: idSchema,
@@ -193,7 +236,14 @@ function courseSchemaFor<L extends z.ZodType>(lesson: L) {
         }),
       )
       .max(100),
-  });
+    cover: courseCoverSchema.optional(),
+    tags: courseTagsSchema.optional(),
+    welcome: courseWelcomeSchema.optional(),
+    blurb: requiredText.max(160).optional(),
+  })
+    .refine((c) => c.cover === undefined || c.layer === "method", { message: "only gym method courses take a cover", path: ["cover"] })
+    .refine((c) => c.welcome === undefined || c.layer === "method", { message: "only gym method courses have a welcome note", path: ["welcome"] })
+    .refine((c) => c.blurb === undefined || c.layer === "method", { message: "only gym method courses have a tenant blurb", path: ["blurb"] });
 }
 
 export const lessonSchema = lessonSchemaFor(lessonBlockSchema) satisfies z.ZodType<Lesson>;
@@ -226,6 +276,18 @@ export const catalogSchema = z.strictObject({
 /** Shape-checks a catalog. Run validateCatalog afterwards for ids, provenance and claim approval. */
 export const parseCatalog = (value: unknown): Catalog => parseWith(catalogSchema, "catalog", value);
 export const parseCourse = (value: unknown): Course => parseWith(courseSchema, "course", value);
+/**
+ * A course draft as authors send it to save_course_draft: cover and tags allowed, no welcome note or
+ * blurb (held tenant texts, saved through save_tenant_text and pending until LEAD admits them).
+ */
+export const parseCourseDraft = (value: unknown): Course =>
+  parseWith(
+    courseSchema
+      .refine((c) => c.welcome === undefined, { message: "is saved through save_tenant_text, not the draft", path: ["welcome"] })
+      .refine((c) => c.blurb === undefined, { message: "is saved through save_tenant_text, not the draft", path: ["blurb"] }),
+    "course draft",
+    value,
+  );
 /** Parses curriculum_versions.learner_snapshot, the only snapshot learners can read (ADR 0007). */
 export const parseLearnerCourse = (value: unknown): LearnerCourse => parseWith(learnerCourseSchema, "learner course", value);
 

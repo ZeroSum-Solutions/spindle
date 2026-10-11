@@ -104,6 +104,50 @@ export interface CoursePart<B = LessonBlock> {
   lessons: Lesson<B>[];
 }
 
+/** The modality taxonomy (P4-A2 spec 2.4). "youth" means youth coaching education, never youth participation. */
+export type ModalityTag =
+  | "strength"
+  | "powerlifting"
+  | "weightlifting"
+  | "hypertrophy"
+  | "speed"
+  | "mobility"
+  | "yoga"
+  | "pilates"
+  | "running"
+  | "endurance"
+  | "combat"
+  | "team-sport"
+  | "youth";
+
+export type CoverPattern = "solid" | "diagonal" | "grid" | "dots" | "rings" | "waves";
+
+/** A Spindle-drawn cover for a gym method course: a pattern and two literal colours. Never an uploaded image. */
+export interface CourseCover {
+  kind: "pattern";
+  pattern: CoverPattern;
+  /** #RRGGBB */
+  background: string;
+  /** #RRGGBB, drawn faintly over the background. */
+  foreground: string;
+}
+
+/**
+ * A gym method course's welcome note as a published version carries it: only after LEAD admitted it,
+ * with its author frozen at save. Drafts never carry it; it is saved through save_tenant_text.
+ */
+export interface CourseWelcome {
+  text: string;
+  author: {
+    authorUserId: string;
+    /** Frozen at save: the gym's admitted coach name, else the gym name. */
+    displayName: string;
+    orgId: string;
+    /** ISO 8601, UTC, microseconds. */
+    savedAt: string;
+  };
+}
+
 export interface Course<B = LessonBlock> {
   id: string;
   slug: string;
@@ -114,6 +158,14 @@ export interface Course<B = LessonBlock> {
   level: CourseLevel;
   outcomes: string[];
   parts: CoursePart<B>[];
+  /** Gym method courses only; base and modality courses use the Spindle cover. */
+  cover?: CourseCover;
+  /** At most two, from the modality taxonomy. Absent when empty. */
+  tags?: ModalityTag[];
+  /** Published versions of gym method courses only, once LEAD admitted it. */
+  welcome?: CourseWelcome;
+  /** The course card's one-line blurb: published versions of gym method courses only, once LEAD admitted it. */
+  blurb?: string;
 }
 
 export interface Catalog {

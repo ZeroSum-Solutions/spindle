@@ -1,0 +1,954 @@
+-- P4-A2 (spec revisions 3 and 4): tenant text admission; held tenant texts (catalog headline and
+-- tagline, coach name and role, course welcome note and blurb), each pending until LEAD records an
+-- admission bound to its org, slot and text hash; course presentation (pattern cover, modality
+-- tags). No tenant image uploads and no anonymous brand delivery in this unit.
+
+-- Tenant text admission -------------------------------------------------------------------
+
+/**
+ * Versioned rule sets for tenant text. The newest row is in force. The same JSON is
+ * packages/engine/src/tenant-text-rules.ts (a unit test compares them), so the editor's mirror
+ * and this authoritative check give the same answer. Rows never change: a new rule set is a new
+ * version, inserted by a migration.
+ */
+create table private.tenant_text_rules (
+  version text primary key,
+  rules jsonb not null check (rules ->> 'version' is not null),
+  created_at timestamptz not null default clock_timestamp(),
+  check (rules ->> 'version' = version)
+);
+create trigger tenant_text_rules_immutable before update or delete on private.tenant_text_rules
+  for each row execute function private.guard_immutable();
+create trigger tenant_text_rules_no_truncate before truncate on private.tenant_text_rules
+  for each statement execute function private.guard_truncate();
+
+insert into private.tenant_text_rules (version, rules)
+select r ->> 'version', r from (select (
+-- tenant-text-rules:begin
+$rules${"version":"tt-2026-10-11.1","slots":{"brand_name":[1,60],"catalog_headline":[1,60],"catalog_tagline":[1,140],"coach_name":[1,60],"coach_role":[1,60],"welcome":[1,280],"course_title":[1,200],"course_summary":[0,300],"course_blurb":[1,160]},"chars":{"trim":[[9,13],[32,32],[160,160],[5760,5760],[8192,8202],[8232,8233],[8239,8239],[8287,8287],[12288,12288],[65279,65279]],"refuse":[[0,31],[127,159],[173,173],[1536,1541],[1564,1564],[1757,1757],[1807,1807],[2192,2193],[2274,2274],[6158,6158],[8203,8207],[8232,8238],[8288,8292],[8294,8303],[65279,65279],[65529,65531],[69821,69821],[69837,69837],[78896,78911],[113824,113827],[119155,119162],[917505,917505],[917536,917631]],"blank":[[173,173],[847,847],[1564,1564],[4447,4448],[6068,6069],[6155,6159],[8203,8207],[8234,8238],[8288,8303],[10240,10240],[12644,12644],[65024,65039],[65279,65279],[65440,65440],[65520,65528],[113824,113827],[119155,119162],[917504,921599]],"visible":[[33,126],[161,172],[174,767],[880,887],[890,895],[900,906],[908,908],[910,929],[931,1154],[1162,1327],[1329,1366],[1369,1418],[1421,1423],[1470,1470],[1472,1472],[1475,1475],[1478,1478],[1488,1514],[1519,1524],[1542,1551],[1563,1563],[1565,1610],[1632,1647],[1649,1749],[1758,1758],[1765,1766],[1769,1769],[1774,1805],[1808,1808],[1810,1839],[1869,1957],[1969,1969],[1984,2026],[2036,2042],[2046,2069],[2074,2074],[2084,2084],[2088,2088],[2096,2110],[2112,2136],[2142,2142],[2144,2154],[2160,2191],[2208,2249],[2308,2361],[2365,2365],[2384,2384],[2392,2401],[2404,2432],[2437,2444],[2447,2448],[2451,2472],[2474,2480],[2482,2482],[2486,2489],[2493,2493],[2510,2510],[2524,2525],[2527,2529],[2534,2557],[2565,2570],[2575,2576],[2579,2600],[2602,2608],[2610,2611],[2613,2614],[2616,2617],[2649,2652],[2654,2654],[2662,2671],[2674,2676],[2678,2678],[2693,2701],[2703,2705],[2707,2728],[2730,2736],[2738,2739],[2741,2745],[2749,2749],[2768,2768],[2784,2785],[2790,2801],[2809,2809],[2821,2828],[2831,2832],[2835,2856],[2858,2864],[2866,2867],[2869,2873],[2877,2877],[2908,2909],[2911,2913],[2918,2935],[2947,2947],[2949,2954],[2958,2960],[2962,2965],[2969,2970],[2972,2972],[2974,2975],[2979,2980],[2984,2986],[2990,3001],[3024,3024],[3046,3066],[3077,3084],[3086,3088],[3090,3112],[3114,3129],[3133,3133],[3160,3162],[3164,3165],[3168,3169],[3174,3183],[3191,3200],[3204,3212],[3214,3216],[3218,3240],[3242,3251],[3253,3257],[3261,3261],[3292,3294],[3296,3297],[3302,3311],[3313,3314],[3332,3340],[3342,3344],[3346,3386],[3389,3389],[3406,3407],[3412,3414],[3416,3425],[3430,3455],[3461,3478],[3482,3505],[3507,3515],[3517,3517],[3520,3526],[3558,3567],[3572,3572],[3585,3632],[3634,3635],[3647,3654],[3663,3675],[3713,3714],[3716,3716],[3718,3722],[3724,3747],[3749,3749],[3751,3760],[3762,3763],[3773,3773],[3776,3780],[3782,3782],[3792,3801],[3804,3807],[3840,3863],[3866,3892],[3894,3894],[3896,3896],[3898,3901],[3904,3911],[3913,3948],[3973,3973],[3976,3980],[4030,4037],[4039,4044],[4046,4058],[4096,4138],[4159,4181],[4186,4189],[4193,4193],[4197,4198],[4206,4208],[4213,4225],[4238,4238],[4240,4249],[4254,4293],[4295,4295],[4301,4301],[4304,4680],[4682,4685],[4688,4694],[4696,4696],[4698,4701],[4704,4744],[4746,4749],[4752,4784],[4786,4789],[4792,4798],[4800,4800],[4802,4805],[4808,4822],[4824,4880],[4882,4885],[4888,4954],[4960,4988],[4992,5017],[5024,5109],[5112,5117],[5120,5759],[5761,5788],[5792,5880],[5888,5905],[5919,5937],[5941,5942],[5952,5969],[5984,5996],[5998,6000],[6016,6067],[6100,6108],[6112,6121],[6128,6137],[6144,6154],[6160,6169],[6176,6264],[6272,6276],[6279,6312],[6314,6314],[6320,6389],[6400,6430],[6464,6464],[6468,6509],[6512,6516],[6528,6571],[6576,6601],[6608,6618],[6622,6678],[6686,6740],[6784,6793],[6800,6809],[6816,6829],[6917,6963],[6981,6988],[6990,7018],[7028,7039],[7043,7072],[7086,7141],[7164,7203],[7227,7241],[7245,7306],[7312,7354],[7357,7367],[7379,7379],[7401,7404],[7406,7411],[7413,7414],[7418,7418],[7424,7615],[7680,7957],[7960,7965],[7968,8005],[8008,8013],[8016,8023],[8025,8025],[8027,8027],[8029,8029],[8031,8061],[8064,8116],[8118,8132],[8134,8147],[8150,8155],[8157,8175],[8178,8180],[8182,8190],[8208,8231],[8240,8286],[8304,8305],[8308,8334],[8336,8348],[8352,8385],[8448,8587],[8592,9257],[9280,9290],[9312,11123],[11126,11502],[11506,11507],[11513,11557],[11559,11559],[11565,11565],[11568,11623],[11631,11632],[11648,11670],[11680,11686],[11688,11694],[11696,11702],[11704,11710],[11712,11718],[11720,11726],[11728,11734],[11736,11742],[11776,11869],[11904,11929],[11931,12019],[12032,12245],[12272,12287],[12289,12329],[12336,12351],[12353,12438],[12443,12543],[12549,12591],[12593,12686],[12688,12773],[12783,12830],[12832,42124],[42128,42182],[42192,42539],[42560,42606],[42611,42611],[42622,42653],[42656,42735],[42738,42743],[42752,42972],[42993,43009],[43011,43013],[43015,43018],[43020,43042],[43048,43051],[43056,43065],[43072,43127],[43138,43187],[43214,43225],[43250,43262],[43264,43301],[43310,43334],[43359,43388],[43396,43442],[43457,43469],[43471,43481],[43486,43492],[43494,43518],[43520,43560],[43584,43586],[43588,43595],[43600,43609],[43612,43642],[43646,43695],[43697,43697],[43701,43702],[43705,43709],[43712,43712],[43714,43714],[43739,43754],[43760,43764],[43777,43782],[43785,43790],[43793,43798],[43808,43814],[43816,43822],[43824,43883],[43888,44002],[44011,44011],[44016,44025],[44032,55203],[55216,55238],[55243,55291],[63744,64109],[64112,64217],[64256,64262],[64275,64279],[64285,64285],[64287,64310],[64312,64316],[64318,64318],[64320,64321],[64323,64324],[64326,64975],[65008,65023],[65040,65049],[65072,65106],[65108,65126],[65128,65131],[65136,65140],[65142,65276],[65281,65470],[65474,65479],[65482,65487],[65490,65495],[65498,65500],[65504,65510],[65512,65518],[65532,65533],[65536,65547],[65549,65574],[65576,65594],[65596,65597],[65599,65613],[65616,65629],[65664,65786],[65792,65794],[65799,65843],[65847,65934],[65936,65948],[65952,65952],[66000,66044],[66176,66204],[66208,66256],[66273,66299],[66304,66339],[66349,66378],[66384,66421],[66432,66461],[66463,66499],[66504,66517],[66560,66717],[66720,66729],[66736,66771],[66776,66811],[66816,66855],[66864,66915],[66927,66938],[66940,66954],[66956,66962],[66964,66965],[66967,66977],[66979,66993],[66995,67001],[67003,67004],[67008,67059],[67072,67382],[67392,67413],[67424,67431],[67456,67461],[67463,67504],[67506,67514],[67584,67589],[67592,67592],[67594,67637],[67639,67640],[67644,67644],[67647,67669],[67671,67742],[67751,67759],[67808,67826],[67828,67829],[67835,67867],[67871,67897],[67903,67929],[67968,68023],[68028,68047],[68050,68096],[68112,68115],[68117,68119],[68121,68149],[68160,68168],[68176,68184],[68192,68255],[68288,68324],[68331,68342],[68352,68405],[68409,68437],[68440,68466],[68472,68497],[68505,68508],[68521,68527],[68608,68680],[68736,68786],[68800,68850],[68858,68899],[68912,68921],[68928,68965],[68974,68997],[69006,69007],[69216,69246],[69248,69289],[69293,69293],[69296,69297],[69314,69319],[69328,69336],[69376,69415],[69424,69445],[69457,69465],[69488,69505],[69510,69513],[69552,69579],[69600,69622],[69635,69687],[69703,69709],[69714,69743],[69745,69746],[69749,69749],[69763,69807],[69819,69820],[69822,69825],[69840,69864],[69872,69881],[69891,69926],[69942,69956],[69959,69959],[69968,70002],[70004,70006],[70019,70066],[70081,70088],[70093,70093],[70096,70111],[70113,70132],[70144,70161],[70163,70187],[70200,70205],[70207,70208],[70272,70278],[70280,70280],[70282,70285],[70287,70301],[70303,70313],[70320,70366],[70384,70393],[70405,70412],[70415,70416],[70419,70440],[70442,70448],[70450,70451],[70453,70457],[70461,70461],[70480,70480],[70493,70497],[70528,70537],[70539,70539],[70542,70542],[70544,70581],[70583,70583],[70609,70609],[70611,70613],[70615,70616],[70656,70708],[70727,70747],[70749,70749],[70751,70753],[70784,70831],[70852,70855],[70864,70873],[71040,71086],[71105,71131],[71168,71215],[71233,71236],[71248,71257],[71264,71276],[71296,71338],[71352,71353],[71360,71369],[71376,71395],[71424,71450],[71472,71494],[71680,71723],[71739,71739],[71840,71922],[71935,71942],[71945,71945],[71948,71955],[71957,71958],[71960,71983],[71999,71999],[72001,72001],[72004,72006],[72016,72025],[72096,72103],[72106,72144],[72161,72163],[72192,72192],[72203,72242],[72250,72250],[72255,72262],[72272,72272],[72284,72329],[72346,72354],[72368,72440],[72448,72457],[72640,72673],[72688,72697],[72704,72712],[72714,72750],[72768,72773],[72784,72812],[72816,72847],[72960,72966],[72968,72969],[72971,73008],[73030,73030],[73040,73049],[73056,73061],[73063,73064],[73066,73097],[73112,73112],[73120,73129],[73136,73179],[73184,73193],[73440,73458],[73463,73464],[73474,73474],[73476,73488],[73490,73523],[73539,73561],[73648,73648],[73664,73713],[73727,74649],[74752,74862],[74864,74868],[74880,75075],[77712,77810],[77824,78895],[78913,78918],[78944,82938],[82944,83526],[90368,90397],[90416,90425],[92160,92728],[92736,92766],[92768,92777],[92782,92862],[92864,92873],[92880,92909],[92917,92917],[92928,92975],[92983,92997],[93008,93017],[93019,93025],[93027,93047],[93053,93071],[93504,93561],[93760,93850],[93856,93880],[93883,93907],[93952,94026],[94032,94032],[94099,94111],[94176,94179],[94194,94198],[94208,101589],[101631,101662],[101760,101874],[110576,110579],[110581,110587],[110589,110590],[110592,110882],[110898,110898],[110928,110930],[110933,110933],[110948,110951],[110960,111355],[113664,113770],[113776,113788],[113792,113800],[113808,113817],[113820,113820],[113823,113823],[117760,118012],[118016,118451],[118458,118480],[118496,118512],[118608,118723],[118784,119029],[119040,119078],[119081,119140],[119146,119148],[119171,119172],[119180,119209],[119214,119274],[119296,119361],[119365,119365],[119488,119507],[119520,119539],[119552,119638],[119648,119672],[119808,119892],[119894,119964],[119966,119967],[119970,119970],[119973,119974],[119977,119980],[119982,119993],[119995,119995],[119997,120003],[120005,120069],[120071,120074],[120077,120084],[120086,120092],[120094,120121],[120123,120126],[120128,120132],[120134,120134],[120138,120144],[120146,120485],[120488,120779],[120782,121343],[121399,121402],[121453,121460],[121462,121475],[121477,121483],[122624,122654],[122661,122666],[122928,122989],[123136,123180],[123191,123197],[123200,123209],[123214,123215],[123536,123565],[123584,123627],[123632,123641],[123647,123647],[124112,124139],[124144,124153],[124368,124397],[124400,124410],[124415,124415],[124608,124638],[124640,124642],[124644,124645],[124647,124653],[124656,124660],[124670,124671],[124896,124902],[124904,124907],[124909,124910],[124912,124926],[124928,125124],[125127,125135],[125184,125251],[125259,125259],[125264,125273],[125278,125279],[126065,126132],[126209,126269],[126464,126467],[126469,126495],[126497,126498],[126500,126500],[126503,126503],[126505,126514],[126516,126519],[126521,126521],[126523,126523],[126530,126530],[126535,126535],[126537,126537],[126539,126539],[126541,126543],[126545,126546],[126548,126548],[126551,126551],[126553,126553],[126555,126555],[126557,126557],[126559,126559],[126561,126562],[126564,126564],[126567,126570],[126572,126578],[126580,126583],[126585,126588],[126590,126590],[126592,126601],[126603,126619],[126625,126627],[126629,126633],[126635,126651],[126704,126705],[126976,127019],[127024,127123],[127136,127150],[127153,127167],[127169,127183],[127185,127221],[127232,127405],[127462,127490],[127504,127547],[127552,127560],[127568,127569],[127584,127589],[127744,128728],[128732,128748],[128752,128764],[128768,128985],[128992,129003],[129008,129008],[129024,129035],[129040,129095],[129104,129113],[129120,129159],[129168,129197],[129200,129211],[129216,129217],[129232,129240],[129280,129623],[129632,129645],[129648,129660],[129664,129674],[129678,129734],[129736,129736],[129741,129756],[129759,129770],[129775,129784],[129792,129938],[129940,130042],[131072,173791],[173824,178205],[178208,183981],[183984,191456],[191472,192093],[194560,195101],[196608,201546],[201552,210041]],"marks":[[768,879],[1155,1161],[1425,1469],[1471,1471],[1473,1474],[1476,1477],[1479,1479],[1552,1562],[1611,1631],[1648,1648],[1750,1756],[1759,1764],[1767,1768],[1770,1773],[1809,1809],[1840,1866],[1958,1968],[2027,2035],[2045,2045],[2070,2073],[2075,2083],[2085,2087],[2089,2093],[2137,2139],[2199,2207],[2250,2273],[2275,2307],[2362,2364],[2366,2383],[2385,2391],[2402,2403],[2433,2435],[2492,2492],[2494,2500],[2503,2504],[2507,2509],[2519,2519],[2530,2531],[2558,2558],[2561,2563],[2620,2620],[2622,2626],[2631,2632],[2635,2637],[2641,2641],[2672,2673],[2677,2677],[2689,2691],[2748,2748],[2750,2757],[2759,2761],[2763,2765],[2786,2787],[2810,2815],[2817,2819],[2876,2876],[2878,2884],[2887,2888],[2891,2893],[2901,2903],[2914,2915],[2946,2946],[3006,3010],[3014,3016],[3018,3021],[3031,3031],[3072,3076],[3132,3132],[3134,3140],[3142,3144],[3146,3149],[3157,3158],[3170,3171],[3201,3203],[3260,3260],[3262,3268],[3270,3272],[3274,3277],[3285,3286],[3298,3299],[3315,3315],[3328,3331],[3387,3388],[3390,3396],[3398,3400],[3402,3405],[3415,3415],[3426,3427],[3457,3459],[3530,3530],[3535,3540],[3542,3542],[3544,3551],[3570,3571],[3633,3633],[3636,3642],[3655,3662],[3761,3761],[3764,3772],[3784,3790],[3864,3865],[3893,3893],[3895,3895],[3897,3897],[3902,3903],[3953,3972],[3974,3975],[3981,3991],[3993,4028],[4038,4038],[4139,4158],[4182,4185],[4190,4192],[4194,4196],[4199,4205],[4209,4212],[4226,4237],[4239,4239],[4250,4253],[4957,4959],[5906,5909],[5938,5940],[5970,5971],[6002,6003],[6068,6099],[6109,6109],[6155,6157],[6159,6159],[6277,6278],[6313,6313],[6432,6443],[6448,6459],[6679,6683],[6741,6750],[6752,6780],[6783,6783],[6832,6877],[6880,6891],[6912,6916],[6964,6980],[7019,7027],[7040,7042],[7073,7085],[7142,7155],[7204,7223],[7376,7378],[7380,7400],[7405,7405],[7412,7412],[7415,7417],[7616,7679],[8400,8432],[11503,11505],[11647,11647],[11744,11775],[12330,12335],[12441,12442],[42607,42610],[42612,42621],[42654,42655],[42736,42737],[43010,43010],[43014,43014],[43019,43019],[43043,43047],[43052,43052],[43136,43137],[43188,43205],[43232,43249],[43263,43263],[43302,43309],[43335,43347],[43392,43395],[43443,43456],[43493,43493],[43561,43574],[43587,43587],[43596,43597],[43643,43645],[43696,43696],[43698,43700],[43703,43704],[43710,43711],[43713,43713],[43755,43759],[43765,43766],[44003,44010],[44012,44013],[64286,64286],[65024,65039],[65056,65071],[66045,66045],[66272,66272],[66422,66426],[68097,68099],[68101,68102],[68108,68111],[68152,68154],[68159,68159],[68325,68326],[68900,68903],[68969,68973],[69291,69292],[69370,69375],[69446,69456],[69506,69509],[69632,69634],[69688,69702],[69744,69744],[69747,69748],[69759,69762],[69808,69818],[69826,69826],[69888,69890],[69927,69940],[69957,69958],[70003,70003],[70016,70018],[70067,70080],[70089,70092],[70094,70095],[70188,70199],[70206,70206],[70209,70209],[70367,70378],[70400,70403],[70459,70460],[70462,70468],[70471,70472],[70475,70477],[70487,70487],[70498,70499],[70502,70508],[70512,70516],[70584,70592],[70594,70594],[70597,70597],[70599,70602],[70604,70608],[70610,70610],[70625,70626],[70709,70726],[70750,70750],[70832,70851],[71087,71093],[71096,71104],[71132,71133],[71216,71232],[71339,71351],[71453,71467],[71724,71738],[71984,71989],[71991,71992],[71995,71998],[72000,72000],[72002,72003],[72145,72151],[72154,72160],[72164,72164],[72193,72202],[72243,72249],[72251,72254],[72263,72263],[72273,72283],[72330,72345],[72544,72551],[72751,72758],[72760,72767],[72850,72871],[72873,72886],[73009,73014],[73018,73018],[73020,73021],[73023,73029],[73031,73031],[73098,73102],[73104,73105],[73107,73111],[73459,73462],[73472,73473],[73475,73475],[73524,73530],[73534,73538],[73562,73562],[78912,78912],[78919,78933],[90398,90415],[92912,92916],[92976,92982],[94031,94031],[94033,94087],[94095,94098],[94180,94180],[94192,94193],[113821,113822],[118528,118573],[118576,118598],[119141,119145],[119149,119154],[119163,119170],[119173,119179],[119210,119213],[119362,119364],[121344,121398],[121403,121452],[121461,121461],[121476,121476],[121499,121503],[121505,121519],[122880,122886],[122888,122904],[122907,122913],[122915,122916],[122918,122922],[123023,123023],[123184,123190],[123566,123566],[123628,123631],[124140,124143],[124398,124399],[124643,124643],[124646,124646],[124654,124655],[124661,124661],[125136,125142],[125252,125258],[917760,917999]]},"links":["[<>{}\\\\`@]","(^|[^a-z0-9+.-])[a-z][a-z0-9+.-]*:\\S","//","www\\.","[a-z0-9-]\\.[a-z]{2,63}($|[^a-z])","10\\.[0-9]{4,9}/"],"confusables":{"Ø":"o","ø":"o","Đ":"d","đ":"d","Ħ":"h","ħ":"h","ı":"i","Ł":"l","ł":"l","Ŧ":"t","ŧ":"t","ɑ":"a","ɗ":"d","ɡ":"g","ɪ":"i","ʟ":"l","Α":"a","Β":"b","Ε":"e","Ζ":"z","Η":"h","Ι":"i","Κ":"k","Μ":"m","Ν":"n","Ο":"o","Ρ":"p","Τ":"t","Υ":"y","Χ":"x","α":"a","β":"b","γ":"y","ε":"e","ζ":"z","ι":"i","κ":"k","ν":"v","ο":"o","ρ":"p","τ":"t","υ":"y","χ":"x","ω":"w","Ѕ":"s","І":"i","Ј":"j","А":"a","В":"b","Е":"e","К":"k","М":"m","Н":"h","О":"o","Р":"p","С":"c","Т":"t","У":"y","Х":"x","а":"a","в":"b","е":"e","к":"k","м":"m","н":"h","о":"o","р":"p","с":"c","т":"t","у":"y","х":"x","ѕ":"s","і":"i","ј":"j","Ү":"y","ү":"y","Һ":"h","һ":"h","Ӏ":"l","ӏ":"l","ԁ":"d","ԛ":"q","ԝ":"w","ս":"u","օ":"o","ᴅ":"d","ꜱ":"s"},"leet":{"0":"o","3":"e","4":"a","5":"s","7":"t","8":"b","9":"g","$":"s","!":"i","|":"l"},"leetOne":["i","l"],"deny":["accreditation","accredited","approved","certified","citation","citations","cited","claim","claimed","claims","clinically","cure","cured","cures","curing","diagnose","diagnosed","diagnoses","diagnosing","diagnosis","doctor","doctors","doi","dr","endorsed","evidence","evidenced","heal","healed","healing","heals","licensed","official","officially","pmid","prevent","prevented","preventing","prevention","prevents","proven","rehab","rehabilitation","research","researched","researcher","researchers","reviewed","science","sciences","scientific","scientifically","scientist","scientists","source","sourced","sources","spindle","studies","study","treat","treated","treating","treatment","treatments","treats","verified"],"denyPhrases":[["peer","reviewed"],["practice","based"],["stop","and","refer"],["base","curriculum"],["physical","therapist"],["physical","therapists"],["physical","therapy"],["et","al"]]}$rules$
+-- tenant-text-rules:end
+)::jsonb as r) s;
+
+/**
+ * LEAD-recorded exceptions: one gym may use this exact text (as admission normalizes it) in this
+ * slot although it holds a reserved word, for example a gym called "Sports Science Lab". Never a
+ * general allowlist; the character and link rules still apply.
+ */
+create table private.tenant_text_overrides (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.orgs (id) on delete cascade,
+  slot text not null,
+  text text not null,
+  reason text not null check (char_length(reason) between 1 and 500),
+  rules_version text not null references private.tenant_text_rules (version),
+  recorded_by uuid not null,
+  recorded_at timestamptz not null default clock_timestamp(),
+  unique (org_id, slot, text)
+);
+alter table private.tenant_text_rules enable row level security;
+alter table private.tenant_text_overrides enable row level security;
+
+/** The rule set in force. */
+create function private.tt_rules()
+returns jsonb
+language sql stable security definer set search_path = ''
+as $$
+  select rules from private.tenant_text_rules order by created_at desc, version desc limit 1
+$$;
+
+/** A regular-expression bracket for a list of [first, last] code point ranges. */
+create function private.tt_class(p_ranges jsonb)
+returns text
+language sql immutable set search_path = ''
+as $$
+  select '[' || string_agg(case when (r ->> 0) = (r ->> 1) then '\U' || lpad(to_hex((r ->> 0)::integer), 8, '0')
+      else '\U' || lpad(to_hex((r ->> 0)::integer), 8, '0') || '-\U' || lpad(to_hex((r ->> 1)::integer), 8, '0') end, '' order by o) || ']'
+  from jsonb_array_elements(p_ranges) with ordinality as t (r, o)
+$$;
+
+create function private.tt_ascii_lower(p_text text)
+returns text
+language sql immutable set search_path = ''
+as $$ select translate(p_text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') $$;
+
+/** NFC, then the edges String.prototype.trim removes (the #34 core trims the same way). */
+create function private.tt_normalize(p_text text, p_rules jsonb)
+returns text
+language sql immutable set search_path = ''
+as $$
+  select regexp_replace(normalize(p_text, nfc),
+    '^' || private.tt_class(p_rules -> 'chars' -> 'trim') || '+|' || private.tt_class(p_rules -> 'chars' -> 'trim') || '+$', '', 'g')
+$$;
+
+/** The copy the reserved-word rules read: NFKC, blanks dropped, camelCase split, ASCII lowercase, marks dropped, confusables mapped. */
+create function private.tt_fold(p_text text, p_rules jsonb)
+returns text
+language sql immutable set search_path = ''
+as $$
+  select translate(
+    regexp_replace(normalize(private.tt_ascii_lower(regexp_replace(
+        regexp_replace(normalize(p_text, nfkc), private.tt_class(p_rules -> 'chars' -> 'blank'), '', 'g'),
+        '([a-z])([A-Z])', '\1 \2', 'g')), nfkd),
+      private.tt_class(p_rules -> 'chars' -> 'marks'), '', 'g'),
+    (select coalesce(string_agg(key, '' order by key), '') from jsonb_each_text(p_rules -> 'confusables')),
+    (select coalesce(string_agg(value, '' order by key), '') from jsonb_each_text(p_rules -> 'confusables')))
+$$;
+
+/** Joins runs of two or more single-letter tokens ("s c i e n c e" reads as "science"). */
+create function private.tt_join_singles(p_tokens text[])
+returns text[]
+language plpgsql immutable set search_path = ''
+as $$
+declare
+  out_tokens text[] := '{}';
+  run text := '';
+  n integer := coalesce(cardinality(p_tokens), 0);
+  single boolean;
+begin
+  for i in 1 .. n loop
+    single := p_tokens[i] ~ '^[a-z]$';
+    if single and ((i < n and p_tokens[i + 1] ~ '^[a-z]$') or (i > 1 and p_tokens[i - 1] ~ '^[a-z]$')) then
+      run := run || p_tokens[i];
+    else
+      if run <> '' then out_tokens := out_tokens || run; run := ''; end if;
+      out_tokens := out_tokens || p_tokens[i];
+    end if;
+  end loop;
+  if run <> '' then out_tokens := out_tokens || run; end if;
+  return out_tokens;
+end;
+$$;
+
+/**
+ * The token readings of a folded text: plain (symbols separate words), then leet with each
+ * reading of "1". A chunk is mapped when it holds a letter or is one character long, so years
+ * and percentages stay numbers.
+ */
+create function private.tt_readings(p_folded text, p_rules jsonb)
+returns setof text[]
+language plpgsql immutable set search_path = ''
+as $$
+declare
+  chunks text[] := array(select m[1] from regexp_matches(p_folded, '([a-z0-9$!|]+)', 'g') as m);
+  leet_from text := (select coalesce(string_agg(key, '' order by key), '') from jsonb_each_text(p_rules -> 'leet'));
+  leet_to text := (select coalesce(string_agg(value, '' order by key), '') from jsonb_each_text(p_rules -> 'leet'));
+  one text;
+begin
+  return next private.tt_join_singles(coalesce((
+    select array_agg(x.m[1] order by c.o, x.o2)
+    from unnest(chunks) with ordinality as c (ch, o),
+         lateral regexp_matches(c.ch, '([a-z0-9]+)', 'g') with ordinality as x (m, o2)), '{}'));
+  for one in select jsonb_array_elements_text(p_rules -> 'leetOne') loop
+    return next private.tt_join_singles(coalesce((
+      select array_agg(x.m[1] order by c.o, x.o2)
+      from unnest(chunks) with ordinality as c (ch, o),
+           lateral regexp_matches(
+             case when c.ch !~ '[a-z]' and char_length(c.ch) > 1 then c.ch else translate(c.ch, '1' || leet_from, one || leet_to) end,
+             '([a-z0-9]+)', 'g') with ordinality as x (m, o2)), '{}'));
+  end loop;
+end;
+$$;
+
+/** The first reserved word or phrase in a text, or null. */
+create function private.tt_reserved(p_text text, p_rules jsonb)
+returns text
+language plpgsql immutable set search_path = ''
+as $$
+declare
+  tokens text[];
+  deny text[] := array(select jsonb_array_elements_text(p_rules -> 'deny'));
+  phrase text[];
+  k integer;
+begin
+  for tokens in select private.tt_readings(private.tt_fold(p_text, p_rules), p_rules) loop
+    for i in 1 .. coalesce(cardinality(tokens), 0) loop
+      if tokens[i] = any (deny) then return tokens[i]; end if;
+      for phrase in select array(select jsonb_array_elements_text(p)) from jsonb_array_elements(p_rules -> 'denyPhrases') as p loop
+        k := cardinality(phrase);
+        if tokens[i : i + k - 1] = phrase then return array_to_string(phrase, ' '); end if;
+      end loop;
+    end loop;
+  end loop;
+  return null;
+end;
+$$;
+
+/**
+ * Admits one tenant text for one slot, under the rule set in force, for one gym (whose LEAD
+ * overrides apply). Returns {ok, text, version, overridden} or {ok: false, reason, detail,
+ * version}. Mirrored by admitTenantText in @spindle/engine; the steps are listed there.
+ */
+create function private.admit_tenant_text(p_org uuid, p_slot text, p_text text)
+returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  r jsonb := private.tt_rules();
+  v text := r ->> 'version';
+  bounds jsonb := r -> 'slots' -> p_slot;
+  t text;
+  n integer;
+  lc text;
+  link text;
+  term text;
+  overridden boolean;
+begin
+  if bounds is null then
+    return jsonb_build_object('ok', false, 'reason', 'unknown-slot', 'detail', coalesce(p_slot, ''), 'version', v);
+  end if;
+  if p_text is null then
+    return jsonb_build_object('ok', false, 'reason', 'required', 'detail', 'text is required', 'version', v);
+  end if;
+  t := private.tt_normalize(p_text, r);
+  if t ~ private.tt_class(r -> 'chars' -> 'refuse') then
+    return jsonb_build_object('ok', false, 'reason', 'control', 'detail', 'must not contain control, format or invisible characters', 'version', v);
+  end if;
+  n := char_length(t);
+  if n < (bounds ->> 0)::integer or n > (bounds ->> 1)::integer then
+    return jsonb_build_object('ok', false, 'reason', 'length',
+      'detail', format('must be %s to %s characters', bounds ->> 0, bounds ->> 1), 'version', v);
+  end if;
+  if n = 0 then return jsonb_build_object('ok', true, 'text', t, 'version', v, 'overridden', false); end if;
+  if regexp_replace(t, private.tt_class(r -> 'chars' -> 'blank'), '', 'g') !~ private.tt_class(r -> 'chars' -> 'visible') then
+    return jsonb_build_object('ok', false, 'reason', 'blank', 'detail', 'must contain visible text', 'version', v);
+  end if;
+  lc := private.tt_ascii_lower(regexp_replace(normalize(t, nfkc), private.tt_class(r -> 'chars' -> 'blank'), '', 'g'));
+  for link in select jsonb_array_elements_text(r -> 'links') loop
+    if lc ~ link then
+      return jsonb_build_object('ok', false, 'reason', 'link', 'detail', 'must be plain text, without links, addresses or markup', 'version', v);
+    end if;
+  end loop;
+  overridden := exists (select 1 from private.tenant_text_overrides o where o.org_id = p_org and o.slot = p_slot and o.text = t);
+  if not overridden then
+    term := private.tt_reserved(t, r);
+    if term is not null then
+      return jsonb_build_object('ok', false, 'reason', 'denied', 'detail', term, 'version', v);
+    end if;
+  end if;
+  return jsonb_build_object('ok', true, 'text', t, 'version', v, 'overridden', overridden);
+end;
+$$;
+
+/** Raises 22023 unless the text is admitted; returns the text to store. */
+create function private.require_tenant_text(p_org uuid, p_slot text, p_text text, p_path text)
+returns text
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  a jsonb := private.admit_tenant_text(p_org, p_slot, p_text);
+begin
+  if not (a ->> 'ok')::boolean then
+    raise exception 'invalid %: % (%)', p_path, a ->> 'detail', a ->> 'reason' using errcode = '22023';
+  end if;
+  return a ->> 'text';
+end;
+$$;
+
+/**
+ * LEAD records an override for one exact text in one gym and slot. Only a text whose sole
+ * problem is a reserved word can be overridden.
+ */
+create function public.publisher_record_text_override(p_publisher uuid, p_override jsonb)
+returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  org uuid;
+  slot text;
+  a jsonb;
+  oid uuid;
+begin
+  perform private.require_publisher(p_publisher);
+  perform private.jobject(p_override, 'override', array['orgId', 'slot', 'text', 'reason'], array['orgId', 'slot', 'text', 'reason']);
+  org := private.juuid(p_override -> 'orgId', 'override.orgId');
+  if not exists (select 1 from public.orgs where id = org) then raise exception 'no such org' using errcode = 'P0002'; end if;
+  slot := private.jstr(p_override -> 'slot', 'override.slot', 1, 40);
+  a := private.admit_tenant_text(org, slot, private.jstr(p_override -> 'text', 'override.text', 1, 400));
+  if (a ->> 'ok')::boolean then
+    raise exception 'invalid override.text: it is admitted without an override' using errcode = '22023';
+  end if;
+  if a ->> 'reason' <> 'denied' then
+    raise exception 'invalid override.text: % (%); only a reserved word can be overridden', a ->> 'detail', a ->> 'reason' using errcode = '22023';
+  end if;
+  insert into private.tenant_text_overrides (org_id, slot, text, reason, rules_version, recorded_by)
+  values (org, slot, private.tt_normalize(p_override ->> 'text', private.tt_rules()),
+    private.jstr(p_override -> 'reason', 'override.reason', 1, 500), a ->> 'version', p_publisher)
+  returning id into oid;
+  perform private.audit(p_publisher, 'record_text_override', org, oid, jsonb_build_object('slot', slot, 'term', a ->> 'detail'));
+  return oid;
+end;
+$$;
+
+/** Editor feedback for signed-in authors: the same answer the save will give. */
+create function public.check_tenant_text(p_org uuid, p_slot text, p_text text)
+returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  perform private.require_author(p_org);
+  return private.admit_tenant_text(p_org, p_slot, p_text);
+end;
+$$;
+
+-- Course presentation: pattern cover and modality tags -------------------------------------
+
+/** The modality taxonomy (spec 2.4). "youth" is youth coaching education, never youth participation. */
+create function private.modality_tags()
+returns text[]
+language sql immutable set search_path = ''
+as $$ select array['strength', 'powerlifting', 'weightlifting', 'hypertrophy', 'speed', 'mobility', 'yoga', 'pilates',
+  'running', 'endurance', 'combat', 'team-sport', 'youth'] $$;
+
+/** A Spindle-drawn cover: a pattern and two literal colours. No tenant images in P4-A2. */
+create function private.cover_ok(p_cover jsonb)
+returns boolean
+language sql immutable set search_path = ''
+as $$
+  select jsonb_typeof(p_cover) = 'object'
+    and (select array_agg(k order by k) from jsonb_object_keys(p_cover) k) = array['background', 'foreground', 'kind', 'pattern']
+    and p_cover ->> 'kind' = 'pattern'
+    and p_cover ->> 'pattern' in ('solid', 'diagonal', 'grid', 'dots', 'rings', 'waves')
+    and jsonb_typeof(p_cover -> 'background') = 'string' and p_cover ->> 'background' ~ '^#[0-9a-f]{6}$'
+    and jsonb_typeof(p_cover -> 'foreground') = 'string' and p_cover ->> 'foreground' ~ '^#[0-9a-f]{6}$'
+$$;
+
+create function private.tags_ok(p_tags text[])
+returns boolean
+language sql immutable set search_path = ''
+as $$
+  select p_tags is not null and cardinality(p_tags) <= 2 and p_tags <@ private.modality_tags()
+    and cardinality(p_tags) = (select count(distinct t) from unnest(p_tags) t)
+$$;
+
+alter table public.courses
+  add column cover jsonb check (cover is null or (layer = 'method' and private.cover_ok(cover))),
+  add column tags text[] not null default '{}' check (private.tags_ok(tags));
+
+/** Validates the optional cover and tags of a course document; returns {cover, tags} normalized. */
+create function private.validate_presentation(p_course jsonb, p_layer text)
+returns jsonb
+language plpgsql immutable set search_path = ''
+as $$
+declare
+  cover jsonb;
+  tags text[] := '{}';
+  k text;
+begin
+  if p_course ? 'cover' then
+    if p_layer <> 'method' then
+      perform private.jfail('course.cover', 'only gym method courses take a cover; base and modality courses use the Spindle cover');
+    end if;
+    perform private.jobject(p_course -> 'cover', 'course.cover', array['kind', 'pattern', 'background', 'foreground'],
+      array['kind', 'pattern', 'background', 'foreground']);
+    perform private.jenum(p_course -> 'cover' -> 'kind', 'course.cover.kind', array['pattern']);
+    perform private.jenum(p_course -> 'cover' -> 'pattern', 'course.cover.pattern', array['solid', 'diagonal', 'grid', 'dots', 'rings', 'waves']);
+    foreach k in array array['background', 'foreground'] loop
+      if jsonb_typeof(p_course -> 'cover' -> k) is distinct from 'string' or p_course -> 'cover' ->> k !~ '^#[0-9a-fA-F]{6}$' then
+        perform private.jfail('course.cover.' || k, 'must be a #RRGGBB colour');
+      end if;
+    end loop;
+    cover := jsonb_build_object('kind', 'pattern', 'pattern', p_course -> 'cover' ->> 'pattern',
+      'background', lower(p_course -> 'cover' ->> 'background'), 'foreground', lower(p_course -> 'cover' ->> 'foreground'));
+  end if;
+  if p_course ? 'tags' then
+    tags := array(select x #>> '{}' from jsonb_array_elements(private.jstrs(p_course -> 'tags', 'course.tags', 0, 2, 40)) x);
+    for i in 1 .. cardinality(tags) loop
+      perform private.jenum(to_jsonb(tags[i]), format('course.tags[%s]', i - 1), private.modality_tags());
+    end loop;
+    if cardinality(tags) <> (select count(distinct t) from unnest(tags) t) then
+      perform private.jfail('course.tags', 'has a duplicate tag');
+    end if;
+  end if;
+  return jsonb_build_object('cover', cover, 'tags', to_jsonb(tags));
+end;
+$$;
+
+-- Member-visible tenant text: pending until LEAD admits it (spec revision 4) -----------------
+
+/**
+ * Which tenant texts are held for admission, and where each lives. The brand name is the one
+ * member-visible tenant text that is not held (it is admitted at save only).
+ *   org scope:    catalog_headline, catalog_tagline, coach_name, coach_role
+ *   course scope: welcome, course_blurb (gym method courses only)
+ */
+create function private.held_slot_scope(p_slot text)
+returns text
+language sql immutable set search_path = ''
+as $$
+  select case when p_slot in ('catalog_headline', 'catalog_tagline', 'coach_name', 'coach_role') then 'org'
+              when p_slot in ('welcome', 'course_blurb') then 'course' end
+$$;
+
+/**
+ * Every saved value of a held slot, append-only. The newest row for (org, slot, course) is the
+ * slot's value; a row with no text clears it. Any save is a new row, so an edit always resets the
+ * slot to pending. display_name is frozen at save for course texts (the gym's admitted coach name,
+ * else the gym name). Members never read this table.
+ */
+create table private.tenant_texts (
+  id uuid primary key default gen_random_uuid(),
+  seq bigint generated always as identity unique,
+  org_id uuid not null references public.orgs (id) on delete cascade,
+  slot text not null check (private.held_slot_scope(slot) is not null),
+  course_id uuid references public.courses (id) on delete cascade,
+  text text,
+  text_hash text check (text_hash ~ '^[0-9a-f]{64}$'),
+  rules_version text references private.tenant_text_rules (version),
+  author_user_id uuid not null,
+  display_name text check (char_length(display_name) between 1 and 60),
+  saved_at timestamptz not null default clock_timestamp(),
+  check ((course_id is not null) = (private.held_slot_scope(slot) = 'course')),
+  check ((text is null) = (text_hash is null) and (text is null) = (rules_version is null)),
+  check ((display_name is not null) = (course_id is not null))
+);
+create index tenant_texts_slot_idx on private.tenant_texts (org_id, slot, course_id, seq desc);
+
+/**
+ * LEAD's admission receipt for one saved value. It repeats the org, slot, course and text hash it
+ * admits, and the insert trigger checks them against the saved row, so a receipt cannot be moved
+ * to another gym, slot or text. One decision per saved value.
+ */
+create table private.tenant_text_admissions (
+  text_id uuid primary key references private.tenant_texts (id) on delete cascade,
+  org_id uuid not null references public.orgs (id) on delete cascade,
+  slot text not null,
+  course_id uuid,
+  text_hash text not null,
+  decision text not null check (decision in ('admitted', 'rejected')),
+  reason text not null check (char_length(reason) between 1 and 500),
+  rules_version text not null references private.tenant_text_rules (version),
+  decided_by uuid not null,
+  decided_at timestamptz not null default clock_timestamp()
+);
+
+create function private.guard_tenant_text_admission()
+returns trigger
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  if not exists (select 1 from private.tenant_texts t where t.id = new.text_id and t.org_id = new.org_id and t.slot = new.slot
+                 and t.course_id is not distinct from new.course_id and t.text_hash = new.text_hash) then
+    raise exception 'an admission must name the org, slot, course and text hash of the text it admits' using errcode = 'P0001';
+  end if;
+  if not exists (select 1 from private.content_publishers p where p.user_id = new.decided_by) then
+    raise exception 'only a content publisher decides tenant text' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+create trigger tenant_text_admissions_bound before insert on private.tenant_text_admissions
+  for each row execute function private.guard_tenant_text_admission();
+
+alter table private.tenant_texts enable row level security;
+alter table private.tenant_text_admissions enable row level security;
+create trigger tenant_texts_immutable before update or delete on private.tenant_texts
+  for each row execute function private.guard_immutable();
+create trigger tenant_text_admissions_immutable before update on private.tenant_text_admissions
+  for each row execute function private.guard_immutable();
+create trigger tenant_texts_no_truncate before truncate on private.tenant_texts
+  for each statement execute function private.guard_truncate();
+create trigger tenant_text_admissions_no_truncate before truncate on private.tenant_text_admissions
+  for each statement execute function private.guard_truncate();
+
+/** The newest saved value of a held slot. */
+create function private.latest_tenant_text(p_org uuid, p_slot text, p_course uuid)
+returns private.tenant_texts
+language sql stable security definer set search_path = ''
+as $$
+  select * from private.tenant_texts
+  where org_id = p_org and slot = p_slot and course_id is not distinct from p_course
+  order by seq desc limit 1
+$$;
+
+/** pending | admitted | rejected | cleared, for one saved value. */
+create function private.tenant_text_status(p_text uuid)
+returns text
+language sql stable security definer set search_path = ''
+as $$
+  select case when t.text is null then 'cleared' else coalesce(a.decision, 'pending') end
+  from private.tenant_texts t
+  left join private.tenant_text_admissions a
+    on a.text_id = t.id and a.org_id = t.org_id and a.slot = t.slot and a.course_id is not distinct from t.course_id
+       and a.text_hash = t.text_hash
+  where t.id = p_text
+$$;
+
+/** The value members and published versions may show: the newest value, only once admitted. */
+create function private.admitted_tenant_text(p_org uuid, p_slot text, p_course uuid)
+returns table (text text, author_user_id uuid, display_name text, org_id uuid, saved_at timestamptz)
+language sql stable security definer set search_path = ''
+as $$
+  select t.text, t.author_user_id, t.display_name, t.org_id, t.saved_at
+  from private.latest_tenant_text(p_org, p_slot, p_course) t
+  where t.id is not null and private.tenant_text_status(t.id) = 'admitted'
+$$;
+
+/**
+ * Saves a held tenant text (owner or lead; P4-03 narrows this through private.require_author).
+ * Text admission runs first as a filter; nothing is stored on a refusal. The saved value is
+ * pending: members see it only after LEAD admits it (and, for course texts, in a version
+ * published after that). A null text clears the slot.
+ */
+create function public.save_tenant_text(p_org uuid, p_slot text, p_course uuid, p_text text)
+returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  uid uuid;
+  scope text := private.held_slot_scope(p_slot);
+  c public.courses%rowtype;
+  t text;
+  display text;
+  tid uuid;
+begin
+  if (select auth.uid()) is null then raise exception 'not signed in' using errcode = '28000'; end if;
+  uid := private.require_author(p_org);
+  if scope is null then raise exception 'invalid slot: % is not a held tenant text', p_slot using errcode = '22023'; end if;
+  if scope = 'org' and p_course is not null then
+    raise exception 'invalid slot: % belongs to the gym, not a course', p_slot using errcode = '22023';
+  end if;
+  if scope = 'course' then
+    select * into c from public.courses where id = p_course and org_id = p_org for update;
+    if not found then raise exception 'no such course in this gym' using errcode = 'P0002'; end if;
+    -- Frozen identity: the gym's admitted coach name, else the gym name.
+    display := coalesce((select a.text from private.admitted_tenant_text(p_org, 'coach_name', null) a),
+      (select o.name from public.orgs o where o.id = p_org));
+  else
+    perform 1 from public.orgs where id = p_org for update;
+  end if;
+  if p_text is not null then
+    t := private.require_tenant_text(p_org, p_slot, p_text, p_slot);
+    if display is not null then
+      display := private.require_tenant_text(p_org, 'coach_name', display, p_slot || ' display name');
+    end if;
+  elsif display is not null then
+    display := left(display, 60);
+  end if;
+  insert into private.tenant_texts (org_id, slot, course_id, text, text_hash, rules_version, author_user_id, display_name)
+  values (p_org, p_slot, p_course, t, case when t is null then null else private.sha256(to_jsonb(t)) end,
+    case when t is null then null else private.tt_rules() ->> 'version' end, uid, display)
+  returning id into tid;
+  perform private.audit(uid, 'save_tenant_text', p_org, tid,
+    jsonb_build_object('slot', p_slot, 'courseId', p_course, 'status', private.tenant_text_status(tid)));
+  return tid;
+end;
+$$;
+
+/** A held slot's newest value and decision, for its authors (owner or lead). */
+create function public.tenant_text_status(p_org uuid, p_slot text, p_course uuid)
+returns table (text_id uuid, status text, text text, text_hash text, display_name text, saved_at timestamptz, reason text)
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  perform private.require_author(p_org);
+  return query
+    select t.id, private.tenant_text_status(t.id), t.text, t.text_hash, t.display_name, t.saved_at, a.reason
+    from private.latest_tenant_text(p_org, p_slot, p_course) t
+    left join private.tenant_text_admissions a on a.text_id = t.id
+    where t.id is not null;
+end;
+$$;
+
+/** The admitted gym texts a member may see (headline, tagline, coach name and role). No pending text. */
+create function public.member_tenant_texts(p_org uuid)
+returns table (slot text, text text)
+language plpgsql stable security definer set search_path = ''
+as $$
+begin
+  if (select auth.uid()) is null then raise exception 'not signed in' using errcode = '28000'; end if;
+  if not private.is_member(p_org) then raise exception 'not a member of this gym' using errcode = '42501'; end if;
+  return query
+    select s.slot, a.text
+    from unnest(array['catalog_headline', 'catalog_tagline', 'coach_name', 'coach_role']) as s (slot),
+         lateral private.admitted_tenant_text(p_org, s.slot, null) a
+    order by s.slot;
+end;
+$$;
+
+/**
+ * LEAD admits or rejects the newest saved value of a held slot (service key, acting for a content
+ * publisher). The decision names the text hash LEAD reviewed; a value edited since then is a new
+ * row, so a stale hash is refused. Admission re-runs text admission under the rules in force.
+ */
+create function public.publisher_decide_tenant_text(p_publisher uuid, p_text uuid, p_decision jsonb)
+returns text
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  t private.tenant_texts%rowtype;
+  decision text;
+  a jsonb;
+begin
+  perform private.require_publisher(p_publisher);
+  perform private.jobject(p_decision, 'decision', array['decision', 'reason', 'textHash'], array['decision', 'reason', 'textHash']);
+  decision := private.jenum(p_decision -> 'decision', 'decision.decision', array['admitted', 'rejected']);
+  select * into t from private.tenant_texts where id = p_text;
+  if not found then raise exception 'no such tenant text' using errcode = 'P0002'; end if;
+  perform 1 from public.orgs where id = t.org_id for update;
+  if exists (select 1 from private.tenant_texts where org_id = t.org_id and slot = t.slot
+             and course_id is not distinct from t.course_id and seq > t.seq) then
+    raise exception 'tenant text % was replaced by a newer save', p_text using errcode = 'P0001';
+  end if;
+  if t.text is null then raise exception 'tenant text % clears the slot; there is nothing to decide', p_text using errcode = 'P0001'; end if;
+  if p_decision ->> 'textHash' is distinct from t.text_hash then
+    raise exception 'tenant text % has changed since it was reviewed (stale hash)', p_text using errcode = 'P0001';
+  end if;
+  if exists (select 1 from private.tenant_text_admissions where text_id = p_text) then
+    raise exception 'tenant text % is already decided', p_text using errcode = 'P0001';
+  end if;
+  a := private.admit_tenant_text(t.org_id, t.slot, t.text);
+  if decision = 'admitted' and not (a ->> 'ok')::boolean then
+    raise exception 'tenant text % fails text admission: % (%)', p_text, a ->> 'detail', a ->> 'reason' using errcode = 'P0001';
+  end if;
+  if t.display_name is not null then
+    a := private.admit_tenant_text(t.org_id, 'coach_name', t.display_name);
+    if decision = 'admitted' and not (a ->> 'ok')::boolean then
+      raise exception 'tenant text % display name fails text admission: % (%)', p_text, a ->> 'detail', a ->> 'reason' using errcode = 'P0001';
+    end if;
+  end if;
+  insert into private.tenant_text_admissions (text_id, org_id, slot, course_id, text_hash, decision, reason, rules_version, decided_by)
+  values (p_text, t.org_id, t.slot, t.course_id, t.text_hash, decision,
+    private.jstr(p_decision -> 'reason', 'decision.reason', 1, 500), a ->> 'version', p_publisher);
+  perform private.audit(p_publisher, 'decide_tenant_text', t.org_id, p_text,
+    jsonb_build_object('slot', t.slot, 'courseId', t.course_id, 'decision', decision, 'textHash', t.text_hash));
+  return decision;
+end;
+$$;
+
+-- Snapshot, save and publish ----------------------------------------------------------------
+
+/**
+ * The frozen course. Cover, tags, and an admitted welcome note (with its frozen author) and
+ * blurb are included only when present, so courses without them keep their earlier hashes.
+ * A pending, rejected or cleared text is never frozen.
+ */
+create or replace function private.course_snapshot(p_course uuid)
+returns jsonb
+language sql stable security definer set search_path = ''
+as $$
+  select jsonb_build_object(
+    'id', c.id, 'slug', c.slug, 'layer', c.layer, 'title', c.title, 'subtitle', c.subtitle,
+    'description', c.description, 'level', c.level, 'outcomes', c.outcomes,
+    'parts', coalesce((
+      select jsonb_agg(jsonb_build_object(
+          'id', p.id, 'ordinal', p.ordinal, 'title', p.title, 'summary', p.summary,
+          'lessons', coalesce((select jsonb_agg(private.lesson_json(l.id) order by l.ordinal)
+                               from public.lessons l where l.part_id = p.id), '[]'::jsonb))
+        order by p.ordinal)
+      from public.course_parts p where p.course_id = c.id), '[]'::jsonb))
+    || case when c.cover is null then '{}'::jsonb else jsonb_build_object('cover', c.cover) end
+    || case when cardinality(c.tags) = 0 then '{}'::jsonb else jsonb_build_object('tags', to_jsonb(c.tags)) end
+    || coalesce((select jsonb_build_object('welcome', jsonb_build_object('text', w.text, 'author', jsonb_build_object(
+          'authorUserId', w.author_user_id, 'displayName', w.display_name, 'orgId', w.org_id,
+          'savedAt', to_char(w.saved_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'))))
+        from private.admitted_tenant_text(c.org_id, 'welcome', c.id) w where c.org_id is not null), '{}'::jsonb)
+    || coalesce((select jsonb_build_object('blurb', b.text)
+        from private.admitted_tenant_text(c.org_id, 'course_blurb', c.id) b where c.org_id is not null), '{}'::jsonb)
+  from public.courses c where c.id = p_course
+$$;
+
+/** Freezes cover, tags and admitted course texts into new versions (P4-A2); otherwise as before. */
+create or replace function private.publish(p_course uuid, p_actor uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  c public.courses%rowtype;
+  b record;
+  les record;
+  claim_set uuid[];
+  claim uuid;
+  status text;
+  snap jsonb;
+  hash text;
+  latest public.curriculum_versions%rowtype;
+  vid uuid;
+  graded bigint;
+  a jsonb;
+  w record;
+begin
+  perform private.lock_publishing(false);
+  select * into c from public.courses where id = p_course for update;
+  if not found then raise exception 'no such course' using errcode = 'P0002'; end if;
+  if not exists (select 1 from public.lessons where course_id = p_course) then
+    raise exception 'publish gate: the course has no lessons' using errcode = 'P0001';
+  end if;
+  -- A learner submits every graded question at once (private.normalize_answers takes at most 1000).
+  graded := (select count(*) from public.lesson_blocks lb join public.lessons l on l.id = lb.lesson_id
+             where l.course_id = p_course and lb.kind = 'quiz' and lb.support = 'science');
+  if graded > 1000 then
+    raise exception 'publish gate: course % has % graded questions; the limit is 1000', p_course, graded using errcode = 'P0001';
+  end if;
+
+  for b in
+    select lb.id, lb.lesson_id, lb.kind, lb.support, lb.content, lb.content_hash
+    from public.lesson_blocks lb join public.lessons l on l.id = lb.lesson_id
+    where l.course_id = p_course
+    order by l.id, lb.ordinal
+  loop
+    -- Recompute rather than trust the stored hash.
+    if b.content_hash <> private.block_hash(b.kind, b.content) then
+      raise exception 'publish gate: lesson % has a block whose hash does not match its content', b.lesson_id
+        using errcode = 'P0001';
+    end if;
+    claim_set := array(select bc.claim_id from public.block_claims bc where bc.block_id = b.id order by bc.claim_id);
+    -- Media saved before this migration is not re-validated on save, so check here too.
+    if b.kind = 'image' and private.is_video_host_url(b.content ->> 'src') then
+      raise exception 'publish gate: lesson % has media on a video host; use a registry video block', b.lesson_id
+        using errcode = 'P0001';
+    end if;
+    -- P18-06: media must be a stored file of the course's owner (rows saved before the rule included).
+    if b.kind = 'image' and not private.media_src_ok(b.content ->> 'src', c.org_id) then
+      raise exception 'publish gate: lesson % has media that is not a stored file of its owner', b.lesson_id
+        using errcode = 'P0001';
+    end if;
+    if b.kind = 'image' and b.content ->> 'kind' = 'video' then
+      raise exception 'publish gate: lesson % has a plain video asset; use a registry video block', b.lesson_id
+        using errcode = 'P0001';
+    end if;
+    if b.kind = 'video' then
+      if c.org_id is not null then
+        raise exception 'publish gate: lesson % is gym method content, which cannot embed registry videos', b.lesson_id
+          using errcode = 'P0001';
+      end if;
+      status := private.video_block_status(b.content, b.lesson_id);
+      if status <> 'ok' then
+        raise exception 'publish gate: lesson % has a video whose registry entry is %', b.lesson_id, status
+          using errcode = 'P0001';
+      end if;
+    end if;
+    if b.kind = 'diagram' and (b.support is null or not (b.content ? 'legend') or not (b.content ? 'alt')) then
+      raise exception 'publish gate: lesson % has a diagram without reviewable text (alt, caption, legend and support)', b.lesson_id
+        using errcode = 'P0001';
+    end if;
+    if b.support is null then
+      if cardinality(claim_set) > 0 then
+        raise exception 'publish gate: lesson % has a % block carrying claims', b.lesson_id, b.kind using errcode = 'P0001';
+      end if;
+      continue;
+    end if;
+    if c.layer = 'method' and (b.support = 'science' or cardinality(claim_set) > 0) then
+      raise exception 'publish gate: lesson % is gym method content, which is practice-based', b.lesson_id
+        using errcode = 'P0001';
+    end if;
+    if b.support = 'practice-based' then
+      if cardinality(claim_set) > 0 then
+        raise exception 'publish gate: lesson % has a practice-based block carrying claims', b.lesson_id
+          using errcode = 'P0001';
+      end if;
+      continue;
+    end if;
+    if cardinality(claim_set) = 0 then
+      raise exception 'publish gate: lesson % has a science block without a claim', b.lesson_id using errcode = 'P0001';
+    end if;
+    foreach claim in array claim_set loop
+      status := private.claim_status(claim);
+      if status <> 'approved' then
+        raise exception 'publish gate: lesson % cites claim %, which is %', b.lesson_id, claim, status
+          using errcode = 'P0001';
+      end if;
+    end loop;
+    if not private.binding_supported(b.content_hash, claim_set) then
+      raise exception 'publish gate: lesson % has a % block with no supporting binding review for its exact content and claims',
+        b.lesson_id, b.kind using errcode = 'P0001';
+    end if;
+  end loop;
+
+  if exists (select 1 from public.lessons l, jsonb_array_elements(l.media) m
+             where l.course_id = p_course and private.is_video_host_url(m ->> 'src')) then
+    raise exception 'publish gate: course % has lesson media on a video host; use a registry video block', p_course
+      using errcode = 'P0001';
+  end if;
+  if exists (select 1 from public.lessons l, jsonb_array_elements(l.media) m
+             where l.course_id = p_course and not private.media_src_ok(m ->> 'src', c.org_id)) then
+    raise exception 'publish gate: course % has lesson media that is not a stored file of its owner', p_course
+      using errcode = 'P0001';
+  end if;
+  if exists (select 1 from public.lessons l, jsonb_array_elements(l.media) m
+             where l.course_id = p_course and m ->> 'kind' = 'video') then
+    raise exception 'publish gate: course % has a plain video asset; use a registry video block', p_course
+      using errcode = 'P0001';
+  end if;
+
+  -- Founder (global) content: a clean lesson receipt on the exact lesson hash,
+  -- practice text and frozen video fields included, and a clean course receipt
+  -- on the course and part text. Gym method content keeps the phase-2 rules.
+  if c.org_id is null then
+    for les in select id from public.lessons where course_id = p_course order by id loop
+      if not private.lesson_review_clean(les.id, private.lesson_hash(les.id), private.lesson_claims(les.id)) then
+        raise exception 'publish gate: lesson % has no clean lesson review for its exact content', les.id
+          using errcode = 'P0001';
+      end if;
+    end loop;
+    if not private.course_review_clean(p_course, private.sha256(private.course_shell(p_course))) then
+      raise exception 'publish gate: course % has no clean course review for its exact text', p_course
+        using errcode = 'P0001';
+    end if;
+  end if;
+
+  -- P4-A2: gym text is admitted again under the rule set in force, so a direct call cannot skip it
+  -- and a newer rule set applies at the next publish. Pending, rejected or cleared texts are not published.
+  if c.layer = 'method' then
+    a := private.admit_tenant_text(c.org_id, 'course_title', c.title);
+    if not (a ->> 'ok')::boolean then
+      raise exception 'publish gate: course % title fails text admission: % (%)', p_course, a ->> 'detail', a ->> 'reason'
+        using errcode = 'P0001';
+    end if;
+    a := private.admit_tenant_text(c.org_id, 'course_summary', c.subtitle);
+    if not (a ->> 'ok')::boolean then
+      raise exception 'publish gate: course % summary fails text admission: % (%)', p_course, a ->> 'detail', a ->> 'reason'
+        using errcode = 'P0001';
+    end if;
+    for w in select x.slot, adm.text, adm.display_name
+             from unnest(array['welcome', 'course_blurb']) as x (slot), lateral private.admitted_tenant_text(c.org_id, x.slot, p_course) adm loop
+      a := private.admit_tenant_text(c.org_id, w.slot, w.text);
+      if not (a ->> 'ok')::boolean then
+        raise exception 'publish gate: course % % fails text admission: % (%)', p_course, w.slot, a ->> 'detail', a ->> 'reason'
+          using errcode = 'P0001';
+      end if;
+      a := private.admit_tenant_text(c.org_id, 'coach_name', w.display_name);
+      if not (a ->> 'ok')::boolean then
+        raise exception 'publish gate: course % % display name fails text admission: % (%)', p_course, w.slot, a ->> 'detail', a ->> 'reason'
+          using errcode = 'P0001';
+      end if;
+    end loop;
+  end if;
+
+  snap := private.course_snapshot(p_course);
+  hash := private.sha256(snap);
+  select * into latest from public.curriculum_versions where course_id = p_course order by version_number desc limit 1;
+  -- Global content last published under the phase-2 rules gets a new phase-3 version.
+  -- Gym method courses stay idempotent whatever rules their latest version used.
+  if found and latest.content_hash = hash and (latest.rules = 'phase3' or c.org_id is not null) then
+    perform private.audit(p_actor, 'publish_unchanged', c.org_id, latest.id);
+    return latest.id;
+  end if;
+
+  insert into public.curriculum_versions (course_id, org_id, layer, version_number, snapshot, content_hash, published_by,
+    rules, question_set_hash)
+  values (p_course, c.org_id, c.layer, coalesce(latest.version_number, 0) + 1, snap, hash, p_actor,
+    'phase3', private.question_set_hash(snap))
+  returning id into vid;
+
+  insert into public.version_lessons (version_id, lesson_id, org_id, ordinal, content_hash)
+  select vid, (l ->> 'id')::uuid, c.org_id, o, private.sha256(l)
+  from jsonb_path_query(snap, '$.parts[*].lessons[*]') with ordinality as t (l, o);
+
+  insert into public.version_claims (version_id, lesson_id, claim_id)
+  select distinct vid, (l ->> 'id')::uuid, (ci #>> '{}')::uuid
+  from jsonb_path_query(snap, '$.parts[*].lessons[*]') as t (l),
+       jsonb_path_query(l, '$.blocks[*].claimIds[*]') as u (ci);
+
+  perform private.audit(p_actor, 'publish', c.org_id, vid,
+    jsonb_build_object('course_id', p_course, 'version_number', coalesce(latest.version_number, 0) + 1, 'content_hash', hash));
+  return vid;
+end;
+$function$
+
+;
+
+create or replace function private.save_draft(p_org uuid, p_course jsonb, p_actor uuid)
+returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  -- Cover and tags are validated beside the course document (P4-A2); a welcome key is refused as unknown:
+  -- the note has save_tenant_text.
+  n jsonb := private.validate_course(case when jsonb_typeof(p_course) = 'object' then p_course - 'cover' - 'tags' else p_course end);
+  pres jsonb := private.validate_presentation(p_course, n ->> 'layer');
+  new_cover jsonb := nullif(pres -> 'cover', 'null'::jsonb);
+  new_tags text[] := array(select jsonb_array_elements_text(pres -> 'tags'));
+  cid uuid := (n ->> 'id')::uuid;
+  existing public.courses%rowtype;
+  missing text;
+begin
+  if p_org is null and n ->> 'layer' = 'method' then
+    raise exception 'method courses belong to a gym' using errcode = '22023';
+  end if;
+  if p_org is not null and n ->> 'layer' <> 'method' then
+    raise exception 'gyms author method courses only; base and modality content is global' using errcode = '42501';
+  end if;
+  -- Gym text that learners see next to Spindle's labels passes tenant text admission.
+  if n ->> 'layer' = 'method' then
+    perform private.require_tenant_text(p_org, 'course_title', n ->> 'title', 'course.title');
+    perform private.require_tenant_text(p_org, 'course_summary', n ->> 'subtitle', 'course.subtitle');
+  end if;
+  select c #>> '{}' into missing
+  from jsonb_path_query(n, '$.parts[*].lessons[*].blocks[*].claimIds[*]') c
+  where not exists (select 1 from public.claims cl where cl.id = (c #>> '{}')::uuid)
+  limit 1;
+  if missing is not null then
+    raise exception 'invalid course: unknown claim %', missing using errcode = '22023';
+  end if;
+
+  select * into existing from public.courses where id = cid for update;
+  if found then
+    if existing.org_id is distinct from p_org or existing.layer <> n ->> 'layer' then
+      raise exception 'course belongs to another owner or layer' using errcode = '42501';
+    end if;
+    update public.courses set slug = n ->> 'slug', title = n ->> 'title', subtitle = n ->> 'subtitle',
+      description = n ->> 'description', level = n ->> 'level', outcomes = n -> 'outcomes',
+      cover = new_cover, tags = new_tags, updated_at = now(), updated_by = p_actor
+    where id = cid;
+    delete from public.course_parts where course_id = cid;
+  else
+    insert into public.courses (id, org_id, layer, slug, title, subtitle, description, level, outcomes, cover, tags, updated_by)
+    values (cid, p_org, n ->> 'layer', n ->> 'slug', n ->> 'title', n ->> 'subtitle', n ->> 'description',
+            n ->> 'level', n -> 'outcomes', new_cover, new_tags, p_actor);
+  end if;
+
+  insert into public.course_parts (id, course_id, org_id, ordinal, title, summary)
+  select (p ->> 'id')::uuid, cid, p_org, po, p ->> 'title', p ->> 'summary'
+  from jsonb_array_elements(n -> 'parts') with ordinality as t (p, po);
+
+  insert into public.lessons (id, course_id, part_id, org_id, ordinal, slug, title, summary, duration_minutes,
+    format, objectives, anatomy_ids, media, resources)
+  select (l ->> 'id')::uuid, cid, (p ->> 'id')::uuid, p_org, lo, l ->> 'slug', l ->> 'title', l ->> 'summary',
+    (l ->> 'durationMinutes')::integer, l ->> 'format', l -> 'objectives', l -> 'anatomyIds', l -> 'media', l -> 'resources'
+  from jsonb_array_elements(n -> 'parts') as t (p),
+       jsonb_array_elements(p -> 'lessons') with ordinality as u (l, lo);
+
+  with src as materialized (
+    select gen_random_uuid() as block_id, (l ->> 'id')::uuid as lesson_id, bo, b
+    from jsonb_array_elements(n -> 'parts') as t (p),
+         jsonb_array_elements(p -> 'lessons') as u (l),
+         jsonb_array_elements(l -> 'blocks') with ordinality as v (b, bo)
+  ), ins as (
+    insert into public.lesson_blocks (id, lesson_id, org_id, ordinal, kind, support, content, content_hash)
+    select block_id, lesson_id, p_org, bo, b ->> 'kind', b ->> 'support', b -> 'content',
+      private.block_hash(b ->> 'kind', b -> 'content')
+    from src
+    returning id
+  )
+  insert into public.block_claims (block_id, claim_id)
+  select s.block_id, (c #>> '{}')::uuid
+  from src s, jsonb_array_elements(coalesce(s.b -> 'claimIds', '[]'::jsonb)) as c
+  where exists (select 1 from ins where ins.id = s.block_id);
+
+  perform private.audit(p_actor, 'save_draft', p_org, cid);
+  return cid;
+end;
+$$;
+
+
+-- Privileges ---------------------------------------------------------------------------------
+
+revoke all on table private.tenant_text_rules, private.tenant_text_overrides, private.tenant_texts,
+  private.tenant_text_admissions from public, anon, authenticated, service_role;
+revoke all on function private.tt_rules(), private.tt_class(jsonb), private.tt_ascii_lower(text), private.tt_normalize(text, jsonb),
+  private.tt_fold(text, jsonb), private.tt_join_singles(text[]), private.tt_readings(text, jsonb), private.tt_reserved(text, jsonb),
+  private.admit_tenant_text(uuid, text, text), private.require_tenant_text(uuid, text, text, text), private.modality_tags(),
+  private.cover_ok(jsonb), private.tags_ok(text[]), private.validate_presentation(jsonb, text), private.held_slot_scope(text),
+  private.guard_tenant_text_admission(), private.latest_tenant_text(uuid, text, uuid), private.tenant_text_status(uuid),
+  private.admitted_tenant_text(uuid, text, uuid)
+  from public, anon, authenticated, service_role;
+revoke all on function public.save_tenant_text(uuid, text, uuid, text), public.tenant_text_status(uuid, text, uuid),
+  public.member_tenant_texts(uuid), public.check_tenant_text(uuid, text, text),
+  public.publisher_decide_tenant_text(uuid, uuid, jsonb), public.publisher_record_text_override(uuid, jsonb)
+  from public, anon, authenticated, service_role;
+grant execute on function public.save_tenant_text(uuid, text, uuid, text), public.tenant_text_status(uuid, text, uuid),
+  public.member_tenant_texts(uuid), public.check_tenant_text(uuid, text, text) to authenticated;
+grant execute on function public.publisher_decide_tenant_text(uuid, uuid, jsonb), public.publisher_record_text_override(uuid, jsonb)
+  to service_role;
