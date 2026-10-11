@@ -7,7 +7,7 @@ We studied how strength, rehabilitation, hypertrophy and movement coaches teach 
 ## Voice
 
 - **Coach to coach.** Write to a working trainer between sessions: direct, warm, no lecture tone.
-- **Plain words first, the term second.** "The shoulder joint (glenohumeral joint)". Keep the proper term: trainers meet it with clients and clinicians. Choose plain words that stay accurate: a teaching image (a ball on a saucer) is labelled as an image, never used as the name.
+- **Plain words first, the term second.** "The shoulder joint (glenohumeral joint)". Keep the proper term: trainers meet it with clients and clinicians. Choose plain words that stay accurate: a teaching image (a ball on a saucer) is labeled as an image, never used as the name.
 - **Short sentences, active voice.** One idea per sentence.
 - **Calm about pain.** Most shoulder pain settles. We name warning signs clearly and never use fear to sell an exercise.
 - **No hype.** No "fix", "bulletproof", "forever", "the only exercise you need", "never do X". Say what the evidence supports and for whom.
@@ -47,7 +47,7 @@ Lessons are short: 8 to 15 minutes of reading, chunked under headings. A longer 
 - **Two labels, block by block:** *Science* (bound to an approved claim with sources) and *Practice-based* (coaching experience). The label is never implied by tone.
 - **Confident where the research is strong.** Plain statements, with the claim one tap away.
 - **Honest where it is not.** "Coaches often use…", "In practice…". No made-up percentages or study counts.
-- **Contested frameworks are practice context only.** Models such as fascial lines, tensegrity of the whole body, or posture-as-cause stories may appear as clearly labelled practice-based context with a note that the evidence is limited. They never carry a Science label and never explain a cause as fact.
+- **Contested frameworks are practice context only.** Models such as fascial lines, tensegrity of the whole body, or posture-as-cause stories may appear as clearly labeled practice-based context with a note that the evidence is limited. They never carry a Science label and never explain a cause as fact.
 - **A video is never a source.** If a video presents research, cite the paper.
 
 ## Visuals

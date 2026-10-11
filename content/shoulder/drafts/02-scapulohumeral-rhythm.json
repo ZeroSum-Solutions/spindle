@@ -71,7 +71,7 @@
     },
     {
       "prompt": "Same client, but the shoulder aches more with each rep.",
-      "goodAnswer": "Stop shoulder loading for this session. If the pain is getting worse: routine referral now (GP or physiotherapist). If it has not improved after 2 weeks: routine referral. Urgent or emergency if those signs appear.",
+      "goodAnswer": "Stop shoulder loading for this session. If the pain is getting worse: routine referral now (primary care provider or physical therapist). If it has not improved after 2 weeks: routine referral. Urgent or emergency if those signs appear.",
       "safety": "SAFETY.md sections 3 and 4"
     }
   ],

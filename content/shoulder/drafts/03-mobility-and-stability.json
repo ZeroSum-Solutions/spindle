@@ -5,7 +5,7 @@
   "lessonNumber": 3,
   "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
-    "Science sections are removed, never relabelled, if their claims are not approved.",
+    "Science sections are removed, never relabeled, if their claims are not approved.",
     "Fascial and rib-position models carry the limited-evidence note STYLE.md requires."
   ],
   "claimSlots": [
@@ -60,12 +60,12 @@
     },
     {
       "prompt": "Since last week, with no injury, the client cannot lift the right arm themselves at all, though you can lift it for them.",
-      "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.",
+      "goodAnswer": "Stop shoulder loading; urgent: urgent care or their primary care provider today.",
       "safety": "SAFETY.md sections 3 and 4"
     },
     {
       "prompt": "Over several weeks, lifting the arm has become very difficult, but the client can still lift it themselves; no other warning sign.",
-      "goodAnswer": "Stop shoulder loading for the session; routine referral to a GP or physiotherapist.",
+      "goodAnswer": "Stop shoulder loading for the session; routine referral to a primary care provider or a physical therapist.",
       "safety": "SAFETY.md section 4"
     },
     {
@@ -83,7 +83,7 @@
     "format": "article",
     "objectives": [
       "Tell active range from passive range, and range from control.",
-      "Recognise the restrictions trainers often see: overhead reach, reaching behind the back, reaching across the body.",
+      "Recognize the restrictions trainers often see: overhead reach, reaching behind the back, reaching across the body.",
       "State what reviews found about upper-back posture and shoulder pain, and what they did not show.",
       "Decide when a restriction is a training question and when it needs referral."
     ],
@@ -123,7 +123,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "Stop shoulder loading for the rest of the session. A client who can no longer lift or move the arm themselves, even though you could move it for them, with no injury: urgent, an urgent GP appointment or NHS 111 today. It is never something to train. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
+          "text": "Stop shoulder loading for the rest of the session. A client who can no longer lift or move the arm themselves, even though you could move it for them, with no injury: urgent, at urgent care or with their primary care provider today. It is never something to train. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []

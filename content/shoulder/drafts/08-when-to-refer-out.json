@@ -6,12 +6,13 @@
   "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
     "The tier, stop-rule and exclusion checklists are parsed from docs/curriculum/SAFETY.md (bounded at the next heading; malformed tables stop the build); regenerate whenever SAFETY.md changes.",
-    "Scenario answers give the first action, the tier, who to contact and how soon. Scenarios stay ungraded."
+    "Scenario answers give the first action, the tier, who to contact and how soon. Scenarios stay ungraded.",
+    "D-18 (2026-10-11): converted to US care pathways (911 and the emergency department; urgent care or the primary care provider the same day; a primary care provider or a licensed physical therapist) and US spelling. Needs Sol re-review before the v2 publish."
   ],
   "claimSlots": [
     {
       "slot": "claim-slot:l8-red-flags",
-      "statement": "The British Elbow & Shoulder Society subacromial pain care pathway states that shoulder pain red flags found at primary-care assessment need urgent secondary-care referral, and lists among them a child or adolescent patient, swelling or lumps, and inflammation involving multiple joints.",
+      "statement": "The British Elbow & Shoulder Society subacromial pain care pathway lists red flags for shoulder pain that need urgent specialist assessment (in the pathway, urgent referral from primary to secondary care), and includes among them a child or adolescent patient, swelling or lumps, and inflammation involving multiple joints.",
       "domain": "applied",
       "evidenceLevel": "Clinical care pathway, British Elbow & Shoulder Society",
       "population": "Patients with shoulder pain assessed in primary care (BESS 2025 patient care pathway).",
@@ -27,7 +28,7 @@
           "locator": "pp. 715-716, Red flags for the Shoulder"
         }
       ],
-      "note": "Supports the graded adverse-case questions (SAFETY.md section 6), which test only the pathway's finding (urgent referral to secondary care). Spindle's stop-first, same-day and parent-or-carer steps sit in the practice-based 'What you do first' callout beside them. The excerpt stays in the private evidence packet (D-13)."
+      "note": "Supports the graded adverse-case questions (SAFETY.md section 6), which test only the guidance's finding (a red flag that needs urgent specialist assessment). Reworded under D-18 so that the claim states the clinical finding and no UK care pathway; the US same-day pathway (urgent care or the primary care provider), the stop-first step and telling a parent or guardian are Spindle policy in the practice-based 'What you do first' callout beside them. Needs Sol re-review. The excerpt stays in the private evidence packet (D-13)."
     },
     {
       "slot": "claim-slot:l8-subacromial-course",
@@ -53,27 +54,27 @@
   "scenarios": [
     {
       "prompt": "Arm pain with chest tightness during a session.",
-      "goodAnswer": "Stop all exercise; emergency: call emergency services (999 in the UK) now and stay with the client.",
+      "goodAnswer": "Stop all exercise; emergency: call 911 now and stay with the client.",
       "safety": "SAFETY.md section 4"
     },
     {
       "prompt": "A new lump above the collarbone.",
-      "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.",
+      "goodAnswer": "Stop shoulder loading; urgent: urgent care or their primary care provider today.",
       "safety": "SAFETY.md section 4"
     },
     {
-      "prompt": "Shoulder pain that has got worse every day this week; no other sign.",
-      "goodAnswer": "Stop shoulder loading for this session; routine referral now: a GP or physiotherapist, without waiting for 2 weeks.",
+      "prompt": "Shoulder pain that has gotten worse every day this week; no other sign.",
+      "goodAnswer": "Stop shoulder loading for this session; routine referral now: a primary care provider or a physical therapist, without waiting for 2 weeks.",
       "safety": "SAFETY.md sections 3 and 4"
     },
     {
       "prompt": "After a fall, the client cannot move the arm.",
-      "goodAnswer": "Stop; emergency: call emergency services now; do not move the arm or try to put it back; do not let them drive.",
+      "goodAnswer": "Stop; emergency: call 911 now; do not move the arm or try to put it back; do not let them drive.",
       "safety": "SAFETY.md sections 3 and 4"
     },
     {
       "prompt": "Fever and shoulder pain.",
-      "goodAnswer": "Stop all exercise; emergency: call emergency services (999 in the UK) or go to the emergency department now. This is Spindle policy, stricter than the NHS page.",
+      "goodAnswer": "Stop all exercise; emergency: call 911 or go to the emergency department now. This strict mapping is Spindle policy (SAFETY.md, note on infection).",
       "safety": "SAFETY.md section 4 and its note on infection"
     },
     {
@@ -136,7 +137,7 @@
       },
       {
         "kind": "heading",
-        "content": "Emergency: call emergency services now (999 in the UK)"
+        "content": "Emergency: call 911 or go to the emergency department (ER) now"
       },
       {
         "kind": "checklist",
@@ -152,14 +153,14 @@
         "kind": "callout",
         "content": {
           "label": "Note on infection",
-          "text": "the NHS shoulder pain page lists fever or feeling unwell, and an arm that is hot or cold to the touch, as urgent reasons to get help. Spindle's rule is deliberately stricter for fever or feeling unwell: a trainer cannot tell whether a joint is infected, and BESS asks for same-day emergency referral when infection is suspected. That stricter mapping is Spindle policy. A shoulder that feels hot or cold to the touch, or is badly swollen, without sudden severe pain, redness, fever or feeling unwell, stays urgent."
+          "text": "A trainer cannot tell whether a joint is infected, and BESS asks for same-day emergency referral when infection is suspected. Spindle's rule is therefore deliberately strict: fever or feeling unwell with shoulder pain goes to the emergency department, not to a same-day appointment. That strict mapping is Spindle policy. A shoulder that feels hot or cold to the touch, or is badly swollen, without sudden severe pain, redness, fever or feeling unwell, stays urgent."
         },
         "support": "practice-based",
         "claimIds": []
       },
       {
         "kind": "heading",
-        "content": "Urgent: an urgent GP appointment or NHS 111 today (or the local equivalent)"
+        "content": "Urgent: urgent care or the client's primary care provider, the same day"
       },
       {
         "kind": "checklist",
@@ -174,14 +175,14 @@
           "Severe pain in both shoulders",
           "A new lump, mass or swelling around the shoulder",
           "New pain, swelling or stiffness in several joints at once",
-          "A child or adolescent with shoulder pain: urgent GP or NHS 111 the same day, for referral to trauma and orthopaedics; tell a parent or carer"
+          "A child or adolescent with shoulder pain: urgent care or the PCP the same day, for assessment and, if needed, referral to orthopedics; tell a parent or guardian"
         ],
         "support": "practice-based",
         "claimIds": []
       },
       {
         "kind": "heading",
-        "content": "Routine: a GP or physiotherapist"
+        "content": "Routine: a primary care provider or a licensed physical therapist"
       },
       {
         "kind": "checklist",
@@ -214,7 +215,7 @@
           "New loss of active movement: the client cannot lift or move the arm themselves (even if you could move it for them), without an injury - Stop. Urgent. Never treat this as a mobility or control problem to train.",
           "After an injury, pain and weakness, but the arm still moves and the shoulder looks normal - Stop. Urgent (possible acute cuff tear).",
           "Signs of a joint infection: the shoulder is suddenly very painful and red or warm, or the client has a fever or feels unwell with shoulder pain - Stop. Emergency.",
-          "Arm pain together with chest pain, tightness, breathlessness, or feeling faint - Stop all exercise. Emergency: call emergency services.",
+          "Arm pain together with chest pain, tightness, breathlessness, or feeling faint - Stop all exercise. Emergency: call 911.",
           "Pain at night that wakes the client, with stiffness that is not going away - Do not progress shoulder loading. Routine."
         ],
         "support": "practice-based",
@@ -231,7 +232,7 @@
           "After shoulder surgery, or a recent dislocation or fracture, still in rehabilitation - Outside the base module. Follow the treating clinician's plan; do not progress it on your own.",
           "Diagnosed neurological condition affecting the arm or neck - Outside the base module.",
           "Diagnosed shoulder condition under current care (for example frozen shoulder, a known cuff tear, instability) - Outside the base module; work only within the clinician's plan.",
-          "Children and adolescents with shoulder pain - Outside the base module. Urgent tier: stop shoulder loading, and tell the young person and their parent or carer to get an urgent GP appointment or call NHS 111 (or the local equivalent) the same day, for referral to trauma and orthopaedics. Emergency tier if any emergency criterion applies.",
+          "Children and adolescents with shoulder pain - Outside the base module. Urgent tier: stop shoulder loading, and tell the young person and their parent or guardian to get care the same day, at urgent care or with their primary care provider, for assessment and, if needed, referral to orthopedics. Emergency tier if any emergency criterion applies.",
           "Anyone with a warning sign in the lists in this lesson - Stop and refer."
         ],
         "support": "practice-based",
@@ -243,7 +244,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "For subacromial shoulder pain, UK specialist guidance from the British Elbow & Shoulder Society lists reassurance among the treatments suitable for primary care: this is usually a self-limiting condition, and most symptoms respond within three months.",
+        "content": "For subacromial shoulder pain, specialist shoulder guidance from the British Elbow & Shoulder Society lists reassurance among the treatments suitable for primary care: this is usually a self-limiting condition, and most symptoms respond within three months.",
         "support": "science",
         "claimIds": [
           "claim-slot:l8-subacromial-course"
@@ -262,9 +263,9 @@
       {
         "kind": "checklist",
         "content": [
-          "Emergency: call emergency services yourself, stay with the client, and do not let them drive. After a fall or impact, do not move the arm or try to put it back. Nothing else happens in the session.",
-          "Urgent: \"You can't lift your arm yourself today, and that's new. We'll stop the shoulder work now. Please get it checked today: call your GP for an urgent appointment, or NHS 111.\" Do not offer more training in place of getting help.",
-          "Routine, with no other warning sign: \"Your shoulder pain is getting worse. Please book in with your GP or a physiotherapist now; you don't need to wait.\" With the shoulder left out, the rest of the session can go ahead if the client feels well.",
+          "Emergency: call 911 yourself, stay with the client, and do not let them drive. After a fall or impact, do not move the arm or try to put it back. Nothing else happens in the session.",
+          "Urgent: \"You can't lift your arm yourself today, and that's new. We'll stop the shoulder work now. Please get it checked today, at urgent care or with your primary care provider.\" Do not offer more training in place of getting help.",
+          "Routine, with no other warning sign: \"Your shoulder pain is getting worse. Please make an appointment with your primary care provider or a physical therapist now; you don't need to wait.\" With the shoulder left out, the rest of the session can go ahead if the client feels well.",
           "Every tier: do not name a condition, and do not say it is nothing."
         ],
         "support": "practice-based",
@@ -287,7 +288,7 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "For subacromial shoulder pain, what does UK specialist guidance say about how symptoms usually go?",
+          "prompt": "For subacromial shoulder pain, what does specialist shoulder guidance say about how symptoms usually go?",
           "options": [
             "It is usually self-limiting, and most symptoms respond within three months",
             "Symptoms never improve without surgery",
@@ -305,7 +306,7 @@
         "kind": "callout",
         "content": {
           "label": "What you do first",
-          "text": "For the three urgent red flags below, Spindle's stop rule comes first: leave the shoulder out of today's session and arrange the referral the same day. For anyone under 18, tell a parent or carer. This is Spindle's rule for trainers; the questions below test what the UK specialist pathway says about each sign."
+          "text": "For the three urgent red flags below, Spindle's stop rule comes first: leave the shoulder out of today's session and send the client to urgent care or their primary care provider the same day. For anyone under 18, tell a parent or guardian. This is Spindle's rule for trainers; the questions below test only what specialist shoulder guidance says about each sign."
         },
         "support": "practice-based",
         "claimIds": []
@@ -313,14 +314,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "Under the UK specialist pathway, what does shoulder pain in a child or adolescent need?",
+          "prompt": "In specialist shoulder guidance, what is shoulder pain in a child or adolescent?",
           "options": [
-            "Urgent referral to secondary care",
-            "Routine referral if it has not improved after 2 weeks",
-            "No referral"
+            "A red flag that needs urgent specialist assessment",
+            "A routine problem to review if it has not improved after 2 weeks",
+            "Not a reason for referral"
           ],
           "answerIndex": 0,
-          "explanation": "The pathway lists a child or adolescent with shoulder pain among the red flags that need urgent referral to secondary care."
+          "explanation": "The guidance lists a child or adolescent with shoulder pain among the red flags that need urgent specialist assessment."
         },
         "support": "science",
         "claimIds": [
@@ -330,14 +331,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "Under the UK specialist pathway, what does a lump or swelling found when someone is assessed for shoulder pain need?",
+          "prompt": "In specialist shoulder guidance, what is a lump or swelling found when someone is assessed for shoulder pain?",
           "options": [
-            "Routine referral if it is still there in 2 weeks",
-            "Urgent referral to secondary care",
-            "No referral"
+            "A routine problem to review if it is still there in 2 weeks",
+            "A red flag that needs urgent specialist assessment",
+            "Not a reason for referral"
           ],
           "answerIndex": 1,
-          "explanation": "The pathway lists swelling or lumps among the shoulder red flags that need urgent referral to secondary care."
+          "explanation": "The guidance lists swelling or lumps among the shoulder red flags that need urgent specialist assessment."
         },
         "support": "science",
         "claimIds": [
@@ -347,14 +348,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "Under the UK specialist pathway, what does shoulder pain with inflammation in several joints need?",
+          "prompt": "In specialist shoulder guidance, what is shoulder pain with inflammation in several joints?",
           "options": [
-            "No referral",
-            "Routine referral if it is not better in 2 weeks",
-            "Urgent referral to secondary care"
+            "Not a reason for referral",
+            "A routine problem to review if it is not better in 2 weeks",
+            "A red flag that needs urgent specialist assessment"
           ],
           "answerIndex": 2,
-          "explanation": "The pathway lists inflammation involving several joints among the shoulder red flags that need urgent referral to secondary care."
+          "explanation": "The guidance lists inflammation involving several joints among the shoulder red flags that need urgent specialist assessment."
         },
         "support": "science",
         "claimIds": [
@@ -365,7 +366,7 @@
         "kind": "callout",
         "content": {
           "label": "Talk it through",
-          "text": "Pick the tier and say what you do first, who to contact and how soon: (1) arm pain with chest tightness during a session; (2) a new lump above the collarbone; (3) shoulder pain that has got worse every day this week, with no other sign; (4) after a fall, the client cannot move the arm; (5) fever and shoulder pain; (6) an ache after training that settled within a day, with no other sign."
+          "text": "Pick the tier and say what you do first, who to contact and how soon: (1) arm pain with chest tightness during a session; (2) a new lump above the collarbone; (3) shoulder pain that has gotten worse every day this week, with no other sign; (4) after a fall, the client cannot move the arm; (5) fever and shoulder pain; (6) an ache after training that settled within a day, with no other sign."
         },
         "support": "practice-based",
         "claimIds": []

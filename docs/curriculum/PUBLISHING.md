@@ -28,7 +28,7 @@ This runbook takes one base module from its drafts (`content/<module>/drafts`) t
 - `content/<module>/drafts/NN-*.json`: lessons, one per number (two drafts with the same number are refused). Each science block binds `claim-slot:` ids, and each `claimSlots` entry gives `statement`, `domain`, `evidenceLevel`, `population` and candidate sources.
 - `content/<module>/sources.json`: every source the drafts cite, with its DOI and PMID (both are passed to ingest and must agree). Each entry can also carry:
   - a D-12 override (`kindOverride` plus `justification`);
-  - D-13 open-licence full-text sections (`fullText`: exact section names or table labels);
+  - D-13 open-license full-text sections (`fullText`: exact section names or table labels);
   - D-13 publisher-excerpt *locators* (`excerpts`: file name, locator, attribution). The text itself is never in the repository.
 - `content/<module>/module.json`: course title, description, level, outcomes and part order. Course, part and lesson ids are UUIDv5 values derived from the module key and the lesson ids, so every run addresses the same rows.
 
@@ -40,7 +40,7 @@ Run from `packages/evidence` with the environment set.
    ```sh
    mise exec -- pnpm exec tsx scripts/module.ts sources --manifest ../../content/<module>/sources.json
    ```
-   Every source must end `ready`. A blocked source names its reason (kind, licence, retraction, missing year or abstract, identifiers that disagree). Fix the manifest or the draft; never force it. A stored excerpt is reused only when its text and attribution are identical. To replace one, remove it from the private evidence file, run again, and review the claims that rely on it again.
+   Every source must end `ready`. A blocked source names its reason (kind, license, retraction, missing year or abstract, identifiers that disagree). Fix the manifest or the draft; never force it. A stored excerpt is reused only when its text and attribution are identical. To replace one, remove it from the private evidence file, run again, and review the claims that rely on it again.
 2. **Claims.** Create one claim per slot from the drafts:
    ```sh
    mise exec -- pnpm exec tsx scripts/module.ts claims --drafts ../../content/<module>/drafts
@@ -86,7 +86,7 @@ Run from `packages/evidence` with the environment set.
 ## Privacy and licensing
 
 - Abstracts, full-text sections and publisher excerpts stay in the private directories and in review packets. They are never committed, logged in public CI, or shown to learners (D-13).
-- Full text is used only when every recorded licence is open (CC BY, CC0 or public domain). A table is excerpted only when it is a plain grid. Anything else is a publisher excerpt with a page or section locator.
+- Full text is used only when every recorded license is open (CC BY, CC0 or public domain). A table is excerpted only when it is a plain grid. Anything else is a publisher excerpt with a page or section locator.
 
 ## Rehearsal record
 

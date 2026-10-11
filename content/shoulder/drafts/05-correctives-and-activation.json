@@ -6,7 +6,7 @@
   "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
     "The EMG section and its quiz were removed: the accessible abstract did not support the ratios or the inference limit.",
-    "The outline no longer says 'first-line'. The lesson does not generalise BESS PICO 18's narrower recommendation (physiotherapy as a possible first-line treatment for chronic subacromial pain).",
+    "The outline no longer says 'first-line'. The lesson does not generalize BESS PICO 18's narrower recommendation (physiotherapy as a possible first-line treatment for chronic subacromial pain).",
     "The warm-up is practice-based and ranks nothing.",
     "BESS 2025 is expected to become admissible as guidance through W1's D-12 operator-asserted source kind (pending: no receipt yet); its claim statements carry no publication year until the review packet includes one."
   ],
@@ -29,7 +29,7 @@
           "locator": "p. 719, PICO 6"
         }
       ],
-      "note": "Paraphrased; the attributed source excerpt stays in the private evidence packet (D-13), at p. 719, PICO 6. Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."
+      "note": "Paraphrased; the attributed source excerpt stays in the private evidence packet (D-13), at p. 719, PICO 6. Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalize that narrower clinical recommendation."
     },
     {
       "slot": "claim-slot:l5-decompression",
@@ -103,7 +103,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance from the British Elbow & Shoulder Society reports evidence that exercise reduces pain over 8 weeks to 6 months and improves the function patients report, at follow-up of up to six months. It grades that recommendation as conditional and positive, on low evidence, and says the best physiotherapy, exercise or manual therapy approach is still uncertain.",
+        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, specialist shoulder guidance from the British Elbow & Shoulder Society reports evidence that exercise reduces pain over 8 weeks to 6 months and improves the function patients report, at follow-up of up to six months. It grades that recommendation as conditional and positive, on low evidence, and says the best physical therapy, exercise or manual therapy approach is still uncertain.",
         "support": "science",
         "claimIds": [
           "claim-slot:l5-subacromial-exercise"
@@ -250,10 +250,10 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "What does UK specialist guidance report about exercise for subacromial shoulder pain?",
+          "prompt": "What does specialist shoulder guidance report about exercise for subacromial shoulder pain?",
           "options": [
             "It reduces pain over 8 weeks to 6 months and improves patient-reported function; the recommendation is conditional, on low evidence, and the best approach is uncertain",
-            "One exercise programme is proven best",
+            "One exercise program is proven best",
             "Exercise does not help"
           ],
           "answerIndex": 0,

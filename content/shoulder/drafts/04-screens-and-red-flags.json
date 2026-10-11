@@ -5,6 +5,7 @@
   "lessonNumber": 4,
   "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
+    "D-18 (2026-10-11): converted to US care pathways (911 and the emergency department; urgent care or the primary care provider the same day; a primary care provider or a licensed physical therapist) and US spelling. Needs Sol re-review before the v2 publish.",
     "The tier callouts are generated from SAFETY.md, so they match it exactly.",
     "The scope question ('can a screen clear a client?') is an ungraded discussion item, not a graded science question.",
     "Every screen has its own stop-and-refer block beside it."
@@ -39,17 +40,17 @@
   "scenarios": [
     {
       "prompt": "After a fall in class, the shoulder looks out of place.",
-      "goodAnswer": "Stop; emergency: call emergency services now; do not move the arm or try to put it back; do not let them drive.",
+      "goodAnswer": "Stop; emergency: call 911 now; do not move the arm or try to put it back; do not let them drive.",
       "safety": "SAFETY.md section 4"
     },
     {
       "prompt": "After catching a heavy bar: pain and weakness lifting the arm; it still moves and looks normal.",
-      "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.",
+      "goodAnswer": "Stop shoulder loading; urgent: urgent care or their primary care provider today.",
       "safety": "SAFETY.md sections 3 and 4"
     },
     {
       "prompt": "Pins and needles in the arm that have not gone away.",
-      "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.",
+      "goodAnswer": "Stop shoulder loading; urgent: urgent care or their primary care provider today.",
       "safety": "SAFETY.md section 4"
     },
     {
@@ -59,12 +60,12 @@
     },
     {
       "prompt": "Pain that has not improved after 2 weeks of leaving out the provoking movements.",
-      "goodAnswer": "Stop shoulder loading for this session; routine referral: a GP or physiotherapist.",
+      "goodAnswer": "Stop shoulder loading for this session; routine referral: a primary care provider or a physical therapist.",
       "safety": "SAFETY.md section 4"
     },
     {
       "prompt": "A 16-year-old says the shoulder hurts after training.",
-      "goodAnswer": "Stop shoulder loading; urgent: tell a parent or carer; an urgent GP appointment or NHS 111 the same day for referral to trauma and orthopaedics.",
+      "goodAnswer": "Stop shoulder loading; urgent: tell a parent or guardian; urgent care or their primary care provider the same day, for assessment and, if needed, referral to orthopedics.",
       "safety": "SAFETY.md sections 2 and 4"
     },
     {
@@ -127,7 +128,7 @@
           "Is there anything you cannot do with the arm that you could do recently, like lifting it yourself?",
           "Does it hurt at night, or is it getting worse?",
           "Do you have a fever or feel unwell? Any chest pain or breathlessness?",
-          "Is a doctor or physiotherapist treating this shoulder or your neck, or have you had surgery on it?",
+          "Is a doctor or physical therapist treating this shoulder or your neck, or have you had surgery on it?",
           "For younger clients: are you under 18?"
         ],
         "support": "practice-based",
@@ -137,7 +138,7 @@
         "kind": "callout",
         "content": {
           "label": "Emergency",
-          "text": "Emergency: call emergency services now (999 in the UK). Chest pain that feels tight, crushing or squeezing, or chest pain that spreads to the arm, neck or jaw; severe difficulty breathing; the person collapses or does not respond normally. After an injury (a fall, an impact, a joint that \"popped out\", a seizure or an electric shock), the client cannot move the arm, or the shoulder looks out of place or has changed shape. Do not move the arm or try to put it back. Do not let the client drive themselves. Signs of a joint infection: the shoulder is suddenly very painful and red or warm, or the client has a fever or feels unwell with shoulder pain. Use the highest tier that any sign matches."
+          "text": "Emergency: call 911 or go to the emergency department (ER) now. Chest pain that feels tight, crushing or squeezing, or chest pain that spreads to the arm, neck or jaw; severe difficulty breathing; the person collapses or does not respond normally. After an injury (a fall, an impact, a joint that \"popped out\", a seizure or an electric shock), the client cannot move the arm, or the shoulder looks out of place or has changed shape. Do not move the arm or try to put it back. Do not let the client drive themselves. Signs of a joint infection: the shoulder is suddenly very painful and red or warm, or the client has a fever or feels unwell with shoulder pain. Use the highest tier that any sign matches."
         },
         "support": "practice-based",
         "claimIds": []
@@ -146,7 +147,7 @@
         "kind": "callout",
         "content": {
           "label": "Urgent",
-          "text": "Urgent: an urgent GP appointment or NHS 111 today (or the local equivalent). Sudden or very bad shoulder pain. New loss of active movement without an injury: the client cannot lift or move the arm themselves, even if it can be moved for them. After an injury, pain and weakness, while the arm still moves and the shoulder looks normal (possible acute cuff tear). BESS asks for urgent specialist assessment at the next available clinic; its 2014 guide gives under 2 weeks. Any other new shoulder pain that started after an injury or accident, such as a fall. The arm or shoulder has changed shape or is badly swollen, with no injury and no sign of infection. Pins and needles that do not go away, or no feeling in the arm or shoulder. The arm or shoulder feels hot or cold to the touch, with no sign of infection (no sudden severe pain with redness or warmth, no fever, not unwell). Severe pain in both shoulders. A new lump, mass or swelling around the shoulder. New pain, swelling or stiffness in several joints at once. A child or adolescent with shoulder pain: urgent GP or NHS 111 the same day, for referral to trauma and orthopaedics; tell a parent or carer. Use the highest tier that any sign matches."
+          "text": "Urgent: urgent care or the client's primary care provider (PCP), the same day. Sudden or very bad shoulder pain. New loss of active movement without an injury: the client cannot lift or move the arm themselves, even if it can be moved for them. After an injury, pain and weakness, while the arm still moves and the shoulder looks normal (possible acute cuff tear). BESS asks for urgent specialist assessment at the next available clinic; its 2014 guide gives under 2 weeks. Any other new shoulder pain that started after an injury or accident, such as a fall. The arm or shoulder has changed shape or is badly swollen, with no injury and no sign of infection. Pins and needles that do not go away, or no feeling in the arm or shoulder. The arm or shoulder feels hot or cold to the touch, with no sign of infection (no sudden severe pain with redness or warmth, no fever, not unwell). Severe pain in both shoulders. A new lump, mass or swelling around the shoulder. New pain, swelling or stiffness in several joints at once. A child or adolescent with shoulder pain: urgent care or the PCP the same day, for assessment and, if needed, referral to orthopedics; tell a parent or guardian. Use the highest tier that any sign matches."
         },
         "support": "practice-based",
         "claimIds": []
@@ -155,7 +156,7 @@
         "kind": "callout",
         "content": {
           "label": "Routine",
-          "text": "Routine: a GP or physiotherapist (many areas allow self-referral to physiotherapy). Shoulder pain that is getting worse. Refer now; do not wait for 2 weeks to pass. Shoulder pain that is not getting worse but has not improved after 2 weeks. Moving the arm or shoulder is very difficult, but the client can still move it themselves. Pain and stiffness that do not go away, including pain that is worse at night. Pain that persists after the trainer has removed the provoking movements. Use the highest tier that any sign matches."
+          "text": "Routine: a primary care provider or a licensed physical therapist (direct access to physical therapy varies by state). Shoulder pain that is getting worse. Refer now; do not wait for 2 weeks to pass. Shoulder pain that is not getting worse but has not improved after 2 weeks. Moving the arm or shoulder is very difficult, but the client can still move it themselves. Pain and stiffness that do not go away, including pain that is worse at night. Pain that persists after the trainer has removed the provoking movements. Use the highest tier that any sign matches."
         },
         "support": "practice-based",
         "claimIds": []
@@ -291,9 +292,9 @@
       {
         "kind": "checklist",
         "content": [
-          "Urgent: \"You can't lift your arm yourself today, and that's new. We'll stop the shoulder work now. Please get it checked today: call your GP for an urgent appointment, or NHS 111.\"",
-          "Routine, with no other warning sign: \"Your shoulder hasn't improved in two weeks. Book in with your GP or a physiotherapist. Today we'll leave the shoulder out of training.\"",
-          "Emergency: call emergency services yourself, stay with the client, and follow the emergency list above.",
+          "Urgent: \"You can't lift your arm yourself today, and that's new. We'll stop the shoulder work now. Please get it checked today, at urgent care or with your primary care provider.\"",
+          "Routine, with no other warning sign: \"Your shoulder hasn't improved in two weeks. Please make an appointment with your primary care provider or a physical therapist. Today we'll leave the shoulder out of training.\"",
+          "Emergency: call 911 yourself, stay with the client, and follow the emergency list above.",
           "Never name a condition, and never say it is nothing."
         ],
         "support": "practice-based",
