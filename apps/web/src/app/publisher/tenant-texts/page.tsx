@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AppHeader, ErrorNote } from "@/components/ui";
-import { parseDecision } from "@/lib/publisher/admission";
+import { errorMessage, parseDecision } from "@/lib/publisher/admission";
 import { heldTexts, publisherClient, type HeldTextRow } from "@/lib/publisher/load";
 
 // The publisher admission screen (P4-A2: "a LEAD tool, not tenant UI"). Content publishers review
@@ -16,11 +16,6 @@ const PATH = "/publisher/tenant-texts";
 
 export const metadata: Metadata = { title: "Held texts awaiting admission", robots: { index: false } };
 
-const ERRORS: Record<string, string> = {
-  input: "This decision could not be read. Reload the page and try again.",
-  reason: "Give a reason to reject.",
-  decision: "The decision was refused: the text may have changed, been replaced or already been decided. Reload and review it again.",
-};
 
 export default function PublisherTenantTexts(props: PageProps<"/publisher/tenant-texts">) {
   return (
@@ -40,7 +35,7 @@ export default function PublisherTenantTexts(props: PageProps<"/publisher/tenant
 async function decide(form: FormData) {
   "use server";
   const parsed = parseDecision(form);
-  if (!parsed.ok) redirect(`${PATH}?error=${parsed.error === ERRORS.reason ? "reason" : "input"}`);
+  if (!parsed.ok) redirect(`${PATH}?error=${parsed.error === errorMessage("reason") ? "reason" : "input"}`);
   const supabase = await publisherClient();
   const { textId, textHash, decision, reason } = parsed.value;
   const { error } = await supabase.rpc("admission_decide_tenant_text", { p_text: textId, p_decision: { decision, reason, textHash } });
@@ -53,7 +48,7 @@ async function Admission({ searchParams }: PageProps<"/publisher/tenant-texts">)
   await connection();
   const supabase = await publisherClient();
   const [rows, sp] = await Promise.all([heldTexts(supabase), searchParams]);
-  const error = typeof sp.error === "string" ? ERRORS[sp.error] : undefined;
+  const error = errorMessage(sp.error);
   const pending = rows.filter((r) => r.status === "pending" && !r.superseded);
   const history = rows.filter((r) => !(r.status === "pending" && !r.superseded));
   const byGym = Map.groupBy(pending, (r) => r.org_id);

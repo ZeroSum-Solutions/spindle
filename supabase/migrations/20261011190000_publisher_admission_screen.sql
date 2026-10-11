@@ -16,9 +16,10 @@ end;
 $$;
 
 /**
- * Every saved held text with its gym, slot, course, full text, hash and decision state, newest
- * first, for review by a content publisher. `superseded` marks a value a newer save replaced (it can
- * no longer be decided). At most 500 rows.
+ * Held texts for review by a content publisher, with their gym, slot, course, full text, hash and
+ * decision state. Every pending value that can still be decided is returned, never capped, so a
+ * queue item cannot fall out of view; the history (decided, revoked, cleared and superseded values)
+ * is the newest 500. `superseded` marks a value a newer save replaced (it can no longer be decided).
  */
 create function public.admission_tenant_texts()
 returns table (
@@ -33,19 +34,25 @@ begin
     raise exception 'not a content publisher' using errcode = '42501';
   end if;
   return query
-    select t.id, t.org_id, o.name, o.slug, t.slot, t.course_id, c.title, t.text, t.text_hash, t.rules_version, t.saved_at,
-           private.tenant_text_status(t.id),
-           exists (select 1 from private.tenant_texts n where n.org_id = t.org_id and n.slot = t.slot
-                   and n.course_id is not distinct from t.course_id and n.seq > t.seq),
-           a.decided_by, a.decided_at, a.reason, r.revoked_at, r.reason
-    from private.tenant_texts t
-    join public.orgs o on o.id = t.org_id
-    left join public.courses c on c.id = t.course_id
-    left join private.tenant_text_admissions a on a.text_id = t.id
-    left join private.tenant_text_revocations r on r.text_id = t.id
-    where t.text is not null
-    order by t.seq desc
-    limit 500;
+    with held as (
+      select t.id, t.org_id, o.name, o.slug, t.slot, t.course_id, c.title, t.text, t.text_hash, t.rules_version, t.saved_at, t.seq,
+             private.tenant_text_status(t.id) as status,
+             exists (select 1 from private.tenant_texts n where n.org_id = t.org_id and n.slot = t.slot
+                     and n.course_id is not distinct from t.course_id and n.seq > t.seq) as superseded,
+             a.decided_by, a.decided_at, a.reason, r.revoked_at, r.reason as revocation_reason
+      from private.tenant_texts t
+      join public.orgs o on o.id = t.org_id
+      left join public.courses c on c.id = t.course_id
+      left join private.tenant_text_admissions a on a.text_id = t.id
+      left join private.tenant_text_revocations r on r.text_id = t.id
+      where t.text is not null
+    ),
+    queue as (select * from held h where h.status = 'pending' and not h.superseded),
+    history as (select * from held h where not (h.status = 'pending' and not h.superseded) order by h.seq desc limit 500)
+    select q.id, q.org_id, q.name, q.slug, q.slot, q.course_id, q.title, q.text, q.text_hash, q.rules_version, q.saved_at,
+           q.status, q.superseded, q.decided_by, q.decided_at, q.reason, q.revoked_at, q.revocation_reason
+    from (select * from queue union all select * from history) q
+    order by q.seq desc;
 end;
 $$;
 

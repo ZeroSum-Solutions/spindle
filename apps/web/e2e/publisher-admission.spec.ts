@@ -40,16 +40,19 @@ test("is a hard 404 for anyone who is not a content publisher", async ({ browser
   }
 });
 
-test("adversarial requests: encoded paths, RSC, direct RPCs and forged-origin actions never decide a text", async ({ browser, request }) => {
+test("adversarial requests: encoded paths, RSC, direct RPCs and forged-origin actions never decide a text", async ({ browser, request, baseURL }) => {
+  // Absolute URLs, so a doubled slash is a path and not a protocol-relative host.
+  const at = (path: string) => `${baseURL}${path}`;
   // Encoded and doubled spellings and RSC requests are 404 too, signed out and signed in.
   for (const path of ["/%70ublisher/tenant-texts", "//publisher/tenant-texts", "/publisher/../publisher/tenant-texts", "/Publisher/Tenant-Texts"]) {
-    expect((await request.get(path, { maxRedirects: 0 })).status(), `anon ${path}`).toBe(404);
+    // A doubled slash is first redirected (308) to the canonical path, which is then 404.
+    expect((await request.get(at(path))).status(), `anon ${path}`).toBe(404);
   }
   for (const who of ["owner", "trainer", "outsider"]) {
     const page = await signIn(browser, actors[who]!, "/gyms");
     for (const path of [PATH, "/%70ublisher/tenant-texts"]) {
-      expect((await page.request.get(path)).status(), `${who} ${path}`).toBe(404);
-      const rsc = await page.request.get(`${path}?_rsc=x`, { headers: { RSC: "1" } });
+      expect((await page.request.get(at(path))).status(), `${who} ${path}`).toBe(404);
+      const rsc = await page.request.get(at(`${path}?_rsc=x`), { headers: { RSC: "1" } });
       expect(rsc.status(), `${who} RSC ${path}`).toBe(404);
       expect(await rsc.text()).not.toContain("Lift well. Coach better.");
     }
@@ -68,8 +71,9 @@ test("adversarial requests: encoded paths, RSC, direct RPCs and forged-origin ac
   expect(forged.error).not.toBeNull();
   // A server action posted with a foreign Origin, as the publisher, is refused by Next before it runs.
   const pub = await signIn(browser, actors.pub!, PATH);
-  const actionId = await pub.locator('form input[name^="$ACTION_ID_"]').first().getAttribute("name");
-  expect(actionId).toBeTruthy();
+  // React replaces the form action on hydration; the server HTML still names the action.
+  const actionId = (await (await pub.request.get(at(PATH))).text()).match(/name="(\$ACTION_ID_[^"]+)"/)?.[1];
+  expect(actionId, "action id in the server HTML").toBeTruthy();
   const forgedPost = await pub.request.post(PATH, {
     headers: { Origin: "https://attacker.example" },
     multipart: { [actionId!]: "", textId: texts.headline!, textHash: hash, decision: "admitted", reason: "forged" },
@@ -83,7 +87,8 @@ test("adversarial requests: encoded paths, RSC, direct RPCs and forged-origin ac
 test("an unknown error key shows no message and does not break the page", async ({ browser }) => {
   const page = await signIn(browser, actors.pub!, `${PATH}?error=__proto__`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Held texts awaiting admission");
-  await expect(page.getByRole("alert")).toHaveCount(0);
+  // Scoped to main: Next keeps its own route announcer (role="alert") outside it.
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
 });
 
 test("a publisher sees each pending text in full, with its slot, gym and hash", async ({ browser }) => {

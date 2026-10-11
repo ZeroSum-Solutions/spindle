@@ -26,7 +26,13 @@ export function parseDecision(form: FormData): { ok: true; value: DecisionInput 
   return { ok: true, value: { ...parsed.data, reason: reason || DEFAULT_ADMIT_REASON } };
 }
 
-/** The page's fixed error message for a `?error=` key, or undefined for anything else. */
-export function errorMessage(_key: unknown): string | undefined {
-  return undefined;
+const ERRORS: Readonly<Record<string, string>> = {
+  input: "This decision could not be read. Reload the page and try again.",
+  reason: "Give a reason to reject.",
+  decision: "The decision was refused: the text may have changed, been replaced or already been decided. Reload and review it again.",
+};
+
+/** The page's fixed error message for a `?error=` key; inherited or unknown keys give nothing. */
+export function errorMessage(key: unknown): string | undefined {
+  return typeof key === "string" && Object.hasOwn(ERRORS, key) ? ERRORS[key] : undefined;
 }

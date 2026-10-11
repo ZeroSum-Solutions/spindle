@@ -97,7 +97,9 @@ select ok((select count(*) from public.admission_tenant_texts() where not (statu
   'only the history is capped, at 500 rows');
 
 -- Adversarial wrapper calls: replay, a superseded value, unknown ids; none leaves a receipt.
+select pg_temp.reset_role();
 select set_config('test.receipts', (select count(*)::text from private.tenant_text_admissions), true);
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000c1');
 select throws_ok(format($$ select public.admission_decide_tenant_text(%L, jsonb_build_object('decision', 'rejected', 'reason', 'x', 'textHash', %L)) $$,
   current_setting('test.t1'), current_setting('test.h1')), 'P0001', null, 'a second decision on the same value is refused');
 select throws_ok(format($$ select public.admission_decide_tenant_text(%L, jsonb_build_object('decision', 'admitted', 'reason', 'x', 'textHash', %L)) $$,
