@@ -55,4 +55,25 @@ describe("stripTags", () => {
     expect(out.isRetracted).toBe(true);
     expect(out.retractionEvidence).toContain("title:retraction");
   });
+
+  it("removes escaped markup written with numeric delimiters or unnamespaced JATS names (Sol R2 R04)", () => {
+    expect(stripTags("A&lt;break/&gt;B")).toBe("A B");
+    expect(stripTags("&#60;jats:p&#62;Result&#60;/jats:p&#62;")).toBe("Result");
+    expect(stripTags("&#x3C;italic&#x3E;Result&#x3c;/italic&#x3e;")).toBe("Result");
+    expect(stripTags('&lt;named-content content-type=&#34;x&#34;&gt;Text&lt;/named-content&gt;')).toBe("Text");
+    expect(stripTags("a &#60; b and c &#62; d")).toBe("a < b and c > d");
+  });
+
+  it("keeps text that only looks like a tag (Sol R2 R05)", () => {
+    expect(stripTags("P<alpha; pooled effect>0.5. Conclusion.")).toBe("P<alpha; pooled effect>0.5. Conclusion.");
+    expect(stripTags("risk<x and y>0 remained")).toBe("risk<x and y>0 remained");
+    expect(stripTags("n<5 vs n>10")).toBe("n<5 vs n>10");
+    expect(stripTags('<sec id="s1"><title>Methods</title></sec>')).toBe("Methods");
+  });
+
+  it("removes a processing instruction through its ?> (Sol R2 R06)", () => {
+    expect(stripTags("a<?tex x > y?>b")).toBe("a b");
+    expect(stripTags("a <?unterminated x > y")).toBe("a <?unterminated x > y");
+  });
 });
+
