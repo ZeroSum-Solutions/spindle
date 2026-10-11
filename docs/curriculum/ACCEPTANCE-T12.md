@@ -34,6 +34,17 @@ The same flow was rehearsed three times on an isolated scratch database. Rehears
    export SPINDLE_MODULE_STATE_DIR=~/Private/spindle/state-shared  # new, empty: state is bound to one publisher and database
    ```
    Each directory must be outside the repository, with mode 700 (`mkdir -p … && chmod 700 …`). The state directory **must be new**. A state file written for scratch is refused on the shared database, and that refusal is correct.
+5. **App and browser target, before any sign-in.** Every account in this runbook is created by an OTP sign-in through the app, so the app must be bound to the local stack first.
+   - The app reads `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from its process environment, with `apps/web/.env.local` as the fallback. It does not read `SPINDLE_DB_URL`, and it accepts remote URLs.
+   - Set both in the server's own environment so the effective values are known, without printing the key. Stop if either check fails:
+     ```sh
+     cd ~/projects/spindle
+     eval "$(supabase status -o env | grep '^PUBLISHABLE_KEY=')"
+     test -n "$PUBLISHABLE_KEY"
+     NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" mise exec -- pnpm --filter web dev --port 3000
+     ```
+   - Before the first account, verify the effective target in a fresh browser. Open `http://127.0.0.1:3000/sign-in` and request a code for `t12-probe@spindle.test`. In DevTools, the Auth request must go to `http://127.0.0.1:54321/auth/v1/otp`, and the code must arrive in the local Mailpit (`http://127.0.0.1:54324`).
+   - Only a code arriving in the local Mailpit proves the app is on the local stack. Do not finish the probe sign-in.
 
 ## 1. Back up first
 
@@ -55,10 +66,16 @@ set +euo pipefail
 Keep the file name. Restoring is a LEAD decision. It runs as one transaction and stops at the first error, so a failed restore leaves the database as it was:
 
 ```sh
-docker cp ~/Backups/spindle/shared-pre-t12-$ts.dump supabase_db_spindle:/tmp/restore.dump
-docker exec supabase_db_spindle pg_restore -U postgres -d postgres --clean --if-exists --single-transaction --exit-on-error /tmp/restore.dump \
+set -euo pipefail
+tmp=/tmp/restore-t12-$(date -u +%Y%m%dT%H%M%SZ)-$$.dump
+docker cp ~/Backups/spindle/shared-pre-t12-$ts.dump supabase_db_spindle:$tmp \
+  && docker exec supabase_db_spindle pg_restore -U postgres -d postgres --clean --if-exists --single-transaction --exit-on-error $tmp \
   && echo "restore succeeded"
+docker exec supabase_db_spindle rm -f $tmp
+set +euo pipefail
 ```
+
+A failed copy stops the block before `pg_restore`, so an older file can never be restored by mistake.
 
 Only "restore succeeded" counts as recovered.
 
@@ -114,10 +131,10 @@ Source the environment, then run from `packages/evidence`:
 | 4 | `mise exec -- pnpm exec tsx scripts/module.ts claims --drafts ../../content/shoulder/drafts` | 22 claim slots mapped, `claim-ids.txt` written, exit 0 |
 | 5 | `mise exec -- pnpm exec tsx scripts/module.ts course --module ../../content/shoulder/module.json --drafts ../../content/shoulder/drafts` | course 99bc81db-798f-5c4a-b01a-bcba6eeef23f saved with 8 lessons |
 | – | the two `--dry-run` commands in step 2 | packet digests, exit 0 |
-| 6 | `mise exec -- pnpm exec tsx scripts/review.ts --claims "$(cat "$SPINDLE_MODULE_STATE_DIR/claim-ids.txt")" --timeout-ms 3600000` | exit 0, a Sol session id, 22 verdicts `approve` |
+| 6 | `mise exec -- pnpm exec tsx scripts/review.ts --claims "$(cat "$SPINDLE_MODULE_STATE_DIR/claim-ids.txt")" --timeout-ms 3600000` | exit 0, a Sol session id, one `approve` per line of `claim-ids.txt` (22 at main 56e8120) |
 | 7 | `mise exec -- pnpm exec tsx scripts/record-review.ts --dir "$SPINDLE_REVIEW_DIR/<printed digest>"` | 22 receipts recorded |
-| 8 | `mise exec -- pnpm exec tsx scripts/review.ts --course "$(cat "$SPINDLE_MODULE_STATE_DIR/course-id.txt")" --safety ../../docs/curriculum/SAFETY.md --timeout-ms 3600000` | exit 0, a Sol session id, 51 items: 42 science blocks `supported`, 8 lessons and the course `clean` |
-| 9 | `mise exec -- pnpm exec tsx scripts/record-review.ts --dir "$SPINDLE_REVIEW_DIR/<printed digest>"` | 51 receipts recorded |
+| 8 | `mise exec -- pnpm exec tsx scripts/review.ts --course "$(cat "$SPINDLE_MODULE_STATE_DIR/course-id.txt")" --safety ../../docs/curriculum/SAFETY.md --timeout-ms 3600000` | exit 0, a Sol session id, and as many items as the course `--dry-run` printed (`buildContentPacket`: claim-bound science blocks + lessons + course). At main 56e8120 that is 54 items: 45 science blocks `supported`, 8 lessons and the course `clean`. |
+| 9 | `mise exec -- pnpm exec tsx scripts/record-review.ts --dir "$SPINDLE_REVIEW_DIR/<printed digest>"` | one receipt per item of step 8 (54 at main 56e8120) |
 | 10 | `mise exec -- pnpm exec tsx scripts/publish.ts --course "$(cat "$SPINDLE_MODULE_STATE_DIR/course-id.txt")"` | retraction recheck: 19 sources, none retracted; prints the **version id** |
 
 **On any refusal, stop.**
@@ -171,15 +188,9 @@ Before the acceptance session, `module_status(:'assignment')` run as the learner
 
 ## 5. The acceptance run (fresh session)
 
-Use a fresh browser profile or a new EGO Lite task space, with no cookies. The app runs from the main checkout (`mise exec -- pnpm dev`, :3000) against the shared stack.
+Use a fresh browser profile or a new EGO Lite task space, with no cookies. The app runs from the main checkout on :3000 against the shared stack.
 
-**Check the browser's database target first.** The app reads `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from `apps/web/.env.local` (see [TESTING.md](../TESTING.md)), not `SPINDLE_DB_URL`, and it accepts remote URLs. Before signing in:
-
-```sh
-grep -x 'NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321' apps/web/.env.local   # must print the line
-```
-
-Then confirm that the publishable key is the local stack's, by comparing it locally without printing it.
+Use the app server started in step 0.5, with the target already verified. If the server was restarted, repeat that verification before signing in.
 
 Keep screenshots and notes in `~/.claude/goal-state/spindle/receipts/T12/`, outside the repository. Step 6 lists what to record there.
 
@@ -200,9 +211,9 @@ Pick three explanation fragments from that list for the payload checks (A3b).
 | A3 | Open **each** of the 8 lessons | Every block renders. Science blocks show the Science label and "Show sources" with the real sources. Practice blocks are labelled practice-based and carry no sources. All 8 diagrams show their drawing and legend (every shoulder diagram id is in the registry since #35; a missing drawing fails A3). Graded questions show the prompt only, never options with the answer marked or the explanation. Safety warnings point to the stop rules and "When to refer out". |
 | A3b | **Payload leak check, before any attempt.** In the signed-in tab's console, for the quiz page and for each lesson with graded questions, fetch the page twice, once plain and once with the RSC header: `await (await fetch(path)).text()` and `await (await fetch(path, { headers: { RSC: "1" } })).text()` | No body contains `"answerIndex"` or any of the three explanation fragments, and each body is longer than 500 characters (a real page, not an error). This is the pattern in `apps/web/e2e/player-quiz.spec.ts`. |
 | A4 | Complete each lesson | Each completion sticks after a reload; progress reaches 8 of 8; `module_status` shows `lessons_completed 8` and `complete false` (the quiz is still due) |
-| A5 | **Failing attempt, one below the line:** answer exactly 16 correctly (5 wrong) and submit | Result: not passed, 16 of 21. No answers or explanations are shown. Repeat the A3b payload check: still no key or explanation. `quiz_attempt_review(<attempt>)` as the learner is refused (message contains "the answer review opens after a passing attempt"). `complete false`. |
+| A5 | **Failing attempt, one below the line:** answer exactly 16 correctly (5 wrong) and submit | Result: not passed, 16 of 21. No answers or explanations are shown. Repeat the A3b payload check: still no key or explanation. In DevTools, open the submission's POST to the quiz page (the server action, with a `Next-Action` header). Its response must carry the score only (16 of 21, not passed), with no `"answerIndex"` and none of the three explanation fragments. `quiz_attempt_review(<attempt>)` as the learner is refused (message contains "the answer review opens after a passing attempt"). `complete false`. |
 | A6 | **Passing attempt, exactly on the line:** answer exactly 17 correctly (4 wrong) and submit | Result: passed, 17 of 21. The answer review opens with the explanations. `module_status` shows `quiz_passed true`, `complete true`. Record this attempt id for N4. |
-| A7 | **Persistence:** sign out, close the browser, then sign in again in a new fresh session | 8 of 8 lessons complete, quiz passed, module complete. No duplicate completions: `select count(*) from public.lesson_completions where user_id = '…a002'` is 8. Reloading and re-completing changes nothing. |
+| A7 | **Persistence:** sign out, close the browser, then sign in again in a new fresh session | 8 of 8 lessons complete, quiz passed, module complete. No duplicate completions: as the owner, `select count(*) from public.lesson_completions where user_id = :'learner' and org_id = :'org' and version_id = '<version id>'` is 8 (the unique key on org, user, version and lesson makes a duplicate impossible; this proves all 8 landed). Reloading and re-completing changes nothing. |
 
 **Negatives (each must fail closed):**
 
