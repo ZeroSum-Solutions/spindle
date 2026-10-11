@@ -3,7 +3,7 @@ import type { LessonBlock, LessonResource, MediaAsset } from "@spindle/schema";
 import type { ClaimView } from "../../lib/learning/load";
 import { resolveContentUrl, resolveMediaUrl } from "../../lib/learning/media";
 import { ClaimDisclosure } from "./claim-disclosure";
-import { DIAGRAMS, DiagramFigure } from "./diagrams";
+import { DiagramFigure, diagramFor } from "./diagrams";
 import { SupportLabel } from "./labels";
 import { MediaImage, MediaUnavailable, MediaVideo } from "./media-image";
 import { QuizSelfCheck } from "./quiz-self-check";
@@ -34,7 +34,7 @@ function Block({ block, index, ctx, showLabel }: { block: LessonBlock; index: nu
     case "image":
       return <Figure asset={block.content} orgId={ctx.orgId} />;
     case "diagram": {
-      const entry = DIAGRAMS[block.content.diagramId];
+      const entry = diagramFor(block.content.diagramId);
       if (entry) {
         return (
           <figure data-block="diagram" data-diagram="available" className="flex flex-col gap-2">

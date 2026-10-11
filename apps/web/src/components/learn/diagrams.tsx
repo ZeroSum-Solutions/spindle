@@ -30,6 +30,15 @@ export const DIAGRAMS: Readonly<Record<string, DiagramEntry>> = {
   },
 };
 
+/**
+ * The drawing for a diagram id, or undefined. Only the registry's own keys count: an id
+ * like "toString" or "constructor" passes the content schema but must not resolve to an
+ * inherited property.
+ */
+export function diagramFor(id: string): DiagramEntry | undefined {
+  return Object.hasOwn(DIAGRAMS, id) ? DIAGRAMS[id] : undefined;
+}
+
 export function DiagramFigure({ entry }: { entry: DiagramEntry }) {
   return (
     <div className="flex flex-col gap-3 rounded-card bg-surface-muted p-4 md:p-6">
