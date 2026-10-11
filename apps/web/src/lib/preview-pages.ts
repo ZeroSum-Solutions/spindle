@@ -44,3 +44,12 @@ export function isTestOnlyPath(pathname: string): boolean {
   const path = canonicalPath(pathname);
   return TEST_ONLY_PAGES.some((page) => path === page || path.startsWith(`${page}/`) || path.startsWith(`${page}.`));
 }
+
+/** Publisher-only pages (the admission screen). The proxy answers 404 unless the caller is a content publisher. */
+export const PUBLISHER_PAGES: readonly string[] = ["/publisher"];
+
+/** True when a request path reaches a publisher-only page, in any spelling (canonical, as for test-only pages). */
+export function isPublisherPath(pathname: string): boolean {
+  const path = canonicalPath(pathname);
+  return PUBLISHER_PAGES.some((page) => path === page || path.startsWith(`${page}/`) || path.startsWith(`${page}.`));
+}

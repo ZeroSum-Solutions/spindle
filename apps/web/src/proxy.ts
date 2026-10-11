@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isTestOnlyPath, previewPagesEnabled } from "./lib/preview-pages";
+import { isPublisherPath, isTestOnlyPath, previewPagesEnabled } from "./lib/preview-pages";
 
 const PROTECTED = ["/gyms"];
 
@@ -35,6 +35,15 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const signedIn = Boolean(data?.claims?.sub);
   const path = request.nextUrl.pathname;
+  // Publisher-only pages are a real 404 (status and body) for everyone who is not a content
+  // publisher, signed in or not. The page repeats the check at request time.
+  if (isPublisherPath(path)) {
+    const { data: isPublisher, error } = signedIn ? await supabase.rpc("is_content_publisher") : { data: false, error: null };
+    if (error || isPublisher !== true) {
+      return apply(new NextResponse("Not found", { status: 404, headers: { "Cache-Control": "no-store" } }), pendingCookies, pendingHeaders);
+    }
+    response.headers.set("Cache-Control", "no-store");
+  }
   if (!signedIn && PROTECTED.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) {
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";

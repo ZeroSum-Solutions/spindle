@@ -1313,6 +1313,58 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { invite_token: string }; Returns: string }
+      admission_decide_tenant_text: {
+        Args: { p_decision: Json; p_text: string }
+        Returns: string
+      }
+      admission_pending_tenant_texts: {
+        Args: { p_after?: number; p_limit?: number }
+        Returns: {
+          course_id: string
+          course_title: string
+          decided_at: string
+          decided_by: string
+          org_id: string
+          org_name: string
+          org_slug: string
+          reason: string
+          revocation_reason: string
+          revoked_at: string
+          rules_version: string
+          saved_at: string
+          seq: number
+          slot: string
+          status: string
+          superseded: boolean
+          text: string
+          text_hash: string
+          text_id: string
+        }[]
+      }
+      admission_tenant_texts: {
+        Args: never
+        Returns: {
+          course_id: string
+          course_title: string
+          decided_at: string
+          decided_by: string
+          org_id: string
+          org_name: string
+          org_slug: string
+          reason: string
+          revocation_reason: string
+          revoked_at: string
+          rules_version: string
+          saved_at: string
+          seq: number
+          slot: string
+          status: string
+          superseded: boolean
+          text: string
+          text_hash: string
+          text_id: string
+        }[]
+      }
       assign_version: {
         Args: { p_org: string; p_user: string; p_version: string }
         Returns: string
@@ -1337,6 +1389,7 @@ export type Database = {
         Args: { org_name: string; org_slug: string }
         Returns: string
       }
+      is_content_publisher: { Args: never; Returns: boolean }
       member_brand: { Args: { p_org: string }; Returns: Json }
       member_course_cards: { Args: { p_org: string }; Returns: Json }
       member_tenant_texts: {

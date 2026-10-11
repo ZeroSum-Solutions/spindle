@@ -219,6 +219,7 @@ export class PlayerWorld {
   /** Every email this run asks Auth for, recorded before the code is requested so cleanup can find it even if sign-in fails. */
   readonly emails = new Set<string>();
   readonly actors = new Map<string, Actor>();
+  private readonly clients = new Map<string, SupabaseClient>();
   readonly orgs = new Map<string, { id: string; slug: string }>();
   readonly courses: string[] = [];
   readonly uploads: { client: SupabaseClient; bucket: string; name: string }[] = [];
@@ -245,6 +246,7 @@ export class PlayerWorld {
     this.emails.add(email);
     const { client, id } = await userClient(email);
     this.actors.set(name, { email, id });
+    this.clients.set(name, client);
     return { email, id, client };
   }
 
@@ -378,6 +380,28 @@ export class PlayerWorld {
       .at(-1)!;
   }
 
+  /** Grants a signed-in actor the content-publisher role (setup, as the database owner; removed with the account). */
+  makePublisher(actor: Actor): void {
+    sql(`insert into private.content_publishers (user_id, note) values (${lit(actor.id)}, 'synthetic admission-screen e2e');`);
+  }
+
+  /** A held text's stored hash. */
+  textHash(textId: string): string {
+    return sql(`select text_hash from private.tenant_texts where id = ${lit(textId)};`);
+  }
+
+  /** The signed-in Supabase client of a named actor (publishable key, the actor's own session). */
+  client(name: string): SupabaseClient {
+    const c = this.clients.get(name);
+    if (!c) throw new Error(`no client for ${name}`);
+    return c;
+  }
+
+  /** The current status of a held text (pending, admitted, rejected, revoked or cleared). */
+  textStatus(textId: string): string {
+    return sql(`select private.tenant_text_status(${lit(textId)});`);
+  }
+
   /** P4-A2: the owner saves the gym's brand through save_org_brand (which repeats the AA checks). */
   saveBrand(org: { id: string }, owner: Actor, brand: Json): void {
     sql(`begin; ${asUser(owner.id)} select public.save_org_brand(${lit(org.id)}, ${lit(JSON.stringify(brand))}::jsonb); commit;`);
@@ -400,6 +424,37 @@ export class PlayerWorld {
     return sql(`begin; ${asUser(author.id)} select public.save_tenant_text(${lit(org.id)}, ${lit(slot)}, ${courseId ? lit(courseId) : "null"}, ${lit(text)}); commit;`)
       .split("\n")
       .at(-1)!;
+  }
+
+  /**
+   * `n` synthetic gyms owned by `owner`, each holding one pending catalog headline, created in one
+   * transaction through create_org and save_tenant_text. Returns the held text ids; the gyms are
+   * registered for cleanup (their texts go with them).
+   */
+  bulkPending(key: string, owner: Actor, n: number): string[] {
+    // Chunks of 100, each in its own transaction with the statement timeout lifted for that
+    // transaction only: the lexical screen runs once per saved text.
+    // A chunk that fails rolls back whole; every committed chunk's gyms are registered for cleanup
+    // before the next chunk runs.
+    const textIds: string[] = [];
+    for (let from = 1; from <= n; from += 100) {
+      const to = Math.min(n, from + 99);
+      const lines = sql(`begin; set local statement_timeout = 0; ${asUser(owner.id)}
+        select i || ',' || o.id::text || ',' || public.save_tenant_text(o.id, 'catalog_headline', null, ${lit(`Synthetic ${key} headline `)} || i)::text
+          from generate_series(${from}, ${to}) i,
+          lateral (select public.create_org(${lit(`Synthetic gym ${key.toUpperCase()} `)} || i, ${lit(`player-${key}-`)} || i || ${lit(`-${this.run}`)}) as id) o
+          order by i;
+        commit;`)
+        .split("\n")
+        .filter((line) => /^\d+,[0-9a-f-]{36},[0-9a-f-]{36}$/.test(line));
+      for (const line of lines) {
+        const [i, orgId, textId] = line.split(",") as [string, string, string];
+        this.orgs.set(`${key}-${i}`, { id: orgId, slug: `player-${key}-${i}-${this.run}` });
+        textIds.push(textId);
+      }
+      if (lines.length !== to - from + 1) throw new Error(`bulkPending: chunk ${from}-${to} returned ${lines.length} rows`);
+    }
+    return textIds;
   }
 
   /** P4-A2: the publisher admits a held text through publisher_decide_tenant_text (never a direct receipt row). */
