@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ModuleStatus } from "@spindle/schema";
+import { parseQuizReview, type ModuleStatus } from "@spindle/schema";
 import type { LearnerQuestion } from "@spindle/engine";
 import { fieldName, moduleQuizHref, MISSING_ANSWERS, moduleStatusView, neededToPass, questionViews, readSubmission, resultState, classifySubmitError } from "./quiz";
 
@@ -117,6 +117,13 @@ describe("resultState (T21: feedback only after a pass, from the server's review
 
   it("never derives passed itself", () => {
     expect(resultState({ attemptId: "a1", correct: 3, total: 3, passed: false }, null).passed).toBe(false);
+  });
+
+  it("parses a review whose explanation is as long as publishing allows (Sol R2 PR22-05)", () => {
+    const long = "x".repeat(4500);
+    const rows = parseQuizReview([{ question_id: "l1:q1", chosen: 1, answer_index: 1, correct: true, explanation: long }]);
+    expect(rows[0]!.explanation).toHaveLength(4500);
+    expect(() => parseQuizReview([{ question_id: "l1:q1", chosen: 1, answer_index: 1, correct: true, explanation: "x".repeat(5001) }])).toThrow();
   });
 });
 

@@ -43,7 +43,7 @@ export interface QuizReviewRow {
 }
 
 export const quizReviewRowSchema = z
-  .strictObject({ question_id: z.string().min(1).max(200), chosen: count, answer_index: count, correct: z.boolean(), explanation: z.string().max(4000) })
+  .strictObject({ question_id: z.string().min(1).max(200), chosen: count, answer_index: count, correct: z.boolean(), explanation: z.string().max(5000) })
   .transform((r): QuizReviewRow => ({ questionId: r.question_id, chosen: r.chosen, answerIndex: r.answer_index, correct: r.correct, explanation: r.explanation }));
 
 /** Module completion as the server works it out (module_status). */
