@@ -149,10 +149,14 @@ export default function DesignSpecimen() {
       <Section title="Course rows">
         <ul className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
           <li>
-            <CourseRow item={{ id: "a1", available: true, view }} base="/design" />
+            <CourseRow
+              item={{ id: "a2", courseId: "c1", versionNumber: 2, available: true, view }}
+              earlier={[{ id: "a1", courseId: "c1", versionNumber: 1, available: true, view: { ...view, versionNumber: 1, done: 3, total: 3 } }]}
+              base="/design"
+            />
           </li>
           <li>
-            <CourseRow item={{ id: "a2", available: false, versionNumber: 4 }} base="/design" />
+            <CourseRow item={{ id: "a4", courseId: "c2", available: false, versionNumber: 4 }} base="/design" />
           </li>
         </ul>
       </Section>

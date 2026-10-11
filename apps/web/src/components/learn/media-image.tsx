@@ -35,7 +35,8 @@ export function MediaUnavailable({ alt }: { alt: string }) {
       className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-card border border-dashed border-control bg-surface-muted p-6 text-center text-text-muted"
     >
       <ImageOff aria-hidden strokeWidth={1.75} className="size-6" />
-      <p className="text-label">Media unavailable: {alt}</p>
+      <p className="text-label">This image is not available.</p>
+      <p className="sr-only">{alt}</p>
     </div>
   );
 }

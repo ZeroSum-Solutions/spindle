@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { carryForwardCredit } from "@spindle/engine";
 import type { Course, LessonBlock } from "@spindle/schema";
 import {
+  byCourse,
   completionsFrom,
   courseView,
   previousVersion,
@@ -183,5 +184,20 @@ describe("previousVersion", () => {
   it("picks the latest older assigned version", () => {
     expect(previousVersion(v3, [v1, v2, v3])?.id).toBe(V2);
     expect(previousVersion(v1, [v1, v2])).toBeUndefined();
+  });
+});
+
+describe("byCourse", () => {
+  it("leads each course with its newest version and keeps course order", () => {
+    const items = [
+      { id: "a1", courseId: "c1", versionNumber: 1 },
+      { id: "m1", courseId: "m", versionNumber: 1 },
+      { id: "a3", courseId: "c1", versionNumber: 3 },
+      { id: "a2", courseId: "c1", versionNumber: 2 },
+    ];
+    expect(byCourse(items).map((g) => [g.latest.id, g.earlier.map((e) => e.id)])).toEqual([
+      ["a3", ["a2", "a1"]],
+      ["m1", []],
+    ]);
   });
 });

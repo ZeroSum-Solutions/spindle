@@ -54,7 +54,7 @@ function Supported({ block, index, ctx }: { block: SupportedBlock; index: number
       <div className="flex flex-wrap items-center gap-2">
         <SupportLabel support={block.support} />
         {retracted ? (
-          <span className="inline-flex items-center gap-1.5 rounded-small bg-danger-soft px-2 py-0.5 text-label font-medium text-danger">
+          <span className="inline-flex items-center gap-1.5 rounded-small bg-caution-soft px-2 py-0.5 text-label font-medium text-caution">
             <TriangleAlert aria-hidden strokeWidth={1.75} className="size-4" />
             Source retracted
           </span>

@@ -4,7 +4,26 @@ import type { AssignmentSummary } from "@/lib/learning/load";
 import { LayerLabel, ProgressBar, ProgressText, VersionTag } from "./labels";
 
 /** One assigned course: title, version, layer, literal progress, change and integrity notes. */
-export function CourseRow({ item, base }: { item: AssignmentSummary; base: string }) {
+export function CourseRow({ item, base, earlier = [] }: { item: AssignmentSummary; base: string; earlier?: AssignmentSummary[] }) {
+  return (
+    <div className="flex flex-col">
+      <LatestRow item={item} base={base} />
+      {earlier.length > 0 ? (
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-4 text-label text-text-muted md:px-6">
+          <span>Earlier versions:</span>
+          {earlier.map((e) => (
+            <Link key={e.id} href={`${base}/${e.id}`} className="inline-flex min-h-11 items-center text-brand underline underline-offset-4 hover:text-brand-hover">
+              v{e.versionNumber}
+              {e.available ? ` · ${e.view.done} of ${e.view.total} done` : " · unavailable"}
+            </Link>
+          ))}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function LatestRow({ item, base }: { item: AssignmentSummary; base: string }) {
   if (!item.available) {
     return (
       <div className="flex flex-col gap-1 p-4 md:px-6">
@@ -20,7 +39,7 @@ export function CourseRow({ item, base }: { item: AssignmentSummary; base: strin
   return (
     <Link href={`${base}/${item.id}`} className="flex flex-col gap-2 p-4 hover:bg-surface-muted md:px-6" data-testid="course-row">
       <span className="flex flex-wrap items-center gap-2">
-        <span className="text-lg font-medium">{view.title}</span>
+        <span className="text-xl font-medium tracking-tight">{view.title}</span>
         <VersionTag n={view.versionNumber} />
       </span>
       <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -33,7 +52,7 @@ export function CourseRow({ item, base }: { item: AssignmentSummary; base: strin
           </span>
         ) : null}
         {view.flaggedClaimIds.length > 0 ? (
-          <span className="inline-flex items-center gap-1 text-label font-medium text-danger">
+          <span className="inline-flex items-center gap-1 text-label font-medium text-caution">
             <TriangleAlert aria-hidden strokeWidth={1.75} className="size-4" />
             Source retracted
           </span>

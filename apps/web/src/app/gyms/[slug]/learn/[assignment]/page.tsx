@@ -84,7 +84,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
                       <span className="font-medium">{lesson.title}</span>
                       <span className="text-label text-text-muted">
                         {lesson.durationMinutes} min · {lesson.format}
-                        {lesson.flagged ? <span className="font-medium text-danger"> · Source retracted</span> : null}
+                        {lesson.flagged ? <span className="font-medium text-caution"> · Source retracted</span> : null}
                       </span>
                       <span className="text-label text-text-muted">
                         <LessonStateDetail lesson={lesson} />

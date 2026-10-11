@@ -235,6 +235,16 @@ export function previousVersion<T extends { versionNumber: number }>(current: T,
     .sort((a, b) => b.versionNumber - a.versionNumber)[0];
 }
 
+/** Groups a learner's assignments by course: the newest version leads, older ones follow newest first. Keeps first-assigned course order. */
+export function byCourse<T extends { courseId: string; versionNumber: number }>(items: readonly T[]): { latest: T; earlier: T[] }[] {
+  const groups = new Map<string, T[]>();
+  for (const item of items) groups.set(item.courseId, [...(groups.get(item.courseId) ?? []), item]);
+  return [...groups.values()].map((group) => {
+    const [latest, ...earlier] = [...group].sort((a, b) => b.versionNumber - a.versionNumber);
+    return { latest: latest!, earlier };
+  });
+}
+
 export const LAYER_LABEL: Record<CurriculumLayer, string> = {
   base: "Base",
   modality: "Modality",

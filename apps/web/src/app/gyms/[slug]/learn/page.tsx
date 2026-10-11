@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { CourseRow } from "@/components/learn/course-row";
 import { LearnShell, LoadingNote } from "@/components/learn/shell";
 import { learnerGym, myAssignments, type AssignmentSummary } from "@/lib/learning/load";
+import { byCourse } from "@/lib/learning/view";
 
 export default function LearnPage(props: PageProps<"/gyms/[slug]/learn">) {
   return (
@@ -24,10 +25,15 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
   const ctx = await learnerGym(slug);
   const items = await myAssignments(ctx);
   const base = `/gyms/${ctx.org.slug}/learn`;
-  const resume = items.find((a): a is Extract<AssignmentSummary, { available: true }> => a.available && a.view.next !== null);
+  const courses = byCourse(items);
+  // Resume only ever points into the newest assigned version of a course.
+  const resume = courses
+    .map((c) => c.latest)
+    .find((a): a is Extract<AssignmentSummary, { available: true }> => a.available && a.view.next !== null);
 
   return (
     <LearnShell gym={ctx.org.name} back={{ href: `/gyms/${ctx.org.slug}`, label: ctx.org.name }}>
+      <div className="flex max-w-3xl flex-col gap-6">
       <h1 className="text-heading font-medium">Your courses</h1>
       {items.length === 0 ? (
         <p className="rounded-card border border-border bg-surface p-6 text-text-muted">Nothing is assigned to you in this gym yet.</p>
@@ -49,14 +55,15 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
             </section>
           ) : null}
           <ul aria-label="Assigned courses" className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
-            {items.map((item) => (
-              <li key={item.id}>
-                <CourseRow item={item} base={base} />
+            {courses.map((course) => (
+              <li key={course.latest.id}>
+                <CourseRow item={course.latest} base={base} earlier={course.earlier} />
               </li>
             ))}
           </ul>
         </>
       )}
+      </div>
     </LearnShell>
   );
 }

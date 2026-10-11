@@ -99,8 +99,8 @@ async function flaggedClaims(ctx: LearnerGym, versionIds: string[]): Promise<Map
 }
 
 export type AssignmentSummary =
-  | { id: string; available: true; view: CourseView }
-  | { id: string; available: false; versionNumber: number };
+  | { id: string; courseId: string; versionNumber: number; available: true; view: CourseView }
+  | { id: string; courseId: string; versionNumber: number; available: false };
 
 /** The caller's assignments in the route gym, each with its own version's progress. */
 export async function myAssignments(ctx: LearnerGym): Promise<AssignmentSummary[]> {
@@ -114,11 +114,12 @@ export async function myAssignments(ctx: LearnerGym): Promise<AssignmentSummary[
 
   return rows.map((r) => {
     const current = versions.get(r.version.id);
-    if (!current) return { id: r.id, available: false, versionNumber: r.version.version_number };
+    const meta = { id: r.id, courseId: r.version.course_id, versionNumber: r.version.version_number };
+    if (!current) return { ...meta, available: false };
     const sameCourse = rows.filter((o) => o.version.course_id === r.version.course_id).map((o) => versions.get(o.version.id));
     const previous = previousVersion(current, sameCourse.filter((v): v is PublishedVersion => Boolean(v)));
     return {
-      id: r.id,
+      ...meta,
       available: true,
       view: courseView({ current, previous, completions, versionNumbers: numbers, flaggedClaimIds: flags.get(r.version.id) ?? [] }),
     };

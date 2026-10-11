@@ -76,10 +76,10 @@ export function LessonStateDetail({ lesson }: { lesson: LessonView }) {
   }
 }
 
-/** Integrity alert. Used for retracted sources; says what happened and what still holds. */
+/** Integrity caution for retracted sources: content stays readable and credit stays; it says so. Red is kept for failures. */
 export function IntegrityAlert({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div role="note" className="flex items-start gap-3 rounded-card border border-danger/30 bg-danger-soft p-4 text-danger">
+    <div role="note" className="flex items-start gap-3 rounded-card border border-caution-border bg-caution-soft p-4 text-caution">
       <TriangleAlert aria-hidden strokeWidth={1.75} className="mt-0.5 size-5 shrink-0" />
       <div className="flex flex-col gap-1">
         <p className="font-medium">{title}</p>

@@ -41,7 +41,7 @@ export function ClaimDisclosure({
               {claim ? (
                 <>
                   {flagged.has(id) ? (
-                    <p className="flex items-center gap-1.5 text-label font-medium text-danger">
+                    <p className="flex items-center gap-1.5 text-label font-medium text-caution">
                       <TriangleAlert aria-hidden strokeWidth={1.75} className="size-4" />
                       A source for this claim was retracted after publishing
                     </p>
@@ -84,7 +84,7 @@ function SourceItem({ source }: { source: SourceView }) {
         {source.locator ? `, ${source.locator}` : ""}
       </p>
       {source.retractedAt ? (
-        <p className="text-label font-medium text-danger">Retracted, recorded {formatDate(source.retractedAt)}</p>
+        <p className="text-label font-medium text-caution">Retracted, recorded {formatDate(source.retractedAt)}</p>
       ) : null}
       <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
         {links.map((l) => (
