@@ -421,6 +421,7 @@ export type Database = {
           course_id: string
           id: string
           layer: string
+          learner_snapshot: Json | null
           org_id: string | null
           published_at: string
           published_by: string
@@ -435,6 +436,7 @@ export type Database = {
           course_id: string
           id?: string
           layer: string
+          learner_snapshot?: Json | null
           org_id?: string | null
           published_at?: string
           published_by: string
@@ -449,6 +451,7 @@ export type Database = {
           course_id?: string
           id?: string
           layer?: string
+          learner_snapshot?: Json | null
           org_id?: string | null
           published_at?: string
           published_by?: string
@@ -1358,6 +1361,16 @@ export type Database = {
       publisher_set_media_status: {
         Args: { p_actor: string; p_media: string; p_status: Json }
         Returns: string
+      }
+      quiz_attempt_review: {
+        Args: { p_attempt: string }
+        Returns: {
+          answer_index: number
+          chosen: number
+          correct: boolean
+          explanation: string
+          question_id: string
+        }[]
       }
       remove_member: {
         Args: { member: string; target_org: string }

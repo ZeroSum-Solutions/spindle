@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(182);
+select plan(195);
 
 -- Fixtures -------------------------------------------------------------------
 -- Gym A: Alice owner, Tess and Tom trainers. Gym B: Bob owner, Tess trainer.
@@ -988,6 +988,46 @@ select throws_ok($$select public.save_course_draft('aaaaaaaa-aaaa-4aaa-8aaa-aaaa
 select pg_temp.reset_role();
 select throws_ok($$update public.lessons set slug = 'quiz' where id = '7c000000-0000-4000-8000-000000000011'$$,
   '22023', 'invalid course: the lesson slug "quiz" is reserved', 'not even the table owner can write the reserved slug');
+
+-- 9d. Answer keys never reach learners (ADR 0007, closes the accepted S04 risk) ---------------------
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
+select throws_ok(format($$select snapshot from public.curriculum_versions where id = %L$$, pg_temp.id('q_v1')), '42501', null,
+  'a learner cannot select the raw snapshot column');
+select throws_ok($$select * from public.curriculum_versions$$, '42501', null, 'a learner cannot select * (it includes the raw snapshot)');
+select is((select count(*) from jsonb_path_query((select learner_snapshot from public.curriculum_versions where id = pg_temp.id('q_v1')),
+  '$.parts[*].lessons[*].blocks[*] ? (@.kind == "quiz" && @.support == "science").content.answerIndex')), 0::bigint,
+  'the learner projection carries no answer index for a graded quiz');
+select is((select count(*) from jsonb_path_query((select learner_snapshot from public.curriculum_versions where id = pg_temp.id('q_v1')),
+  '$.parts[*].lessons[*].blocks[*] ? (@.kind == "quiz" && @.support == "science").content.explanation')), 0::bigint,
+  'the learner projection carries no explanation for a graded quiz');
+select is((select count(*) from jsonb_path_query((select learner_snapshot from public.curriculum_versions where id = pg_temp.id('q_v1')),
+  '$.parts[*].lessons[*].blocks[*] ? (@.kind == "quiz").content.prompt')), 5::bigint, 'learners still get every question and its options');
+select pg_temp.reset_role();
+select is((select learner_snapshot #> '{parts,0,lessons,0,blocks,1,content}' from public.curriculum_versions where id = pg_temp.id('mixed_v1')),
+  (select snapshot #> '{parts,0,lessons,0,blocks,1,content}' from public.curriculum_versions where id = pg_temp.id('mixed_v1')),
+  'a practice self-check keeps its answer and explanation') ;
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, (select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f4')),
+  'P0001', 'the answer review opens after a passing attempt', 'a failed attempt reveals no answers');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select results_eq(format($$select question_id, chosen, answer_index, correct from public.quiz_attempt_review(%L) order by question_id$$,
+  (select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f2')),
+  $$values ('79000000-0000-4000-8000-000000000011:q1'::text, 1, 1, true), ('79000000-0000-4000-8000-000000000011:q2', 1, 1, true),
+    ('79000000-0000-4000-8000-000000000012:q1', 1, 1, true), ('79000000-0000-4000-8000-000000000012:q2', 1, 1, true),
+    ('79000000-0000-4000-8000-000000000012:q3', 0, 1, false)$$,
+  'after a pass the learner gets each answer and explanation back');
+select is((select count(*) from public.quiz_attempt_review((select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f2'))
+  where explanation = 'Synthetic explanation.'), 5::bigint, 'the post-pass review carries the explanations');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
+select throws_ok(format($$select * from public.quiz_attempt_review(%L)$$, (select id from public.quiz_attempts where attempt_key = '00000000-0000-4000-8000-0000000000f2')),
+  'P0002', 'no such attempt', 'another learner cannot review someone else''s attempt');
+select throws_ok($$select private.graded_questions('{}')$$, '42501', null, 'learners cannot call the private grading helper');
+select pg_temp.as_service();
+select ok((select snapshot #>> '{parts,0,lessons,0,blocks,1,content,answerIndex}' = '1' from public.curriculum_versions where id = pg_temp.id('q_v1')),
+  'the publisher path still reads the full snapshot');
+select pg_temp.reset_role();
+select is((select learner_snapshot from public.curriculum_versions where id = pg_temp.id('m_v1')),
+  (select snapshot from public.curriculum_versions where id = pg_temp.id('m_v1')), 'a gym method projection equals its snapshot (practice only)');
 
 -- 10. Privileges and hygiene -------------------------------------------------------------------
 create temp table p3_tables (name text);

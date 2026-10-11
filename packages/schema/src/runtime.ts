@@ -2,7 +2,7 @@
 // API bodies). They check shape only: whether a cited claim is approved and
 // relevant is the publish gate's job (validateCatalog and the database receipt).
 import { z } from "zod";
-import type { Catalog, Course, Lesson, LessonBlock, MediaAsset, VideoSegment } from "./types";
+import type { Catalog, Course, LearnerCourse, LearnerLessonBlock, Lesson, LessonBlock, MediaAsset, RedactedGradedQuiz, VideoSegment } from "./types";
 
 export class ContentParseError extends Error {
   constructor(
@@ -134,49 +134,75 @@ export const lessonBlockSchema = blockVariants.superRefine((block, ctx) => {
  */
 export const RESERVED_LESSON_SLUGS: readonly string[] = ["quiz"];
 
-export const lessonSchema = z.strictObject({
-  id: idSchema,
-  slug: slugSchema,
-  title: requiredText,
-  summary: text,
-  durationMinutes: z.number().int().min(0).max(600),
-  format: z.enum(["article", "video", "diagram", "practice", "quiz"]),
-  objectives: z.array(requiredText).max(50),
-  anatomyIds: z.array(z.string().regex(/^UBERON:\d{7}$/, "must be an Uberon id")).max(50),
-  blocks: z.array(lessonBlockSchema).max(500),
-  media: z.array(mediaAssetSchema).max(100),
-  resources: z
-    .array(
-      z.strictObject({
-        label: requiredText,
-        href: safeUrl,
-        type: z.enum(["worksheet", "reference", "transcript"]),
-      }),
-    )
-    .max(50),
-}) satisfies z.ZodType<Lesson>;
+function lessonSchemaFor<B extends z.ZodType>(block: B) {
+  return z.strictObject({
+    id: idSchema,
+    slug: slugSchema,
+    title: requiredText,
+    summary: text,
+    durationMinutes: z.number().int().min(0).max(600),
+    format: z.enum(["article", "video", "diagram", "practice", "quiz"]),
+    objectives: z.array(requiredText).max(50),
+    anatomyIds: z.array(z.string().regex(/^UBERON:\d{7}$/, "must be an Uberon id")).max(50),
+    blocks: z.array(block).max(500),
+    media: z.array(mediaAssetSchema).max(100),
+    resources: z
+      .array(
+        z.strictObject({
+          label: requiredText,
+          href: safeUrl,
+          type: z.enum(["worksheet", "reference", "transcript"]),
+        }),
+      )
+      .max(50),
+  });
+}
 
-export const courseSchema = z.strictObject({
-  id: idSchema,
-  slug: slugSchema,
-  layer: z.enum(["base", "modality", "method"]),
-  title: requiredText,
-  subtitle: text,
-  description: text,
-  level: z.enum(["foundation", "intermediate", "advanced"]),
-  outcomes: z.array(requiredText).max(50),
-  parts: z
-    .array(
-      z.strictObject({
-        id: idSchema,
-        ordinal: z.number().int().min(1),
-        title: requiredText,
-        summary: text,
-        lessons: z.array(lessonSchema).max(200),
-      }),
-    )
-    .max(100),
-}) satisfies z.ZodType<Course>;
+function courseSchemaFor<L extends z.ZodType>(lesson: L) {
+  return z.strictObject({
+    id: idSchema,
+    slug: slugSchema,
+    layer: z.enum(["base", "modality", "method"]),
+    title: requiredText,
+    subtitle: text,
+    description: text,
+    level: z.enum(["foundation", "intermediate", "advanced"]),
+    outcomes: z.array(requiredText).max(50),
+    parts: z
+      .array(
+        z.strictObject({
+          id: idSchema,
+          ordinal: z.number().int().min(1),
+          title: requiredText,
+          summary: text,
+          lessons: z.array(lesson).max(200),
+        }),
+      )
+      .max(100),
+  });
+}
+
+export const lessonSchema = lessonSchemaFor(lessonBlockSchema) satisfies z.ZodType<Lesson>;
+export const courseSchema = courseSchemaFor(lessonSchema) satisfies z.ZodType<Course>;
+
+/** A graded quiz as learners receive it (learner_snapshot): prompt and options, no answer key or explanation. */
+const redactedQuizSchema = z.strictObject({
+  kind: z.literal("quiz"),
+  content: z.strictObject({ prompt: requiredText, options: z.array(requiredText).min(2).max(10) }),
+  support: z.literal("science"),
+  claimIds: z.array(idSchema).min(1).max(50),
+}) satisfies z.ZodType<RedactedGradedQuiz>;
+
+/**
+ * Blocks in a learner projection. A graded quiz must arrive redacted: one that still carries its answer
+ * key is refused, so a leak through a wrong read path fails loudly instead of rendering the key.
+ */
+export const learnerBlockSchema = z.union([
+  lessonBlockSchema.refine((b) => !(b.kind === "quiz" && b.support === "science"), "a graded quiz must arrive without its answer key"),
+  redactedQuizSchema,
+]) satisfies z.ZodType<LearnerLessonBlock>;
+
+export const learnerCourseSchema = courseSchemaFor(lessonSchemaFor(learnerBlockSchema)) satisfies z.ZodType<LearnerCourse>;
 
 export const catalogSchema = z.strictObject({
   version: requiredText,
@@ -186,3 +212,5 @@ export const catalogSchema = z.strictObject({
 /** Shape-checks a catalog. Run validateCatalog afterwards for ids, provenance and claim approval. */
 export const parseCatalog = (value: unknown): Catalog => parseWith(catalogSchema, "catalog", value);
 export const parseCourse = (value: unknown): Course => parseWith(courseSchema, "course", value);
+/** Parses curriculum_versions.learner_snapshot, the only snapshot learners can read (ADR 0007). */
+export const parseLearnerCourse = (value: unknown): LearnerCourse => parseWith(learnerCourseSchema, "learner course", value);
