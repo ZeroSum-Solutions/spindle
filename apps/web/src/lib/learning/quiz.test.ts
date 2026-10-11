@@ -135,7 +135,7 @@ describe("module status text", () => {
     expect(moduleStatusView(base)).toEqual({
       complete: false,
       headline: "Module not complete yet.",
-      lessons: "8 of 8 lessons done.",
+      lessons: "Every lesson is done.",
       quiz: "Quiz not taken yet: 20 questions, 16 correct to pass.",
       offerQuiz: true,
     });
@@ -162,9 +162,14 @@ describe("module status text", () => {
     expect(moduleStatusView({ ...base, quizRequired: false, questionsTotal: 0, complete: true })).toMatchObject({ quiz: "This version has no graded quiz.", offerQuiz: false });
   });
 
+  it("says what is left, never repeating the progress label", () => {
+    expect(moduleStatusView({ ...base, lessonsCompleted: 5 }).lessons).toBe("3 lessons still to do.");
+    expect(moduleStatusView({ ...base, lessonsCompleted: 5 }).lessons).not.toMatch(/of 8/);
+  });
+
   it("uses the singular for one lesson and one question", () => {
     const one = moduleStatusView({ ...base, lessonsTotal: 1, lessonsCompleted: 0, questionsTotal: 1 });
-    expect(one.lessons).toBe("0 of 1 lesson done.");
+    expect(one.lessons).toBe("1 lesson still to do.");
     expect(one.quiz).toBe("Quiz not taken yet: 1 question, 1 correct to pass.");
   });
 });

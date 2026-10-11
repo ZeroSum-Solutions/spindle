@@ -104,7 +104,9 @@ export interface ModuleStatusView {
 
 /** Literal text for the module status the server reported. */
 export function moduleStatusView(s: ModuleStatus): ModuleStatusView {
-  const lessons = `${s.lessonsCompleted} of ${s.lessonsTotal} ${s.lessonsTotal === 1 ? "lesson" : "lessons"} done.`;
+  // Says what is left rather than repeating the overview's "N of M lessons done" progress label.
+  const remaining = Math.max(0, s.lessonsTotal - s.lessonsCompleted);
+  const lessons = remaining === 0 ? "Every lesson is done." : `${remaining} ${remaining === 1 ? "lesson" : "lessons"} still to do.`;
   let quiz: string;
   if (!s.quizRequired) quiz = "This version has no graded quiz.";
   else if (s.quizPassed && s.quizCarried) quiz = "Quiz passed: credit carried from another version with the same questions.";

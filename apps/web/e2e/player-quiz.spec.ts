@@ -113,7 +113,7 @@ test.describe.serial("graded module quiz", () => {
     const page = await signIn(browser, second, overview);
     const status = page.getByTestId("module-status");
     await expect(status).toContainText("Module not complete yet.");
-    await expect(status).toContainText("1 of 2 lessons done.");
+    await expect(status).toContainText("1 lesson still to do.");
     await expect(status).toContainText("Quiz passed: your best attempt was 2 of 2.");
     await expect(status.getByRole("link", { name: "Take the module quiz" })).toHaveCount(0);
 
@@ -124,7 +124,7 @@ test.describe.serial("graded module quiz", () => {
 
     const fresh = await signIn(browser, second, overview);
     await expect(fresh.getByTestId("module-status")).toContainText("Module complete.");
-    await expect(fresh.getByTestId("module-status")).toContainText("2 of 2 lessons done.");
+    await expect(fresh.getByTestId("module-status")).toContainText("Every lesson is done.");
     const { data, error } = await second.client.rpc("module_status", { p_assignment: assignments.second });
     expect(error).toBeNull();
     expect((data as { complete: boolean }[])[0]?.complete).toBe(true);

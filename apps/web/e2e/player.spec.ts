@@ -322,9 +322,9 @@ test.describe.serial("learner flow", () => {
     await p.reload();
     await expect(p.getByTestId("lesson-status")).toContainText("Completed.");
     await p.goto(learn(gymA, assignments.partial));
-    await expect(p.getByText("1 of 3 lessons done")).toBeVisible();
+    await expect(p.getByText("1 of 3 lessons done", { exact: true })).toBeVisible();
     const fresh = await signIn(browser, actors.partial!, learn(gymA, assignments.partial));
-    await expect(fresh.getByText("1 of 3 lessons done")).toBeVisible();
+    await expect(fresh.getByText("1 of 3 lessons done", { exact: true })).toBeVisible();
     expect(rows()).toBe(first);
   });
 
@@ -365,7 +365,7 @@ test.describe.serial("learner flow", () => {
     await expect(lessonRow(f, "Synthetic lesson one")).toContainText("Credited");
     await expect(lessonRow(f, "Synthetic lesson two")).toContainText("Updated");
     await expect(lessonRow(f, "Synthetic lesson four")).toContainText("New");
-    await expect(f.getByText("1 of 3 lessons done")).toBeVisible();
+    await expect(f.getByText("1 of 3 lessons done", { exact: true })).toBeVisible();
     await f.goto(learn(gymA, assignments.full));
     await expect(f.getByText("You completed every lesson in v1.")).toBeVisible();
 
@@ -409,7 +409,7 @@ test.describe.serial("learner flow", () => {
 
   test("two gyms stay separate, and assignments are self-only", async ({ browser }) => {
     const m = await signIn(browser, actors.multi!, learn(gymB, assignments.multiB));
-    await expect(m.getByText("0 of 3 lessons done")).toBeVisible();
+    await expect(m.getByText("0 of 3 lessons done", { exact: true })).toBeVisible();
     await expectNotFound(m, learn(gymB, assignments.multiA));
     await expectNotFound(m, learn(gymB, assignments.method));
     const b = await signIn(browser, actors.ownerb!, learn(gymB));
@@ -430,7 +430,7 @@ test.describe.serial("learner flow", () => {
     world.retract(sourceId);
     const p = await signIn(browser, actors.partial!, learn(gymA, assignments.partial));
     await expect(p.getByText("A source cited in this version was retracted after it was published")).toBeVisible();
-    await expect(p.getByText("1 of 3 lessons done")).toBeVisible();
+    await expect(p.getByText("1 of 3 lessons done", { exact: true })).toBeVisible();
     await p.goto(learn(gymA, assignments.partial, "lesson-one"));
     await expect(p.locator('[data-block="paragraph"][data-support="science"]').getByText("Source retracted")).toBeVisible();
     await p.goto(learn(gymA, assignments.partial, "lesson-2"));
