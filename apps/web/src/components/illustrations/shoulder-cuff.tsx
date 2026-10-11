@@ -22,10 +22,10 @@ const CUFF_ANCHORS = {
   "front-view": P(30, 30),
   "back-view": P(452, 30),
   subscapularis: { x: 70, y: 236, leader: { from: P(86, 226), to: P(112, 150) } },
-  supraspinatus: { x: 392, y: 30, leader: { from: P(380, 42), to: P(372, 68) } },
+  supraspinatus: { x: 392, y: 30, leader: { from: P(380, 42), to: P(372, 78) } },
   infraspinatus: { x: 452, y: 150, leader: { from: P(436, 146), to: P(400, 132) } },
-  "teres-minor": { x: 412, y: 238, leader: { from: P(398, 230), to: P(352, 178) } },
-  "humeral-head": { x: 240, y: 30, leader: { from: P(226, 38), to: P(192, 76) } },
+  "teres-minor": { x: 412, y: 238, leader: { from: P(398, 230), to: P(377, 184) } },
+  "humeral-head": { x: 240, y: 30, leader: { from: P(226, 38), to: P(186, 82) } },
 } as const;
 
 function CuffArt() {
