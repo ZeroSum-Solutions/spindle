@@ -36,6 +36,15 @@ async function exercise(s: Locator) {
   const check = s.locator("form").filter({ has: s.page().getByRole("button", { name: "Check answer" }) }).first();
   await check.getByRole("radio").first().check();
   await check.getByRole("button", { name: "Check answer" }).click();
+  await expect(s.getByText("Option B is the synthetic answer.")).toBeVisible();
+  await settled(s.page());
+}
+
+/** Waits for every finite animation (the feedback fade-in, the chevrons) to finish, so colours are final. */
+async function settled(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(document.getAnimations().filter((a) => a.effect?.getComputedTiming().iterations !== Infinity).map((a) => a.finished)),
+  );
 }
 
 async function axeClean(page: Page, name: string, what: string) {
