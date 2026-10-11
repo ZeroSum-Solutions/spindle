@@ -1,3 +1,4 @@
+import { moduleQuizHref } from "@/lib/learning/quiz";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowRight } from "lucide-react";
@@ -76,7 +77,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
           <p className="rounded-card bg-surface-muted p-4 font-medium">You completed every lesson in v{view.versionNumber}.</p>
         )}
 
-        <ModuleStatusCard status={status} quizHref={hasQuiz ? `${base}/quiz` : null} />
+        <ModuleStatusCard status={status} quizHref={hasQuiz ? moduleQuizHref(base) : null} />
 
         {view.delta ? <VersionNotice delta={view.delta} versionNumber={view.versionNumber} credited={view.lessons.some((l) => l.state === "credited")} /> : null}
 

@@ -137,3 +137,11 @@ export function moduleStatusView(s: ModuleStatus): ModuleStatusView {
     offerQuiz: s.quizRequired && !s.quizPassed,
   };
 }
+
+/**
+ * The module quiz page of a course. It sits two segments below the course so it can never
+ * shadow a lesson route, which is always exactly one segment.
+ */
+export function moduleQuizHref(courseHref: string): string {
+  return `${courseHref}/module/quiz`;
+}

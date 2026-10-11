@@ -27,7 +27,7 @@ const RIGHT = [
   { questionId: QID(1), answerIndex: 0 },
 ];
 
-const quizPath = (who = "learner") => learnPath(gymA, assignments[who], "quiz");
+const quizPath = (who = "learner") => learnPath(gymA, assignments[who], "module/quiz");
 const attempts = (who: string) => sql(`select count(*) from public.quiz_attempts where user_id = '${actors[who]!.id}'`);
 
 async function answer(page: Page, choices: string[]) {
@@ -189,7 +189,7 @@ test.describe.serial("graded module quiz", () => {
     const page = await signIn(browser, actors.plain!, learnPath(gymA, assignments.plain));
     await expect(page.getByTestId("module-status")).toContainText("This version has no graded quiz.");
     await expect(page.getByRole("link", { name: /Take the module quiz/ })).toHaveCount(0);
-    await page.goto(learnPath(gymA, assignments.plain, "quiz"));
+    await page.goto(learnPath(gymA, assignments.plain, "module/quiz"));
     await expect(page.getByText("This course version has no graded quiz.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Submit answers" })).toHaveCount(0);
   });

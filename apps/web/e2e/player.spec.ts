@@ -201,7 +201,7 @@ test.describe.serial("learner flow", () => {
     // A graded (science) question shows its prompt and points to the module quiz; the lesson never reveals its answer.
     const graded = p.locator('[data-block="quiz"][data-support="science"]');
     await expect(graded).toContainText("Synthetic question?");
-    await expect(graded.getByRole("link", { name: "Go to the module quiz" })).toHaveAttribute("href", learn(gymA, assignments.partial, "quiz"));
+    await expect(graded.getByRole("link", { name: "Go to the module quiz" })).toHaveAttribute("href", learn(gymA, assignments.partial, "module/quiz"));
     await expect(graded.getByRole("button", { name: "Check answer" })).toHaveCount(0);
     await expect(graded).not.toContainText("Synthetic explanation.");
     // A practice question stays an ungraded self-check: feedback after checking, and it says nothing is saved.

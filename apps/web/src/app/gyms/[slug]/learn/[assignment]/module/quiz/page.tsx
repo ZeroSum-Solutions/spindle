@@ -9,11 +9,9 @@ import { questionViews, type QuizState } from "@/lib/learning/quiz";
 import { loadModuleStatus, submitQuiz, type QuizRoute } from "@/lib/learning/quiz-server";
 import { lessonsOf } from "@/lib/learning/view";
 
-// Route clash: this static segment would shadow a lesson whose slug is "quiz". W1's PR #19
-// reserves that slug in the content schema and database (RESERVED_LESSON_SLUGS; tested in
-// packages/schema/src/contracts.test.ts, "reserved lesson slugs"), so no published lesson can
-// use it. Until #19 lands, the lesson view of such a slug is unreachable through this route.
-export default function QuizPage(props: PageProps<"/gyms/[slug]/learn/[assignment]/quiz">) {
+// The module quiz lives two segments below the course (module/quiz), so it can never shadow a
+// lesson: lesson routes are exactly one segment, whatever the lesson's slug.
+export default function QuizPage(props: PageProps<"/gyms/[slug]/learn/[assignment]/module/quiz">) {
   return (
     <Suspense
       fallback={
@@ -27,7 +25,7 @@ export default function QuizPage(props: PageProps<"/gyms/[slug]/learn/[assignmen
   );
 }
 
-async function Quiz({ params }: PageProps<"/gyms/[slug]/learn/[assignment]/quiz">) {
+async function Quiz({ params }: PageProps<"/gyms/[slug]/learn/[assignment]/module/quiz">) {
   const { slug, assignment: rawId } = await params;
   const ctx = await learnerGym(slug);
   const detail = await myAssignment(ctx, rawId);

@@ -1,3 +1,4 @@
+import { moduleQuizHref } from "@/lib/learning/quiz";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -109,7 +110,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
 
           <SupportLegend supports={lesson.blocks.flatMap((b) => ("support" in b ? [b.support] : []))} />
 
-          <LessonBlocks blocks={lesson.blocks} ctx={{ orgId: version.orgId, claims, flagged, media, quizHref: `${courseHref}/quiz`, gradedQuiz: version.gradedQuiz, versionId: version.id, integrity }} />
+          <LessonBlocks blocks={lesson.blocks} ctx={{ orgId: version.orgId, claims, flagged, media, quizHref: moduleQuizHref(courseHref), gradedQuiz: version.gradedQuiz, versionId: version.id, integrity }} />
           <LessonMedia media={lesson.media} orgId={version.orgId} />
           <LessonResources resources={lesson.resources} orgId={version.orgId} />
 
