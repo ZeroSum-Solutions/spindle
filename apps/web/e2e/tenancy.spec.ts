@@ -1,11 +1,11 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { authCookiesSet, forceExpiresAt, jwtClaims, readSession, sha256 } from "./helpers/auth-cookie";
 import { cleanupRun, lit, sql } from "./helpers/local-supabase";
+import { e2ePort, mailpitFetch } from "./helpers/test-env";
 
 // Traces would record sign-in codes, cookie values and the service key's headers.
 test.use({ trace: "off" });
 
-const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
 const run = Date.now().toString(36);
 const alice = `alice-${run}@a.test`;
 const tess = `tess-${run}@a.test`;
@@ -23,10 +23,10 @@ test.afterAll(async () => {
 
 async function latestCode(email: string): Promise<string> {
   for (let attempt = 0; attempt < 20; attempt++) {
-    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=1`);
+    const res = await mailpitFetch(`/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=1`);
     const { messages } = (await res.json()) as { messages: { ID: string }[] };
     if (messages[0]) {
-      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${messages[0].ID}`)).json()) as { Text: string };
+      const msg = (await (await mailpitFetch(`/api/v1/message/${messages[0].ID}`)).json()) as { Text: string };
       const code = /\b(\d{6})\b/.exec(msg.Text)?.[1];
       if (code) return code;
     }
@@ -95,7 +95,7 @@ test("sign-in never redirects off-site", async ({ browser }) => {
   const attempts = ["//evil.example", "/\\evil.example", "https://evil.example"];
   for (const [i, next] of attempts.entries()) {
     const page = await signIn(browser, carols[i]!, next, "/gyms");
-    expect(new URL(page.url()).host).toBe(`127.0.0.1:${process.env.E2E_PORT ?? "3100"}`);
+    expect(new URL(page.url()).host).toBe(`127.0.0.1:${e2ePort()}`);
   }
 });
 

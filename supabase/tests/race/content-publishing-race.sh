@@ -200,8 +200,20 @@ commit;
 begin;
 $(as_user "$O")
 select public.save_course_draft('$ORG', $(course "$C3" method "jsonb_build_object('kind', 'paragraph', 'content', 'House cue.', 'support', 'practice-based', 'claimIds', '[]'::jsonb)"));
+select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+-- P4-A2: a gym title is held until a publisher admits it (the publisher does here, as in the pgTAP fixtures).
+select public.publisher_decide_tenant_text('$P', t.id, jsonb_build_object('decision', 'admitted', 'reason', 'Race fixture title.', 'textHash', t.text_hash))
+from (select * from private.tenant_texts where course_id = '$C3' and slot = 'course_title' order by seq desc limit 1) t
+where not exists (select 1 from private.tenant_text_admissions a where a.text_id = t.id);
+$(as_user "$O")
 select set_config('race.v1', public.publish_course('$C3')::text, true);
 select public.save_course_draft('$ORG', jsonb_set($(course "$C3" method "jsonb_build_object('kind', 'paragraph', 'content', 'House cue.', 'support', 'practice-based', 'claimIds', '[]'::jsonb)"), '{title}', '"Race fixture v2"'));
+select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+-- P4-A2: a gym title is held until a publisher admits it (the publisher does here, as in the pgTAP fixtures).
+select public.publisher_decide_tenant_text('$P', t.id, jsonb_build_object('decision', 'admitted', 'reason', 'Race fixture title.', 'textHash', t.text_hash))
+from (select * from private.tenant_texts where course_id = '$C3' and slot = 'course_title' order by seq desc limit 1) t
+where not exists (select 1 from private.tenant_text_admissions a where a.text_id = t.id);
+$(as_user "$O")
 select public.publish_course('$C3');
 select public.assign_version('$ORG', current_setting('race.v1')::uuid, u) from unnest(array['$T1', '$T2']::uuid[]) u;
 commit;

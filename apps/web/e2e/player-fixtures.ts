@@ -8,9 +8,9 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { mailpitFetch } from "./helpers/test-env";
 
 const DB_URL = process.env.DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
-const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
 
 /** Fixtures write synthetic rows; they only ever talk to this machine. */
 export function assertLoopback(url: string, what: string): void {
@@ -112,7 +112,7 @@ export function publicEnv(): { url: string; key: string } {
 // ---- Sign-in codes -----------------------------------------------------------------
 
 async function messageIds(email: string): Promise<Set<string>> {
-  const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=50`);
+  const res = await mailpitFetch(`/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=50`);
   const { messages } = (await res.json()) as { messages: { ID: string }[] };
   return new Set(messages.map((m) => m.ID));
 }
@@ -120,11 +120,11 @@ async function messageIds(email: string): Promise<Set<string>> {
 /** Waits for a sign-in code that arrived after `before` was taken, so a stale code is never reused. */
 export async function codeAfter(email: string, before: Set<string>): Promise<string> {
   for (let attempt = 0; attempt < 40; attempt++) {
-    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=5`);
+    const res = await mailpitFetch(`/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=5`);
     const { messages } = (await res.json()) as { messages: { ID: string }[] };
     const fresh = messages.find((m) => !before.has(m.ID));
     if (fresh) {
-      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${fresh.ID}`)).json()) as { Text: string };
+      const msg = (await (await mailpitFetch(`/api/v1/message/${fresh.ID}`)).json()) as { Text: string };
       const code = /\b(\d{6})\b/.exec(msg.Text)?.[1];
       if (code) return code;
     }

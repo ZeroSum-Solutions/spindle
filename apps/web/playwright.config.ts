@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import { e2ePort } from "./e2e/helpers/test-env";
 
-// E2E_PORT lets a writer run the suite on its own port beside the shared one (default 3100).
-const PORT = process.env.E2E_PORT ?? "3100";
+// E2E_PORT lets a writer run the suite on its own port beside the shared one (default 3100; validated).
+const PORT = e2ePort();
 
 // Needs the local Supabase stack (`supabase start`, with Mailpit) for sign-in codes.
 export default defineConfig({
