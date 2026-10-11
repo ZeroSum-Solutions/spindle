@@ -8,7 +8,7 @@ import { learnerGym, myAssignment } from "@/lib/learning/load";
 import { groupByPart } from "@/lib/learning/view";
 import { VersionNotice } from "@/components/learn/version-notice";
 import { ModuleStatusCard } from "@/components/learn/module-status";
-import { gradedQuestions } from "@spindle/engine";
+import { learnerQuestions } from "@spindle/engine";
 import { loadModuleStatus } from "@/lib/learning/quiz-server";
 
 export default function CoursePage(props: PageProps<"/gyms/[slug]/learn/[assignment]">) {
@@ -40,7 +40,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
   const { view } = detail;
   const base = `/gyms/${ctx.org.slug}/learn/${detail.assignmentId}`;
   const parts = groupByPart(view.lessons);
-  const hasQuiz = detail.version.gradedQuiz && gradedQuestions(detail.version.course).length > 0;
+  const hasQuiz = detail.version.gradedQuiz && learnerQuestions(detail.version.learnerCourse).length > 0;
   const status = await loadModuleStatus(ctx, detail.assignmentId);
 
   return (

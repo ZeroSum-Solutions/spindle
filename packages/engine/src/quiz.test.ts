@@ -1,7 +1,7 @@
 // Synthetic fixtures only. Mirrors the database rules in supabase/tests/database/evidence.test.sql.
-import type { Course, LessonBlock } from "@spindle/schema";
+import { parseLearnerCourse, type Course, type LessonBlock } from "@spindle/schema";
 import { describe, expect, it } from "vitest";
-import { bestAttempt, blockEvidence, gradedQuestions, moduleCompletion, passes, quizCreditCarries, scoreAttempt, validateCatalog } from "./index";
+import { bestAttempt, blockEvidence, gradedQuestions, learnerQuestions, moduleCompletion, passes, quizCreditCarries, scoreAttempt, validateCatalog } from "./index";
 
 const quiz = (prompt: string, support: "science" | "practice-based" = "science"): LessonBlock => ({
   kind: "quiz",
@@ -32,6 +32,25 @@ describe("graded questions", () => {
       ["l1:q1", "Q1"], ["l1:q2", "Q2"], ["l2:q1", "Q3"], ["l2:q2", "Q4"], ["l2:q3", "Q5"],
     ]);
   });
+});
+
+describe("learner questions (Sol R1 PR22-01)", () => {
+  // The learner projection: graded quizzes arrive without answerIndex and explanation.
+  const redacted = () => {
+    const c = course();
+    return parseLearnerCourse({
+      ...c,
+      parts: c.parts.map((p) => ({ ...p, lessons: p.lessons.map((l) => ({ ...l, blocks: l.blocks.map((b) =>
+        b.kind === "quiz" && b.support === "science" ? { ...b, content: { prompt: b.content.prompt, options: b.content.options } } : b) })) })),
+    });
+  };
+
+  it("lists the graded questions of the learner projection with the database's ids, prompts and options, and no key", () => {
+    const qs = learnerQuestions(redacted());
+    expect(qs.map((q) => [q.questionId, q.lessonId, q.prompt])).toEqual(gradedQuestions(course()).map((q) => [q.questionId, q.lessonId, q.prompt]));
+    expect(qs[0]).toEqual({ questionId: "l1:q1", lessonId: "l1", prompt: "Q1", options: ["Wrong", "Right"] });
+  });
+
 });
 
 describe("scoring", () => {

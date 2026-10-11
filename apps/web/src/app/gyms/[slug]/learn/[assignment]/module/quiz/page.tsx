@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { gradedQuestions } from "@spindle/engine";
+import { learnerQuestions } from "@spindle/engine";
 import { LayerLabel, VersionTag } from "@/components/learn/labels";
 import { ModuleQuiz } from "@/components/learn/module-quiz";
 import { ModuleStatusCard } from "@/components/learn/module-status";
@@ -39,7 +39,7 @@ async function Quiz({ params }: PageProps<"/gyms/[slug]/learn/[assignment]/modul
   }
   const { version, view } = detail;
   // Only versions published under the phase-3 rules have a graded quiz; older ones keep the lesson self-checks.
-  const questions = version.gradedQuiz ? gradedQuestions(version.course) : [];
+  const questions = version.gradedQuiz ? learnerQuestions(version.learnerCourse) : [];
   const titles = new Map(lessonsOf(version.course).map((l) => [l.id, l.title]));
   const status = await loadModuleStatus(ctx, detail.assignmentId);
 
