@@ -9,7 +9,7 @@ import { OXBLOOD, SAGE } from "../src/lib/theme/preview-brands";
 const rgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
 const BRANDS = [OXBLOOD, SAGE].map((b) => {
   const t = brandTokens(b.colors);
-  return { name: b.name, accent: rgb(t.accent), hover: rgb(t.accentHover), soft: rgb(t.accentSoft) };
+  return { name: b.name, accent: rgb(t.accent), hover: rgb(t.accentHover), soft: rgb(t.accentSoft), onAccent: rgb(b.colors.onAccent) };
 });
 // Atlas evidence colours, which no brand can change.
 const SCIENCE = "rgb(11, 107, 80)";
@@ -83,7 +83,20 @@ async function colours(el: Locator, prop: "color" | "outlineColor" = "color") {
   }, prop);
 }
 
+/** Every brand utility the preview uses. A build whose stylesheet lacks one draws that part in Atlas colours. */
+const BRAND_UTILITIES = [".bg-brand{", ".border-brand{", ".text-brand{", ".text-on-brand{", ".hover\\:bg-brand-hover:hover{", ".hover\\:text-brand-hover:hover{"];
+
 test.describe("tenant brand preview", () => {
+  test("the served stylesheets carry every brand utility the preview uses", async ({ page, request }) => {
+    // A guard against a stale or partial CSS build: the selected control once rendered in body text
+    // on the accent (1.57:1) in a fresh production run, which only a missing .text-on-brand explains.
+    await page.goto("/brand-preview");
+    const hrefs = await page.locator('link[rel="stylesheet"]').evaluateAll((els) => els.map((el) => (el as HTMLLinkElement).href));
+    expect(hrefs.length).toBeGreaterThan(0);
+    const css = (await Promise.all(hrefs.map(async (href) => (await request.get(href)).text()))).join("\n");
+    for (const rule of BRAND_UTILITIES) expect(css, `stylesheet rule ${rule}`).toContain(rule);
+  });
+
   for (const view of VIEWS) {
     test(`both brands pass axe AA, reflow without sideways scroll and keep evidence colours at ${view.label}`, async ({ browser }) => {
       const context = await browser.newContext({ viewport: { width: view.width, height: view.height }, deviceScaleFactor: view.scale });
@@ -177,6 +190,8 @@ test.describe("tenant brand preview", () => {
       expect(ratio(hovered.fg, hovered.bg), `${brand.name}: hovered link`).toBeGreaterThanOrEqual(4.5);
       expect(hovered.fg).not.toBe(brand.accent);
       const selected = s.locator("[aria-pressed='true']").first();
+      // The text is the brand's onAccent colour; if not, the ratio below would only report a symptom.
+      await expect(selected, `${brand.name}: selected control text`).toHaveCSS("color", brand.onAccent);
       const sel = await colours(selected);
       expect(ratio(sel.fg, sel.bg), `${brand.name}: selected control`).toBeGreaterThanOrEqual(4.5);
       await selected.hover();
