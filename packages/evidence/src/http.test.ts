@@ -93,18 +93,18 @@ describe("fetchJson", () => {
     expect((seen[1]?.headers as Record<string, string>)["User-Agent"]).toBe("test-agent");
   });
 
-  it("spaces requests to the same host by the configured interval", async () => {
-    const sleeps: number[] = [];
-    const fetch = async () => Response.json({ ok: true });
-    const http = createHttp({
-      fetch,
-      now: () => 1000,
-      sleep: async (ms) => void sleeps.push(ms),
-      intervalsMs: { "slow.test": 1000 },
-    });
+  it("spaces sends to the same host by the configured interval", async () => {
+    const clock = vclock();
+    const sentAt: number[] = [];
+    const fetch = async () => {
+      sentAt.push(clock.now());
+      return Response.json({ ok: true });
+    };
+    const http = createHttp({ fetch, ...clock, intervalsMs: { "slow.test": 1000 } });
     await Promise.all([1, 2, 3].map(() => http.fetchJson("https://slow.test/x", schema, opts)));
     await http.fetchJson("https://fast.test/x", schema, opts);
-    expect(sleeps).toEqual([1000, 2000]);
+    expect(sentAt.slice(0, 3).map((t, i, all) => t - (all[0] ?? 0))).toEqual([0, 1000, 2000]);
+    expect(sentAt[3]).toBe(sentAt[2]); // another host is not delayed
   });
 
   it("redacts API keys from errors", async () => {
@@ -146,13 +146,13 @@ describe("hardening", () => {
     expect(sleeps).toEqual([45_000]);
   });
 
-  it("makes requests already waiting for a slot honor a pause set meanwhile", async () => {
-    // Sleeps take real (tiny) time proportional to the virtual wait, so requests truly overlap.
+  it("keeps strict spacing after a Retry-After pause (four callers, 100 ms interval, one 45 s pause)", async () => {
+    // Sleeps take real (tiny) time proportional to the virtual wait, so callers truly overlap.
     let t = 0;
     const sleep = (ms: number) =>
       new Promise<void>((r) =>
         setTimeout(() => {
-          t = Math.max(t, t + ms);
+          t += ms;
           r();
         }, ms / 1000),
       );
@@ -162,12 +162,11 @@ describe("hardening", () => {
       sentAt.push(t);
       return n++ === 0 ? new Response("", { status: 429, headers: { "retry-after": "45" } }) : Response.json({ ok: true });
     };
-    const http = createHttp({ fetch, now: () => t, sleep, intervalsMs: { "slow.test": 100 }, concurrency: { "slow.test": 5 } });
+    const http = createHttp({ fetch, now: () => t, sleep, intervalsMs: { "slow.test": 100 } });
     await Promise.all([1, 2, 3, 4].map(() => http.fetchJson("https://slow.test/x", schema, opts)));
-    const [first, ...rest] = sentAt;
-    expect(first).toBe(0);
-    expect(rest.length).toBeGreaterThanOrEqual(4);
-    expect(Math.min(...rest)).toBeGreaterThanOrEqual(45_000);
+    expect(sentAt).toHaveLength(5);
+    expect(sentAt[1]! - sentAt[0]!).toBeGreaterThanOrEqual(45_000);
+    for (let i = 1; i < sentAt.length; i++) expect(sentAt[i]! - sentAt[i - 1]!).toBeGreaterThanOrEqual(100);
   });
 
   it("retries a body-read timeout instead of reporting a validation error", async () => {
@@ -202,22 +201,41 @@ describe("hardening", () => {
     expect(calls).toHaveLength(1);
   });
 
-  it("limits in-flight requests per host", async () => {
-    let active = 0;
+  it("runs one request per host at a time, in FIFO order, and lets other hosts run alongside", async () => {
+    const active = new Map<string, number>();
     let peak = 0;
-    const fetch = async () => {
-      active++;
-      peak = Math.max(peak, active);
+    let overlapAcrossHosts = false;
+    const order: string[] = [];
+    const fetch = async (url: string) => {
+      const host = new URL(url).host;
+      order.push(url);
+      active.set(host, (active.get(host) ?? 0) + 1);
+      peak = Math.max(peak, active.get(host) ?? 0);
+      if (active.size > 1 && [...active.values()].filter((v) => v > 0).length > 1) overlapAcrossHosts = true;
       await new Promise((r) => setTimeout(r, 5));
-      active--;
+      active.set(host, (active.get(host) ?? 1) - 1);
       return Response.json({ ok: true });
     };
-    const http = createHttp({ fetch, intervalsMs: {}, concurrency: { "api.crossref.org": 3 } });
-    await Promise.all(Array.from({ length: 9 }, () => http.fetchJson("https://api.crossref.org/x", schema, opts)));
-    expect(peak).toBe(3);
-    peak = 0;
-    await Promise.all(Array.from({ length: 6 }, () => http.fetchJson("https://other.test/x", schema, opts)));
-    expect(peak).toBe(2);
+    const http = createHttp({ fetch, intervalsMs: {} });
+    const urls = Array.from({ length: 6 }, (_, i) => `https://api.crossref.org/x${i}`);
+    await Promise.all([...urls.map((u) => http.fetchJson(u, schema, opts)), http.fetchJson("https://other.test/y", schema, opts)]);
+    expect(peak).toBe(1);
+    expect(order.filter((u) => u.includes("crossref"))).toEqual(urls);
+    expect(overlapAcrossHosts).toBe(true);
+  });
+
+  it("retries keep their place at the front of the host queue", async () => {
+    const clock = vclock();
+    const order: string[] = [];
+    const bad = new Set(["https://a.test/first"]);
+    const fetch = async (url: string) => {
+      order.push(url);
+      if (bad.delete(url)) return new Response("", { status: 503 });
+      return Response.json({ ok: true });
+    };
+    const http = createHttp({ fetch, ...clock, intervalsMs: {} });
+    await Promise.all(["first", "second", "third"].map((k) => http.fetchJson(`https://a.test/${k}`, schema, opts)));
+    expect(order).toEqual(["https://a.test/first", "https://a.test/first", "https://a.test/second", "https://a.test/third"]);
   });
 
   it("stops at the daily budget across contexts", async () => {

@@ -43,13 +43,6 @@ export const DEFAULT_INTERVALS_MS: Readonly<Record<string, number>> = {
   "wger.de": 200,
 };
 
-/** Maximum in-flight requests per host. Crossref's polite pool allows 3; WDQS allows 5 per IP. */
-export const DEFAULT_CONCURRENCY: Readonly<Record<string, number>> = {
-  "api.crossref.org": 3,
-  "query.wikidata.org": 5,
-};
-const FALLBACK_CONCURRENCY = 2;
-
 /** Requests per UTC day, per host, counted in-process (retries included). Unpaywall allows 100,000. */
 export const DEFAULT_DAILY_LIMITS: Readonly<Record<string, number>> = {
   "api.unpaywall.org": 90_000,
@@ -62,7 +55,6 @@ export interface HttpOptions {
   timeoutMs?: number;
   maxRetries?: number;
   intervalsMs?: Readonly<Record<string, number>>;
-  concurrency?: Readonly<Record<string, number>>;
   dailyLimits?: Readonly<Record<string, number>>;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
@@ -115,19 +107,22 @@ export function resetDailyBudgets(): void {
   dailyUsed.clear();
 }
 
-class Semaphore {
-  private active = 0;
-  private waiting: (() => void)[] = [];
-  constructor(private readonly max: number) {}
-  async acquire(): Promise<() => void> {
-    if (this.active >= this.max) await new Promise<void>((r) => this.waiting.push(r));
-    else this.active++;
-    // A released slot is handed straight to the next waiter, so `active` stays put.
-    return () => {
-      const next = this.waiting.shift();
-      if (next) next();
-      else this.active--;
-    };
+/**
+ * Serial FIFO lane per host: one request in flight at a time. A job holds its turn through its own
+ * retries, which is the same as re-entering at the front of the queue.
+ */
+class Lane {
+  private tail: Promise<void> = Promise.resolve();
+  async run<T>(job: () => Promise<T>): Promise<T> {
+    const prev = this.tail;
+    let release!: () => void;
+    this.tail = new Promise<void>((r) => (release = r));
+    await prev;
+    try {
+      return await job();
+    } finally {
+      release();
+    }
   }
 }
 
@@ -136,31 +131,29 @@ export function createHttp(options: HttpOptions = {}): Http {
   const timeoutMs = options.timeoutMs ?? 20_000;
   const maxRetries = options.maxRetries ?? 3;
   const intervals = options.intervalsMs ?? DEFAULT_INTERVALS_MS;
-  const concurrency = options.concurrency ?? DEFAULT_CONCURRENCY;
   const dailyLimits = options.dailyLimits ?? DEFAULT_DAILY_LIMITS;
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const now = options.now ?? (() => Date.now());
-  const nextSlot = new Map<string, number>();
+  const lastStart = new Map<string, number>();
   const cooldownUntil = new Map<string, number>();
-  const semaphores = new Map<string, Semaphore>();
+  const lanes = new Map<string, Lane>();
 
-  function semaphore(host: string): Semaphore {
-    let s = semaphores.get(host);
-    if (!s) semaphores.set(host, (s = new Semaphore(concurrency[host] ?? FALLBACK_CONCURRENCY)));
-    return s;
+  function lane(host: string): Lane {
+    let l = lanes.get(host);
+    if (!l) lanes.set(host, (l = new Lane()));
+    return l;
   }
 
-  async function acquireSlot(host: string, override?: number): Promise<void> {
-    const interval = override ?? intervals[host] ?? 0;
-    // Reserve the slot synchronously so concurrent callers queue up in order.
-    const slot = Math.max(now(), nextSlot.get(host) ?? 0);
-    nextSlot.set(host, slot + Math.max(interval, 0));
-    const wait = slot - now();
-    if (wait > 0) await sleep(wait);
-    // A pause set while we slept (429 + Retry-After) applies to us too: re-check until it ends.
-    for (let left = (cooldownUntil.get(host) ?? 0) - now(); left > 0; left = (cooldownUntil.get(host) ?? 0) - now()) {
+  /** Wait until both the minimum spacing and any provider pause have passed, then mark the send time. */
+  async function waitForTurn(host: string, override?: number): Promise<void> {
+    const interval = Math.max(override ?? intervals[host] ?? 0, 0);
+    for (;;) {
+      const until = Math.max((lastStart.get(host) ?? -Infinity) + interval, cooldownUntil.get(host) ?? 0);
+      const left = until - now();
+      if (left <= 0) break;
       await sleep(left);
     }
+    lastStart.set(host, now());
   }
 
   function pauseHost(host: string, ms: number): void {
@@ -189,7 +182,7 @@ export function createHttp(options: HttpOptions = {}): Http {
   ): Promise<Outcome> {
     const host = new URL(url).host;
     const backoff = 500 * 2 ** attempt;
-    await acquireSlot(host, opts.minIntervalMs);
+    await waitForTurn(host, opts.minIntervalMs);
     countDaily(host, safeUrl);
     let body: unknown;
     try {
@@ -211,7 +204,7 @@ export function createHttp(options: HttpOptions = {}): Http {
           );
         }
         const delayMs = hinted ?? backoff;
-        pauseHost(host, delayMs); // everything queued on this host honors the pause too
+        pauseHost(host, delayMs); // the next send on this host waits for it
         return { done: false, error };
       }
       const text = await res.text(); // body timeouts land in the catch below and are retried
@@ -241,20 +234,15 @@ export function createHttp(options: HttpOptions = {}): Http {
 
   async function fetchJson(url: string, schema: z.ZodType, opts: RequestOptions): Promise<unknown> {
     const safeUrl = sanitize(url);
-    const sem = semaphore(new URL(url).host);
-    let lastError: EvidenceHttpError | null = null;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      const release = await sem.acquire();
-      let outcome: Outcome;
-      try {
-        outcome = await attemptOnce(url, safeUrl, schema, opts, attempt);
-      } finally {
-        release();
+    return lane(new URL(url).host).run(async () => {
+      let lastError: EvidenceHttpError | null = null;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        const outcome = await attemptOnce(url, safeUrl, schema, opts, attempt);
+        if (outcome.done) return outcome.value;
+        lastError = outcome.error;
       }
-      if (outcome.done) return outcome.value;
-      lastError = outcome.error;
-    }
-    throw lastError ?? new EvidenceHttpError(`Request failed for ${safeUrl}`, null, safeUrl);
+      throw lastError ?? new EvidenceHttpError(`Request failed for ${safeUrl}`, null, safeUrl);
+    });
   }
 
   return { fetchJson: fetchJson as Http["fetchJson"] };
