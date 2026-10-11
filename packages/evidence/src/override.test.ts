@@ -228,4 +228,3 @@ describe("Sol R1 on #26", () => {
     expect(prompt).toMatch(/only if its text itself reads as an anatomy or nomenclature reference/);
   });
 });
-
