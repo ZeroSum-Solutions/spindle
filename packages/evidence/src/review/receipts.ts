@@ -2,11 +2,11 @@
 // runs them in one transaction as the named publisher; the database compares
 // every expected hash again and refuses a stale one.
 import { MODEL, SESSION, type ReviewOutcome } from "./harness";
-import { assertPacket, canonicalJson, packetDigest, type ReviewPacket } from "./packet";
+import { assertPacket, canonicalJson, packetDigest, type ReviewPacket, type SegmentDescriber } from "./packet";
 import { parseReviewResult } from "./result";
 
 export interface ReceiptCall {
-  fn: "publisher_review_claim" | "publisher_review_block" | "publisher_review_lesson" | "publisher_review_course";
+  fn: "publisher_review_claim" | "publisher_review_block" | "publisher_review_lesson" | "publisher_review_course" | "publisher_record_media_check";
   target: string;
   body: Record<string, unknown>;
 }
@@ -73,6 +73,23 @@ export function receiptCalls(packet: ReviewPacket, outcome: ReviewOutcome, now: 
           target: item.target,
           body: { verdict: answer.verdict, expectedHash: item.expectedHash, claimIds: item.claimIds ?? [], notes: canonicalJson(findings).slice(0, 2000), run },
         };
+      case "segment": {
+        const describer = (item.content as { describer?: SegmentDescriber }).describer;
+        if (!describer?.run || typeof describer.costUsd !== "number") throw new Error(`${item.id} has no describer run`);
+        if (describer.run.session === run.session && describer.run.model === run.model) throw new Error(`${item.id}: the describer cannot be the reviewer`);
+        return {
+          fn: "publisher_record_media_check",
+          target: item.target,
+          body: {
+            kind: "segment",
+            outcome: answer.verdict,
+            checkedAt: run.reviewedAt,
+            run,
+            describer: { run: describer.run, costUsd: describer.costUsd },
+            notes: canonicalJson(findings).slice(0, 2000),
+          },
+        };
+      }
       case "lesson":
       case "course":
         return {

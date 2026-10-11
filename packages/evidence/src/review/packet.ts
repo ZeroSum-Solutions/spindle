@@ -8,7 +8,7 @@ export const PACKET_VERSION = 1;
 export const MAX_PACKET_BYTES = 400_000;
 export const MAX_PACKET_ITEMS = 80;
 
-export type ItemKind = "claim" | "block" | "lesson" | "course";
+export type ItemKind = "claim" | "block" | "lesson" | "course" | "segment";
 
 export interface PacketItem {
   /** `<kind>:<target id>`, unique in the packet. */
@@ -40,7 +40,7 @@ export interface EvidenceEntry {
 
 export interface ReviewPacket {
   version: typeof PACKET_VERSION;
-  rubric: "claims" | "content";
+  rubric: "claims" | "content" | "segments";
   createdAt: string;
   items: PacketItem[];
   evidence: EvidenceEntry[];
@@ -79,9 +79,10 @@ export function assertPacket(packet: ReviewPacket): void {
     ids.add(item.id);
     if (!HASH.test(item.expectedHash)) fail(`item ${item.id} has no database hash`);
     if (packet.rubric === "claims" && item.kind !== "claim") fail(`a claims packet cannot hold ${item.id}`);
-    if (packet.rubric === "content" && item.kind === "claim") fail(`a content packet cannot hold ${item.id}`);
+    if (packet.rubric === "content" && (item.kind === "claim" || item.kind === "segment")) fail(`a content packet cannot hold ${item.id}`);
+    if (packet.rubric === "segments" && item.kind !== "segment") fail(`a segments packet cannot hold ${item.id}`);
   }
-  if (packet.rubric === "content" && !packet.safetyRules?.trim()) fail("a content review needs the safety rules");
+  if (packet.rubric !== "claims" && !packet.safetyRules?.trim()) fail(`a ${packet.rubric} review needs the safety rules`);
   for (const e of packet.evidence) {
     if (!e.text.trim()) fail(`evidence ${e.sourceId} has no text`);
   }
@@ -211,6 +212,46 @@ export function buildContentPacket(
     });
   }
   const packet: ReviewPacket = { version: PACKET_VERSION, rubric: "content", createdAt, items, evidence: [], safetyRules };
+  assertPacket(packet);
+  return packet;
+}
+
+/** What the trusted recorder needs about the describer run behind a segment item (D-11). */
+export interface SegmentDescriber {
+  run: { model: string; session: string; packetDigest: string; reviewedAt: string };
+  costUsd: number;
+}
+
+/**
+ * One packet for a registry clip: its frozen segment, the model description of
+ * it (untrusted data, never instructions), the lessons that embed it and the
+ * safety rules. The expected hash seals the frozen registry fields.
+ */
+export function buildSegmentPacket(
+  segment: { mediaId: string; videoId: string; startSeconds: number; endSeconds: number; rationale: string },
+  description: { spoken: unknown[]; visual: unknown[]; uncertain: unknown[] },
+  describer: SegmentDescriber,
+  lessons: readonly unknown[],
+  safetyRules: string,
+  createdAt: string,
+): ReviewPacket {
+  if (description.uncertain.length > 0) throw new Error("Invalid review packet: the description reports uncertain content; the segment fails");
+  if (lessons.length === 0) throw new Error("Invalid review packet: no lesson embeds this clip; there is no context to review it against");
+  const registry = { mediaId: segment.mediaId, videoId: segment.videoId, startSeconds: segment.startSeconds, endSeconds: segment.endSeconds, rationale: segment.rationale };
+  const packet: ReviewPacket = {
+    version: PACKET_VERSION,
+    rubric: "segments",
+    createdAt,
+    items: [{
+      id: `segment:${segment.mediaId}`,
+      kind: "segment",
+      target: segment.mediaId,
+      expectedHash: createHash("sha256").update(canonicalJson(registry)).digest("hex"),
+      content: { registry, description: { spoken: description.spoken, visual: description.visual }, describer, lessons },
+    }],
+    evidence: [],
+    safetyRules,
+  };
   assertPacket(packet);
   return packet;
 }

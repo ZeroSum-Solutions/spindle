@@ -76,4 +76,11 @@ Environment:
 - `SPINDLE_EVIDENCE_DIR` and `SPINDLE_REVIEW_DIR` must be absolute paths outside the repository. Abstracts, packets and raw answers are private and copyrighted, and never committed.
 - `SPINDLE_CONTACT_EMAIL` is required, as above.
 
-Video segments: `codex exec` takes text and still images only, and Gemini through the `agy` subscription lane reports no native video input (it can only try page-reading or shell tools, and downloading is not allowed). So no authorized route lets a reviewer see a segment's speech and demonstration. Registry clips stay deferred until a reviewer route is decided (plan section 6).
+Video segments (D-11): `codex exec` takes text and still images only, and Gemini on the `agy` subscription lane has no native video input. The approved route is the metered Gemini API, whose native YouTube input lets a describer report a segment's speech and demonstration.
+
+`segment-review.ts --media <id> --safety <SAFETY.md>` checks that the clip is active, embedded by a global lesson and not described in the last 90 days. It checks the $5-per-month cap from the private ledger `SPINDLE_REVIEW_DIR/gemini-spend.jsonl`, then has `gemini-3.8-flash` describe the segment plus 15 s of context, and logs the cost. Then:
+- A describer failure records nothing.
+- Uncertain content records a failed segment check.
+- Otherwise Sol reviews the description, lessons and SAFETY.md, and `record-review.ts` records Sol's run with the describer run.
+
+The key comes from `GEMINI_API_KEY` or `GOOGLE_API_KEY`, travels only in a request header and is never printed.

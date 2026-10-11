@@ -68,7 +68,9 @@ describe("learner RPC rows", () => {
   it("parse integrity and media rows", () => {
     expect(parseVersionIntegrity([{ lesson_id: UUID, claim_id: UUID, state: "withdrawn" }])).toEqual([{ lessonId: UUID, claimId: UUID, state: "withdrawn" }]);
     expect(() => parseVersionIntegrity([{ lesson_id: UUID, claim_id: UUID, state: "rejected" }])).toThrow(ContentParseError);
-    expect(parseVersionMedia([{ media_id: UUID, state: "disabled", title: null, channel: null, available: null }])[0]).toMatchObject({ state: "disabled" });
+    expect(parseVersionMedia([{ media_id: UUID, state: "disabled", review: null, title: null, channel: null, available: null }])[0]).toMatchObject({ state: "disabled" });
+    expect(parseVersionMedia([{ media_id: UUID, state: "playable", review: "model-described", title: null, channel: null, available: null }])[0]!.review).toBe("model-described");
+    expect(() => parseVersionMedia([{ media_id: UUID, state: "playable", review: "human-checked", title: null, channel: null, available: null }])).toThrow(ContentParseError);
   });
 
   it("refuse a client-side verdict in quiz answers", () => {
