@@ -15,6 +15,6 @@ export const SPINDLE: Brand = {
     onLight: "/brand/spindle-wordmark-ink.svg",
     onInk: "/brand/spindle-wordmark-white.svg",
     width: 120,
-    height: 33,
+    height: 41,
   },
 };

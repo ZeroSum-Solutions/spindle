@@ -1,29 +1,42 @@
 {
   "revision": 2,
   "selected_asset": {
-    "id": "03",
-    "file": null,
-    "name": "Spindle / cut",
-    "provider": "KIE.ai",
-    "model": "gpt-image-2-image-to-image",
-    "task_id": "dc2d775b4638f0e9eef5ef63ec084b28",
-    "prompt": "Edit this exact lowercase \"spindle\" wordmark. Make ONLY this specific change: move the slanted white cut currently crossing the top of the lowercase l onto the tall vertical stem/ascender of the lowercase d instead. The lowercase l must become one completely solid unbroken vertical black stem from its flat top to its baseline, with no detached cap, no dot, no notch, and no slash. The d receives one thin white 12-degree diagonal slash through its tall ascender, above its round bowl. Preserve the existing slanted cut through the round dot of the i exactly as it is. Keep all six letters spelled exactly spindle. Preserve the exact letter shapes, black weight, horizontal proportions, kerning, p descender, background and placement. The d must still read as d with its intact round bowl and vertical stem. Flat pure black on white. No other design changes. This is a precise typography correction: d cut, l solid.",
-    "derived": "assets/r2-logo-03.svg",
-    "conversion": "ImageMagick grayscale 50% threshold; Potrace SVG trace, tight bounds, turdsize 8, opttolerance 0.15. Original retained.",
-    "status": "User-preferred wordmark corrected: d ascender cut; l solid; i dot cut retained.",
-    "prior_generation": {
-      "model": "gpt-image-2-text-to-image",
-      "task_id": "df0bc508588e740b45c7c1fa62300b0b",
-      "prompt": "Create an original premium logo for Spindle, a modern anatomy education app for personal trainers. The brand should feel intelligent, independent, confident and contemporary. Exactly one pure black logo on pure white, centered, hard crisp clean edges, flat vector-like graphic design. No mockup, no scene, no shadow, no gradient, no texture, no watermark, no border, no annotations. Avoid literal anatomy, a muscle, a leaf, an almond, a flame, a medical cross, a dumbbell, DNA, a book, an eye, an AI sparkle, a shield and a swoosh. Prioritize an unexpected ownable silhouette, generous counters and optical balance. Do not copy an existing brand. Wordmark only, no separate symbol. Exact text: \"spindle\" in lowercase. A custom wide neo-grotesk logotype with extremely confident optical kerning, medium-bold weight, subtly squared rounded bowls. Use one single 12-degree slanted stencil cut through the dot of i and top of the l as a unique recognizable signature; the rest of every letter remains complete and very legible. i has a round dot, p and d have open generous counters. Not italic. Horizontal wordmark spans 82 percent of square, center vertically, no other words."
-    },
-    "original": "Kept privately, not redistributed: the generated PNG carries C2PA metadata from the generator and no redistribution right is recorded."
+    "id": "pressroom-cut",
+    "name": "Spindle / Cut, Pressroom redraw",
+    "files": [
+      "apps/web/public/brand/spindle-wordmark.svg",
+      "apps/web/public/brand/spindle-wordmark-ink.svg",
+      "apps/web/public/brand/spindle-wordmark-white.svg",
+      "apps/web/public/brand/spindle-wordmark-blue.svg",
+      "apps/web/public/brand/spindle-symbol.svg",
+      "apps/web/public/brand/spindle-symbol-small.svg",
+      "apps/web/public/brand/spindle-symbol-square.svg",
+      "apps/web/public/brand/spindle-symbol-ink.svg",
+      "apps/web/public/brand/spindle-disc.svg",
+      "apps/web/src/app/icon.svg",
+      "apps/web/src/app/favicon.ico",
+      "apps/web/src/app/apple-icon.png",
+      "apps/web/public/brand/icon-192.png",
+      "apps/web/public/brand/icon-512.png"
+    ],
+    "source": "original-vector",
+    "createdAt": "2026-10-11",
+    "creator": "Spindle (drawn with AI assistance: Claude Opus 5.5, W3)",
+    "method": "Glyph outlines of Archivo Italic (SIL OFL 1.1, google/fonts commit bd8f81ddb5c74d5c8897b36ad88b440266245103) instantiated at wght 900 and wdth 75, shaped with HarfBuzz; the i dot is replaced by a disc; the cuts through the d ascender and the disc rise 1 in 2 and are boolean differences (Skia PathOps). Built by docs/design/spindle/build-wordmark.py. No tracing and no generated image.",
+    "anchor": "Devin's preferred Cut wordmark (concept 03): cut through the d ascender, solid l, cut i dot. The exploration image the redraw follows (direction A, KIE gpt-image-2 image-to-image, task logged privately) was used as a visual reference only; no pixels or traced paths from it are in these files.",
+    "cut_angle": "rises 1 in 2 (26.57 deg from horizontal); measured 25.6 deg on the earlier trace and 26.5 deg on the concept 03 PNG",
+    "status": "Selected 2026-10-11 by the LEAD (Pressroom direction); Devin can override.",
+    "rights": "Spindle's mark. Archivo outlines used under the SIL OFL 1.1 (fonts may be used to make logos); provenance is not trademark clearance."
   },
   "scope": "Corrected user-preferred wordmark only; generated asset provenance is not trademark clearance.",
   "font_licenses": [
+    "assets/archivo-OFL.txt",
+    "assets/barlow-condensed-OFL.txt",
+    "assets/fraunces-OFL.txt",
     "assets/geist-OFL.txt",
     "assets/geist-mono-OFL.txt",
-    "assets/barlow-condensed-OFL.txt",
-    "assets/fraunces-OFL.txt"
+    "assets/ibm-plex-mono-OFL.txt",
+    "assets/newsreader-OFL.txt"
   ],
   "illustrations": [
     {
@@ -125,5 +138,23 @@
       "method": "Hand-written SVG geometry (paths, circles, polygons) in code. Not traced from, or generated from, any image, atlas, textbook figure or third-party illustration; no reference image was opened while drawing.",
       "accuracy": "Schematic and not to scale. Shows only positions the lesson text describes; adds no claim. All words (alt, caption, legend) come from the lesson's diagram block."
     }
-  ]
+  ],
+  "previous_selected_asset": {
+    "id": "03",
+    "file": null,
+    "name": "Spindle / cut",
+    "provider": "KIE.ai",
+    "model": "gpt-image-2-image-to-image",
+    "task_id": "dc2d775b4638f0e9eef5ef63ec084b28",
+    "prompt": "Edit this exact lowercase \"spindle\" wordmark. Make ONLY this specific change: move the slanted white cut currently crossing the top of the lowercase l onto the tall vertical stem/ascender of the lowercase d instead. The lowercase l must become one completely solid unbroken vertical black stem from its flat top to its baseline, with no detached cap, no dot, no notch, and no slash. The d receives one thin white 12-degree diagonal slash through its tall ascender, above its round bowl. Preserve the existing slanted cut through the round dot of the i exactly as it is. Keep all six letters spelled exactly spindle. Preserve the exact letter shapes, black weight, horizontal proportions, kerning, p descender, background and placement. The d must still read as d with its intact round bowl and vertical stem. Flat pure black on white. No other design changes. This is a precise typography correction: d cut, l solid.",
+    "derived": "assets/r2-logo-03.svg",
+    "conversion": "ImageMagick grayscale 50% threshold; Potrace SVG trace, tight bounds, turdsize 8, opttolerance 0.15. Original retained.",
+    "status": "User-preferred wordmark corrected: d ascender cut; l solid; i dot cut retained.",
+    "prior_generation": {
+      "model": "gpt-image-2-text-to-image",
+      "task_id": "df0bc508588e740b45c7c1fa62300b0b",
+      "prompt": "Create an original premium logo for Spindle, a modern anatomy education app for personal trainers. The brand should feel intelligent, independent, confident and contemporary. Exactly one pure black logo on pure white, centered, hard crisp clean edges, flat vector-like graphic design. No mockup, no scene, no shadow, no gradient, no texture, no watermark, no border, no annotations. Avoid literal anatomy, a muscle, a leaf, an almond, a flame, a medical cross, a dumbbell, DNA, a book, an eye, an AI sparkle, a shield and a swoosh. Prioritize an unexpected ownable silhouette, generous counters and optical balance. Do not copy an existing brand. Wordmark only, no separate symbol. Exact text: \"spindle\" in lowercase. A custom wide neo-grotesk logotype with extremely confident optical kerning, medium-bold weight, subtly squared rounded bowls. Use one single 12-degree slanted stencil cut through the dot of i and top of the l as a unique recognizable signature; the rest of every letter remains complete and very legible. i has a round dot, p and d have open generous counters. Not italic. Horizontal wordmark spans 82 percent of square, center vertically, no other words."
+    },
+    "original": "Kept privately, not redistributed: the generated PNG carries C2PA metadata from the generator and no redistribution right is recorded."
+  }
 }

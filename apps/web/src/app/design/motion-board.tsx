@@ -58,7 +58,7 @@ export function LogoReveal() {
     <div className="flex flex-col items-start gap-4">
       <div className="rounded-card border border-border bg-surface p-8">
         {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG */}
-        <img key={run} src="/brand/spindle-wordmark-ink.svg" alt="Spindle" width={240} height={66} className="logo-reveal h-[66px] w-[240px]" />
+        <img key={run} src="/brand/spindle-wordmark-ink.svg" alt="Spindle" width={240} height={81} className="logo-reveal h-[81px] w-[240px]" />
       </div>
       <button
         type="button"
