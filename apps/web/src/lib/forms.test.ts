@@ -10,6 +10,9 @@ describe("safeNext", () => {
 
   it.each([
     "//evil.example",
+    "/a/..//evil.example",
+    "/a/../..//evil.example",
+    "/%2e%2e//evil.example",
     "/\\evil.example",
     "/\\/evil.example",
     "https://evil.example",

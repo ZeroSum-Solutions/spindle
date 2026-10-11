@@ -11,7 +11,9 @@ export function safeNext(value: unknown, fallback = "/gyms"): string {
   if (typeof value !== "string" || !value.startsWith("/") || /[\\\u0000-\u001f\u007f]/.test(value)) return fallback;
   try {
     const url = new URL(value, BASE);
-    return url.origin === BASE ? `${url.pathname}${url.search}${url.hash}` : fallback;
+    const path = `${url.pathname}${url.search}${url.hash}`;
+    // Dot segments can collapse "/a/..//x" into "//x", which browsers treat as another host.
+    return url.origin === BASE && !path.startsWith("//") ? path : fallback;
   } catch {
     return fallback;
   }

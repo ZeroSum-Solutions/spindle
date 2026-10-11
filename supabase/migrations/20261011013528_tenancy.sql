@@ -202,11 +202,12 @@ declare
   inv public.invites%rowtype;
   caller public.member_role;
 begin
+  perform private.lock_org((select org_id from public.invites where id = invite_id));
   select * into inv from public.invites where id = invite_id for update;
   if not found then raise exception 'no such invite' using errcode = 'P0002'; end if;
   caller := private.role_in(inv.org_id);
-  if caller is distinct from 'owner'
-     and not (caller = 'lead' and inv.invited_by = (select auth.uid())) then
+  if not (coalesce(caller = 'owner', false)
+          or coalesce(caller = 'lead' and inv.invited_by = (select auth.uid()), false)) then
     raise exception 'not allowed to revoke this invite' using errcode = '42501';
   end if;
   update public.invites set revoked_at = clock_timestamp()
@@ -228,6 +229,9 @@ begin
   if uid is null then raise exception 'not signed in' using errcode = '28000'; end if;
   select lower(u.email) into confirmed_email from auth.users u
   where u.id = uid and u.email_confirmed_at is not null;
+  -- Lock order everywhere: org row, then invite row (avoids deadlocks).
+  perform private.lock_org((select i.org_id from public.invites i
+    where i.token_hash = encode(extensions.digest(invite_token, 'sha256'), 'hex')));
   select * into inv from public.invites
   where token_hash = encode(extensions.digest(invite_token, 'sha256'), 'hex')
   for update;
@@ -238,7 +242,6 @@ begin
   if confirmed_email is null or inv.email <> confirmed_email then
     raise exception 'invite was sent to a different email' using errcode = '42501';
   end if;
-  perform private.lock_org(inv.org_id);
   insert into public.memberships (org_id, user_id, role) values (inv.org_id, uid, inv.role)
   on conflict (org_id, user_id) do nothing;
   update public.invites set accepted_at = clock_timestamp(), accepted_by = uid where id = inv.id;
@@ -261,7 +264,7 @@ end;
 $$;
 
 -- Owners remove anyone; any member may leave. The last owner cannot go
--- (trigger). The removed member's pending invites are revoked.
+-- (trigger). Pending invites the member sent, or that were sent to them, are revoked.
 create function public.remove_member(target_org uuid, member uuid)
 returns void
 language plpgsql security definer set search_path = ''
@@ -274,7 +277,9 @@ begin
   delete from public.memberships where org_id = target_org and user_id = member;
   if not found then raise exception 'no such member' using errcode = 'P0002'; end if;
   update public.invites set revoked_at = clock_timestamp()
-  where org_id = target_org and invited_by = member and accepted_at is null and revoked_at is null;
+  where org_id = target_org and accepted_at is null and revoked_at is null
+    and (invited_by = member
+         or email = (select lower(u.email) from auth.users u where u.id = member));
 end;
 $$;
 

@@ -37,7 +37,7 @@ async function Gym({ params, searchParams }: PageProps<"/gyms/[slug]">) {
   const myRole = members.find((m) => m.user_id === me.id)?.role;
   const canInvite = myRole === "owner" || myRole === "lead";
 
-  const { data: invites } = canInvite
+  const { data: invites, error: invitesError } = canInvite
     ? await supabase
         .from("invites")
         .select("id, email, role, invited_by")
@@ -45,7 +45,8 @@ async function Gym({ params, searchParams }: PageProps<"/gyms/[slug]">) {
         .is("accepted_at", null)
         .is("revoked_at", null)
         .order("created_at")
-    : { data: [] };
+    : { data: [], error: null };
+  if (invitesError) throw new Error("Could not load pending invites. Try again.");
 
   return (
     <Page title={org.name}>

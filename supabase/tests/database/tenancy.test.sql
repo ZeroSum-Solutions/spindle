@@ -2,7 +2,7 @@
 -- role rules hold for clients and for the service role.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(60);
+select plan(66);
 
 -- Fixtures: Alice owns gym A, Bob owns gym B, Tess trains at A, Lee leads at A.
 -- Mallory has an unconfirmed email; Sam's account email is sam@x.test.
@@ -22,10 +22,20 @@ $$;
 create function pg_temp.reset_role() returns void language sql as $$
   select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
 $$;
-create function pg_temp.org(slug text) returns uuid language sql as $$ select id from public.orgs where slug = $1 $$;
+-- Org ids are captured as postgres right after creation; looking them up under a
+-- caller's role would return NULL for other gyms and make cross-tenant tests vacuous.
+create function pg_temp.org(slug text) returns uuid language sql as $$
+  select current_setting('test.org_' || replace(slug, '-', '_'))::uuid
+$$;
+create function pg_temp.capture(slug text) returns void language sql as $$
+  select set_config('test.org_' || replace(slug, '-', '_'), (select id::text from public.orgs where orgs.slug = $1), true)
+$$;
 
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a', 'alice@a.test');
 select public.create_org('Gym A', 'gym-a');
+select pg_temp.reset_role();
+select pg_temp.capture('gym-a');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a', 'alice@a.test');
 select set_config('test.tess_token', public.create_invite(pg_temp.org('gym-a'), 'Tess@A.test', 'trainer'), true);
 select set_config('test.lee_token', public.create_invite(pg_temp.org('gym-a'), 'lee@a.test', 'lead'), true);
 select set_config('test.mallory_token', public.create_invite(pg_temp.org('gym-a'), 'mallory@a.test', 'trainer'), true);
@@ -35,19 +45,30 @@ select set_config('test.sam_invite', (select id::text from public.invites where 
 
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b', 'bob@b.test');
 select public.create_org('Gym B', 'gym-b');
+select pg_temp.reset_role();
+select pg_temp.capture('gym-b');
+select is(pg_temp.org('gym-a') is not null and pg_temp.org('gym-b') is not null, true, 'both gym ids were captured');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b', 'bob@b.test');
 select set_config('test.bob_invite', public.create_invite(pg_temp.org('gym-b'), 'eve@x.test', 'trainer'), true);
 
 -- 1-3: privilege matrix. Clients get SELECT (plus orgs.name UPDATE); no direct writes.
 select pg_temp.reset_role();
 select table_privs_are('public', 'orgs', 'anon', array[]::text[], 'anon has no privileges on orgs');
+select table_privs_are('public', 'memberships', 'anon', array[]::text[], 'anon has no privileges on memberships');
+select table_privs_are('public', 'invites', 'anon', array[]::text[], 'anon has no privileges on invites');
+select table_privs_are('public', 'orgs', 'authenticated', array['SELECT'], 'authenticated may only SELECT orgs (plus the name column)');
+select ok(has_column_privilege('authenticated', 'public.orgs', 'name', 'UPDATE')
+  and not has_column_privilege('authenticated', 'public.orgs', 'slug', 'UPDATE'), 'authenticated may update only orgs.name');
 select table_privs_are('public', 'memberships', 'authenticated', array['SELECT'], 'authenticated may only SELECT memberships');
 select table_privs_are('public', 'invites', 'authenticated', array['SELECT'], 'authenticated may only SELECT invites');
+select is((select count(*) from information_schema.routine_privileges
+  where routine_schema = 'public' and grantee in ('anon', 'PUBLIC')
+    and routine_name in ('create_org', 'create_invite', 'revoke_invite', 'accept_invite', 'set_member_role', 'remove_member')),
+  0::bigint, 'no client RPC is executable by anon or PUBLIC');
 -- 4-5: TRUNCATE bypasses triggers, so even the service role lacks it.
 select ok(not has_table_privilege('service_role', 'public.memberships', 'TRUNCATE'), 'service role cannot TRUNCATE memberships');
 select ok(not has_table_privilege('service_role', 'public.orgs', 'TRUNCATE'), 'service role cannot TRUNCATE orgs');
 -- 6-7: RPCs are for signed-in users only.
-select function_privs_are('public', 'accept_invite', array['text'], 'anon', array[]::text[], 'anon cannot accept invites');
-select function_privs_are('public', 'create_org', array['text', 'text'], 'anon', array[]::text[], 'anon cannot create orgs');
 -- 8: RLS is on everywhere.
 select ok((select bool_and(relrowsecurity) from pg_class
   where oid in ('public.orgs'::regclass, 'public.memberships'::regclass, 'public.invites'::regclass)),
@@ -160,13 +181,24 @@ select lives_ok(format($$update public.orgs set name = 'Gym A' where slug = 'gym
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b', 'bob@b.test');
 select is(private.role_in(pg_temp.org('gym-a')), null::public.member_role, 'Bob has no role in gym A');
 
--- 48-49: removing a member revokes the invites they sent
+-- removing a member revokes the invites they sent and the ones sent to them
+select pg_temp.reset_role();
+insert into public.invites (org_id, email, role, token_hash, invited_by)
+  values (pg_temp.org('gym-a'), 'orphan@x.test', 'trainer', repeat('a', 64), null);
+select set_config('test.orphan_invite', (select id::text from public.invites where email = 'orphan@x.test'), true);
+insert into public.invites (org_id, email, role, token_hash, invited_by)
+  values (pg_temp.org('gym-a'), 'alice@a.test', 'trainer', repeat('b', 64), '00000000-0000-0000-0000-00000000000d');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b', 'bob@b.test');
+select throws_ok(format('select public.revoke_invite(%L)', current_setting('test.orphan_invite')),
+  '42501', 'not allowed to revoke this invite', 'a non-member cannot revoke an invite whose sender is gone');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000d', 'lee@a.test');
 select lives_ok(format($$select public.remove_member(%L, %L)$$, pg_temp.org('gym-a'),
   '00000000-0000-0000-0000-00000000000a'), 'the new owner removes Alice');
 select pg_temp.reset_role();
 select is((select count(*) from public.invites where invited_by = '00000000-0000-0000-0000-00000000000a'
-  and accepted_at is null and revoked_at is null), 0::bigint, 'Alice''s pending invites were revoked');
+  and accepted_at is null and revoked_at is null), 0::bigint, 'Alice''s sent invites were revoked');
+select is((select count(*) from public.invites where email = 'alice@a.test' and revoked_at is null), 0::bigint,
+  'invites addressed to Alice were revoked, so she cannot rejoin with them');
 
 -- 50-55: service-role paths keep the invariants --------------------------------
 set local role service_role;
