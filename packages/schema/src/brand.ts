@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { courseTagsSchema } from "./runtime";
 
 // Tenant brand (phase 4, P4-A; plan revision 2, theming security). A gym's brand is presentation
 // only: a plain-text name, a text mark or a raster logo, two literal colours and one bundled font.
@@ -147,7 +148,7 @@ export const courseCardDtoSchema = z
         foreground: lowerHex,
       })
       .nullable(),
-    tags: z.array(z.string()).max(2),
+    tags: courseTagsSchema,
     lessonCount: z.number().int().nonnegative(),
     durationMinutes: z.number().int().nonnegative(),
     publishedBySpindle: z.boolean(),

@@ -121,6 +121,12 @@ as $$
   returning revision
 $$;
 
+/**
+ * Moves the revision whenever member_brand or member_course_cards can change (Sol R1 #43 W2):
+ * any save, clear or decision of a gym-scope held text (member_brand reads the newest row), and any
+ * revocation, gym or course scope (cards check course-text receipts live). Course-text saves and
+ * decisions change cards only through a new version, whose id is part of the card.
+ */
 create function private.bump_brand_revision_on_text()
 returns trigger
 language plpgsql security definer set search_path = ''
@@ -128,11 +134,19 @@ as $$
 declare
   t private.tenant_texts%rowtype;
 begin
-  select * into t from private.tenant_texts where id = new.text_id;
-  if private.held_slot_scope(t.slot) = 'org' then perform private.bump_brand_revision(t.org_id); end if;
+  if tg_table_name = 'tenant_texts' then
+    t := new;
+  else
+    select * into t from private.tenant_texts where id = new.text_id;
+  end if;
+  if tg_table_name = 'tenant_text_revocations' or private.held_slot_scope(t.slot) = 'org' then
+    perform private.bump_brand_revision(t.org_id);
+  end if;
   return new;
 end;
 $$;
+create trigger tenant_texts_brand_revision after insert on private.tenant_texts
+  for each row execute function private.bump_brand_revision_on_text();
 create trigger tenant_text_admissions_brand_revision after insert on private.tenant_text_admissions
   for each row execute function private.bump_brand_revision_on_text();
 create trigger tenant_text_revocations_brand_revision after insert on private.tenant_text_revocations
@@ -189,11 +203,14 @@ declare
   b jsonb;
 begin
   if uid is null then raise exception 'not signed in' using errcode = '28000'; end if;
+  -- Lock first, then check the role (Sol R1 #43 B1): a concurrent demotion that commits while this
+  -- call waits for the org lock is seen by the check below, as in the membership RPCs.
+  perform private.require_read_committed();
+  perform 1 from public.orgs where id = p_org for update;
   if p_org is null or private.role_in(p_org) is distinct from 'owner' then
     raise exception 'only the owner of this gym can change its brand' using errcode = '42501';
   end if;
   b := private.validate_org_brand(p_brand);
-  perform 1 from public.orgs where id = p_org for update;
   insert into private.org_brand (org_id, brand, updated_by) values (p_org, b, uid)
   on conflict (org_id) do update set brand = excluded.brand, updated_by = excluded.updated_by, updated_at = clock_timestamp();
   perform private.audit(uid, 'save_org_brand', p_org, p_org, jsonb_build_object('brand', b));
@@ -233,7 +250,8 @@ end;
 $$;
 
 /**
- * CourseCardDto list for a member's catalog: the latest version of every global course and of this
+ * CourseCardDto list for a member's catalog (cache under org:{id}:cards:{revision}, with the revision
+ * from member_brand; every card names its version id): the latest version of every global course and of this
  * gym's method courses. Gym titles and blurbs are shown only while their receipts are live; a
  * revoked title reads as the fallback and a revoked blurb is left out. Base and modality courses
  * use Spindle's cover (cover null); only gym method courses carry a tenant cover.

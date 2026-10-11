@@ -25,6 +25,8 @@ insert into public.memberships (org_id, user_id, role) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '00000000-0000-0000-0000-0000000000a4', 'trainer'),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '00000000-0000-0000-0000-0000000000b1', 'owner');
 insert into private.content_publishers (user_id, note) values ('00000000-0000-0000-0000-0000000000c1', 'test publisher');
+-- Global versions that already exist (real content on a shared stack). Counts below are relative to it.
+select set_config('test.pre_global', (select count(*) from public.curriculum_versions where org_id is null)::text, true);
 
 create function pg_temp.act_as(uid text) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -512,7 +514,8 @@ delete from public.lesson_blocks where lesson_id = '63000000-0000-4000-8000-0000
 
 -- 57-62: who sees what ----------------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
-select is((select count(*) from public.curriculum_versions), 3::bigint, 'Tess sees the global versions (G, N) and her gym''s');
+select is((select count(*) from public.curriculum_versions), 3 + current_setting('test.pre_global')::bigint,
+  'Tess sees the global versions (G, N, and any that existed before) and her gym''s');
 select is((select count(*) from public.courses), 0::bigint, 'a trainer sees no drafts');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
 select results_eq('select id from public.courses', $$values ('63000000-0000-4000-8000-000000000000'::uuid)$$,
@@ -766,7 +769,7 @@ select ok(exists (select 1 from private.content_audit where actor = '00000000-00
 -- 123-124: offboarding a gym removes its content and progress; global content stays
 select lives_ok($$delete from public.orgs where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$$,
   'deleting a gym cascades through its versions, assignments and progress');
-select is((select count(*) from public.curriculum_versions where org_id is null), 4::bigint,
+select is((select count(*) from public.curriculum_versions where org_id is null), 4 + current_setting('test.pre_global')::bigint,
   'global versions survive a gym''s deletion');
 
 select * from finish();

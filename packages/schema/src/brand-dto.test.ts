@@ -58,6 +58,8 @@ describe("CourseCardDto", () => {
     ["a wrong layer label", { layerLabel: "Base" }],
     ["a seal on a gym card", { seal: true }],
     ["an extra key", { progress: 0.5 }],
+    ["a tag outside the taxonomy", { tags: ["unknown-tag"] }],
+    ["a duplicate tag", { tags: ["strength", "strength"] }],
   ])("refuses %s", (_l, extra) => {
     expect(() => parseCourseCards([{ ...card, ...extra }])).toThrow();
   });
