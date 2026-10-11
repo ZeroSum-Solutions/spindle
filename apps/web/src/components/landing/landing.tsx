@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { LayerLabel, SupportLabel } from "../learn/labels";
 import type { Brand } from "../../lib/brand";
+import { LayerStack } from "../illustrations/layer-stack";
 
 // Signed-out landing page. Honest copy only: no testimonials, counts or claims we
 // cannot show. Science statements never appear here, because nothing on this page
@@ -10,7 +11,8 @@ import type { Brand } from "../../lib/brand";
 
 const SIGN_IN = "/sign-in?next=%2Fgyms";
 
-const MODALITIES = ["Strength", "Speed", "Conjugate", "Hypertrophy", "Mobility", "Yoga", "Pilates", "Sport development"];
+// Modalities only. Named methods (conjugate, for example) belong to a coach's method layer, not this list.
+const MODALITIES = ["Strength", "Speed", "Hypertrophy", "Mobility", "Yoga", "Pilates", "Sport development"];
 
 const SHOULDER = [
   "Shoulder anatomy a trainer needs",
@@ -99,10 +101,11 @@ function Section({ id, labelledBy, className = "", children }: { id?: string; la
   );
 }
 
-function SectionHead({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children?: ReactNode }) {
+/** A section heading led by the Cut 03 tick: the wordmark's 12-degree cut, in place of a template eyebrow. */
+function SectionHead({ id, title, children }: { id: string; title: string; children?: ReactNode }) {
   return (
     <div className="flex max-w-[44rem] flex-col gap-3">
-      <p className="text-label font-medium text-brand">{eyebrow}</p>
+      <span aria-hidden className="cut-tick text-ink" />
       <h2 id={id} className="text-heading font-medium text-balance text-text">
         {title}
       </h2>
@@ -138,7 +141,10 @@ function Hero({ brand }: { brand: Brand }) {
           </div>
           <p className="text-label text-text-muted">We email you a 6-digit code. New here? The same step creates your account.</p>
         </div>
-        <LessonSpecimen />
+        <figure className="flex min-w-0 flex-col gap-3" aria-label="Three layers of courses">
+          <LayerStack brandName={brand.name} />
+          <figcaption className="text-label text-text-muted">Base, modality and method are separate courses. Each keeps its own label. Schematic, not to scale.</figcaption>
+        </figure>
       </div>
     </section>
   );
@@ -181,7 +187,7 @@ function LessonSpecimen() {
 function Layers() {
   return (
     <Section id="layers" labelledBy="layers-title" className="border-t border-border bg-surface">
-      <SectionHead id="layers-title" eyebrow="Three layers of courses" title="Your system sits on top. The science underneath is shared and cited.">
+      <SectionHead id="layers-title" title="Your system sits on top. The science underneath is shared and cited.">
         Base, modality and method are separate courses, each labelled with its layer. A gym can assign a trainer courses from every layer, and each
         teaching passage inside a course says whether it is science or practice-based.
       </SectionHead>
@@ -248,7 +254,7 @@ function LayerRow({
 function Floor() {
   return (
     <Section labelledBy="floor-title">
-      <SectionHead id="floor-title" eyebrow="Coach-first lessons" title="Every idea ends on the gym floor.">
+      <SectionHead id="floor-title" title="Every idea ends on the gym floor.">
         Short sections, each with one job. A lesson finishes with something you change: an assessment, a cue, an exercise choice or a referral.
       </SectionHead>
       <ol className="grid grid-cols-1 gap-px overflow-hidden rounded-card border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
@@ -270,7 +276,10 @@ function Honest({ brand }: { brand: Brand }) {
   return (
     <Section labelledBy="honest-title" className="border-t border-border bg-surface">
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16">
-        <SectionHead id="honest-title" eyebrow="Honest about evidence" title="Confident where the research is strong. Clear when it is coaching experience." />
+        <div className="flex flex-col gap-8">
+          <SectionHead id="honest-title" title="Confident where the research is strong. Clear when it is coaching experience." />
+          <LessonSpecimen />
+        </div>
         <ul className="flex flex-col divide-y divide-border border-y border-border">
           {promises(brand.name).map((p) => (
             <li key={p} className="flex items-start gap-3 py-4 text-base text-text">
@@ -288,8 +297,8 @@ function Building() {
   return (
     <Section labelledBy="building-title">
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16">
-        <SectionHead id="building-title" eyebrow="In development" title="The first base module is the shoulder.">
-          Eight lessons, from the anatomy a trainer needs to when to refer out. Each one is checked against its cited research before it is published.
+        <SectionHead id="building-title" title="The first base module is the shoulder.">
+          In development: eight lessons, from the anatomy a trainer needs to when to refer out. Each one is checked against its cited research before it is published.
         </SectionHead>
         <ol aria-label="Shoulder module lessons" className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
           {SHOULDER.map((title, i) => (

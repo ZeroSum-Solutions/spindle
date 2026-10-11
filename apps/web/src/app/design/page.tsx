@@ -56,6 +56,8 @@ const blocks: LessonBlock[] = [
   { kind: "checklist", content: ["First synthetic step", "Second synthetic step"], support: "science", claimIds: [FLAGGED] },
   { kind: "image", content: { kind: "image", src: "/media/content/synthetic/missing.png", alt: "Synthetic missing figure", caption: "A storage figure that is not available.", provenanceId: "synthetic" } },
   { kind: "diagram", content: { diagramId: "synthetic-diagram", caption: "A diagram block without an asset yet." } },
+  { kind: "diagram", content: { diagramId: "shoulder-complex-front", caption: "Original diagram: the shoulder complex from the front." } },
+  { kind: "diagram", content: { diagramId: "scapula-upward-rotation", caption: "Original diagram: upward rotation of the shoulder blade." } },
   {
     kind: "quiz",
     content: { prompt: "Synthetic self-check: which option is right?", options: ["Option A", "Option B", "Option C"], answerIndex: 1, explanation: "Option B is the synthetic answer." },

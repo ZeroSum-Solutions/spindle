@@ -31,6 +31,16 @@ describe("Landing", () => {
     expect(html).not.toContain("A trainer sees one course");
   });
 
+  it("drops template eyebrows for the cut motif, lists modalities only, and draws the layer stack", () => {
+    const html = render(SPINDLE);
+    expect(html).not.toContain("Conjugate");
+    expect(html).not.toMatch(/<p class="text-label font-medium text-brand">/);
+    expect(html.match(/class="cut-tick/g)?.length).toBeGreaterThanOrEqual(4);
+    expect(html).toContain("<title");
+    expect(html).toContain("Spindle base");
+    expect(html).toContain("In development");
+  });
+
   it("gives the action on the dark section a light focus outline", () => {
     // The global ring is unlayered CSS, so a utility class cannot recolour it; the section sets the ring's custom property.
     expect(render(SPINDLE)).toMatch(/<section aria-labelledby="closing-title" class="[^"]*\[--focus-ring:var\(--color-white\)\]/);

@@ -18,7 +18,7 @@ export function LessonOutline({ view, base, currentId }: { view: CourseView; bas
             <Link
               href={`${base}/${lesson.slug}`}
               aria-current={current ? "page" : undefined}
-              className={`flex min-h-11 flex-col gap-0.5 rounded-small px-3 py-2 ${current ? "bg-brand-soft text-brand" : "hover:bg-surface-muted"}`}
+              className={`flex min-h-11 flex-col gap-0.5 rounded-small py-2 pr-3 pl-4 ${current ? "cut-marker text-brand" : "hover:bg-surface-muted"}`}
             >
               <span className="text-label">
                 <span className="font-mono text-code text-text-muted">{String(i + 1).padStart(2, "0")}</span> {lesson.title}
