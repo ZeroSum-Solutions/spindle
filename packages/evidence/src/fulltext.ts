@@ -47,15 +47,28 @@ const decode = (t: string) =>
   });
 
 // Well-formed XML: text never holds a raw "<", so one token pattern suffices.
-const TOKEN = /<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>|<\?[\s\S]*?\?>|<!(?!\[CDATA\[)[^>]*>|<(\/?)([A-Za-z_][\w.:-]*)((?:\s+[^\s=/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>|([^<]+)/g;
+const TOKEN = /<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>|<\?[\s\S]*?\?>|<!(?!\[CDATA\[)[^>]*>|<(\/?)([A-Za-z_][\w.:-]*)((?:\s+[^\s=/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>|([^<]+)|(<)/g;
 /** Text inside these elements is not section prose. */
 const SKIP = new Set(["fig", "fn-group", "ref-list", "supplementary-material", "disp-formula", "inline-formula", "graphic", "media", "label"]);
 
 interface TableState { label: string; caption: string; head: string[][]; rows: string[][]; row: string[] | null; cell: string | null; part: "label" | "caption" | "head" | "body" | "foot" | null; foot: string; merged: boolean }
 
 /** A cell spanning rows or columns: without a real grid its values would be mislabelled (Sol R1 PR31-02). */
-const SPAN = /\b(?:rowspan|colspan)\s*=\s*["']?\s*([0-9]+)/gi;
-const spans = (attrs: string | undefined) => [...(attrs ?? "").matchAll(SPAN)].some((m) => Number(m[1]) > 1);
+const ATTR = /([^\s=/>]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+/**
+ * True when a cell spans rows or columns. Values are decoded first ("&#50;" is 2); anything but
+ * exactly 1 counts as a span (Sol R2 PR31-02).
+ */
+const spans = (attrs: string | undefined) =>
+  [...(attrs ?? "").matchAll(ATTR)].some((m) => /^(rowspan|colspan)$/i.test(m[1]!) && decode(m[2] ?? m[3] ?? "").trim() !== "1");
+
+const NOT_A_GRID = "it is not a plain grid (merged cells, no header row, uneven rows or unreadable markup); quote it as a publisher excerpt instead";
+
+/** A plain grid: one header row width, every body row the same width, no spans or stray markup. */
+function plainGrid(t: TableState): boolean {
+  const width = t.head[t.head.length - 1]?.length ?? 0;
+  return !t.merged && width > 0 && t.head.every((r) => r.length === width) && t.rows.length > 0 && t.rows.every((r) => r.length === width);
+}
 
 function tableText(t: TableState): string {
   const head = t.head[t.head.length - 1] ?? [];
@@ -92,7 +105,12 @@ export function jatsSections(xml: string): JatsSection[] {
     if (text) out.push({ locator: `Section: ${[...secs.map((s) => s.title), sec.title].filter(Boolean).join(" > ")}`, text });
   };
   for (const m of xml.matchAll(TOKEN)) {
-    const [, cdata, slash, name, attrs, selfClose, text] = m;
+    const [, cdata, slash, name, attrs, selfClose, text, stray] = m;
+    if (stray) {
+      // A "<" that is not well-formed markup: inside a table the grid cannot be trusted.
+      if (table && inBody && !skip) table.merged = true;
+      continue;
+    }
     if (name) {
       if (selfClose) {
         // An empty cell keeps its column.
@@ -129,7 +147,7 @@ export function jatsSections(xml: string): JatsSection[] {
         else if (name === "table-wrap") {
           const label = table.label.replace(/\s+/g, " ").trim() || `Table ${tables.length + 1}`;
           const text = tableText(table);
-          if (table.merged) tables.push({ locator: `Table: ${label}`, text: "", unsupported: "it has merged cells (rowspan or colspan); quote it as a publisher excerpt instead" });
+          if (!plainGrid(table)) tables.push({ locator: `Table: ${label}`, text: "", unsupported: NOT_A_GRID });
           else if (text) tables.push({ locator: `Table: ${label}`, text });
           table = null;
         }
