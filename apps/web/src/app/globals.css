@@ -391,6 +391,82 @@ body {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
 }
 
+/*
+ * The landing hero (M2b): the atmosphere art sits under a scrim in the canvas colour, so the copy keeps AA
+ * over it in both themes; the measurement layer (grid, ticks, crosshair) is decoration over the art; one
+ * magenta scan passes once on load and is hidden under reduced motion. Lesson text never animates.
+ */
+.hero-scrim {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--color-canvas) 45%, transparent) 0%, transparent 30%, transparent 55%, var(--color-canvas) 100%);
+}
+.hero-grid {
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--color-text) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--color-text) 6%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(120% 90% at 20% 30%, #000 30%, transparent 75%);
+}
+.hero-xhair {
+  width: 18px;
+  height: 18px;
+  background:
+    linear-gradient(var(--color-text), var(--color-text)) center / 1px 100% no-repeat,
+    linear-gradient(var(--color-text), var(--color-text)) center / 100% 1px no-repeat;
+  opacity: 0.6;
+}
+.hero-scan {
+  background: var(--color-signal);
+  box-shadow: 0 0 12px 2px color-mix(in oklab, var(--color-signal) 40%, transparent);
+  opacity: 0;
+  animation: hero-scan 900ms var(--ease-out) 200ms 1 both;
+}
+@keyframes hero-scan {
+  0% {
+    transform: translateY(80px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(22rem);
+    opacity: 0;
+  }
+}
+@media (min-width: 1024px) {
+  .hero-scrim {
+    background:
+      linear-gradient(90deg, color-mix(in oklab, var(--color-canvas) 92%, transparent) 0%, color-mix(in oklab, var(--color-canvas) 74%, transparent) 38%, transparent 66%),
+      linear-gradient(180deg, color-mix(in oklab, var(--color-canvas) 50%, transparent) 0%, transparent 22%, transparent 70%, var(--color-canvas) 100%);
+  }
+  .hero-scan {
+    animation-name: hero-scan-wide;
+  }
+  @keyframes hero-scan-wide {
+    0% {
+      transform: translateY(120px);
+      opacity: 0;
+    }
+    15% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(50rem);
+      opacity: 0;
+    }
+  }
+}
+.closing-scrim {
+  background:
+    linear-gradient(90deg, color-mix(in oklab, var(--color-canvas) 94%, transparent) 0%, color-mix(in oklab, var(--color-canvas) 70%, transparent) 55%, color-mix(in oklab, var(--color-canvas) 25%, transparent) 100%),
+    linear-gradient(180deg, var(--color-canvas) 0%, transparent 25%, transparent 75%, var(--color-canvas) 100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-scan {
+    display: none;
+  }
+}
+
 /* The lesson bar publishes its height as --dock-h; focus moved by keyboard or scroll stops above it. */
 html {
   scroll-padding-bottom: var(--dock-h, 0px);

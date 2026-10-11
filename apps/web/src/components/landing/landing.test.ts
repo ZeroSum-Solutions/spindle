@@ -31,18 +31,31 @@ describe("Landing", () => {
     expect(html).not.toContain("A trainer sees one course");
   });
 
-  it("drops template eyebrows for the cut motif, lists modalities only, and draws the layer stack", () => {
+  it("keeps the cut motif on section heads, lists modalities only, and stacks the layers top to bottom", () => {
     const html = render(SPINDLE);
     expect(html).not.toContain("Conjugate");
     expect(html).not.toMatch(/<p class="text-label font-medium text-brand">/);
     expect(html.match(/class="cut-tick/g)?.length).toBeGreaterThanOrEqual(4);
-    expect(html).toContain("<title");
-    expect(html).toContain("Spindle base");
+    expect([...html.matchAll(/data-layer="(\w+)"/g)].map((m) => m[1])).toEqual(["method", "modality", "base"]);
     expect(html).toContain("In development");
   });
 
-  it("gives the action on the ink section an on-ink focus outline, which inverts with the theme", () => {
-    // The global ring is unlayered CSS, so a utility class cannot recolour it; the section sets the ring's custom property.
-    expect(render(SPINDLE)).toMatch(/<section aria-labelledby="closing-title" class="[^"]*\[--focus-ring:var\(--color-on-ink\)\]/);
+  it("opens on the Lab hero: decorative art per theme, one signal action, the measurement layer", () => {
+    const html = render(SPINDLE);
+    for (const t of ["light", "dark"]) {
+      expect(html).toContain(`/art/track-${t}.webp`);
+      expect(html).toContain(`/art/track-${t}-m.webp`);
+    }
+    expect(html).toMatch(/<img src="\/art\/track-dark\.webp" alt=""/);
+    const hero = html.slice(html.indexOf("data-lab-hero"), html.indexOf("</section>", html.indexOf("data-lab-hero")));
+    expect(hero.match(/bg-signal /g)).toHaveLength(1);
+    expect(hero).toContain("measure-ticks");
+  });
+
+  it("closes on the canvas over the chalk art, with the default signal focus ring", () => {
+    const html = render(SPINDLE);
+    expect(html).toMatch(/<section aria-labelledby="closing-title" class="relative isolate overflow-hidden bg-canvas">/);
+    expect(html).toContain("/art/chalk-light.webp");
+    expect(html).not.toMatch(/closing-title[^>]*--focus-ring/);
   });
 });

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { LayerLabel, SupportLabel } from "../learn/labels";
 import type { Brand } from "../../lib/brand";
-import { LayerStack } from "../illustrations/layer-stack";
+import { LabHero } from "./lab-hero";
 import { ThemeToggle } from "../theme/theme-toggle";
 import { ThemedWordmark } from "../ui/themed-wordmark";
 
@@ -107,7 +107,7 @@ export function Landing({ brand }: { brand: Brand }) {
       <SiteHeader brand={brand} />
 
       <main className="flex flex-1 flex-col">
-        <Hero brand={brand} />
+        <LabHero brand={brand} />
         <Layers />
         <Floor />
         <Honest brand={brand} />
@@ -138,42 +138,6 @@ export function SectionHead({ id, title, children }: { id: string; title: string
       </h2>
       {children ? <p className="text-reading text-text-muted">{children}</p> : null}
     </div>
-  );
-}
-
-function Hero({ brand }: { brand: Brand }) {
-  return (
-    <section aria-labelledby="hero-title">
-      <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 items-center gap-12 px-4 pt-12 pb-16 md:px-8 md:pt-20 md:pb-24 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
-        <div className="flex flex-col gap-6">
-          <p className="text-label font-medium text-text-muted">For coaches, gyms and the trainers they teach</p>
-          <h1 id="hero-title" className="text-display text-balance text-text">
-            Your method, on a base that shows its work.
-          </h1>
-          <p className="max-w-[52ch] text-reading text-text-muted">
-            {brand.name} teaches personal trainers how the body works, and every science statement links to its sources. A gym&apos;s own
-            method sits on top as a separate course. Tools for coaches to write and publish those courses are planned.
-          </p>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <Link
-              href={SIGN_IN}
-              className="inline-flex min-h-12 items-center gap-2 rounded-control bg-ink px-5 font-medium text-on-ink transition-colors duration-[var(--duration-feedback)] hover:bg-ink-hover"
-            >
-              Sign in
-              <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />
-            </Link>
-            <a href="#layers" className="inline-flex min-h-11 items-center font-medium text-brand hover:text-brand-hover">
-              See how the layers fit
-            </a>
-          </div>
-          <p className="text-label text-text-muted">We email you a 6-digit code. New here? The same step creates your account.</p>
-        </div>
-        <figure className="flex min-w-0 flex-col gap-3" aria-label="Three layers of courses">
-          <LayerStack brandName={brand.name} />
-          <figcaption className="text-label text-text-muted">Base, modality and method are separate courses. Each keeps its own label. Schematic, not to scale.</figcaption>
-        </figure>
-      </div>
-    </section>
   );
 }
 
@@ -218,12 +182,12 @@ function Layers() {
         Base, modality and method are separate courses, each labelled with its layer. A gym can assign a trainer courses from every layer, and each
         teaching passage inside a course says whether it is science or practice-based.
       </SectionHead>
-      <ol className="flex flex-col gap-4">
-        <LayerRow n="03" layer="method" title="Your method" lead="Yours." planned="Authoring planned">
+      <ol aria-label="The three layers, top to bottom" data-allow-number className="flex flex-col gap-attach md:[&>li:nth-child(2)]:ml-group md:[&>li:nth-child(3)]:ml-page">
+        <LayerRow n="3" layer="method" title="Your method" lead="Yours." planned="Authoring planned">
           Your assessments, cues, progressions and language, in your gym&apos;s own course. Always labelled practice-based, so it reads as your
           coaching and never as borrowed science.
         </LayerRow>
-        <LayerRow n="02" layer="modality" title="Your discipline" lead="Your field." planned="Planned">
+        <LayerRow n="2" layer="modality" title="Your discipline" lead="Your field." planned="Planned">
           Science where the evidence exists, practice-based where it is coaching experience. The label tells the trainer which.
           <span className="mt-3 flex flex-wrap gap-2" aria-label="Modalities a course can cover">
             {MODALITIES.map((m) => (
@@ -233,7 +197,7 @@ function Layers() {
             ))}
           </span>
         </LayerRow>
-        <LayerRow n="01" layer="base" title="How the body works" lead="Shared.">
+        <LayerRow n="1" layer="base" title="How the body works" lead="Shared.">
           Anatomy, movement and loading. Every science statement is bound to a checked claim, with its sources one tap away.
         </LayerRow>
       </ol>
@@ -258,21 +222,20 @@ function LayerRow({
   children: ReactNode;
 }) {
   return (
-    <li className="grid grid-cols-1 gap-3 rounded-card border border-border bg-canvas p-5 md:grid-cols-[4rem_minmax(0,16rem)_minmax(0,1fr)] md:gap-6 md:p-6">
-      <span aria-hidden className="font-mono text-code text-text-muted">
-        {n}
+    <li data-layer={layer} className="layer-card relative grid grid-cols-[3.5rem_minmax(0,1fr)] gap-x-stack gap-y-tight rounded-card border border-border bg-surface py-block pr-stack shadow-raise md:grid-cols-[5rem_minmax(0,1fr)_auto] md:pr-block">
+      <span aria-hidden className="row-span-3 flex flex-col items-center gap-tight border-r border-border md:row-span-2">
+        <span className="grid size-6 place-items-center rounded-small border border-control font-mono text-code text-text">{n}</span>
+        <span className="font-mono text-eyebrow text-text-muted">L{n}</span>
       </span>
-      <div className="flex flex-col items-start gap-2">
-        <span className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col items-start gap-tight">
+        <h3 className="text-subhead text-text">{title}</h3>
+        <span className="flex flex-wrap items-center gap-tight">
           <LayerLabel layer={layer} />
-          {planned ? <span className="text-label text-text-muted">{planned}</span> : null}
+          {planned ? <span className="font-mono text-eyebrow text-text-muted">{planned}</span> : null}
         </span>
-        <h3 className="text-xl font-medium tracking-tight text-text">{title}</h3>
       </div>
-      <p className="flex flex-col text-base text-text-muted">
-        <span>
-          <span className="font-medium text-text">{lead}</span> {children}
-        </span>
+      <p className="text-ui text-text-muted md:col-start-2">
+        <span className="font-semibold text-text">{lead}</span> {children}
       </p>
     </li>
   );
@@ -344,21 +307,28 @@ function Building() {
 
 function Closing({ brand }: { brand: Brand }) {
   return (
-    <section aria-labelledby="closing-title" className="bg-ink text-on-ink [--focus-ring:var(--color-on-ink)]">
-      <div className="mx-auto flex w-full max-w-[1200px] flex-col items-start gap-6 px-4 py-16 md:px-8 md:py-24">
-        <Wordmark brand={brand} surface="ink" />
-        <h2 id="closing-title" className="max-w-[20ch] text-display text-balance">
+    <section aria-labelledby="closing-title" className="relative isolate overflow-hidden bg-canvas">
+      <div aria-hidden className="closing-art absolute inset-0 -z-10">
+        {(["dark", "light"] as const).map((t) => (
+          // eslint-disable-next-line @next/next/no-img-element -- decorative art, one file per theme
+          <img key={t} src={`/art/chalk-${t}.webp`} alt="" width={1672} height={941} loading="lazy" className={`theme-${t}-only h-full w-full object-cover object-[70%_40%]`} />
+        ))}
+        <div className="closing-scrim absolute inset-0" />
+      </div>
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col items-start gap-block px-4 py-section md:px-8 md:py-hero">
+        <Wordmark brand={brand} />
+        <h2 id="closing-title" className="max-w-[16ch] text-display text-balance text-text">
           Bring your method.
         </h2>
-        <p className="max-w-[52ch] text-reading text-on-ink/80">
+        <p className="max-w-[52ch] text-reading text-text">
           Sign in to join your gym, or start one and invite your trainers. Writing and publishing your own courses is planned for a later release.
         </p>
         <Link
           href={SIGN_IN}
-          className="inline-flex min-h-12 items-center gap-2 rounded-control bg-on-ink px-5 font-medium text-ink transition-colors duration-[var(--duration-feedback)] hover:bg-surface-muted"
+          className="pressable inline-flex min-h-13 items-center gap-tight rounded-control bg-signal px-block text-ui font-semibold text-on-signal hover:bg-signal-hover"
         >
           Sign in
-          <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />
+          <ArrowRight aria-hidden strokeWidth={2} className="size-4" />
         </Link>
       </div>
     </section>
