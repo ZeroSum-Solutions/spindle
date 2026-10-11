@@ -4,7 +4,7 @@ Provisional drafts of the base shoulder lessons. They were written before the ou
 
 Each file holds one lesson:
 - `lesson`: the lesson in the block schema (`packages/schema`). It passes the runtime lesson schema.
-- `claimSlots`: one entry per science statement. Each entry has the claim text and candidate sources (DOI, PMID or nomenclature URL), checked against Crossref and PubMed. A candidate source is not a citation until the claim pipeline verifies it and the claim is approved.
+- `claimSlots`: one entry per science statement. Each entry has the claim text, its `evidenceLevel` (the study designs behind it, 1 to 100 characters) and `population` (each source's own wording, quoted, 1 to 500 characters; anatomy claims say they describe the human shoulder, not a sampled population), both required by the claim RPC, and candidate sources (DOI, PMID or nomenclature URL), checked against Crossref and PubMed. A candidate source is not a citation until the claim pipeline verifies it and the claim is approved.
 - `scenarios`: ungraded discussion cases with the expected action and the relevant SAFETY.md sections.
 - `originality`: the authorship and originality note.
 - `reviewNotes`: open points for review.
