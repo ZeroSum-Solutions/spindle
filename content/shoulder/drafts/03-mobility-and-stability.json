@@ -12,6 +12,7 @@
     {
       "slot": "claim-slot:l3-kyphosis-pain",
       "statement": "A 2016 systematic review found moderate evidence of no significant difference in thoracic kyphosis between people with and without shoulder pain; a non-significant result does not establish equivalence and study quality varied. A 2024 review of cross-sectional studies found conflicting results for thoracic posture. Both concern association, not causation.",
+      "domain": "applied",
       "evidenceLevel": "Systematic review; systematic review with meta-analysis of cross-sectional studies",
       "population": "\"groups with and without shoulder pain\" (Barrett 2016); \"non-athletes with shoulder pain compared to asymptomatic individuals\" (Fialho 2024).",
       "candidateSources": [
@@ -36,6 +37,7 @@
     {
       "slot": "claim-slot:l3-upright-range",
       "statement": "In single-session studies gathered by a 2016 systematic review, maximum shoulder range of motion was greater in erect than in slouched postures, in people with and without shoulder pain; long-term relevance is unclear.",
+      "domain": "applied",
       "evidenceLevel": "Systematic review",
       "population": "\"people with and without shoulder pain\" (Barrett 2016).",
       "candidateSources": [
