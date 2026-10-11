@@ -9,7 +9,7 @@ import { LayerStack } from "../illustrations/layer-stack";
 // cannot show. Science statements never appear here, because nothing on this page
 // is bound to a claim; the lesson specimen describes the labels instead.
 
-const SIGN_IN = "/sign-in?next=%2Fgyms";
+export const SIGN_IN = "/sign-in?next=%2Fgyms";
 
 // Modalities only. Named methods (conjugate, for example) belong to a coach's method layer, not this list.
 const MODALITIES = ["Strength", "Speed", "Hypertrophy", "Mobility", "Yoga", "Pilates", "Sport development"];
@@ -41,7 +41,7 @@ const promises = (name: string) => [
 ];
 
 /** Keeps the supplied wordmark's aspect ratio: fixed width, height from the file's own proportions. */
-function Wordmark({ src, brand, className = "" }: { src: string; brand: Brand; className?: string }) {
+export function Wordmark({ src, brand, className = "" }: { src: string; brand: Brand; className?: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element -- a static SVG gains nothing from the optimizer
     <img
@@ -55,13 +55,21 @@ function Wordmark({ src, brand, className = "" }: { src: string; brand: Brand; c
   );
 }
 
-export function Landing({ brand }: { brand: Brand }) {
+/** The signed-out site header: the wordmark home link, the coaches page and sign-in. */
+export function SiteHeader({ brand, current }: { brand: Brand; current?: "/coaches" }) {
   return (
-    <>
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex min-h-16 w-full max-w-[1200px] items-center justify-between gap-4 px-4 md:px-8">
-          <Link href="/" className="-mx-1 inline-flex min-h-11 items-center px-1" aria-label={`${brand.name}, home`}>
-            <Wordmark src={brand.wordmark.onLight} brand={brand} className="logo-reveal" />
+    <header className="border-b border-border bg-surface">
+      <div className="mx-auto flex min-h-16 w-full max-w-[1200px] items-center justify-between gap-4 px-4 md:px-8">
+        <Link href="/" className="-mx-1 inline-flex min-h-11 items-center px-1" aria-label={`${brand.name}, home`}>
+          <Wordmark src={brand.wordmark.onLight} brand={brand} className="logo-reveal" />
+        </Link>
+        <nav aria-label="Site" className="flex items-center gap-2 sm:gap-4">
+          <Link
+              href="/coaches"
+              aria-current={current === "/coaches" ? "page" : undefined}
+              className="hidden min-h-11 items-center px-1 font-medium text-text hover:text-brand aria-[current=page]:underline aria-[current=page]:underline-offset-4 sm:inline-flex"
+            >
+            For coaches
           </Link>
           <Link
             href={SIGN_IN}
@@ -69,8 +77,41 @@ export function Landing({ brand }: { brand: Brand }) {
           >
             Sign in
           </Link>
-        </div>
-      </header>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+/** The signed-out site footer. */
+export function SiteFooter() {
+  return (
+    <footer className="border-t border-border bg-surface">
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-2 px-4 py-8 text-label text-text-muted md:flex-row md:items-center md:justify-between md:px-8">
+        <p>Open source under AGPL-3.0. Original curriculum text under CC BY-SA 4.0.</p>
+        <span className="flex flex-wrap items-center gap-x-5">
+          <Link href="/coaches" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
+            For coaches
+          </Link>
+          <Link href="/privacy" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
+            Privacy
+          </Link>
+          <Link href="/terms" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
+            Terms
+          </Link>
+          <a href="https://github.com/ZeroSum-Solutions/spindle" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
+            Source code on GitHub
+          </a>
+        </span>
+      </div>
+    </footer>
+  );
+}
+
+export function Landing({ brand }: { brand: Brand }) {
+  return (
+    <>
+      <SiteHeader brand={brand} />
 
       <main className="flex flex-1 flex-col">
         <Hero brand={brand} />
@@ -81,27 +122,12 @@ export function Landing({ brand }: { brand: Brand }) {
         <Closing brand={brand} />
       </main>
 
-      <footer className="border-t border-border bg-surface">
-        <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-2 px-4 py-8 text-label text-text-muted md:flex-row md:items-center md:justify-between md:px-8">
-          <p>Open source under AGPL-3.0. Original curriculum text under CC BY-SA 4.0.</p>
-          <span className="flex flex-wrap items-center gap-x-5">
-            <Link href="/privacy" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
-              Privacy
-            </Link>
-            <Link href="/terms" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
-              Terms
-            </Link>
-            <a href="https://github.com/ZeroSum-Solutions/spindle" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-brand hover:text-brand-hover">
-              Source code on GitHub
-            </a>
-          </span>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
 
-function Section({ id, labelledBy, className = "", children }: { id?: string; labelledBy: string; className?: string; children: ReactNode }) {
+export function Section({ id, labelledBy, className = "", children }: { id?: string; labelledBy: string; className?: string; children: ReactNode }) {
   return (
     <section id={id} aria-labelledby={labelledBy} className={`scroll-mt-4 ${className}`}>
       <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-4 py-16 md:px-8 md:py-24">{children}</div>
@@ -110,7 +136,7 @@ function Section({ id, labelledBy, className = "", children }: { id?: string; la
 }
 
 /** A section heading led by the Cut 03 tick: the wordmark's 12-degree cut, in place of a template eyebrow. */
-function SectionHead({ id, title, children }: { id: string; title: string; children?: ReactNode }) {
+export function SectionHead({ id, title, children }: { id: string; title: string; children?: ReactNode }) {
   return (
     <div className="flex max-w-[44rem] flex-col gap-3">
       <span aria-hidden className="cut-tick text-ink" />

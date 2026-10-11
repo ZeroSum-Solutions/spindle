@@ -341,8 +341,8 @@ select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https:
 select throws_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('/media/cuff.png', 'original illustration')))$$,
   '22023', 'invalid course.parts[0].lessons[0].blocks[0].content.provenanceId: must be a plain identifier',
   'a provenance id must be a plain identifier');
-select throws_ok($$select pg_temp.save_n(jsonb_build_array(jsonb_build_object('kind', 'diagram', 'content',
-  jsonb_build_object('diagramId', 'my diagram', 'caption', ''))))$$,
+select throws_ok($$select pg_temp.save_n(jsonb_build_array(jsonb_build_object('kind', 'diagram', 'support', 'practice-based', 'claimIds', '[]'::jsonb,
+  'content', jsonb_build_object('diagramId', 'my diagram', 'alt', 'x', 'caption', '', 'legend', '[]'::jsonb))))$$,
   '22023', 'invalid course.parts[0].lessons[0].blocks[0].content.diagramId: must be a plain identifier',
   'a diagram id must be a plain identifier');
 select throws_ok($$select public.publisher_save_course_draft('00000000-0000-0000-0000-0000000000c1',
@@ -350,10 +350,11 @@ select throws_ok($$select public.publisher_save_course_draft('00000000-0000-0000
     jsonb_build_array(pg_temp.lesson('62000000-0000-4000-8000-000000000011', 'neg', jsonb_build_array(pg_temp.prac('x'))))),
     '{parts,0,lessons,0,title}', to_jsonb(E'\t\u00a0'::text)))$$,
   '22023', 'invalid course.parts[0].lessons[0].title: must be 1 to 200 characters', 'a whitespace-only title is blank');
-select lives_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('https://cdn.example.org:8443/a/b.png?v=2#top', 'img:cuff-1'),
-  pg_temp.image('/media/shoulder/cuff_2.webp', 'p.1'), jsonb_build_object('kind', 'diagram', 'content',
-  jsonb_build_object('diagramId', 'shoulder.rhythm', 'caption', 'x'))))$$,
-  'safe https URLs, site paths and plain ids are accepted');
+-- P18-06: image media must be stored files; https link grammar stays covered by the content contract's URL corpus.
+select lives_ok($$select pg_temp.save_n(jsonb_build_array(pg_temp.image('/media/content/a/b.png', 'img:cuff-1'),
+  pg_temp.image('/media/content/shoulder/cuff_2.webp', 'p.1'), jsonb_build_object('kind', 'diagram', 'support', 'practice-based', 'claimIds', '[]'::jsonb, 'content',
+  jsonb_build_object('diagramId', 'shoulder.rhythm', 'alt', 'x', 'caption', 'x', 'legend', '[]'::jsonb))))$$,
+  'stored media paths and plain ids are accepted');
 select throws_ok($$select public.publisher_add_claim('00000000-0000-0000-0000-0000000000c1',
   '{"statement": "x", "evidenceLevel": "x", "population": "x"}')$$,
   '22023', 'invalid claim.sourceIds: is required', 'a claim needs sources');
