@@ -27,15 +27,14 @@ export const overrideKind = (t: KindOverrideType): "position_stand" | "foundatio
   (REFERENCE_TYPES as readonly string[]).includes(t) ? "foundation_reference" : "position_stand";
 
 /**
- * An open licence: what a foundation reference must carry. Only CC BY (any version), CC0 and
- * public domain; restricted CC variants (NC, ND, SA) are refused (Sol R1 PR26-01). The name is
- * normalised: text after "(", "," or ";" is ignored, case and separators are folded.
+ * An open licence: what a foundation reference must carry. The whole value must name CC BY (any
+ * version), CC0 or public domain; the only text allowed after it is the matching Creative Commons
+ * URL in parentheses. Anything else (a restriction, a note) refuses it (Sol R1/R2 PR26-01).
+ * Mirrored in SQL by private.license_is_open.
  */
-export function normalizeLicense(license: string): string {
-  return license.split(/[(,;]/)[0]!.trim().toLowerCase().replace(/[\s_]+/g, "-").replace(/-+/g, "-");
-}
-export const OPEN_LICENSE = /^(cc-by(-\d(\.\d)?)?|cc0(-1\.0)?|public-domain)$/;
-export const isOpenLicense = (license: string | null | undefined): boolean => OPEN_LICENSE.test(normalizeLicense(license ?? ""));
+export const OPEN_LICENSE =
+  /^\s*(?:(cc[\s_-]?by(?:[\s_-]?\d(?:\.\d)?)?)(?:\s*\(\s*https?:\/\/creativecommons\.org\/licenses\/by\/\d\.\d\/?\s*\))?|(cc0(?:[\s_-]?1\.0)?)(?:\s*\(\s*https?:\/\/creativecommons\.org\/publicdomain\/zero\/1\.0\/?\s*\))?|public[\s_-]domain)\s*$/i;
+export const isOpenLicense = (license: string | null | undefined): boolean => OPEN_LICENSE.test(license ?? "");
 
 /**
  * D-12: a publisher's assertion that PubMed mislabels a guidance document, or that an open

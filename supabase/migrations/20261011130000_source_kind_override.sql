@@ -94,6 +94,19 @@ as $$
   from public.claims c where c.id = p_claim
 $$;
 
+/**
+ * The whole licence value names CC BY (any version), CC0 or public domain; the only text
+ * allowed after it is the matching Creative Commons URL in parentheses. Mirrors
+ * packages/evidence ingest.ts OPEN_LICENSE.
+ */
+create function private.license_is_open(p_license text)
+returns boolean
+language sql immutable set search_path = ''
+as $$
+  select coalesce(p_license ~* ('^\s*(?:(cc[\s_-]?by(?:[\s_-]?\d(?:\.\d)?)?)(?:\s*\(\s*https?://creativecommons\.org/licenses/by/\d\.\d/?\s*\))?'
+    || '|(cc0(?:[\s_-]?1\.0)?)(?:\s*\(\s*https?://creativecommons\.org/publicdomain/zero/1\.0/?\s*\))?|public[\s_-]domain)\s*$'), false)
+$$;
+
 /** Sources, with an optional D-12 kind override. */
 create or replace function public.publisher_add_source(p_actor uuid, p_source jsonb)
 returns uuid
@@ -134,10 +147,8 @@ begin
                where t ~* '(trial|stud(y|ies)|observational|cohort|case.control|case reports?|cross-sectional|letter|comment|editorial|news|interview|retract|erratum|correct|expression of concern|preprint|dataset)') then
       perform private.jfail('source.kindOverride.publicationTypes', 'name a study or notice type; only guidance documents and open references can be overridden');
     end if;
-    -- Only CC BY (any version), CC0 and public domain; restricted CC variants are refused. The
-    -- name is normalised as in packages/evidence (ingest.ts normalizeLicense).
-    if kind = 'foundation_reference' and regexp_replace(regexp_replace(lower(btrim(regexp_replace(p_source ->> 'license', '[(,;].*$', ''))),
-         '[\s_]+', '-', 'g'), '-+', '-', 'g') !~ '^(cc-by(-[0-9](\.[0-9])?)?|cc0(-1\.0)?|public-domain)$' then
+    -- Only CC BY (any version), CC0 and public domain, judged on the whole value (Sol R2 PR26-01).
+    if kind = 'foundation_reference' and not private.license_is_open(p_source ->> 'license') then
       perform private.jfail('source.license', 'a foundation reference must carry an open licence (CC BY, CC0 or public domain)');
     end if;
   end if;
@@ -236,7 +247,7 @@ begin
 end;
 $$;
 
-revoke all on function private.guard_source_kind_override(), private.guard_claim_domain() from public, anon, authenticated, service_role;
+revoke all on function private.guard_source_kind_override(), private.guard_claim_domain(), private.license_is_open(text) from public, anon, authenticated, service_role;
 revoke all on function public.publisher_add_source(uuid, jsonb), public.publisher_add_claim(uuid, jsonb),
   public.publisher_claim_target(uuid, uuid) from public, anon, authenticated, service_role;
 grant execute on function public.publisher_add_source(uuid, jsonb), public.publisher_add_claim(uuid, jsonb),

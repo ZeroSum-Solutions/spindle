@@ -216,4 +216,16 @@ describe("Sol R1 on #26", () => {
     expect(ppr.year).toBeUndefined();
     expect(ppr.status).toBe("blocked");
   });
+
+  it("PR26-01 R2: validates the whole licence value; only a matching CC licence URL may follow", () => {
+    for (const no of ["CC BY (NC-SA)", "CC BY 4.0; non-commercial use only", "CC BY 4.0, no derivatives", "CC BY 4.0 (https://creativecommons.org/licenses/by-nc/4.0/)",
+      "CC0 (https://creativecommons.org/licenses/by/4.0/)", "CC BY 4.0 (see terms)"]) expect(isOpenLicense(no)).toBe(false);
+    for (const ok of ["CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)", "CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)", "cc by"]) expect(isOpenLicense(ok)).toBe(true);
+  });
+
+  it("PR26-R2-01: asks Sol to check that a reference override reads as that kind of reference", () => {
+    const prompt = reviewPrompt({ version: 1, rubric: "claims", createdAt: "2026-10-11T00:00:00Z", items: [], evidence: [] } as unknown as ReviewPacket);
+    expect(prompt).toMatch(/only if its text itself reads as an anatomy or nomenclature reference/);
+  });
 });
+

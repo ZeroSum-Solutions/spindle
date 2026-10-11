@@ -10,7 +10,7 @@ the drafter; a claim may cite them. An entry with kindOverride had its type reco
 labels it otherwise. For a guidance override (position_stand, clinical_guideline, consensus_statement, care_pathway),
 approve a claim that relies on it only if its text itself reads as that kind of guidance from a professional body;
 otherwise reject with a BLOCK on the evidence level.
-For a reference override (anatomy_reference, nomenclature_reference), the source is an open anatomy or nomenclature reference, not guidance: it may support only a
+For a reference override (anatomy_reference, nomenclature_reference), approve a claim that relies on it only if its text itself reads as an anatomy or nomenclature reference (a description of structures and names), not a study, trial, case report or notice, whatever its publication label; otherwise reject with a BLOCK on the evidence level. Such a source is not guidance: it may support only a
 "foundation" claim. Each claim has a domain. A "foundation" claim states anatomy or nomenclature (structure, names,
 attachments, what a part is); reject a foundation claim that asserts an effect, risk, treatment, prevalence or
 prognosis, and reject any claim whose only support is a reference override unless it is such a foundation claim.`;
