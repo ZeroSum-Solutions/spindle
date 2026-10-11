@@ -73,7 +73,7 @@ describe("nextPlayerState", () => {
     ["unavailable", "activate", "unavailable"],
     ["loading", "blocked", "blocked"],
     ["idle", "blocked", "idle"],
-    ["ready", "blocked", "ready"],
+    ["ready", "blocked", "blocked"],
     ["blocked", "activate", "blocked"],
     ["blocked", "ready", "blocked"],
   ];
