@@ -34,7 +34,7 @@ The same flow was rehearsed three times on an isolated scratch database. Rehears
    export SPINDLE_MODULE_STATE_DIR=~/Private/spindle/state-shared  # new, empty: state is bound to one publisher and database
    ```
    Each directory must be outside the repository, with mode 700 (`mkdir -p … && chmod 700 …`). The state directory **must be new**. A state file written for scratch is refused on the shared database, and that refusal is correct.
-5. **App and browser target, before any sign-in.** Every account in this runbook is created by an OTP sign-in through the app, so the app must be bound to the local stack first.
+5. **App target, before any sign-in.** Every account in this runbook is created by an OTP sign-in through the app, so the app must be bound to the local stack first. This step only starts the server; it writes nothing.
    - The app reads `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from its process environment, with `apps/web/.env.local` as the fallback. It does not read `SPINDLE_DB_URL`, and it accepts remote URLs.
    - Set both in the server's own environment so the effective values are known, without printing the key. Stop if either check fails:
      ```sh
@@ -43,8 +43,7 @@ The same flow was rehearsed three times on an isolated scratch database. Rehears
      test -n "$PUBLISHABLE_KEY"
      NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" mise exec -- pnpm --filter web dev --port 3000
      ```
-   - Before the first account, verify the effective target in a fresh browser. Open `http://127.0.0.1:3000/sign-in` and request a code for `t12-probe@spindle.test`. In DevTools, the Auth request must go to `http://127.0.0.1:54321/auth/v1/otp`, and the code must arrive in the local Mailpit (`http://127.0.0.1:54324`).
-   - Only a code arriving in the local Mailpit proves the app is on the local stack. Do not finish the probe sign-in.
+   - The target is proved after the backup (step 1b): requesting a code is an Auth write.
 
 ## 1. Back up first
 
@@ -80,6 +79,15 @@ A failed copy stops the block before `pg_restore`, so an older file can never be
 Only "restore succeeded" counts as recovered.
 
 Never use `supabase db reset` here.
+
+### 1b. Prove the app's target (after `backup verified`, before any account)
+
+Requesting a code creates an Auth user (`shouldCreateUser`), so this probe comes after the backup. The sign-in form calls a server action, and the server calls Auth. DevTools therefore never shows an Auth request; the proof is the server's environment (step 0.5) plus where the code arrives:
+
+1. Note the newest message in the local Mailpit (`http://127.0.0.1:54324`).
+2. In a fresh browser, open `http://127.0.0.1:3000/sign-in` and request a code for `t12-probe@spindle.test`. The server action must redirect to `/sign-in/verify?email=t12-probe%40spindle.test…` (the code-entry page), not back to the form with an error.
+3. A **new** message to `t12-probe@spindle.test` must arrive in the local Mailpit within a minute. Only that message proves the app is on the local stack.
+4. Do not finish the probe sign-in. Stop if no message arrives.
 
 ## 2. Dry run: read-only checks and packet builds
 
@@ -131,7 +139,7 @@ Source the environment, then run from `packages/evidence`:
 | 4 | `mise exec -- pnpm exec tsx scripts/module.ts claims --drafts ../../content/shoulder/drafts` | 22 claim slots mapped, `claim-ids.txt` written, exit 0 |
 | 5 | `mise exec -- pnpm exec tsx scripts/module.ts course --module ../../content/shoulder/module.json --drafts ../../content/shoulder/drafts` | course 99bc81db-798f-5c4a-b01a-bcba6eeef23f saved with 8 lessons |
 | – | the two `--dry-run` commands in step 2 | packet digests, exit 0 |
-| 6 | `mise exec -- pnpm exec tsx scripts/review.ts --claims "$(cat "$SPINDLE_MODULE_STATE_DIR/claim-ids.txt")" --timeout-ms 3600000` | exit 0, a Sol session id, one `approve` per line of `claim-ids.txt` (22 at main 56e8120) |
+| 6 | `mise exec -- pnpm exec tsx scripts/review.ts --claims "$(cat "$SPINDLE_MODULE_STATE_DIR/claim-ids.txt")" --timeout-ms 3600000` | exit 0, a Sol session id, one `approve` per id in `claim-ids.txt`, which is comma-separated (22 at main 56e8120) |
 | 7 | `mise exec -- pnpm exec tsx scripts/record-review.ts --dir "$SPINDLE_REVIEW_DIR/<printed digest>"` | 22 receipts recorded |
 | 8 | `mise exec -- pnpm exec tsx scripts/review.ts --course "$(cat "$SPINDLE_MODULE_STATE_DIR/course-id.txt")" --safety ../../docs/curriculum/SAFETY.md --timeout-ms 3600000` | exit 0, a Sol session id, and as many items as the course `--dry-run` printed (`buildContentPacket`: claim-bound science blocks + lessons + course). At main 56e8120 that is 54 items: 45 science blocks `supported`, 8 lessons and the course `clean`. |
 | 9 | `mise exec -- pnpm exec tsx scripts/record-review.ts --dir "$SPINDLE_REVIEW_DIR/<printed digest>"` | one receipt per item of step 8 (54 at main 56e8120) |
