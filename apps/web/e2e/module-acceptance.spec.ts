@@ -230,10 +230,19 @@ test.describe.serial("shoulder module acceptance", () => {
       const supported = article.locator("section[data-support]");
       let previous: string | null = null;
       let k = 0;
-      for (const b of blocks) {
+      // Runs follow the blocks as published: a reviewed diagram (Sol R16) carries support too, so it
+      // continues or starts a run. Until the player renders a reviewed diagram as a supported block
+      // (with its own label), the diagram is a plain figure here: it moves the run on, but has no
+      // section or label of its own to check.
+      const diagramSections = await article.locator('section[data-support][data-block="diagram"]').count();
+      for (const b of blocks.map((x) => (x.kind === "diagram" ? diagramBlock(x) : x))) {
         const support = "support" in b && b.support ? b.support : null;
         if (support === null) {
           previous = null;
+          continue;
+        }
+        if (b.kind === "diagram" && diagramSections === 0) {
+          previous = support;
           continue;
         }
         const label = support === "science" ? "Science" : "Practice-based";
