@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// E2E_PORT lets a writer run the suite on its own port beside the shared one (default 3100).
+const PORT = process.env.E2E_PORT ?? "3100";
+
 // Needs the local Supabase stack (`supabase start`, with Mailpit) for sign-in codes.
 export default defineConfig({
   testDir: "./e2e",
@@ -7,7 +10,7 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: process.env.CI ? "github" : "list",
-  use: { baseURL: "http://127.0.0.1:3100", trace: "retain-on-failure" },
+  use: { baseURL: `http://127.0.0.1:${PORT}`, trace: "retain-on-failure" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     // CI tests the production build (NEXT_PUBLIC_* values are inlined at build time).
@@ -16,10 +19,10 @@ export default defineConfig({
     // starts, and the server refuses to start (exit 97) if it is still present.
     command: `env -u SPINDLE_TEST_SERVICE_ROLE_KEY SPINDLE_PREVIEW_PAGES=1 sh -c 'test -z "\${SPINDLE_TEST_SERVICE_ROLE_KEY+x}" || exit 97; ${
       process.env.CI
-        ? "pnpm exec next build && pnpm exec next start --port 3100 --hostname 127.0.0.1"
-        : "pnpm exec next dev --port 3100 --hostname 127.0.0.1"
+        ? `pnpm exec next build && pnpm exec next start --port ${PORT} --hostname 127.0.0.1`
+        : `pnpm exec next dev --port ${PORT} --hostname 127.0.0.1`
     }'`,
-    url: "http://127.0.0.1:3100",
+    url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,
   },

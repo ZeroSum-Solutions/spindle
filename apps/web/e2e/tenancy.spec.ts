@@ -5,7 +5,7 @@ import { cleanupRun, lit, sql } from "./helpers/local-supabase";
 // Traces would record sign-in codes, cookie values and the service key's headers.
 test.use({ trace: "off" });
 
-const MAILPIT = "http://127.0.0.1:54324";
+const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
 const run = Date.now().toString(36);
 const alice = `alice-${run}@a.test`;
 const tess = `tess-${run}@a.test`;
@@ -95,7 +95,7 @@ test("sign-in never redirects off-site", async ({ browser }) => {
   const attempts = ["//evil.example", "/\\evil.example", "https://evil.example"];
   for (const [i, next] of attempts.entries()) {
     const page = await signIn(browser, carols[i]!, next, "/gyms");
-    expect(new URL(page.url()).host).toBe("127.0.0.1:3100");
+    expect(new URL(page.url()).host).toBe(`127.0.0.1:${process.env.E2E_PORT ?? "3100"}`);
   }
 });
 

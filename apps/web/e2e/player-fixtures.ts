@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const DB_URL = process.env.DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
-const MAILPIT = "http://127.0.0.1:54324";
+const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
 
 /** Fixtures write synthetic rows; they only ever talk to this machine. */
 export function assertLoopback(url: string, what: string): void {
