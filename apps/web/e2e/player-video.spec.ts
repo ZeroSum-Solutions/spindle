@@ -109,6 +109,20 @@ test.describe.serial("click-to-load registry clips", () => {
     await expect(page.getByRole("button", { name: "Mark lesson complete" })).toBeVisible();
   });
 
+  test("a playable clip says it was described by a model and is not yet human-checked; a switched-off clip says nothing of review", async ({ browser }) => {
+    // D-11: publishGlobal records each embedded clip's segment review with a synthetic describer
+    // run, so version_media reports the playable clips as model-described.
+    const page = await signIn(browser, actors.vlearner!, learnPath(gym, assignment, LESSON));
+    const playable = clip(page, "playable");
+    const label = playable.locator('[data-review="model-described"]');
+    await expect(label).toHaveText("· Clip described by a model; human check pending");
+    // It sits in the clip's label row, beside the Practice-based label.
+    await expect(playable.locator("p").first()).toContainText("Practice-based");
+    await expect(playable.locator("p").first()).toContainText("Clip described by a model; human check pending");
+    await expect(playable).not.toContainText(/human[- ]checked|reviewed by a (person|human|coach|PT)/i);
+    await expect(clip(page, "off").locator("[data-review]")).toHaveCount(0);
+  });
+
   test("pressing play mounts the privacy-enhanced player in place of the facade", async ({ browser }) => {
     const path = learnPath(gym, assignment, LESSON);
     const page = await signIn(browser, actors.vlearner!, path);
