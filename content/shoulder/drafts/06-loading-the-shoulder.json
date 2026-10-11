@@ -54,7 +54,7 @@
       "slot": "claim-slot:l6-volume",
       "statement": "Muscle hypertrophy increases with weekly resistance training volume, with diminishing returns (2026 meta-regression); the 2026 ACSM position stand reports hypertrophy enhanced by higher volumes (about 10 or more sets per week) in healthy adults.",
       "evidenceLevel": "Meta-regression; position stand (overview of systematic reviews)",
-      "population": "\"67 total studies of 2058 participants (79.1% male, 20.9% female; average age 25.16 ± 5.22 years)\" (Pelland 2026); \"healthy adults (≥18 yr)\" (ACSM 2026).",
+      "population": "Participants in 35 studies contributing to the hypertrophy volume analysis, n=1,032 (Pelland 2026, section 3.6.1); \"healthy adults (≥18 yr)\" (ACSM 2026).",
       "candidateSources": [
         {
           "kind": "meta_analysis",
