@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { validateBrand } from "@spindle/engine";
+import { CatalogPreviewScene } from "@/components/brand/catalog-scene";
 import { BrandedLearnerPreview } from "@/components/brand/learner-preview";
 import { previewPagesEnabled } from "@/lib/preview-pages";
 import { tenantFontClass } from "@/lib/theme/fonts";
+import { CATALOG_SCENES } from "@/lib/theme/preview-catalog";
 import { LIGHT_SAGE, OXBLOOD, SAGE } from "@/lib/theme/preview-brands";
 
 // Test-only page (P4-A): two synthetic brands on the real learner components, for Playwright and
@@ -46,6 +48,9 @@ async function GuardedPreview() {
         if (!result.ok) throw new Error(`preview brand ${brand.name} must pass: ${result.problems.join("; ")}`);
         return <BrandedLearnerPreview key={slug} slug={slug} brand={result.brand} font={tenantFontClass(result.brand.font)} />;
       })}
+      {CATALOG_SCENES.map((scene) => (
+        <CatalogPreviewScene key={scene.id} scene={scene} />
+      ))}
       {!refused.ok ? (
         <section aria-labelledby="refused-title" data-brand-refused className="flex flex-col gap-2 rounded-card bg-surface-muted p-4 md:p-6">
           <h2 id="refused-title" className="text-lg font-medium text-text">
