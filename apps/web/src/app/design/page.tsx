@@ -11,6 +11,7 @@ import { ErrorNote } from "@/components/ui";
 import type { ClaimView } from "@/lib/learning/load";
 import type { CourseView, LessonView } from "@/lib/learning/view";
 import { CompletionBoard, LogoReveal } from "./motion-board";
+import { BrandPreview } from "./brand-preview";
 
 // Design specimen for development only. It mounts the real learner components with
 // synthetic props: no database, no real curriculum, nothing saved. Production
@@ -191,6 +192,10 @@ export default function DesignSpecimen() {
             />
           </article>
         </div>
+      </Section>
+
+      <Section title="Brand preview">
+        <BrandPreview />
       </Section>
 
       <Section title="Motion board (demo states)">
