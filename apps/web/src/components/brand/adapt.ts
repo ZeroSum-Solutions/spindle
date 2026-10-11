@@ -58,9 +58,11 @@ export interface CatalogAssignment {
 export function catalogCards(
   courses: readonly { latest: CatalogAssignment; earlier: readonly CatalogAssignment[] }[],
   base: string,
-): { card: CourseCardView; earlier: { href: string; label: string }[] }[] {
-  return courses.flatMap(({ latest, earlier }) => {
-    if (!latest.available || !latest.view || !latest.card) return [];
+): { card: CourseCardView | null; unavailable?: { versionNumber: number }; earlier: { href: string; label: string }[] }[] {
+  return courses.map(({ latest, earlier }) => {
+    const older = [...earlier].sort((x, y) => y.versionNumber - x.versionNumber).map((e) => ({ href: `${base}/${e.id}`, label: `Version ${e.versionNumber}` }));
+    // A newest version that cannot be displayed stays listed as unavailable, with its earlier versions.
+    if (!latest.available || !latest.view || !latest.card) return { card: null, unavailable: { versionNumber: latest.versionNumber }, earlier: older };
     const facts = latest.card;
     const card: CourseCardView = {
       id: latest.id,
@@ -73,15 +75,22 @@ export function catalogCards(
       meta: `${facts.lessonCount} ${facts.lessonCount === 1 ? "lesson" : "lessons"} · ${duration(facts.durationMinutes)}`,
       ...(facts.cover ? { cover: facts.cover } : {}),
     };
-    const older = [...earlier].sort((x, y) => y.versionNumber - x.versionNumber).map((e) => ({ href: `${base}/${e.id}`, label: `Version ${e.versionNumber}` }));
-    return [{ card, earlier: older }];
+    return { card, earlier: older };
   });
 }
 
 /** The hero's one action: continue where the member left off, start if nothing is started, none when all is done. */
 export function catalogAction(courses: readonly { latest: CatalogAssignment }[], base: string): { label: string; href: string } | undefined {
-  const open = courses.map((c) => c.latest).find((a) => a.available && a.view?.next);
-  if (!open) return undefined;
-  const started = courses.some((c) => (c.latest.view?.done ?? 0) > 0);
-  return { label: started ? "Continue where you left off" : "Start your first course", href: `${base}/${open.id}/${open.view!.next!.slug}` };
+  const open = courses.map((c) => c.latest).filter((a) => a.available && a.view?.next);
+  // Continue only a course the member has started; otherwise start the first unfinished one.
+  const started = open.find((a) => (a.view?.done ?? 0) > 0);
+  const target = started ?? open[0];
+  if (!target) return undefined;
+  return { label: started ? "Continue where you left off" : "Start your first course", href: `${base}/${target.id}/${target.view!.next!.slug}` };
+}
+
+/** A card's summary: the published subtitle for Spindle's courses; only an admitted blurb for gym courses. */
+export function cardSummary(layer: CourseCardView["layer"], subtitle: string, blurb: string | null): string | null {
+  if (layer === "method") return blurb;
+  return subtitle.trim() ? subtitle : null;
 }

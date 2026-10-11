@@ -14,11 +14,20 @@ import type { LearnerGym } from "./load";
 // member_course_cards: that RPC describes the newest published version, which the member may not be
 // assigned, so a card would describe one version and open another (Sol R1 on #45).
 
+/** Runs a parser; any failure becomes the fixed message, so no parser diagnostics reach a page or log. */
+function parsed<T>(parse: () => T, message: string): T {
+  try {
+    return parse();
+  } catch {
+    throw new Error(message);
+  }
+}
+
 /** The gym's member-visible brand: the saved brand (or null) and admitted texts, with the name fallback. */
 export async function memberBrand(ctx: LearnerGym): Promise<MemberBrandDto> {
   const { data, error } = await ctx.supabase.rpc("member_brand", { p_org: ctx.org.id });
   if (error) throw new Error("Could not load this gym's brand.");
-  return parseMemberBrandDto(data);
+  return parsed(() => parseMemberBrandDto(data), "Could not load this gym's brand.");
 }
 
 export type VersionTexts = ReturnType<typeof versionTexts>;
@@ -28,5 +37,5 @@ export const NO_VERSION_TEXTS: VersionTexts = { titleRevoked: false, welcome: nu
 export async function memberVersionTexts(ctx: LearnerGym, versionId: string): Promise<VersionTexts> {
   const { data, error } = await ctx.supabase.rpc("version_tenant_texts", { p_version: versionId });
   if (error) throw new Error("Could not load this course's texts.");
-  return versionTexts(parseVersionTenantTexts(data));
+  return versionTexts(parsed(() => parseVersionTenantTexts(data), "Could not load this course's texts."));
 }

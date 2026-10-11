@@ -17,7 +17,7 @@ import {
   type PublishedVersion,
   type VersionRow,
 } from "./view";
-import { shownCourseTitle } from "@/components/brand/adapt";
+import { cardSummary, shownCourseTitle } from "@/components/brand/adapt";
 import { memberVersionTexts, NO_VERSION_TEXTS, type VersionTexts } from "./tenant";
 
 // Every read here runs as the signed-in user, so RLS applies, and every query also
@@ -146,7 +146,8 @@ function cardFacts(version: PublishedVersion, texts: VersionTexts): CardFacts {
     tags: [...(version.learnerCourse.tags ?? [])],
     lessonCount: lessons.length,
     durationMinutes: lessons.reduce((sum, l) => sum + l.durationMinutes, 0),
-    blurb: texts.blurb,
+    // Spindle's courses show their published subtitle; gym courses only an admitted blurb (Sol R2 on #45).
+    blurb: cardSummary(version.layer, version.learnerCourse.subtitle, texts.blurb),
   };
 }
 

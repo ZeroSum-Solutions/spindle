@@ -105,8 +105,8 @@ function BrandedCatalog({
 }) {
   const { brand, hero } = branded;
   const font = tenantFontClass(brand.font);
-  const of = (layer: CourseCardView["layer"]) => entries.filter((e) => e.card.layer === layer).map((e) => e.card);
-  const earlier = new Map(entries.map((e) => [e.card.id, e.earlier]));
+  const of = (layer: CourseCardView["layer"]) => entries.flatMap((e) => (e.card && e.card.layer === layer ? [e.card] : []));
+  const earlier = new Map(entries.flatMap((e) => (e.card ? [[e.card.id, e.earlier] as const] : [])));
   return (
     <div className={`${font.className} flex flex-1 flex-col bg-canvas`} style={brandScopeVars(brand.colors) as CSSProperties}>
       <BrandHeader
@@ -120,6 +120,33 @@ function BrandedCatalog({
       <main className="flex flex-1 flex-col">
         <CatalogHero brand={brand} hero={hero} fontFamily={font.family} action={action} headingLevel={1} />
         <div className="@container mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-4 pb-12 md:px-8">
+          {entries.some((e) => !e.card) ? (
+            <section aria-labelledby="catalog-unavailable" className="flex flex-col gap-3">
+              <h2 id="catalog-unavailable" className="text-label font-medium uppercase tracking-[0.08em] text-text-muted">
+                Unavailable right now
+              </h2>
+              <ul className="flex flex-col gap-3">
+                {entries
+                  .filter((e) => !e.card)
+                  .map((e, i) => (
+                    <li key={i} data-course-unavailable className="flex flex-col gap-1 rounded-card border border-border bg-surface p-4">
+                      <p className="font-medium text-text">Course unavailable (version {e.unavailable!.versionNumber})</p>
+                      <p className="text-label text-text-muted">This version can&apos;t be displayed. Tell your gym lead. Your progress is safe.</p>
+                      {e.earlier.length > 0 ? (
+                        <p className="flex flex-wrap items-center gap-x-3 text-label text-text-muted">
+                          <span>Earlier:</span>
+                          {e.earlier.map((x) => (
+                            <a key={x.href} href={x.href} className="inline-flex min-h-11 items-center text-brand underline-offset-4 hover:text-brand-hover hover:underline">
+                              {x.label}
+                            </a>
+                          ))}
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+              </ul>
+            </section>
+          ) : null}
           {entries.length === 0 ? (
             <p className="mt-6 rounded-card border border-border bg-surface p-6 text-text-muted">Nothing is assigned to you in this gym yet.</p>
           ) : null}
