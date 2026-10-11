@@ -7,12 +7,13 @@
   "reviewNotes": [
     "The EMG section and its quiz were removed: the accessible abstract did not support the ratios or the inference limit.",
     "The outline no longer says 'first-line'. The lesson does not generalise BESS PICO 18's narrower recommendation (physiotherapy as a possible first-line treatment for chronic subacromial pain).",
-    "The warm-up is practice-based and ranks nothing."
+    "The warm-up is practice-based and ranks nothing.",
+    "BESS 2025 is expected to become admissible as guidance through W1's D-12 operator-asserted source kind (pending: no receipt yet); its claim statements carry no publication year until the review packet includes one."
   ],
   "claimSlots": [
     {
       "slot": "claim-slot:l5-subacromial-exercise",
-      "statement": "For subacromial pain, BESS 2025 (PICO 6) reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves patient-reported function, grades this 'Conditional Positive (low evidence)', and states that the most effective physiotherapy or exercise approach remains uncertain.",
+      "statement": "For subacromial pain, the British Elbow & Shoulder Society patient care pathway (PICO 6) reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves patient-reported function, grades this 'Conditional Positive (low evidence)', and states that the most effective physiotherapy or exercise approach remains uncertain.",
       "evidenceLevel": "Clinical guideline (GRADE), British Elbow & Shoulder Society",
       "population": "\"Subacromial Shoulder Pain\" (BESS 2025 patient care pathway).",
       "candidateSources": [
@@ -29,20 +30,20 @@
       "note": "Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."
     },
     {
-      "slot": "claim-slot:l5-csaw",
-      "statement": "In the CSAW trial (subacromial pain for at least 3 months, intact rotator cuff tendons, eligible for surgery, after non-operative management including exercise therapy and at least one steroid injection), arthroscopic decompression gave no benefit over arthroscopy only on the Oxford Shoulder Score at 6 months, and the surgical groups' advantage over no treatment was not clinically important.",
-      "evidenceLevel": "Randomised placebo-controlled surgical trial",
-      "population": "Patients \"who had subacromial pain for at least 3 months with intact rotator cuff tendons, were eligible for arthroscopic surgery, and had previously completed a non-operative management programme that included exercise therapy and at least one steroid injection\" (CSAW, Beard 2018).",
+      "slot": "claim-slot:l5-decompression",
+      "statement": "In adult patients with subacromial pain syndrome lasting more than 3 months, a systematic review with meta-analysis found high-certainty evidence of no additional benefit of subacromial decompression surgery over placebo surgery for pain at 1 year or physical function at 1 to 2 years.",
+      "evidenceLevel": "Systematic review with meta-analysis of randomised controlled trials",
+      "population": "\"adult patients with subacromial pain syndrome lasting for more than 3 months\" (Lähdeoja 2020).",
       "candidateSources": [
         {
-          "kind": "paper",
-          "citation": "Beard DJ, Rees JL, Cook JA, et al. Arthroscopic subacromial decompression for subacromial shoulder pain (CSAW): a multicentre, pragmatic, parallel group, placebo-controlled, three-group, randomised surgical trial. Lancet. 2018;391(10118):329-338.",
-          "doi": "10.1016/S0140-6736(17)32457-1",
-          "pmid": "29169668",
-          "pmcid": "PMC5803129",
-          "rights": "CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/), PMC5803129. Cited and paraphrased only."
+          "kind": "meta_analysis",
+          "citation": "Lähdeoja T, Karjalainen T, Jokihaara J, Salamh P, Kavaja L, Agarwal A, et al. Subacromial decompression surgery for adults with shoulder pain: a systematic review with meta-analysis. Br J Sports Med. 2020;54(11):665-673.",
+          "doi": "10.1136/bjsports-2018-100486",
+          "pmid": "30647053",
+          "rights": "(c) Author(s) (or their employer(s)) 2020, no commercial re-use (BMJ); Europe PMC lists no licence. Abstract read on PubMed. Cited and paraphrased only."
         }
-      ]
+      ],
+      "note": "Replaces the CSAW trial (Beard 2018), an RCT the claim pipeline does not admit; the meta-analysis pools the placebo-controlled trials, CSAW among them."
     },
     {
       "slot": "claim-slot:l5-progressive-comparisons",
@@ -98,7 +99,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, 2025 UK specialist guidance reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves function. It rates that recommendation as conditional, based on low-certainty evidence, and says the most effective exercise approach remains uncertain.",
+        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance from the British Elbow & Shoulder Society reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves function. It rates that recommendation as conditional, based on low-certainty evidence, and says the most effective exercise approach remains uncertain.",
         "support": "science",
         "claimIds": [
           "claim-slot:l5-subacromial-exercise"
@@ -106,10 +107,10 @@
       },
       {
         "kind": "paragraph",
-        "content": "A UK trial enrolled people who had had subacromial pain for at least three months, had intact rotator cuff tendons, and had not improved with exercise therapy and a steroid injection. At six months, surgery to decompress the space gave no extra benefit on a shoulder pain and function score over an arthroscopy that left out the decompression, and neither surgery gave a clinically important benefit over no treatment.",
+        "content": "For adults whose subacromial pain had lasted more than three months, a systematic review with meta-analysis found high-certainty evidence that surgery to decompress the space gave no additional benefit over placebo surgery, for pain at one year or for physical function at one to two years.",
         "support": "science",
         "claimIds": [
-          "claim-slot:l5-csaw"
+          "claim-slot:l5-decompression"
         ]
       },
       {
@@ -215,7 +216,7 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "What does 2025 UK specialist guidance report about exercise for subacromial shoulder pain?",
+          "prompt": "What does UK specialist guidance report about exercise for subacromial shoulder pain?",
           "options": [
             "It reduces pain in the short term and improves function; the recommendation is conditional, on low-certainty evidence, and the best approach is uncertain",
             "One exercise programme is proven best",
