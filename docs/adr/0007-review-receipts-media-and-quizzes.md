@@ -51,5 +51,10 @@
 - Every phase-2 fixture now records synthetic receipts through the same RPCs (`model: "synthetic-fixture"`). CI never calls a model and has no approval shortcut.
 - Editing a lesson, including only its practice text or its clip, needs a fresh lesson review before the next publish.
 - Phase-2 approvals and binding reviews without a run no longer satisfy the gate. They need a receipted review before the content republishes.
-- **Accepted phase-3 risk (LEAD ruling on Sol S04):** the published snapshot contains each quiz's `answerIndex`, and signed-in readers of the version can see it. Server scoring stops forged scores, not a learner who reads the answer key. The phase-3 pilot is synthetic with no stakes. Follow-up before launch: a learner-redacted quiz projection, with answer keys kept in server-only storage.
+- **Answer keys stay server-side (T21; closes the phase-3 risk accepted on Sol S04).**
+  - Learners read published versions through `curriculum_versions.learner_snapshot`, a stored generated projection of `snapshot` (`private.redact_snapshot`) in which every graded (science) quiz keeps only its prompt and options. Practice self-checks keep their answers.
+  - The `authenticated` role has column-level SELECT on everything except `snapshot`. The raw snapshot stays readable by the service role (publisher tooling) and by SECURITY DEFINER functions, so `submit_quiz_attempt` still scores against the full stored version.
+  - Explanations and answers come back through `quiz_attempt_review(attempt)`, which opens only for a passing attempt. With unlimited retries, per-question feedback after a failed attempt would leak the key; before a pass, learners see their score only.
+  - `parseLearnerCourse` parses the projection and refuses a graded quiz that still carries its key.
+  - Remaining, accepted: the score of each attempt can still be used to infer answers by changing one answer at a time.
 - Retraction rechecks before every publish, and the monthly recheck, run in the review harness (phase 3, milestone 2). The database records their results through the existing retraction RPC and claim reviews.

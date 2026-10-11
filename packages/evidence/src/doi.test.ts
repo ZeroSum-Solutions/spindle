@@ -98,4 +98,3 @@ describe("stripTags", () => {
     expect(normalizeCrossref({ ...work.message, title: ["<i>Why</i> retracted papers persist"], "updated-by": [], relation: {} }).isRetracted).toBe(false);
   });
 });
-
