@@ -1,27 +1,30 @@
 ---
-version: 1
-name: Spindle Atlas
-description: Design contract for Spindle's learner app. Light theme; ink actions, cobalt for brand, links and focus.
+version: 2
+name: Spindle Pressroom
+description: Design contract for Spindle's learner app. Bone and ink with one loud spot colour, Pressroom Blue; Archivo condensed headlines, Newsreader for reading, IBM Plex Mono for numerals; ink actions; a measurement layer of ticks and readouts.
 colors:
-  primary: "#17232B"
-  ink: "#17232B"
-  ink-hover: "#2C3C47"
+  primary: "#111111"
+  ink: "#111111"
+  ink-hover: "#2A2A2A"
   on-ink: "#FFFFFF"
-  canvas: "#F6F8FB"
-  surface: "#FFFFFF"
-  surface-muted: "#EDF1F5"
-  text: "#17232B"
-  text-muted: "#52616D"
-  border: "#D8E0E7"
-  control: "#758491"
-  brand: "#2453D4"
-  brand-hover: "#1B40A6"
-  brand-soft: "#EAF0FF"
+  canvas: "#F3EFE6"
+  surface: "#FFFDF8"
+  surface-muted: "#EEE9DE"
+  text: "#111111"
+  text-muted: "#4A463F"
+  border: "#D9D2C4"
+  control: "#7A7468"
+  signal: "#1D2BE6"
+  signal-bright: "#6E85FF"
+  stop: "#F04438"
+  brand: "#1D2BE6"
+  brand-hover: "#1925C4"
+  brand-soft: "#E8EAFD"
   on-brand: "#FFFFFF"
-  band: "#FFFFFF"
-  on-band: "#17232B"
-  band-tint: "#E3E5E6"
-  band-edge: "#D1D3D5"
+  band: "#FFFDF8"
+  on-band: "#111111"
+  band-tint: "#E2E1DC"
+  band-edge: "#CFCECA"
   science: "#0B6B50"
   science-soft: "#EAF5F0"
   practice: "#8A4B10"
@@ -33,55 +36,84 @@ colors:
   danger-soft: "#FFF0EE"
 typography:
   display:
-    fontFamily: Geist
+    fontFamily: Archivo
+    fontSize: 7.5rem
+    fontWeight: 900
+    lineHeight: 0.92
+    letterSpacing: -0.01em
+  title:
+    fontFamily: Archivo
     fontSize: 4rem
-    fontWeight: 500
-    lineHeight: 1.08
-    letterSpacing: -0.04em
-  heading-lesson:
-    fontFamily: Geist
-    fontSize: 2.5rem
-    fontWeight: 500
-    lineHeight: 1.1
-    letterSpacing: -0.035em
+    fontWeight: 900
+    lineHeight: 0.96
+    letterSpacing: -0.005em
   heading:
-    fontFamily: Geist
-    fontSize: 2rem
-    fontWeight: 500
-    lineHeight: 1.15
-    letterSpacing: -0.03em
+    fontFamily: Archivo
+    fontSize: 3.5rem
+    fontWeight: 900
+    lineHeight: 0.96
+    letterSpacing: -0.005em
+  heading-lesson:
+    fontFamily: Archivo
+    fontSize: 4rem
+    fontWeight: 900
+    lineHeight: 0.96
+    letterSpacing: -0.005em
+  section:
+    fontFamily: Archivo
+    fontSize: 2.25rem
+    fontWeight: 800
+    lineHeight: 1.02
+    letterSpacing: 0em
+  subhead:
+    fontFamily: Archivo
+    fontSize: 1.375rem
+    fontWeight: 700
+    lineHeight: 1.25
   reading:
-    fontFamily: Geist
+    fontFamily: Newsreader
     fontSize: 1.125rem
     fontWeight: 400
     lineHeight: 1.65
   ui:
-    fontFamily: Geist
+    fontFamily: Archivo
     fontSize: 1rem
     fontWeight: 500
     lineHeight: 1.5
   label:
-    fontFamily: Geist
+    fontFamily: Archivo
     fontSize: 0.875rem
     fontWeight: 500
-    lineHeight: 1.5
+    lineHeight: 1.4
+  eyebrow:
+    fontFamily: IBM Plex Mono
+    fontSize: 0.75rem
+    fontWeight: 600
+    lineHeight: 1.3
+    letterSpacing: 0.08em
   code:
-    fontFamily: Geist Mono
+    fontFamily: IBM Plex Mono
     fontSize: 0.8125rem
     fontWeight: 400
     lineHeight: 1.5
 rounded:
-  small: 4px
-  control: 8px
-  card: 12px
+  small: 2px
+  control: 4px
+  card: 6px
+  plate: 8px
+  pill: 9999px
 spacing:
   unit: 4px
-  xs: 8px
-  sm: 12px
-  md: 16px
-  lg: 24px
-  xl: 32px
-  section: 64px
+  hair: 4px
+  tight: 8px
+  attach: 12px
+  stack: 16px
+  block: 24px
+  group: 32px
+  safety: 40px
+  section: 56px
+  page: 64px
+  hero: 96px
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
@@ -105,6 +137,39 @@ components:
     backgroundColor: "{colors.brand-soft}"
     textColor: "{colors.brand}"
     rounded: "{rounded.small}"
+  selected-control:
+    backgroundColor: "{colors.brand}"
+    textColor: "{colors.on-brand}"
+    rounded: "{rounded.control}"
+  signal-band:
+    backgroundColor: "{colors.signal}"
+    textColor: "{colors.on-brand}"
+    typography: "{typography.title}"
+  signal-numeral:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.signal-bright}"
+    typography: "{typography.display}"
+  stop-panel:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.on-ink}"
+    typography: "{typography.subhead}"
+    rounded: "{rounded.plate}"
+  stop-stripe:
+    backgroundColor: "{colors.stop}"
+  section-heading:
+    textColor: "{colors.text}"
+    typography: "{typography.section}"
+  eyebrow:
+    textColor: "{colors.text-muted}"
+    typography: "{typography.eyebrow}"
+  plate:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.plate}"
+  segmented-control:
+    backgroundColor: "{colors.surface-muted}"
+    textColor: "{colors.text}"
+    rounded: "{rounded.pill}"
   science-label:
     backgroundColor: "{colors.science-soft}"
     textColor: "{colors.science}"
@@ -134,6 +199,7 @@ components:
   page:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.text}"
+    typography: "{typography.reading}"
   muted-panel:
     backgroundColor: "{colors.surface-muted}"
     textColor: "{colors.text-muted}"
@@ -151,6 +217,18 @@ components:
     rounded: "{rounded.small}"
   tenant-band-divider:
     backgroundColor: "{colors.band-edge}"
+  code:
+    textColor: "{colors.text-muted}"
+    typography: "{typography.code}"
+  heading:
+    textColor: "{colors.text}"
+    typography: "{typography.heading}"
+  lesson-title:
+    textColor: "{colors.text}"
+    typography: "{typography.heading-lesson}"
+  subhead:
+    textColor: "{colors.text}"
+    typography: "{typography.subhead}"
 ---
 
 # DESIGN.md — Spindle
@@ -159,22 +237,23 @@ This is the design contract. `apps/web/src/app/globals.css` carries the same tok
 
 ## Overview
 
-Spindle teaches personal trainers how the body works, and every science claim is cited. The interface makes three things easy to find: the assigned lesson, how each statement is supported, and the sources behind it. The direction is **Atlas**: cool white for long reading, ink for text and main actions, and one rare cobalt for the brand, links, the current lesson and focus.
+Spindle teaches personal trainers how the body works, and every science claim is cited. The interface makes three things easy to find: the assigned lesson, how each statement is supported, and the sources behind it. The direction is **Pressroom** (2026-10-11, chosen after the three-direction exploration in `~/Inbox/html/spindle-redesign-gallery/directions/`, which is private and not in this repo): a sports magazine for coaches. Newsprint bone and paper for long reading, true ink for text and main actions, and one loud spot colour, **Pressroom Blue**, printed big: bands, giant numerals, the seal. A measurement layer (mono numerals, ticks, readouts, numeric progress) borrowed from the Lab study, and calm, generous reading in lessons borrowed from the Clay study. It replaces Atlas (cool white, cobalt); the landed contracts below are unchanged except where a section says so.
 
 ## Colors
 
-- **Ink** (`ink`, also the `primary` role) carries text and every primary action. One primary action per screen.
-- **Cobalt** (`brand`) marks the wordmark, links, the current lesson and the focus ring. It never means progress, evidence strength or quiz correctness. Lesson states (done, credited, updated, new) use ink with an icon, so they do not read as links.
+- **Ink** `#111111` (`ink`, also the `primary` role) carries text and every primary action. One primary action per screen. **Bone** `#F3EFE6` is the canvas, **paper** `#FFFDF8` the surface, `#EEE9DE` the muted panel.
+- **Pressroom Blue** `#1D2BE6` has two roles. As `signal` it is Spindle's own spot colour: full-width bands, giant numerals, the module seal, the wordmark in blue. A gym brand never recolours it. On ink surfaces it becomes `signal-bright` `#6E85FF` (5.8:1 on ink; plain blue is 2.3:1 there). As the default `brand` accent it marks links, the current lesson, selected controls and the focus ring, and a gym's accent replaces it in those jobs only. In neither role does it mean progress, evidence strength or quiz correctness. Lesson states (done, credited, updated, new) use ink with an icon, so they do not read as links.
+- **Stop** `#F04438` is the stripe on the ink stop-and-refer panel (5.0:1 on ink). Red is otherwise reserved for **danger**.
 - **Support types** use colour plus words, never colour alone: green `science`, brown `practice`.
 - **Caution** marks a retracted source: the content stays readable and credit stays, so it is not an error. **Danger** is for failures only: a version that cannot be displayed, a save that failed, a page that did not load.
-- Checked contrast (WCAG 2.2): text on its backgrounds is at least 5.6:1 (`text-muted` on `surface-muted` is the lowest), `control` boundaries 3.6:1 on canvas, focus ring 6:1. Pale `border` (1.3:1) is for structure only, never a control outline.
+- Checked contrast (WCAG 2.2): `text` on canvas 16.5:1, on surface 18.6:1; `text-muted` 8.2:1 on canvas and 7.8:1 on the muted panel (the lowest text pair); science 5.7:1 and practice 5.9:1 on canvas; danger 5.7:1 on canvas; `control` boundaries 4.0:1 on canvas and 3.8:1 on the muted panel; the default focus ring (Pressroom Blue) 7.2:1 on canvas; white on Pressroom Blue 8.3:1. Pale `border` (1.3:1) is for structure only, never a control outline.
 - **Tenant tokens (P4-A2).** A gym's brand maps onto `brand`, `brand-hover`, `brand-soft`, `on-brand` (P4-A core) and `band` (the tenant band). `band` defaults to `surface`, so an unbranded header looks as it does today. Three tokens derive from it, and the tenant never sets them directly:
-  - `on-band` is ink `#17232b` or white, whichever has more contrast on the band. A band whose best `on-band` is under 4.5:1 is refused.
+  - `on-band` is ink `#111111` or white, whichever has more contrast on the band. A band whose best `on-band` is under 4.5:1 is refused (with Pressroom ink, `#777777` is such a grey: ink 4.2:1, white 4.5:1 rounded down to 4.47).
   - `band-tint` is `on-band` mixed 12% into the band.
   - `band-edge` is `on-band` mixed 20% into the band.
 
-  The defaults in `@theme` are `#ffffff`, `#17232b`, `#e3e5e6` and `#d1d3d5`; `lib/theme/atlas-sync.test.ts` asserts that they follow this derivation. The accent is never drawn on the band: on a dark band it can fall to about 1.5:1.
-- **Checked tenant contrast (P4-A2, planned).** These are acceptance requirements for the W1 validator and the W2 components, not checks that exist yet. `brandChecks` will decide on the unrounded ratio and refuse a brand that fails any row. A unit test will assert that every fixed pair (Atlas only) meets its minimum, so an Atlas edit cannot silently break one.
+  The defaults in `@theme` are `#fffdf8`, `#111111`, `#e2e1dc` and `#cfceca`; `lib/theme/atlas-sync.test.ts` asserts that they follow this derivation. The accent is never drawn on the band: on a dark band it can fall to about 1.5:1.
+- **Checked tenant contrast (P4-A2).** `brandChecks` in the engine and `private.brand_checks` in SQL decide on the unrounded ratio against the fixed palette above and refuse a brand that fails any row; `org_brand.test.sql` carries the engine's exact rows (`lib/brand-sync.test.ts`). The Pressroom palette changed the backgrounds, so migration `20261012090000_pressroom_palette.sql` redefines the SQL checks with the same constants. A stored brand is re-checked by the app on every render (`validateOrgBrand`); one that no longer passes renders the standard Spindle look until its owner saves a passing brand. Nothing is adjusted.
 
   | Role | Foreground / background | Min | States |
   |---|---|---|---|
@@ -195,36 +274,79 @@ Spindle teaches personal trainers how the body works, and every science claim is
   | Seal text | `text-muted` / `surface`, `canvas` | 4.5 | default |
   | P4-A core pairs (links, selected, current lesson, error) | as `validateBrand` | 4.5 / 3 | default, hover, selected, focus, error |
 
-  Exempt, because they are decorative: pattern covers, `band-edge`, `border` hairlines and the cover edge. Planned (W2 acceptance): the renderer draws only the colours `brandTokens` returns plus the fixed Atlas palette, and a render test fails on any other computed colour.
+  Exempt, because they are decorative: pattern covers, `band-edge`, `border` hairlines and the cover edge. The catalog render test fails on any computed colour that is neither in `brandTokens` nor in the fixed palette (`e2e/helpers/catalog.ts`, `ATLAS_FIXED`).
 - Light theme only. A dark theme is deferred until it is designed and checked; the OS dark setting must not half-invert the app.
 
 ## Typography
 
-Geist for everything readable. **A gym's brand font (P4-A2) applies only to display text of 20px or more:** the header name, the hero headline and course card titles. The tagline, coach note, coach name, labels, captions and lesson text stay Geist. Geist Mono only for identifiers and versions (`v2`, lesson numbers, DOIs). Both load through `next/font`, which self-hosts them (SIL OFL; licences in `docs/design/spindle/assets/`). Lesson text is 18px/1.65 at most 68ch. Labels are 14px; source details that a learner must read stay at 16px. Headings: 32px desktop, 28px mobile. **Lesson titles use their own step, `heading-lesson`: 40px/1.1 from 768px, 28px/1.15 below** (token `--text-heading-lesson`; added 2026-10-11 after the design audit, so the lesson opener has presence). Sentence case everywhere, including callout labels.
+Three faces, all SIL OFL 1.1, self-hosted by `next/font/google` (licences in `docs/design/spindle/assets/`: `archivo-OFL.txt`, `newsreader-OFL.txt`, `ibm-plex-mono-OFL.txt`):
+
+- **Archivo** carries headings and the UI. Display steps and headings are set condensed through its width axis (`font-stretch: 72%`) and heavy (800 to 900); UI text is normal width at 500 to 700.
+- **Newsreader** carries long reading text (`text-reading`): lesson prose, ledes, notes. 18px with 1.6 line height on phones and 1.65 from 768px, at most 68ch.
+- **IBM Plex Mono** carries numerals, eyebrows, identifiers and versions (`v2`, `02 / 05`, DOIs), with tabular figures.
+
+The scale (phone, then from 768px; weight; line height):
+
+| Step | Phone | Desktop | Weight | Use |
+|---|---|---|---|---|
+| `display` | 48px | 120px | 900, condensed | Landing hero |
+| `title` | 40px | 64px | 900, condensed | Page titles |
+| `heading-lesson` | 40px | 64px | 900, condensed | Lesson titles (alias of `title`) |
+| `heading` | 36px | 56px | 900, condensed | Landing and section openers |
+| `section` | 28px | 36px | 800, condensed | Chapter headings in lessons, catalog sections |
+| `subhead` | 20px | 22px | 700 | Card titles, panel titles, quiz prompts |
+| `reading` | 18px / 1.6 | 18px / 1.65 | 400, Newsreader | Lesson prose |
+| `ui` | 16px | 16px | 500 | Controls, rows |
+| `label` | 14px | 14px | 500 | Meta, captions, chips |
+| `eyebrow` | 12px | 12px | 600, Plex Mono, caps, +0.08em | Section numbers, figure numbers |
+| `code` | 13px | 13px | 400, Plex Mono | Versions, DOIs |
+
+Source details that a learner must read stay at 16px. **A gym's brand font (P4-A2) applies only to display text of 20px or more:** the header name, the hero headline and the titles of the gym's own (method) course cards. Base and Modality cards are Spindle's and keep Archivo. The tagline, coach note, coach name, labels, captions and lesson text stay in Spindle's faces. Geist stays bundled only as a tenant font option. Sentence case everywhere, including callout labels.
 
 ## Layout
 
 - App frame up to 1440px; content columns up to 768px for lists and overviews, centred in the frame on wide screens (`LearnShell`, asserted at 1024, 1280 and 1440px in `e2e/player.spec.ts` by measuring the column itself, with displaced-layout negatives).
 - The player's outline and reading column are centred together as one 1008px frame (240px outline, 32px gap, 736px reading track).
-- The signed-out home page (`components/landing/`) is a brand surface: 1200px frame, the 64px display step, one ink primary action (Sign in) in the hero, and a reverse ink band at the end. It renders from a `Brand` object (`lib/brand.ts`): the brand name fills the brand-dependent copy, and the wordmark keeps the supplied proportions (fixed width, automatic height). Copy stays honest: no testimonials, counts, or science statements without a claim; layers are separate courses, and course authoring is labelled planned until it ships. Focus on the ink band uses a white outline (16:1 on ink); the cobalt ring is only 2.5:1 there.
+- **Spacing** is an 8-point scale with named steps (`--spacing-*`, so `gap-block`, `mt-section` and so on). Related things sit at 16px or less; unrelated things at 48px or more.
+
+  | Step | Phone | Desktop | Use |
+  |---|---|---|---|
+  | `hair` | 4 | 4 | Icon to word |
+  | `tight` | 8 | 8 | Eyebrow to heading, chip to chip |
+  | `attach` | 12 | 12 | A block to its sources tray, a label to its field |
+  | `stack` | 16 | 16 | A heading to its own content; paragraph to paragraph; phone gutter |
+  | `block` | 24 | 28 | Block to block in a section; card padding |
+  | `group` | 32 | 32 | Groups inside a card; a tray to the next block |
+  | `safety` | 40 | 40 | Air around a stop-and-refer panel |
+  | `section` | 56 | 80 | Section to section |
+  | `page` | 64 | 112 | Landing bands |
+  | `hero` | 96 | 128 | Hero top padding |
+- The signed-out home page (`components/landing/`) is a brand surface: 1200px frame, the display step, one ink primary action (Sign in) in the hero, and a reverse ink band at the end. It renders from a `Brand` object (`lib/brand.ts`): the brand name fills the brand-dependent copy, and the wordmark keeps the supplied proportions (fixed width, automatic height). Copy stays honest: no testimonials, counts, or science statements without a claim; layers are separate courses, and course authoring is labelled planned until it ships. Focus on the ink band uses a white outline (18.9:1 on ink); the blue ring is only 2.3:1 there.
 - Player at 1024px and wider: a 240px course outline beside the reading column. Below 1024px the same outline, in the same order with the same current item, sits in a native disclosure above the lesson.
 - One column below 768px, 16px gutters. No horizontal scrolling at 320px (asserted in `e2e/player.spec.ts`).
 - The course list leads with a single "Resume lesson" action, taken from the newest assigned version of each course. Older versions of a course stay reachable from its row.
 - Curriculum layer (Base, Modality, Gym method) labels a course. Science or practice-based labels a block. They are separate axes and never stand in for each other.
 - **Support runs.** Back-to-back blocks with the same support share one label at the start of the run; a heading, an image or a legacy diagram (one without support) ends the run. A reviewed diagram carries support, so it joins or starts a run like any other supported block. From 1024px every supported block also carries a 2px rule in the left margin, `science` green or `practice` brown, so support stays visible without repeating the chip. Words and colour both remain.
 - **Header frame.** The app header's inner frame is the page's content frame (`LearnShell` frame, or the form column on sign-in), so the wordmark lines up with the content. The bar is at least 64px tall, with automatic height because a tenant name may wrap, so the focus ring never touches the window edge. The tenant name wraps (at most 60 characters, `overflow-wrap: anywhere`); it never truncates and never overlaps the mark. On member pages of a branded gym (P4-A2) the header is the tenant band: the name in the brand font (20px, `on-band`) and up to two nav links (`on-band`, always underlined, thicker underline on hover). It is one row from a 480px container; below that, the name row sits above the link row, and each link is 44px tall. A 60-character unbroken name with two links never scrolls sideways at 320 or 390px. The header is not sticky.
-- **Catalog hero (P4-A2).** The member catalog has a second branded surface directly under the header: the band colour, holding the headline (brand font, display step, `on-band`), the tagline (Geist 18px, `on-band`) and up to three modality chips (`on-band` on `band-tint`). It carries text only, never an image. Copy sits left from a 720px container and stacks below that. The one ink primary action ("Continue where you left off" or "Start your first course", 48px) sits on canvas directly below the hero, never on the band. After the hero come the Gym method courses, then a "Base curriculum" section with the base seal.
+- **Catalog hero (P4-A2).** The member catalog has a second branded surface directly under the header: the band colour, holding the headline (brand font, display step, `on-band`), the tagline (Newsreader 18px, `on-band`) and up to three modality chips (`on-band` on `band-tint`). It carries text only, never an image. Copy sits left from a 720px container and stacks below that. The one ink primary action ("Continue where you left off" or "Start your first course", 48px) sits on canvas directly below the hero, never on the band. After the hero come the Gym method courses, then a "Base curriculum" section with the base seal.
 - **Lesson navigation.** Below 768px, previous is a small link above a full-width 48px "Next lesson" button that names the lesson; from 768px they share a row.
 - **Completion card.** Once a lesson is done the card says it once ("Lesson complete · v2 · 11 Oct 2026", or "Credited · v3 · from your completion on … in v1") and holds the one ink action: the next lesson, or back to the course.
 - **Course overview.** "Resume lesson" comes before the version notice. The notice is a compact list (Pencil, Plus, Minus beside the words Changed, Added, Removed) with one muted line of explanation.
 
 ## Elevation & Depth
 
-Flat: surfaces and 1px borders, no shadows on cards or buttons. No glow, glass or gradient behind lesson text. **Bordered cards are for things you interact with** (course rows, claim disclosures, quizzes, completion, the outline disclosure). Explanations and lists that are only read (the support legend, the version notice, diagram panels, completed-course notes) are `surface-muted` panels; resources and objectives are open sections between rules.
+Flat: surfaces and 1px borders, no shadows on cards or buttons. No glow, glass or gradient behind lesson text. Depth comes from surface changes (bone, paper, ink, blue bands) and three shadow tokens with fixed jobs:
+
+| Token | Value | Use |
+|---|---|---|
+| `--shadow-raise` | `0 1px 0 #d9d2c4, 0 6px 16px rgb(17 17 17 / 0.06)` | The header once the page scrolls under it |
+| `--shadow-float` | `0 -1px 0 #d9d2c4, 0 -10px 28px rgb(17 17 17 / 0.10)` | The bottom lesson dock and sheets |
+| `--shadow-print` | `6px 6px 0 #111111` | A hard print offset for one emphasised card per screen (landing samples, the focal continue card); never on lesson blocks |
+ **Bordered cards are for things you interact with** (course rows, claim disclosures, quizzes, completion, the outline disclosure). Explanations and lists that are only read (the support legend, the version notice, diagram panels, completed-course notes) are `surface-muted` panels; resources and objectives are open sections between rules.
 
 ## Shapes
 
-Controls 8px radius, cards 12px, labels 4px. Every touch target is at least 44×44px; primary actions are 48px tall.
+Pressroom is sharp: labels 2px, controls 4px, cards 6px, plates 8px, pills only for segmented controls. Every touch target is at least 44×44px; primary actions are 48px tall. Pressable controls (`.pressable`) scale to 0.97 for 120ms when pressed; none under reduced motion.
 
 ## Components
 
@@ -232,6 +354,7 @@ Native elements first; no component library is installed. Lucide (ISC) is the on
 
 | Component | File | States |
 |---|---|---|
+| Button, Field, ErrorNote, Eyebrow, AppHeader, Page | `components/ui/` (`index.ts` re-exports) | Button: primary (ink), secondary, ghost; hover, press (scale 0.97), focus, disabled, loading (`aria-busy`, spinner, width kept). Field: hint, error (`aria-invalid`, described by the hint and error, value kept). Eyebrow: Plex Mono caps with tabular figures |
 | SupportLabel, SupportLegend | `components/learn/labels.tsx` | science, practice-based; the legend explains, once per lesson, only the types that lesson uses |
 | LayerLabel, VersionTag, LessonStateLabel | `components/learn/labels.tsx` | Base/Modality/Gym method; done, credited, updated, new, to do |
 | Evidence states (science blocks) | `components/learn/blocks.tsx`, `lib/learning/evidence.ts` | From `version_integrity`: current (Science label); recheck due (Science label plus "Evidence due for recheck"); withdrawn or unreported (no Science label: "Claim withdrawn" with a one-line explanation, text and sources kept as history); retracted ("Source retracted", as before). If the report cannot be read, the lesson says so once and shows labels as published |
@@ -252,7 +375,7 @@ Native elements first; no component library is installed. Lucide (ISC) is the on
 | BaseSeal (P4-A2) | `components/brand/base-seal.tsx` | one state: the Spindle symbol (16px ink tile) and the fixed line "Base curriculum by Spindle, cited" (14px, `text-muted`) on a hairline strip. Only where cited base curriculum appears (the catalog's Base section, base cards, base lesson footers); never on the band, method or modality content. No check-shield and no "evidence" wording; no review claim until a recorded PT review exists (D-08) |
 | ModalityChip (P4-A2) | `components/brand/modality-chip.tsx` | default only (not interactive). On the hero, `on-band` on `band-tint`; on cards, `text` on `surface-muted`. The youth tag reads "Youth coaching education" |
 
-`/design` in development renders the existing learner components above with synthetic props, a replayable motion board, and the three P4-A2 token specimens (header band, catalog hero, pattern covers). The P4-A2 member components render on the test-only `/brand-preview` page instead, for two synthetic brands, a pending scene (fallbacks) and a 60-character name; they are presentational and not yet wired to member routes. In production `/design` answers 404 (asserted in `e2e/player.spec.ts`). `/brand-preview` answers 404 unless the server runs with `SPINDLE_PREVIEW_PAGES=1`: the proxy gate and the page's own request-time guard are covered by unit tests (`src/proxy.test.ts`, `src/lib/preview-pages.test.ts`), not yet by a production browser test.
+`/design` in development opens with the Pressroom foundations (palette with checked ratios, type scale, spacing scale, radius, elevation, motion tokens with replay and a reduced-motion switch, the wordmark and favicon set), then renders the existing learner components above with synthetic props, a replayable motion board, and the three P4-A2 token specimens (header band, catalog hero, pattern covers). The P4-A2 member components render on the test-only `/brand-preview` page instead, for two synthetic brands, a pending scene (fallbacks) and a 60-character name; they are presentational and not yet wired to member routes. In production `/design` answers 404 (asserted in `e2e/player.spec.ts`). `/brand-preview` answers 404 unless the server runs with `SPINDLE_PREVIEW_PAGES=1`: the proxy gate and the page's own request-time guard are covered by unit tests (`src/proxy.test.ts`, `src/lib/preview-pages.test.ts`), not yet by a production browser test.
 
 ## Do's and Don'ts
 
@@ -262,7 +385,7 @@ Do not use streaks, leaderboards or confetti. Do not animate lesson text, hijack
 
 ## Brand
 
-**Tenant brand (phase 4, P4-A core).** A gym brand changes only what this section lists (P4-A core below, P4-A2 after it). The brand is plain data (`TenantBrand` in `@spindle/schema`): a plain-text name, a text mark or a PNG/WebP logo given only as a file name in the gym's own brand folder (with intrinsic size, at most 512 KB and an aspect ratio between 1:8 and 8:1; no SVG, no URL, no path), two literal hex colours (`accent`, `onAccent`) and one bundled font (Geist, Barlow Condensed or Fraunces, all SIL OFL, self-hosted by next/font). The schema is strict: semantic colours, review status, practice labels, attribution and CSS are refused, not ignored. `validateBrand` (`@spindle/engine`) derives the hover (accent mixed 15% toward black) and the tint (90% toward white) and checks every pair a brand colour is drawn in, on the real Atlas backgrounds and in every state: links and hovered links on surface, canvas and muted panels; the current-lesson marker and the text on it; selected controls and their hover; the focus ring on canvas, surface, muted panels, the current lesson and error panels; error text; the text mark. Text needs 4.5:1 and rings and large marks 3:1, decided on the exact ratio (shown rounded down). A brand that fails any pair is refused, never adjusted. `brandToCssVars` accepts only a brand returned by `validateBrand` and emits `--color-brand`, `--color-brand-hover`, `--color-brand-soft`, `--color-on-brand` and `--focus-ring` for the element that scopes the brand, so the learner components theme through their ordinary utilities (`text-brand`, `bg-brand-soft`, the global focus rule). Science, practice, caution and danger colours never change, and the line "Base curriculum by Spindle, cited" stays fixed. `ATLAS` in the engine must equal the `@theme` values (asserted in `lib/theme/atlas-sync.test.ts`). The test-only `/brand-preview` page shows two made-up brands on the real shell, outline, lesson, quiz card, selected control and error; the proxy answers 404 for it unless the server runs with `SPINDLE_PREVIEW_PAGES=1` (only the Playwright server does). The owner's brand editor and per-org rendering come in P4-A2. Tenant images and anonymous brand delivery are deferred (below).
+**Tenant brand (phase 4, P4-A core).** A gym brand changes only what this section lists (P4-A core below, P4-A2 after it). The brand is plain data (`TenantBrand` in `@spindle/schema`): a plain-text name, a text mark or a PNG/WebP logo given only as a file name in the gym's own brand folder (with intrinsic size, at most 512 KB and an aspect ratio between 1:8 and 8:1; no SVG, no URL, no path), two literal hex colours (`accent`, `onAccent`) and one bundled font (Geist, Barlow Condensed or Fraunces, all SIL OFL, self-hosted by next/font). The schema is strict: semantic colours, review status, practice labels, attribution and CSS are refused, not ignored. `validateBrand` (`@spindle/engine`) derives the hover (accent mixed 15% toward black) and the tint (90% toward white) and checks every pair a brand colour is drawn in, on the real fixed backgrounds (canvas, surface, muted panel) and in every state: links and hovered links on surface, canvas and muted panels; the current-lesson marker and the text on it; selected controls and their hover; the focus ring on canvas, surface, muted panels, the current lesson and error panels; error text; the text mark. Text needs 4.5:1 and rings and large marks 3:1, decided on the exact ratio (shown rounded down). A brand that fails any pair is refused, never adjusted. `brandToCssVars` accepts only a brand returned by `validateBrand` and emits `--color-brand`, `--color-brand-hover`, `--color-brand-soft`, `--color-on-brand` and `--focus-ring` for the element that scopes the brand, so the learner components theme through their ordinary utilities (`text-brand`, `bg-brand-soft`, the global focus rule). Science, practice, caution and danger colours never change, and the line "Base curriculum by Spindle, cited" stays fixed. `ATLAS` in the engine (the fixed palette; the constant keeps its historical name) must equal the `@theme` values (asserted in `lib/theme/atlas-sync.test.ts`). The test-only `/brand-preview` page shows two made-up brands on the real shell, outline, lesson, quiz card, selected control and error; the proxy answers 404 for it unless the server runs with `SPINDLE_PREVIEW_PAGES=1` (only the Playwright server does). The owner's brand editor and per-org rendering come in P4-A2. Tenant images and anonymous brand delivery are deferred (below).
 
 **Brand presence (P4-A2).** On member pages a gym brand has these jobs, and no others:
 - the header mark: the gym name as a text mark on the tenant band;
@@ -274,7 +397,7 @@ Do not use streaks, leaderboards or confetti. Do not animate lesson text, hijack
 - pattern course covers;
 - display text in the brand font (20px and up).
 
-The tokens are those above plus `band` (with the derived `on-band`, `band-tint` and `band-edge`). Primary actions stay ink, reading copy stays Geist, and the accent marks links, the current lesson, selected controls and focus only.
+The tokens are those above plus `band` (with the derived `on-band`, `band-tint` and `band-edge`). Primary actions stay ink, reading copy stays in Spindle's faces, and the accent marks links, the current lesson, selected controls and focus only.
 
 A brand that fails a check is refused, never adjusted. "Base curriculum by Spindle, cited" stays fixed.
 
@@ -284,7 +407,7 @@ These things stay Spindle's and never sit in a tenant slot:
 - review chips, source drawers, citations, and retracted or withdrawn states;
 - quiz feedback, errors and layer labels;
 - the base seal;
-- Geist body type, the canvas, surface, text and border tokens, and the ink action.
+- Spindle's body faces (Archivo, Newsreader, IBM Plex Mono), the canvas, surface, text and border tokens, the signal colour, and the ink action.
 
 Spindle draws every tenant shape itself, from an enum plus validated literal hex. Text never sits on a tenant surface the validator has not checked. P4-A2 refuses the logo mark (`mark.kind` must be `text`).
 
@@ -304,33 +427,40 @@ Editing admitted text makes it pending again. A method course cannot publish wit
 
 **Deferred.** Every tenant image (logo, coach photo, raster cover: P4-A3) and all anonymous delivery of brand data (P4-A4). Until P4-A4, no anonymous page or payload shows a tenant's brand.
 
-**Cut 03 motif.** The d cut leans 12 degrees from vertical (horizontal run = 0.2126 x height). It recurs as the slanted tick that leads landing section headings (`.cut-tick`), the leading edge of the current-lesson marker (`.cut-marker`), and the sheets of the layer-stack drawing. Never on lesson text.
+**The Cut motif.** The cut rises **1 in 2 (26.57° from horizontal)** through the d ascender and the i dot. That is the angle of the shipped Cut wordmark and of Devin's concept 03 original (measured 25.6° on the earlier trace and 26.5° on the concept 03 PNG, `docs/design/spindle/` and the private design bundle; the earlier "12 degrees from vertical" here was wrong and is corrected). It recurs as the slash that leads section headings (`.cut-tick`, a band rising 1 in 2), the chamfered top-left corner of the current-lesson marker (`.cut-marker`, 1rem across and 0.5rem down), the edge of the logo reveal, and the sheets of the layer-stack drawing. Never on lesson text.
 
 **Illustrations.** Original line art drawn as inline SVG from simple geometry, never traced: 1.75px strokes at any size (`vector-effect: non-scaling-stroke`), round caps and joins, ink lines, `control` grey for context structures, dashed lines for structures behind others, and one `brand-soft` fill on the structure under discussion. Every drawing has a `<title>`, a `<desc>` and a text legend, and says "Schematic, not to scale". Any text a reader must read (marker numbers, notes) is HTML at the 14px label size over or beside the drawing, never SVG text that shrinks with it; SVG text is kept for large labels that stay at least 16px at 320px. Laterality follows the subject: the shoulder complex is the subject's left shoulder seen from the front. Diagrams are placed by id (`components/learn/diagrams.tsx`); unknown ids show the "not available yet" state. Provenance is in `docs/design/spindle/asset-provenance.json`.
 
 
-The wordmark is the lowercase Cut 03 mark: a diagonal cut through the **d** ascender, a **solid l**, and a cut through the **i** dot. Never move the cut to the l, stretch, outline or decorate the mark.
+The wordmark is the lowercase Cut mark (Devin's concept 03) redrawn in the Pressroom face: Archivo Italic at weight 900 and width 75, a cut through the **d** ascender, a **solid l**, and a disc for the **i** dot with the same cut through it. Never move the cut to the l, stretch, outline or decorate the mark.
 
-- Files: `apps/web/public/brand/spindle-wordmark.svg` (currentColor), `-ink`, `-white` (reverse on ink), `-cobalt`. Built by `docs/design/spindle/build-brand.py` from the traced original.
-- Minimum width 120px. Clear space at least a quarter of the mark's height on every side.
-- Symbol and favicon: the cut **d** in white on an ink tile (`spindle-symbol.svg`, `src/app/icon.svg`, `favicon.ico` 16/32/48, `apple-icon.png` 180). Checked at 16, 24 and 32px: the d stays legible. The cut i dot alone was rejected because it reads as a "no entry" sign at 16px.
-- The mark is a generated design asset; its provenance is recorded, but provenance is not trademark clearance.
+- Files: `apps/web/public/brand/spindle-wordmark.svg` (currentColor), `-ink`, `-white` (reverse on ink), `-blue`. Built by `docs/design/spindle/build-wordmark.py` from Archivo's outlines (shaped with HarfBuzz; cuts are boolean differences): clean vector geometry, no tracing and no generated image. Aspect ratio 2.95:1.
+- Minimum width 120px (41px tall). Clear space at least a quarter of the mark's height on every side.
+- Symbol and favicon: the cut disc (the i dot) in bone on a Pressroom Blue tile (`spindle-symbol.svg`; `spindle-symbol-small.svg` doubles the cut so it survives at 16 and 32px and is `src/app/icon.svg` and `favicon.ico` 16/32/48; `spindle-symbol-square.svg` is the full-bleed tile behind `apple-icon.png` 180 and the manifest icons 192 and 512). Checked at 16, 32 and 180px: the cut stays visible at 16px. The earlier cut-d symbol is retired with the Atlas files.
+- Archivo is SIL OFL 1.1; the wordmark is a logo drawn from its outlines, not a font. Provenance is recorded in `asset-provenance.json`, but provenance is not trademark clearance.
 
 ## Motion
 
 | Token | Value | Use |
 |---|---|---|
-| `--duration-feedback` | 120ms | hover, colour, appear |
-| `--duration-disclosure` | 180ms | chevron of a native disclosure (content opens without sliding) |
-| `--duration-drawer` | 240ms | reserved for a future sheet |
-| `--duration-confirm` | 320ms | completion check stroke, once, after server success |
-| `--ease-interface` | cubic-bezier(.2,.8,.2,1) | entry |
-| `--ease-exit` | cubic-bezier(.4,0,1,1) | exit |
+| `--duration-press` | 120ms | press feedback (scale 0.97) |
+| `--duration-feedback` | 160ms | hover, colour, appear |
+| `--duration-disclosure` | 200ms | chevron of a native disclosure, sources tray (content opens without sliding) |
+| `--duration-route` | 260ms | route entry: the new page rises 12px and fades in |
+| `--duration-drawer` | 300ms | sheets and the dock (200ms on exit) |
+| `--duration-confirm` | 320ms | completion check stroke and a progress segment filling, once, after server success |
+| `--duration-reveal` | 480ms | a support rule drawing when its block first enters the view; lesson text never moves |
+| `--duration-step` | 640ms | one step of a stepped anatomy sequence |
+| `--duration-logo` | 720ms | the wordmark reveal on brand surfaces |
+| `--duration-celebrate` | 1100ms | the most a module-complete sequence may take, plays once |
+| `--ease-out` | `cubic-bezier(0.23, 1, 0.32, 1)` | entries, reveals, feedback (never ease-in on UI) |
+| `--ease-in-out` | `cubic-bezier(0.77, 0, 0.175, 1)` | on-screen moves: progress fills, anatomy steps |
+| `--ease-drawer` | `cubic-bezier(0.32, 0.72, 0, 1)` | sheets and the dock |
 
-The logo reveal (560ms, along the d cut's slant) is for brand surfaces only and never delays the app. Reduced motion sets every duration to 0 and removes animation; every state stays visible as text. Focus appears immediately. Measured in the rendered app: 320ms check with motion, 0s and fully drawn with reduced motion.
+Values come from the motion-craft standards (UI motion under 300ms; explanatory and rare moments may run longer). `--ease-interface` and `--ease-exit` remain as aliases of `--ease-out` while components move over. Safety panels never animate. The logo reveal (560ms, an edge rising along the cut) is for brand surfaces only and never delays the app. Reduced motion sets every duration to 0 and removes animation; every state stays visible as text. Focus appears immediately. Measured in the rendered app: 320ms check with motion, 0s and fully drawn with reduced motion.
 
 The completion check is a custom inline SVG stroke (a few hundred bytes of markup, token colours, no dependency). The LottieFiles candidate "Success check" (Lan Jean, after "Checkmark green" by Andrew Vilchez, Lottie Simple License, 1.1–6 KB) was rejected without download: it needs a Lottie player runtime for an effect CSS already does, and adds a derivative licence chain to track.
 
 ## Accessibility
 
-WCAG 2.2 AA. Keyboard reachable with a 3px cobalt focus ring offset 4px. On a tenant's header band and catalog hero the ring is `on-band` (still 3px, offset 4px, from the same global rule); everywhere else in a branded gym it is the gym's accent (P4-A2). On ink surfaces the ring is white: the surface sets `--focus-ring` (the global rule is unlayered CSS, so a Tailwind outline utility cannot recolour it). The rule also removes outline colour from transitions, so the ring appears at once rather than fading in with `transition-colors` (asserted in `globals.test.ts` and `e2e/player-landing.spec.ts`). One live region stays mounted and announces saving, saved and failed; focus moves to the confirmation after a save. Icon-only controls have names. Future lesson diagrams are SVG with `<title>` and `<desc>`; until a diagram asset exists, the block says it is not available.
+WCAG 2.2 AA. Keyboard reachable with a 3px focus ring offset 4px, Pressroom Blue by default (7.2:1 on canvas). On a tenant's header band and catalog hero the ring is `on-band` (still 3px, offset 4px, from the same global rule); everywhere else in a branded gym it is the gym's accent (P4-A2). On ink surfaces the ring is white: the surface sets `--focus-ring` (the global rule is unlayered CSS, so a Tailwind outline utility cannot recolour it). The rule also removes outline colour from transitions, so the ring appears at once rather than fading in with `transition-colors` (asserted in `globals.test.ts` and `e2e/player-landing.spec.ts`). One live region stays mounted and announces saving, saved and failed; focus moves to the confirmation after a save. Icon-only controls have names. Future lesson diagrams are SVG with `<title>` and `<desc>`; until a diagram asset exists, the block says it is not available.

@@ -1,43 +1,58 @@
 @import "tailwindcss";
 
 /*
- * Spindle Atlas tokens. Root DESIGN.md is the contract; keep these values in sync
- * with its front matter. Light only for now: a dark theme is deferred until it is
- * designed and checked, so the OS dark setting must not half-invert the UI.
+ * Spindle Pressroom tokens. Root DESIGN.md is the contract; keep these values in sync with its
+ * front matter and its Elevation and Motion tables (lib/theme/tokens-sync.test.ts and
+ * atlas-sync.test.ts assert it). Light only: a dark theme is deferred until it is designed and
+ * checked, so the OS dark setting must not half-invert the UI.
  */
 :root {
   color-scheme: light;
-  --background: #f6f8fb;
-  --foreground: #17232b;
+  --background: #f3efe6;
+  --foreground: #111111;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* Archivo for UI and headings, Newsreader for reading, IBM Plex Mono for numerals and labels (all SIL OFL 1.1). */
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-display: var(--font-archivo), system-ui, sans-serif;
+  --font-reading: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 }
 
 @theme {
-  --color-ink: #17232b;
-  --color-ink-hover: #2c3c47;
-  --color-canvas: #f6f8fb;
-  --color-surface: #ffffff;
-  --color-surface-muted: #edf1f5;
-  --color-text: #17232b;
-  --color-text-muted: #52616d;
-  --color-border: #d8e0e7;
-  --color-control: #758491;
-  --color-brand: #2453d4;
-  --color-brand-hover: #1b40a6;
-  --color-brand-soft: #eaf0ff;
+  /* Fixed Spindle colours (a gym brand never changes these; ATLAS in @spindle/engine mirrors them). */
+  --color-primary: #111111;
+  --color-ink: #111111;
+  --color-ink-hover: #2a2a2a;
+  --color-on-ink: #ffffff;
+  --color-canvas: #f3efe6;
+  --color-surface: #fffdf8;
+  --color-surface-muted: #eee9de;
+  --color-text: #111111;
+  --color-text-muted: #4a463f;
+  --color-border: #d9d2c4;
+  --color-control: #7a7468;
+  /* Pressroom Blue: Spindle's own signal colour for bands, numerals and the seal. Not a tenant slot. */
+  --color-signal: #1d2be6;
+  /* The signal on ink surfaces (5.8:1 on #111111); #1d2be6 is only 2.3:1 there. */
+  --color-signal-bright: #6e85ff;
+  /* The stop stripe on the ink stop-and-refer panel (5.0:1 on ink). Red is otherwise reserved for errors. */
+  --color-stop: #f04438;
+  /* Tenant-overridable accent set (P4-A core). Spindle's default accent is Pressroom Blue;
+     hover and soft follow the engine's derivation (15% toward black, 90% toward white). */
+  --color-brand: #1d2be6;
+  --color-brand-hover: #1925c4;
+  --color-brand-soft: #e8eafd;
   --color-on-brand: #ffffff;
   /* Tenant band (P4-A2, DESIGN.md › Colors). A gym's band replaces --color-band on its member pages;
      on-band, band-tint and band-edge are derived from it, never set by the tenant. */
-  --color-band: #ffffff;
-  --color-on-band: #17232b;
-  --color-band-tint: #e3e5e6;
-  --color-band-edge: #d1d3d5;
+  --color-band: #fffdf8;
+  --color-on-band: #111111;
+  --color-band-tint: #e2e1dc;
+  --color-band-edge: #cfceca;
   --color-science: #0b6b50;
   --color-science-soft: #eaf5f0;
   --color-practice: #8a4b10;
@@ -48,52 +63,163 @@
   --color-danger: #b42318;
   --color-danger-soft: #fff0ee;
 
-  --text-display: 2.5rem;
-  --text-display--line-height: 1.08;
-  --text-display--letter-spacing: -0.04em;
-  --text-heading: 1.75rem;
-  --text-heading--line-height: 1.15;
-  --text-heading--letter-spacing: -0.03em;
-  --text-heading-lesson: 1.75rem;
-  --text-heading-lesson--line-height: 1.15;
-  --text-heading-lesson--letter-spacing: -0.03em;
+  /* Type: the front matter holds the desktop value; the base value here is the phone value. */
+  --text-display: 3rem;
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.01em;
+  --text-display--font-weight: 900;
+  --text-title: 2.5rem;
+  --text-title--line-height: 0.98;
+  --text-title--letter-spacing: -0.005em;
+  --text-title--font-weight: 900;
+  --text-heading: 2.25rem;
+  --text-heading--line-height: 0.98;
+  --text-heading--letter-spacing: -0.005em;
+  --text-heading--font-weight: 900;
+  --text-heading-lesson: 2.5rem;
+  --text-heading-lesson--line-height: 0.98;
+  --text-heading-lesson--letter-spacing: -0.005em;
+  --text-heading-lesson--font-weight: 900;
+  --text-section: 1.75rem;
+  --text-section--line-height: 1.05;
+  --text-section--letter-spacing: 0em;
+  --text-section--font-weight: 800;
+  --text-subhead: 1.25rem;
+  --text-subhead--line-height: 1.25;
+  --text-subhead--font-weight: 700;
   --text-reading: 1.125rem;
-  --text-reading--line-height: 1.65;
+  --text-reading--line-height: 1.6;
+  --text-reading--font-weight: 400;
+  --text-ui: 1rem;
+  --text-ui--line-height: 1.5;
+  --text-ui--font-weight: 500;
   --text-label: 0.875rem;
-  --text-label--line-height: 1.5;
+  --text-label--line-height: 1.4;
+  --text-label--font-weight: 500;
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1.3;
+  --text-eyebrow--letter-spacing: 0.08em;
+  --text-eyebrow--font-weight: 600;
   --text-code: 0.8125rem;
   --text-code--line-height: 1.5;
+  --text-code--font-weight: 400;
 
-  --radius-small: 4px;
-  --radius-control: 8px;
-  --radius-card: 12px;
+  /* Spacing: an 8-point scale with named steps (DESIGN.md › Layout). Semantic steps grow on desktop. */
+  --spacing-hair: 4px;
+  --spacing-tight: 8px;
+  --spacing-attach: 12px;
+  --spacing-stack: 16px;
+  --spacing-block: 24px;
+  --spacing-group: 32px;
+  --spacing-safety: 40px;
+  --spacing-section: 56px;
+  --spacing-page: 64px;
+  --spacing-hero: 96px;
 
-  --ease-interface: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  /* Shape: Pressroom is sharp. */
+  --radius-small: 2px;
+  --radius-control: 4px;
+  --radius-card: 6px;
+  --radius-plate: 8px;
+  --radius-pill: 9999px;
+
+  /* Elevation: flat surfaces; shadows only on floating layers, and one hard "print" offset for emphasis. */
+  --shadow-raise: 0 1px 0 #d9d2c4, 0 6px 16px rgb(17 17 17 / 0.06);
+  --shadow-float: 0 -1px 0 #d9d2c4, 0 -10px 28px rgb(17 17 17 / 0.10);
+  --shadow-print: 6px 6px 0 #111111;
+
+  /* Motion curves (motion-craft): strong ease-out for entries, ease-in-out for moves, a drawer curve. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  /* Older names kept as aliases while components move over. */
+  --ease-interface: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-exit: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @media (min-width: 768px) {
   :root {
-    --text-display: 4rem;
-    --text-heading: 2rem;
-    --text-heading-lesson: 2.5rem;
-    --text-heading-lesson--line-height: 1.1;
-    --text-heading-lesson--letter-spacing: -0.035em;
+    --text-display: 7.5rem;
+    --text-display--line-height: 0.92;
+    --text-title: 4rem;
+    --text-title--line-height: 0.96;
+    --text-heading: 3.5rem;
+    --text-heading--line-height: 0.96;
+    --text-heading-lesson: 4rem;
+    --text-heading-lesson--line-height: 0.96;
+    --text-section: 2.25rem;
+    --text-section--line-height: 1.02;
+    --text-subhead: 1.375rem;
+    --text-reading--line-height: 1.65;
+    --spacing-block: 28px;
+    --spacing-section: 80px;
+    --spacing-page: 112px;
+    --spacing-hero: 128px;
+  }
+}
+
+@layer base {
+  /* Display faces (in the base layer, so a utility such as font-mono still wins): headings and display steps use Archivo condensed; long text uses Newsreader. A gym's
+     own display font, set inline on the band, header name and its own course cards, wins over these. */
+  :root {
+    --display-stretch: 72%;
+  }
+  h1,
+  h2,
+  h3,
+  .text-display,
+  .text-title,
+  .text-heading,
+  .text-heading-lesson,
+  .text-section {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+  .text-display,
+  .text-title,
+  .text-heading,
+  .text-heading-lesson,
+  .text-section {
+    font-stretch: var(--display-stretch);
+  }
+  .text-reading {
+    font-family: var(--font-reading);
+    text-wrap: pretty;
+  }
+  /* Labels, numerals and controls stay in the UI face even inside a reading column. */
+  .text-label,
+  .text-ui,
+  button,
+  input,
+  select,
+  textarea,
+  summary {
+    font-family: var(--font-sans);
+  }
+  .text-eyebrow,
+  .text-code {
+    font-family: var(--font-mono);
+  }
+  .text-eyebrow {
+    text-transform: uppercase;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 }
 
 /*
- * The Cut 03 motif: the wordmark's d cut leans 12 degrees from vertical (the logo
- * reveal travels along it). It recurs as a slanted tick before landing section headings
- * and as the leading edge of the current-lesson marker. Never on lesson text.
- * tan(12deg) = 0.2126, so the slant's horizontal run is 0.2126 x the shape's height.
+ * The Cut motif. The shipped wordmark's cut rises 1 in 2 (26.57 degrees from horizontal) through the
+ * d ascender and the i dot. It recurs as the slash that leads section headings (.cut-tick) and as the
+ * chamfered corner of the current-lesson marker (.cut-marker). Never on lesson text.
  */
 .cut-tick {
   display: inline-block;
-  width: 0.4rem;
-  height: 1.25rem;
+  width: 1.25rem;
+  height: 0.625rem;
   background: currentColor;
-  clip-path: polygon(calc(1.25rem * 0.2126) 0, 100% 0, calc(100% - 1.25rem * 0.2126) 100%, 0 100%);
+  /* A band rising 1 in 2 from bottom left to top right, 0.36rem thick measured vertically. */
+  clip-path: polygon(0 100%, 0 calc(100% - 0.36rem), 100% 0, 100% 0.36rem);
 }
 .cut-marker {
   position: relative;
@@ -106,15 +232,21 @@
   z-index: -1;
   border-radius: 0 var(--radius-small) var(--radius-small) 0;
   background: var(--color-brand-soft);
-  /* Leading edge slanted along the cut: 0.2126 x the marker's height. */
-  clip-path: polygon(calc(0.2126 * var(--marker-h, 3.5rem)) 0, 100% 0, 100% 100%, 0 100%);
+  /* The top-left corner is cut along the same 1-in-2 slope: 1rem across, 0.5rem down. */
+  clip-path: polygon(1rem 0, 100% 0, 100% 100%, 0 100%, 0 0.5rem);
 }
 
 :root {
-  --duration-feedback: 120ms;
-  --duration-disclosure: 180ms;
-  --duration-drawer: 240ms;
+  --duration-press: 120ms;
+  --duration-feedback: 160ms;
+  --duration-disclosure: 200ms;
+  --duration-route: 260ms;
+  --duration-drawer: 300ms;
   --duration-confirm: 320ms;
+  --duration-reveal: 480ms;
+  --duration-step: 640ms;
+  --duration-logo: 720ms;
+  --duration-celebrate: 1100ms;
 }
 
 body {
@@ -124,7 +256,7 @@ body {
 }
 
 /* One visible focus treatment everywhere: 3px brand ring, offset from the control.
-   Dark surfaces set --focus-ring to a light colour (cobalt is 2.5:1 on ink). */
+   Dark surfaces set --focus-ring to a light colour (Pressroom Blue is 2.3:1 on ink). */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 3px solid var(--focus-ring, var(--color-brand));
   outline-offset: 4px;
@@ -141,31 +273,61 @@ details > summary::-webkit-details-marker {
   display: none;
 }
 details > summary .disclosure-chevron {
-  transition: transform var(--duration-disclosure) var(--ease-interface);
+  transition: transform var(--duration-disclosure) var(--ease-out);
 }
 details[open] > summary .disclosure-chevron {
   transform: rotate(180deg);
+}
+
+/* Pressable controls give a small physical press (motion-craft: scale .97, 120ms). */
+.pressable {
+  transition-property: transform, background-color, color, border-color, box-shadow;
+  transition-duration: var(--duration-press);
+  transition-timing-function: var(--ease-out);
+}
+.pressable:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* The measurement layer (from the Lab study): hairline ticks every 8px with a taller tick every 40px,
+   and the "you are here" segment in a progress bar. Decorative; the numbers beside them carry the meaning. */
+.measure-ticks {
+  background-image:
+    repeating-linear-gradient(to right, currentColor 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(to right, currentColor 0 1px, transparent 1px 8px);
+  background-size: 100% 100%, 100% 45%;
+  background-position: 0 100%, 0 100%;
+  background-repeat: no-repeat;
+}
+.measure-current {
+  background: repeating-linear-gradient(-63.43deg, var(--color-ink) 0 2px, transparent 2px 5px);
+  box-shadow: inset 0 0 0 1px var(--color-ink);
+}
+@keyframes motion-token-fill {
+  from {
+    transform: scaleX(0);
+  }
 }
 
 /* Confirmed-save check: drawn once, only when the server has confirmed. */
 .confirm-check path {
   stroke-dasharray: 24;
   stroke-dashoffset: 24;
-  animation: draw-check var(--duration-confirm) var(--ease-interface) forwards;
+  animation: draw-check var(--duration-confirm) var(--ease-out) forwards;
 }
 .confirm-appear {
-  animation: appear var(--duration-feedback) var(--ease-interface);
+  animation: appear var(--duration-feedback) var(--ease-out);
 }
-/* Brand surfaces only: reveal the wordmark along the d cut's slant. Never on app routes. */
+/* Brand surfaces only: reveal the wordmark with an edge that rises along the cut. Never on app routes. */
 .logo-reveal {
-  animation: logo-reveal 560ms var(--ease-interface) both;
+  animation: logo-reveal 560ms var(--ease-out) both;
 }
 @keyframes logo-reveal {
   from {
-    clip-path: polygon(0 0, 0 0, -6% 100%, -6% 100%);
+    clip-path: polygon(0 0, 0 0, -60% 100%, -60% 100%);
   }
   to {
-    clip-path: polygon(0 0, 106% 0, 100% 100%, -6% 100%);
+    clip-path: polygon(0 0, 160% 0, 100% 100%, -60% 100%);
   }
 }
 @keyframes draw-check {
@@ -181,10 +343,16 @@ details[open] > summary .disclosure-chevron {
 
 @media (prefers-reduced-motion: reduce) {
   :root {
+    --duration-press: 0ms;
     --duration-feedback: 0ms;
     --duration-disclosure: 0ms;
+    --duration-route: 0ms;
     --duration-drawer: 0ms;
     --duration-confirm: 0ms;
+    --duration-reveal: 0ms;
+    --duration-step: 0ms;
+    --duration-logo: 0ms;
+    --duration-celebrate: 0ms;
   }
   *,
   *::before,
@@ -195,5 +363,8 @@ details[open] > summary .disclosure-chevron {
   }
   .confirm-check path {
     stroke-dashoffset: 0;
+  }
+  .pressable:active:not(:disabled) {
+    transform: none;
   }
 }

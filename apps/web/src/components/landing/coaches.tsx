@@ -103,7 +103,7 @@ function Hero({ brand }: { brand: Brand }) {
       <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 items-center gap-12 px-4 pt-12 pb-16 md:px-8 md:pt-20 md:pb-24 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
         <div className="flex flex-col gap-6">
           <span aria-hidden className="cut-tick text-ink" />
-          <h1 id="coaches-title" className="text-display font-medium text-balance text-text">
+          <h1 id="coaches-title" className="text-display text-balance text-text">
             Teach your method on a base that cites its science.
           </h1>
           <p className="max-w-[54ch] text-reading text-text-muted">
@@ -331,7 +331,7 @@ function Closing({ brand }: { brand: Brand }) {
     <section aria-labelledby="coaches-closing-title" className="bg-ink text-white [--focus-ring:var(--color-white)]">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-start gap-6 px-4 py-16 md:px-8 md:py-24">
         <Wordmark src={brand.wordmark.onInk} brand={brand} />
-        <h2 id="coaches-closing-title" className="max-w-[20ch] text-display font-medium text-balance">
+        <h2 id="coaches-closing-title" className="max-w-[20ch] text-display text-balance">
           Start with your gym.
         </h2>
         <p className="max-w-[52ch] text-reading text-white/80">

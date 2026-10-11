@@ -14,8 +14,9 @@ export const SCENES = [
   { id: "long-name", colors: PILATES },
 ] as const;
 
-/** Fixed Atlas colours any scene may draw (DESIGN.md › Colors); the brand's own come from brandTokens. */
-export const ATLAS_FIXED = ["#f6f8fb", "#ffffff", "#edf1f5", "#17232b", "#52616d", "#2c3c47", "#d8e0e7", "#758491", "#0b6b50", "#eaf5f0", "#8a4b10", "#fff3e6"];
+// Spindle's fixed Pressroom palette (DESIGN.md › Colors): canvas, surface, white (text on ink), muted panel, ink, muted text,
+// ink hover, border, control, and the evidence colours. The variable keeps its historical name.
+export const ATLAS_FIXED = ["#f3efe6", "#fffdf8", "#ffffff", "#eee9de", "#111111", "#4a463f", "#2a2a2a", "#d9d2c4", "#7a7468", "#0b6b50", "#eaf5f0", "#8a4b10", "#fff3e6"];
 
 export const VIEWS = [
   { label: "320", width: 320, height: 800, scale: 1 },

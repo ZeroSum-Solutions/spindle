@@ -51,7 +51,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
             <LayerLabel layer={view.layer} />
             <VersionTag n={view.versionNumber} />
           </p>
-          <h1 className="text-heading font-medium">{view.title}</h1>
+          <h1 className="text-heading">{view.title}</h1>
           {view.subtitle ? <p className="text-reading text-text-muted">{view.subtitle}</p> : null}
           <div className="flex flex-col gap-2">
             <ProgressText done={view.done} total={view.total} />

@@ -37,7 +37,7 @@ async function GuardedPreview() {
     <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 py-8 md:px-8">
       <div className="flex max-w-[68ch] flex-col gap-2">
         <span aria-hidden className="cut-tick text-ink" />
-        <h1 className="text-heading font-medium text-text">Brand preview</h1>
+        <h1 className="text-heading text-text">Brand preview</h1>
         <p className="text-reading text-text-muted">
           Two made-up brands on the real learner components. A brand changes the mark, links, the current lesson, selected controls, the focus ring
           and the heading font. Evidence labels, errors and the base attribution stay Spindle&apos;s. Test data only.

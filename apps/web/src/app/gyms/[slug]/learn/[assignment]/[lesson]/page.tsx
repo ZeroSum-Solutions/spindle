@@ -77,7 +77,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
                 Lesson {index + 1} of {lessons.length} · {state.partTitle}
               </span>
             </p>
-            <h1 id="lesson-title" className="text-heading-lesson font-medium text-text">
+            <h1 id="lesson-title" className="text-heading-lesson text-text">
               {lesson.title}
             </h1>
             <p className="text-label text-text-muted">
