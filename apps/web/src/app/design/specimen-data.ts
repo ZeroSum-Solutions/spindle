@@ -120,4 +120,3 @@ export const view: CourseView = {
   flaggedClaimIds: [FLAGGED],
   delta: { fromVersionNumber: 1, changed: ["Synthetic lesson 2"], added: ["Synthetic lesson 3"], removed: ["Retired synthetic lesson"] },
 };
-
