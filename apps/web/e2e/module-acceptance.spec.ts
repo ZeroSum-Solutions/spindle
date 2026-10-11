@@ -117,6 +117,35 @@ const REQUIRED_PAIRS: Record<string, { assessment: string; warning: string }[]> 
   "when-to-refer-out": [],
 };
 
+/**
+ * SAFETY.md rule 5: every stop-and-refer box ends by pointing to the full rules. Lesson 4 lists the
+ * tiers itself, so its pointer says so.
+ */
+const FULL_RULES = 'The full stop rules and referral tiers are in "When to refer out" (lesson 8).';
+const STOP_POINTER: Record<string, string> = {
+  "screens-and-red-flags": 'The referral tiers are listed above in this lesson; the full stop rules and tiers are in "When to refer out" (lesson 8).',
+};
+
+/** Lesson-specific text the published drafts must show, or must no longer show (rehearsal fixes, #33). */
+const LESSON_PINS: Record<string, { shows: string[]; never: string[] }> = {
+  "shoulder-anatomy": {
+    shows: ["They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae and pectoralis minor."],
+    // The serratus attachment clause was removed: its source does not support it.
+    never: ["The serratus anterior attaches"],
+  },
+  "when-to-refer-out": {
+    shows: ["For the three urgent red flags below, Spindle's stop rule comes first"],
+    never: [],
+  },
+};
+
+/** SAFETY.md rule 6 in lesson 8: the practice-based "What you do first" box, then the three graded adverse-case questions. */
+const ADVERSE_CASE_PROMPTS = [
+  "Under the UK specialist pathway, what does shoulder pain in a child or adolescent need?",
+  "Under the UK specialist pathway, what does a lump or swelling found when someone is assessed for shoulder pain need?",
+  "Under the UK specialist pathway, what does shoulder pain with inflammation in several joints need?",
+];
+
 async function answerAll(page: Page, pick: (q: (typeof questions)[number]) => number) {
   for (const q of questions) await page.locator(`fieldset[data-question="${q.id}"] input[value="${pick(q)}"]`).check();
 }
@@ -286,6 +315,26 @@ test.describe.serial("shoulder module acceptance", () => {
         expect(sibling.kind, `${d.lesson.slug}: stop rule after "${pin.assessment.slice(0, 40)}"`).toBe("callout");
         expect(sibling.text).toContain("Stop and refer");
         expect(sibling.text).toContain(pin.warning);
+      }
+
+      // Rule 5: every stop-and-refer box ends with its pointer to the full rules.
+      const stopTexts = await article.locator('[data-block="callout"]').filter({ hasText: "Stop and refer" }).allTextContents();
+      const draftStops = blocks.filter((b) => b.kind === "callout" && (b.content as { label: string }).label === "Stop and refer");
+      expect(stopTexts.length, `${d.lesson.slug}: stop boxes`).toBe(draftStops.length);
+      for (const text of stopTexts) expect(text.trim().endsWith(STOP_POINTER[d.lesson.slug] ?? FULL_RULES), `${d.lesson.slug}: rule-5 pointer`).toBe(true);
+
+      const pins = LESSON_PINS[d.lesson.slug];
+      for (const text of pins?.shows ?? []) await expect(article, d.lesson.slug).toContainText(text);
+      for (const text of pins?.never ?? []) await expect(article, d.lesson.slug).not.toContainText(text);
+
+      if (d.lesson.slug === "when-to-refer-out") {
+        // In document order: the "What you do first" box, then exactly the three adverse-case questions.
+        const order = await article.locator("[data-block]").evaluateAll((els) => els.map((el) => ({ kind: el.getAttribute("data-block"), text: el.textContent ?? "" })));
+        const at = order.findIndex((b) => b.kind === "callout" && b.text.includes("What you do first"));
+        expect(at, "lesson 8: What you do first").toBeGreaterThanOrEqual(0);
+        const after = order.slice(at + 1, at + 1 + ADVERSE_CASE_PROMPTS.length);
+        expect(after.map((b) => b.kind)).toEqual(ADVERSE_CASE_PROMPTS.map(() => "quiz"));
+        ADVERSE_CASE_PROMPTS.forEach((prompt, i) => expect(after[i]!.text).toContain(prompt));
       }
 
       // Graded questions show the prompt and point to the module quiz; never the answer.
