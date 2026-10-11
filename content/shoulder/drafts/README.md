@@ -11,4 +11,8 @@ Each file holds one lesson:
 
 Science blocks bind `claim-slot:` ids. These are placeholders, not approved claim records, so the publish gate rejects them until each slot is replaced by an approved claim id. Practice-based blocks bind no claims. Graded quiz candidates are the `quiz` blocks, and every one of them is science-bound.
 
-`build_drafts.py` writes every draft file in this folder. Edit the script, not the JSON, and run it from the repo root: `python3 content/shoulder/drafts/build_drafts.py content/shoulder/drafts`. Lesson 8's tier, stop-rule and exclusion lists are parsed from `docs/curriculum/SAFETY.md`, so run the script again whenever SAFETY.md changes.
+`build_drafts.py` writes every draft file in this folder. Edit the script, not the JSON, and run it from the repo root: `python3 content/shoulder/drafts/build_drafts.py content/shoulder/drafts`.
+
+- Lessons 4 and 8 take their referral tiers, stop rules and exclusions from `docs/curriculum/SAFETY.md`, so run the script again whenever SAFETY.md changes. Each table is read only up to the next heading; a missing heading or a malformed table stops the build.
+- Every lesson is rendered and checked before anything is written (science blocks bind claim slots, practice blocks bind none, every slot is used, every graded quiz is science, and every source has an identifier and a rights record). Files are then replaced atomically, so a failed run changes nothing.
+- Every candidate source records its rights: a licence with its URI, or an explicit rights-reserved or unresolved status. Spindle cites and paraphrases facts; it reproduces no source text.

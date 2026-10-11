@@ -3,22 +3,22 @@
   "status": "provisional: written before the outline review; not publishable (claim slots are not approved claims)",
   "module": "shoulder",
   "lessonNumber": 8,
-  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words from general anatomy knowledge; the candidate sources were used only to choose which facts need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
+  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
-    "The tier, stop-rule and exclusion checklists are generated from docs/curriculum/SAFETY.md, with the source ids removed; regenerate whenever SAFETY.md changes.",
-    "Scenarios stay ungraded."
+    "The tier, stop-rule and exclusion checklists are parsed from docs/curriculum/SAFETY.md (bounded at the next heading; malformed tables stop the build); regenerate whenever SAFETY.md changes.",
+    "Scenario answers give the first action, the tier, who to contact and how soon. Scenarios stay ungraded."
   ],
   "claimSlots": [
     {
       "slot": "claim-slot:l8-subacromial-course",
-      "statement": "BESS guidance describes subacromial pain as usually self-limiting, with most symptoms responding within three months.",
+      "statement": "BESS 2025 describes subacromial pain as usually self-limiting, with most symptoms responding within three months, in the context of initial primary-care management.",
       "candidateSources": [
         {
           "kind": "consensus",
           "citation": "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724.",
           "doi": "10.1177/17585732251374282",
           "url": "https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf",
-          "license": "(c) The Author(s) 2025; no licence stated (treat as all rights reserved)"
+          "rights": "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. Cited and paraphrased only."
         }
       ]
     }
@@ -26,32 +26,32 @@
   "scenarios": [
     {
       "prompt": "Arm pain with chest tightness during a session.",
-      "goodAnswer": "Emergency: stop all exercise; call emergency services.",
+      "goodAnswer": "Stop all exercise; emergency: call emergency services (999 in the UK) now and stay with the client.",
       "safety": "SAFETY.md section 4"
     },
     {
       "prompt": "A new lump above the collarbone.",
-      "goodAnswer": "Urgent: GP or NHS 111 today.",
+      "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.",
       "safety": "SAFETY.md section 4"
     },
     {
       "prompt": "Shoulder pain that has got worse every day this week; no other sign.",
-      "goodAnswer": "Routine, now: do not wait for 2 weeks.",
-      "safety": "SAFETY.md section 4"
+      "goodAnswer": "Stop shoulder loading for this session; routine referral now: a GP or physiotherapist, without waiting for 2 weeks.",
+      "safety": "SAFETY.md sections 3 and 4"
     },
     {
       "prompt": "After a fall, the client cannot move the arm.",
-      "goodAnswer": "Emergency: do not move the arm; call emergency services.",
+      "goodAnswer": "Stop; emergency: call emergency services now; do not move the arm or try to put it back; do not let them drive.",
       "safety": "SAFETY.md sections 3 and 4"
     },
     {
       "prompt": "Fever and shoulder pain.",
-      "goodAnswer": "Emergency (Spindle policy, stricter than the NHS page).",
-      "safety": "SAFETY.md section 4 note"
+      "goodAnswer": "Stop all exercise; emergency: call emergency services (999 in the UK) or go to the emergency department now. This is Spindle policy, stricter than the NHS page.",
+      "safety": "SAFETY.md section 4 and its note on infection"
     },
     {
       "prompt": "An ache after training that settled within a day; no other sign.",
-      "goodAnswer": "Continue; stop if pain comes on during a set.",
+      "goodAnswer": "Continue; stop shoulder loading if pain comes on during a set.",
       "safety": "SAFETY.md section 3"
     }
   ],
@@ -59,14 +59,14 @@
     "id": "shoulder-08-refer-out",
     "slug": "when-to-refer-out",
     "title": "When to refer out",
-    "summary": "Referral is a coaching skill: notice, stop, refer to the right place at the right speed, and keep the client training what is safe.",
+    "summary": "Referral is a coaching skill: notice, stop, refer to the right place at the right speed, and keep the client training only what is safe.",
     "durationMinutes": 15,
     "format": "article",
     "objectives": [
       "Apply the three referral tiers, with the highest matching tier winning.",
       "Use the stop rules and say what to do next.",
       "Know who is outside the base module and how to work alongside a clinician's plan.",
-      "Refer in plain, calm, non-diagnostic words."
+      "Refer in plain, calm, non-diagnostic words, with the right destination and timing."
     ],
     "anatomyIds": [
       "UBERON:0001467"
@@ -200,12 +200,12 @@
       {
         "kind": "checklist",
         "content": [
-          "Recent injury or accident, such as a fall, with new shoulder pain that has not been assessed - Do not train the shoulder. Use the referral tiers above.",
+          "Recent injury or accident, such as a fall, with new shoulder pain that has not been assessed - Do not train the shoulder. Use the referral tiers in this lesson.",
           "After shoulder surgery, or a recent dislocation or fracture, still in rehabilitation - Outside the base module. Follow the treating clinician's plan; do not progress it on your own.",
           "Diagnosed neurological condition affecting the arm or neck - Outside the base module.",
           "Diagnosed shoulder condition under current care (for example frozen shoulder, a known cuff tear, instability) - Outside the base module; work only within the clinician's plan.",
           "Children and adolescents with shoulder pain - Outside the base module. Urgent tier: stop shoulder loading, and tell the young person and their parent or carer to get an urgent GP appointment or call NHS 111 (or the local equivalent) the same day, for referral to trauma and orthopaedics. Emergency tier if any emergency criterion applies.",
-          "Anyone with a warning sign in the lists above - Stop and refer."
+          "Anyone with a warning sign in the lists in this lesson - Stop and refer."
         ],
         "support": "practice-based",
         "claimIds": []
@@ -216,7 +216,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "For subacromial shoulder pain, UK specialist guidance describes the condition as usually self-limiting, with most symptoms settling within about three months.",
+        "content": "For subacromial shoulder pain, 2025 UK specialist guidance describes the condition as usually self-limiting, with most symptoms responding to initial care within about three months.",
         "support": "science",
         "claimIds": [
           "claim-slot:l8-subacromial-course"
@@ -230,15 +230,15 @@
       },
       {
         "kind": "heading",
-        "content": "The conversation"
+        "content": "Saying it, tier by tier"
       },
       {
         "kind": "checklist",
         "content": [
-          "Say what you saw: \"Your arm isn't lifting as high as last week, and that's new.\"",
-          "Say what to do and how soon: \"That's worth getting checked today by a GP or NHS 111.\"",
-          "Do not name a condition, and do not say it is nothing.",
-          "Keep them moving where it is safe: \"Let's work on your lower body for the rest of the session.\""
+          "Emergency: call emergency services yourself, stay with the client, and do not let them drive. After a fall or impact, do not move the arm or try to put it back. Nothing else happens in the session.",
+          "Urgent: \"You can't lift your arm yourself today, and that's new. We'll stop the shoulder work now. Please get it checked today: call your GP for an urgent appointment, or NHS 111.\" Do not offer more training in place of getting help.",
+          "Routine, with no other warning sign: \"Your shoulder pain is getting worse. Please book in with your GP or a physiotherapist now; you don't need to wait.\" With the shoulder left out, the rest of the session can go ahead if the client feels well.",
+          "Every tier: do not name a condition, and do not say it is nothing."
         ],
         "support": "practice-based",
         "claimIds": []
@@ -260,14 +260,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "For subacromial shoulder pain, what does UK specialist guidance say about how symptoms usually go?",
+          "prompt": "For subacromial shoulder pain, what does 2025 UK specialist guidance say about how symptoms usually go?",
           "options": [
-            "Most symptoms settle within about three months",
-            "Symptoms never settle without surgery",
+            "Most symptoms respond to initial care within about three months",
+            "Symptoms never improve without surgery",
             "Most need emergency care"
           ],
           "answerIndex": 0,
-          "explanation": "The guidance describes subacromial pain as usually self-limiting, with most symptoms settling within about three months."
+          "explanation": "The guidance describes subacromial pain as usually self-limiting, with most symptoms responding to initial care within about three months."
         },
         "support": "science",
         "claimIds": [
@@ -278,7 +278,7 @@
         "kind": "callout",
         "content": {
           "label": "Talk it through",
-          "text": "Pick the tier and say what you do first: (1) arm pain with chest tightness during a session; (2) a new lump above the collarbone; (3) shoulder pain that has got worse every day this week, with no other sign; (4) after a fall, the client cannot move the arm; (5) fever and shoulder pain; (6) an ache after training that settled within a day, with no other sign."
+          "text": "Pick the tier and say what you do first, who to contact and how soon: (1) arm pain with chest tightness during a session; (2) a new lump above the collarbone; (3) shoulder pain that has got worse every day this week, with no other sign; (4) after a fall, the client cannot move the arm; (5) fever and shoulder pain; (6) an ache after training that settled within a day, with no other sign."
         },
         "support": "practice-based",
         "claimIds": []

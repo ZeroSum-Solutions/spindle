@@ -3,69 +3,59 @@
   "status": "provisional: written before the outline review; not publishable (claim slots are not approved claims)",
   "module": "shoulder",
   "lessonNumber": 5,
-  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words from general anatomy knowledge; the candidate sources were used only to choose which facts need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
+  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
-    "The outline's wording 'first-line treatment' is not in the BESS 2025 text; the lesson uses what the pathway says (exercise reduces short-term pain; best approach uncertain).",
+    "The EMG section and its quiz were removed: the accessible abstract did not support the ratios or the inference limit.",
+    "The outline no longer says 'first-line'. The lesson does not generalise BESS PICO 18's narrower recommendation (physiotherapy as a possible first-line treatment for chronic subacromial pain).",
     "The warm-up is practice-based and ranks nothing."
   ],
   "claimSlots": [
     {
       "slot": "claim-slot:l5-subacromial-exercise",
-      "statement": "For subacromial shoulder pain, BESS guidance reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves patient-reported function, and states that the most effective physiotherapy or exercise approach remains uncertain.",
+      "statement": "For subacromial pain, BESS 2025 (PICO 6) reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves patient-reported function, grades this 'Conditional Positive (low evidence)', and states that the most effective physiotherapy or exercise approach remains uncertain.",
       "candidateSources": [
         {
           "kind": "consensus",
           "citation": "Pandey RA, Singh HP, BESS Subacromial Pain Working Group. BESS Patient Care Pathway: Subacromial pain. Shoulder Elbow. 2025;17(6):713-724.",
           "doi": "10.1177/17585732251374282",
           "url": "https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf",
-          "license": "(c) The Author(s) 2025; no licence stated (treat as all rights reserved)"
+          "rights": "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. Cited and paraphrased only."
         }
       ],
-      "note": "The guidance says nothing exclusive about who delivers exercise; it also describes self-management. The claim does not mention delivery."
+      "note": "Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."
     },
     {
       "slot": "claim-slot:l5-csaw",
-      "statement": "In the CSAW trial of people with subacromial shoulder pain, arthroscopic decompression gave no extra benefit over arthroscopy only, and the surgical groups' advantage over no treatment at 6 months was not clinically important.",
+      "statement": "In the CSAW trial (subacromial pain for at least 3 months, intact rotator cuff tendons, eligible for surgery, after non-operative management including exercise therapy and at least one steroid injection), arthroscopic decompression gave no benefit over arthroscopy only on the Oxford Shoulder Score at 6 months, and the surgical groups' advantage over no treatment was not clinically important.",
       "candidateSources": [
         {
           "kind": "paper",
           "citation": "Beard DJ, Rees JL, Cook JA, et al. Arthroscopic subacromial decompression for subacromial shoulder pain (CSAW): a multicentre, pragmatic, parallel group, placebo-controlled, three-group, randomised surgical trial. Lancet. 2018;391(10118):329-338.",
           "doi": "10.1016/S0140-6736(17)32457-1",
-          "pmid": "29169668"
+          "pmid": "29169668",
+          "pmcid": "PMC5803129",
+          "rights": "CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/), PMC5803129. Cited and paraphrased only."
         }
-      ],
-      "note": "Lancet; Elsevier user licence. Keep within the trial population."
+      ]
     },
     {
       "slot": "claim-slot:l5-progressive-comparisons",
-      "statement": "A 2020 systematic review found uncertain clinical benefit for progressive resisted exercise and no significant benefit for non-progressive exercise, each versus placebo or no treatment, in rotator cuff related shoulder pain; evidence was low certainty and the two were not compared directly.",
+      "statement": "A 2020 systematic review found uncertain clinical benefit for progressive and resisted exercise and no significant benefit for non-progressive or non-resisted exercise, each versus placebo or no treatment at more than 6 weeks to 6 months, in rotator cuff related shoulder pain; evidence was low certainty and the categories were not compared directly.",
       "candidateSources": [
         {
           "kind": "meta_analysis",
           "citation": "Naunton J, Street G, Littlewood C, Haines T, Malliaras P. Effectiveness of progressive and resisted and non-progressive or non-resisted exercise in rotator cuff related shoulder pain: a systematic review and meta-analysis of randomized controlled trials. Clin Rehabil. 2020;34(9):1198-1216.",
           "doi": "10.1177/0269215520934147",
-          "pmid": "32571081"
+          "pmid": "32571081",
+          "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only."
         }
       ]
-    },
-    {
-      "slot": "claim-slot:l5-emg",
-      "statement": "EMG studies show some exercises elicit high serratus anterior and lower trapezius activity relative to upper trapezius; muscle activation during an exercise does not by itself demonstrate strength gain or symptom change.",
-      "candidateSources": [
-        {
-          "kind": "paper",
-          "citation": "Reinold MM, Escamilla RF, Wilk KE. Current concepts in the scientific and clinical rationale behind exercises for glenohumeral and scapulothoracic musculature. J Orthop Sports Phys Ther. 2009;39(2):105-117.",
-          "doi": "10.2519/jospt.2009.2835",
-          "pmid": "19194023"
-        }
-      ],
-      "note": "The second clause needs explicit support in the packet; if absent, keep it out of the science block."
     }
   ],
   "scenarios": [
     {
       "prompt": "A client wants 20 minutes of activation before every session.",
-      "goodAnswer": "Keep a short warm-up (a few minutes); move strengthening into the main session with progressive load; no claim that activation fixes anything.",
+      "goodAnswer": "Keep a short warm-up; move strengthening into the main session with progressive load; make no claim that activation fixes anything.",
       "safety": "SAFETY.md section 1"
     }
   ],
@@ -73,11 +63,11 @@
     "id": "shoulder-05-correctives",
     "slug": "correctives-and-activation",
     "title": "Correctives and activation: what the evidence supports",
-    "summary": "What exercise research on shoulder pain actually compared, what it did not, and how to use activation drills as a warm-up rather than a fix.",
+    "summary": "What exercise research on shoulder pain actually compared, how certain it is, and how to use activation drills as a warm-up rather than a fix.",
     "durationMinutes": 12,
     "format": "article",
     "objectives": [
-      "Describe what research reports about exercise for subacromial shoulder pain, and for whom.",
+      "Describe what research reports about exercise for subacromial and rotator cuff related shoulder pain, for whom, and how certain it is.",
       "Explain why that clinical research is not a trainer's treatment plan.",
       "Use activation drills as warm-up and rehearsal, without ranking them.",
       "Know when a \"corrective\" should be a referral instead."
@@ -90,7 +80,7 @@
     "blocks": [
       {
         "kind": "paragraph",
-        "content": "\"Correctives\" and \"activation\" are some of the most used words in shoulder training. This lesson separates what the research tested from what is coaching practice, so you can use both honestly.",
+        "content": "\"Correctives\" and \"activation\" are some of the most used words in shoulder training. This lesson separates what research tested from what is coaching practice, so you can use both honestly.",
         "support": "practice-based",
         "claimIds": []
       },
@@ -100,7 +90,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves function. It also says that the most effective exercise approach remains uncertain.",
+        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, 2025 UK specialist guidance reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves function. It rates that recommendation as conditional, based on low-certainty evidence, and says the most effective exercise approach remains uncertain.",
         "support": "science",
         "claimIds": [
           "claim-slot:l5-subacromial-exercise"
@@ -108,7 +98,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "In a large trial of people with subacromial shoulder pain, surgery to decompress the space gave no extra benefit over an arthroscopy without decompression, and neither surgery gave a clinically important benefit over no treatment.",
+        "content": "A UK trial enrolled people who had had subacromial pain for at least three months, had intact rotator cuff tendons, and had not improved with exercise therapy and a steroid injection. At six months, surgery to decompress the space gave no extra benefit on a shoulder pain and function score over an arthroscopy that left out the decompression, and neither surgery gave a clinically important benefit over no treatment.",
         "support": "science",
         "claimIds": [
           "claim-slot:l5-csaw"
@@ -116,7 +106,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "For rotator cuff related shoulder pain, a 2020 systematic review compared each type of exercise with placebo or no treatment, not with each other. Progressive resisted exercise showed an uncertain clinical benefit, non-progressive exercise showed no significant benefit, and the certainty of the evidence was low.",
+        "content": "For rotator cuff related shoulder pain, a 2020 systematic review compared each kind of exercise with placebo or no treatment, not with each other, over more than six weeks and up to six months. Progressive and resisted exercise showed an uncertain clinical benefit; non-progressive or non-resisted exercise showed no significant benefit. The certainty of the evidence was low.",
         "support": "science",
         "claimIds": [
           "claim-slot:l5-progressive-comparisons"
@@ -133,29 +123,11 @@
       },
       {
         "kind": "heading",
-        "content": "Scapular exercise and muscle activity"
-      },
-      {
-        "kind": "paragraph",
-        "content": "Studies that record muscle activity (EMG) show that some exercises produce high activity in the serratus anterior and lower trapezius relative to the upper trapezius. Muscle activity during one session is not the same as gaining strength or changing symptoms.",
-        "support": "science",
-        "claimIds": [
-          "claim-slot:l5-emg"
-        ]
-      },
-      {
-        "kind": "paragraph",
-        "content": "Use that research to understand what an exercise asks of the shoulder blade muscles. It does not make any exercise the best one, and this lesson names none.",
-        "support": "practice-based",
-        "claimIds": []
-      },
-      {
-        "kind": "heading",
         "content": "What activation is for"
       },
       {
         "kind": "paragraph",
-        "content": "In a session, activation drills are rehearsal and warm-up: they get the client's attention on a position and raise the body's readiness to train. They are not a fix, and they do not need to take long.",
+        "content": "In a session, use activation drills as rehearsal and warm-up: a way to get the client's attention on a position before loading it. Do not present them as a fix, and keep them short.",
         "support": "practice-based",
         "claimIds": []
       },
@@ -170,8 +142,24 @@
         "claimIds": []
       },
       {
+        "kind": "callout",
+        "content": {
+          "label": "Stop and refer",
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. A new inability to lift or move the arm themselves, without an injury: urgent, today. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. This never clears anyone and never names an injury."
+        },
+        "support": "practice-based",
+        "claimIds": []
+      },
+      {
         "kind": "heading",
         "content": "A short shoulder warm-up"
+      },
+      {
+        "kind": "diagram",
+        "content": {
+          "diagramId": "shoulder-warm-up",
+          "caption": "Planned diagram, not available yet: the four warm-up positions."
+        }
       },
       {
         "kind": "checklist",
@@ -188,7 +176,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "Do not progress, and stop shoulder loading for the rest of the session, if pain comes on or rises with load, if the client cannot control the range, or if any warning sign appears. A warm-up drill that hurts is not a warm-up; skip it and refer if the pain is getting worse or has not improved after 2 weeks. A new inability to lift the arm themselves: urgent, today."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. A warm-up drill that hurts is not a warm-up: skip it. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. A new inability to lift or move the arm themselves, without an injury: urgent, today. This never clears anyone and never names an injury."
         },
         "support": "practice-based",
         "claimIds": []
@@ -207,7 +195,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "Correctives never replace referral. Any stop rule means stop for the session. Pain that is getting worse: routine referral now. Pain that has not improved after 2 weeks: routine referral. Anything in the urgent or emergency tiers: refer at that tier (see \"When to refer out\")."
+          "text": "Correctives never replace referral. Any stop rule means: Stop shoulder loading for the rest of the session. Pain that is getting worse: routine referral now; do not wait. Pain that has not improved after 2 weeks: routine referral. Anything in the urgent or emergency tiers: refer at that tier (see \"When to refer out\")."
         },
         "support": "practice-based",
         "claimIds": []
@@ -219,14 +207,14 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "What does UK specialist guidance report about exercise for subacromial shoulder pain?",
+          "prompt": "What does 2025 UK specialist guidance report about exercise for subacromial shoulder pain?",
           "options": [
-            "It reduces pain in the short term and improves function; the most effective approach is uncertain",
+            "It reduces pain in the short term and improves function; the recommendation is conditional, on low-certainty evidence, and the best approach is uncertain",
             "One exercise programme is proven best",
             "Exercise does not help"
           ],
           "answerIndex": 0,
-          "explanation": "The guidance reports evidence that exercise reduces short-term pain and improves function, and says the most effective approach remains uncertain."
+          "explanation": "The guidance reports that exercise reduces short-term pain and improves function, rates this as a conditional recommendation on low-certainty evidence, and says the most effective approach remains uncertain."
         },
         "support": "science",
         "claimIds": [
@@ -243,28 +231,11 @@
             "It found no difference between them in a head-to-head comparison"
           ],
           "answerIndex": 1,
-          "explanation": "Each approach was compared with placebo or no treatment; the review did not compare them head to head, and certainty was low."
+          "explanation": "Each approach was compared with placebo or no treatment over more than six weeks to six months; the review did not compare them head to head, and certainty was low."
         },
         "support": "science",
         "claimIds": [
           "claim-slot:l5-progressive-comparisons"
-        ]
-      },
-      {
-        "kind": "quiz",
-        "content": {
-          "prompt": "An exercise shows high serratus anterior activity on EMG. What does that tell you on its own?",
-          "options": [
-            "It builds more strength than other exercises",
-            "It asks a lot of that muscle in that session; it does not show strength gain",
-            "It fixes shoulder pain"
-          ],
-          "answerIndex": 1,
-          "explanation": "EMG shows muscle activity during the exercise. Activity in one session is not the same as strength gain or symptom change."
-        },
-        "support": "science",
-        "claimIds": [
-          "claim-slot:l5-emg"
         ]
       },
       {

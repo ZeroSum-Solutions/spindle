@@ -3,16 +3,16 @@
   "status": "provisional: written before the outline review; not publishable (claim slots are not approved claims)",
   "module": "shoulder",
   "lessonNumber": 4,
-  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words from general anatomy knowledge; the candidate sources were used only to choose which facts need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
+  "originality": "Original Spindle text, CC BY-SA 4.0. AI-drafted (Claude Opus 5.5, 2026-10-11) in our own words; the candidate sources were used only to choose and bound the facts that need a claim, and no sentence, figure, table, exercise sequence or analogy was copied from them or from any coach. The style follows docs/curriculum/STYLE.md. To be model-reviewed (D-08) with an originality check and a private provenance record before publishing.",
   "reviewNotes": [
-    "Every screen has its own stop-and-refer block beside it; the tier callouts follow SAFETY.md section 4 in trainer words.",
-    "Adverse-case scenarios stay ungraded until claims support them.",
-    "Screen 2 points throwers to lesson 7 and makes no claim about thrower range here."
+    "The tier callouts are generated from SAFETY.md, so they match it exactly.",
+    "The scope question ('can a screen clear a client?') is an ungraded discussion item, not a graded science question.",
+    "Every screen has its own stop-and-refer block beside it."
   ],
   "claimSlots": [
     {
-      "slot": "claim-slot:l4-single-tests",
-      "statement": "No single physical examination test can be recommended to make a definitive diagnosis of a specific shoulder condition, and the evidence on these tests is largely low quality.",
+      "slot": "claim-slot:l4-exam-tests",
+      "statement": "A 2024 systematic review and meta-analysis found mostly low-quality evidence for physical examination tests for rotator cuff tears and subacromial impingement, with some tests (for example the external rotation lag sign at 90 degrees) showing useful rule-in accuracy for cuff tears; a 2012 review concluded that no single test could be unequivocally recommended for a definitive diagnosis.",
       "candidateSources": [
         {
           "kind": "meta_analysis",
@@ -20,49 +20,54 @@
           "doi": "10.1186/s12891-024-08144-z",
           "pmid": "39702033",
           "pmcid": "PMC11660602",
-          "license": "CC BY-NC-ND 4.0"
+          "rights": "CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/). Full text read. Cited and paraphrased only."
         },
         {
           "kind": "meta_analysis",
           "citation": "Hegedus EJ, Goode AP, Cook CE, et al. Which physical examination tests provide clinicians with the most value when examining the shoulder? Update of a systematic review with meta-analysis of individual tests. Br J Sports Med. 2012;46(14):964-978.",
           "doi": "10.1136/bjsports-2012-091066",
           "pmid": "22773322",
-          "note": "Bounded historical example only."
+          "rights": "No open licence found (Europe PMC lists none); treat as all rights reserved. Abstract read on PubMed. Cited and paraphrased only. Historical context only."
         }
       ],
-      "note": "Zhao 2024 is open (CC BY-NC-ND 4.0) and is the primary source; Hegedus 2012 concludes that no single test can be recommended for a definitive diagnosis and is kept as a bounded historical example."
+      "note": "Condition-specific: rotator cuff tears and subacromial pain only. Zhao is the primary, open source; Hegedus is historical context."
     }
   ],
   "scenarios": [
     {
       "prompt": "After a fall in class, the shoulder looks out of place.",
-      "goodAnswer": "Emergency: call emergency services; do not move the arm or try to put it back.",
+      "goodAnswer": "Stop; emergency: call emergency services now; do not move the arm or try to put it back; do not let them drive.",
       "safety": "SAFETY.md section 4"
     },
     {
       "prompt": "After catching a heavy bar: pain and weakness lifting the arm; it still moves and looks normal.",
-      "goodAnswer": "Urgent: stop; urgent GP or NHS 111 today.",
+      "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.",
       "safety": "SAFETY.md sections 3 and 4"
     },
     {
       "prompt": "Pins and needles in the arm that have not gone away.",
-      "goodAnswer": "Urgent: stop; urgent GP or NHS 111 today.",
+      "goodAnswer": "Stop shoulder loading; urgent: an urgent GP appointment or NHS 111 today.",
       "safety": "SAFETY.md section 4"
     },
     {
       "prompt": "A mild ache after last week's pressing that settled within a day; no pain during sets; no warning signs.",
-      "goodAnswer": "Continue; consider load or range for this session; stop if pain comes on during a set.",
+      "goodAnswer": "Continue; consider load or range for this session; stop shoulder loading if pain comes on during a set.",
       "safety": "SAFETY.md section 3"
     },
     {
       "prompt": "Pain that has not improved after 2 weeks of leaving out the provoking movements.",
-      "goodAnswer": "Routine: GP or physiotherapist.",
+      "goodAnswer": "Stop shoulder loading for this session; routine referral: a GP or physiotherapist.",
       "safety": "SAFETY.md section 4"
     },
     {
       "prompt": "A 16-year-old says the shoulder hurts after training.",
-      "goodAnswer": "Urgent: stop shoulder loading; tell a parent or carer; GP or NHS 111 the same day for referral to trauma and orthopaedics.",
+      "goodAnswer": "Stop shoulder loading; urgent: tell a parent or carer; an urgent GP appointment or NHS 111 the same day for referral to trauma and orthopaedics.",
       "safety": "SAFETY.md sections 2 and 4"
+    },
+    {
+      "prompt": "Could a careful screen ever clear a client for training?",
+      "goodAnswer": "No. A trainer's screen shows how a movement looks today; it never diagnoses or clears anyone (Spindle policy, SAFETY.md section 1).",
+      "safety": "SAFETY.md section 1"
     }
   ],
   "lesson": {
@@ -75,7 +80,7 @@
     "objectives": [
       "Ask the questions that bring warning signs to light before you train the shoulder.",
       "Run three simple screens, each with a clear start position and what to look for.",
-      "Explain why a trainer's screen can neither diagnose nor clear a shoulder.",
+      "Describe what research found about clinicians' shoulder examination tests, and why a trainer's screen never diagnoses or clears anyone.",
       "Choose the right referral tier from what you see and hear."
     ],
     "anatomyIds": [
@@ -91,19 +96,19 @@
       },
       {
         "kind": "heading",
-        "content": "What a screen is, and is not"
+        "content": "What research says about examination tests"
       },
       {
         "kind": "paragraph",
-        "content": "Even in clinicians' hands, no single physical examination test can be recommended for diagnosing a specific shoulder condition on its own, and much of the research on these tests is low in quality.",
+        "content": "A 2024 review of the physical examination tests clinicians use for rotator cuff tears and subacromial pain found the evidence mostly low in quality. Some tests helped clinicians rule a rotator cuff tear in. An earlier 2012 review concluded that no single test could be recommended on its own for a definitive diagnosis.",
         "support": "science",
         "claimIds": [
-          "claim-slot:l4-single-tests"
+          "claim-slot:l4-exam-tests"
         ]
       },
       {
         "kind": "paragraph",
-        "content": "A trainer's screen is simpler still. It shows how a movement looks today. It never diagnoses, it never clears anyone for training, and a \"normal\" screen does not outweigh a warning sign.",
+        "content": "A trainer's screen is not one of those tests. It shows how a movement looks today. It never diagnoses, it never clears anyone for training, and a \"normal\" screen does not outweigh a warning sign.",
         "support": "practice-based",
         "claimIds": []
       },
@@ -129,7 +134,7 @@
         "kind": "callout",
         "content": {
           "label": "Emergency",
-          "text": "Emergency: call emergency services now. Arm pain with chest pain, tightness or breathlessness, or the client collapses. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: do not move the arm or try to put it back, and do not let them drive. A shoulder that is suddenly very painful and red or warm, or fever or feeling unwell with shoulder pain. If more than one applies, the highest tier wins."
+          "text": "Emergency: call emergency services now (999 in the UK). Chest pain that feels tight, crushing or squeezing, or chest pain that spreads to the arm, neck or jaw; severe difficulty breathing; the person collapses or does not respond normally. After an injury (a fall, an impact, a joint that \"popped out\", a seizure or an electric shock), the client cannot move the arm, or the shoulder looks out of place or has changed shape. Do not move the arm or try to put it back. Do not let the client drive themselves. Signs of a joint infection: the shoulder is suddenly very painful and red or warm, or the client has a fever or feels unwell with shoulder pain. Use the highest tier that any sign matches."
         },
         "support": "practice-based",
         "claimIds": []
@@ -138,7 +143,7 @@
         "kind": "callout",
         "content": {
           "label": "Urgent",
-          "text": "Urgent: an urgent GP appointment or NHS 111 today (or the local equivalent). Sudden or very bad pain. A new inability to lift or move the arm themselves, without an injury. Pain and weakness after an injury while the arm still moves. Any other new pain after an injury or a fall. Changed shape or bad swelling with no injury. Pins and needles that do not go away, or no feeling. An arm that feels hot or cold. Severe pain in both shoulders. A new lump. Several joints newly painful or swollen. Anyone under 18 with shoulder pain: tell a parent or carer; GP or NHS 111 the same day. If more than one applies, the highest tier wins."
+          "text": "Urgent: an urgent GP appointment or NHS 111 today (or the local equivalent). Sudden or very bad shoulder pain. New loss of active movement without an injury: the client cannot lift or move the arm themselves, even if it can be moved for them. After an injury, pain and weakness, while the arm still moves and the shoulder looks normal (possible acute cuff tear). BESS asks for urgent specialist assessment at the next available clinic; its 2014 guide gives under 2 weeks. Any other new shoulder pain that started after an injury or accident, such as a fall. The arm or shoulder has changed shape or is badly swollen, with no injury and no sign of infection. Pins and needles that do not go away, or no feeling in the arm or shoulder. The arm or shoulder feels hot or cold to the touch, with no sign of infection (no sudden severe pain with redness or warmth, no fever, not unwell). Severe pain in both shoulders. A new lump, mass or swelling around the shoulder. New pain, swelling or stiffness in several joints at once. A child or adolescent with shoulder pain: urgent GP or NHS 111 the same day, for referral to trauma and orthopaedics; tell a parent or carer. Use the highest tier that any sign matches."
         },
         "support": "practice-based",
         "claimIds": []
@@ -147,7 +152,7 @@
         "kind": "callout",
         "content": {
           "label": "Routine",
-          "text": "Routine: a GP or physiotherapist. Pain that is getting worse: refer now, without waiting. Pain that has not improved after 2 weeks. Movement that is very difficult but still possible. Pain and stiffness that do not go away, including pain at night. Pain that stays after you have removed the movements that provoke it. If more than one applies, the highest tier wins."
+          "text": "Routine: a GP or physiotherapist (many areas allow self-referral to physiotherapy). Shoulder pain that is getting worse. Refer now; do not wait for 2 weeks to pass. Shoulder pain that is not getting worse but has not improved after 2 weeks. Moving the arm or shoulder is very difficult, but the client can still move it themselves. Pain and stiffness that do not go away, including pain that is worse at night. Pain that persists after the trainer has removed the provoking movements. Use the highest tier that any sign matches."
         },
         "support": "practice-based",
         "claimIds": []
@@ -160,6 +165,13 @@
         },
         "support": "practice-based",
         "claimIds": []
+      },
+      {
+        "kind": "diagram",
+        "content": {
+          "diagramId": "screen-start-positions",
+          "caption": "Planned diagram, not available yet: start positions for the three screens."
+        }
       },
       {
         "kind": "heading",
@@ -180,7 +192,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "Stop the screen, and stop shoulder loading for the rest of the session, if pain comes on or rises. If the client cannot lift the arm themselves and there was no injury: urgent, today. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Pins and needles that do not go away: urgent, today. This screen never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. A new inability to lift or move the arm themselves, without an injury: urgent, today. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. Pain that is getting worse: routine referral now; do not wait. This never clears anyone and never names an injury."
         },
         "support": "practice-based",
         "claimIds": []
@@ -205,7 +217,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "Stop the screen, and stop shoulder loading for the rest of the session, if pain comes on or rises. Weakness with pain after an injury, while the arm still moves: urgent, today. A new inability to turn or lift the arm themselves: urgent, today. Pain that is getting worse over the following days: routine referral now. This screen never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain and weakness after an injury, while the arm still moves and looks normal: urgent, today. A new inability to lift or move the arm themselves, without an injury: urgent, today. Pain that is getting worse: routine referral now; do not wait. This never clears anyone and never names an injury."
         },
         "support": "practice-based",
         "claimIds": []
@@ -229,7 +241,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "Stop the screen, and stop shoulder loading for the rest of the session, if pain comes on or rises. Stiffness or pain that has not improved after 2 weeks, or pain at night with stiffness that does not go away: routine referral. Severe pain in both shoulders, or several joints newly painful or swollen: urgent, today. This screen never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. Pain that has not improved after 2 weeks: routine referral. Pain and stiffness that do not go away, including pain that is worse at night: routine referral. Severe pain in both shoulders, or new pain, swelling or stiffness in several joints at once: urgent, today. This never clears anyone and never names an injury."
         },
         "support": "practice-based",
         "claimIds": []
@@ -240,13 +252,22 @@
       },
       {
         "kind": "paragraph",
-        "content": "Write down what you saw in plain words, without a diagnosis. Then choose: train as planned, adjust the plan for the next session, or refer, and say which tier. Re-check the same screen the same way in a later session.",
+        "content": "Write down what you saw in plain words, without a diagnosis. Then choose: train as planned, adjust the plan for a later session, or refer, and say which tier. Re-check the same screen the same way in a later session.",
         "support": "practice-based",
         "claimIds": []
       },
       {
-        "kind": "paragraph",
-        "content": "When you refer, keep it calm and specific: \"I noticed you can't lift your arm as high as last week and it's new. That's worth getting checked today by a GP or NHS 111. We'll work on your lower body for the rest of the session.\" Do not name a condition, and do not say it is nothing.",
+        "kind": "heading",
+        "content": "Saying it"
+      },
+      {
+        "kind": "checklist",
+        "content": [
+          "Urgent: \"You can't lift your arm yourself today, and that's new. We'll stop the shoulder work now. Please get it checked today: call your GP for an urgent appointment, or NHS 111.\"",
+          "Routine, with no other warning sign: \"Your shoulder hasn't improved in two weeks. Book in with your GP or a physiotherapist. Today we'll leave the shoulder out of training.\"",
+          "Emergency: call emergency services yourself, stay with the client, and follow the emergency list above.",
+          "Never name a condition, and never say it is nothing."
+        ],
         "support": "practice-based",
         "claimIds": []
       },
@@ -257,42 +278,25 @@
       {
         "kind": "quiz",
         "content": {
-          "prompt": "Can a trainer use one screen to diagnose a shoulder problem or to clear a shoulder for training?",
+          "prompt": "What did a 2024 review find about clinicians' physical examination tests for rotator cuff tears and subacromial pain?",
           "options": [
-            "Yes, if the screen is done carefully",
-            "No: even clinicians' single tests cannot identify a condition on their own",
-            "Only if the client has no pain"
+            "The evidence was mostly low in quality, and some tests helped rule a rotator cuff tear in",
+            "Every test is accurate on its own",
+            "No test gave any useful information"
           ],
-          "answerIndex": 1,
-          "explanation": "No single examination test identifies a specific shoulder condition, even for clinicians; a trainer's screen never diagnoses and never clears anyone."
+          "answerIndex": 0,
+          "explanation": "The review found mostly low-quality evidence; some tests helped clinicians rule in a rotator cuff tear."
         },
         "support": "science",
         "claimIds": [
-          "claim-slot:l4-single-tests"
-        ]
-      },
-      {
-        "kind": "quiz",
-        "content": {
-          "prompt": "What is the quality of the research on clinicians' physical examination tests for common shoulder conditions?",
-          "options": [
-            "Mostly high quality and conclusive",
-            "Mostly low quality",
-            "There is no research"
-          ],
-          "answerIndex": 1,
-          "explanation": "A 2024 systematic review described a large body of low-quality evidence for these tests."
-        },
-        "support": "science",
-        "claimIds": [
-          "claim-slot:l4-single-tests"
+          "claim-slot:l4-exam-tests"
         ]
       },
       {
         "kind": "callout",
         "content": {
           "label": "Talk it through",
-          "text": "Pick the tier for each, and say what you do first: (1) after a fall in class, the shoulder looks out of place; (2) after catching a heavy bar, pain and weakness lifting the arm, but it still moves and looks normal; (3) pins and needles in the arm that have not gone away; (4) a mild ache after last week's pressing that settled within a day, with no pain during sets; (5) pain that has not improved after 2 weeks of leaving out the movements that provoke it; (6) a 16-year-old says the shoulder hurts after training."
+          "text": "Pick the tier for each, and say what you do first: (1) after a fall in class, the shoulder looks out of place; (2) after catching a heavy bar, pain and weakness lifting the arm, but it still moves and looks normal; (3) pins and needles in the arm that have not gone away; (4) a mild ache after last week's pressing that settled within a day, with no pain during sets; (5) pain that has not improved after 2 weeks of leaving out the movements that provoke it; (6) a 16-year-old says the shoulder hurts after training. Then: could a careful screen ever clear a client for training?"
         },
         "support": "practice-based",
         "claimIds": []

@@ -28,7 +28,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 - Point to where each structure is on a client, by surface landmarks.
 
 **Sections**
-1. *What it is: the parts.* [S] Bones: humerus, scapula, clavicle; joints: glenohumeral, acromioclavicular, sternoclavicular, and the scapulothoracic articulation (a gliding interface, not a true joint). Candidate evidence: official nomenclature (Terminologia Anatomica).
+1. *What it is: the parts.* [S] Bones: humerus, scapula, clavicle; joints: glenohumeral, acromioclavicular, sternoclavicular (the only bony joint between the shoulder girdle and the axial skeleton). Candidate evidence: OpenStax Anatomy and Physiology 2e (CC BY 4.0). The scapulothoracic statement was removed: no accessible source stated it.
 2. *What it is: a shallow socket.* [S] The glenoid is shallow relative to the humeral head; the labrum deepens the socket, and the capsule and its ligaments help hold the joint stable. Candidate evidence: anatomy reference with an open consensus or review source.
 3. *What it is: the cuff.* [S] Four rotator cuff muscles (supraspinatus, infraspinatus, teres minor, subscapularis) and their role in keeping the humeral head centred during arm movement. Candidate evidence: a review of cuff function (e.g. a JOSPT clinical commentary on shoulder exercise rationale).
 4. *What it is: the big movers.* [S] Deltoid, pectoralis major, latissimus dorsi, trapezius, serratus anterior: what each moves. Candidate evidence: nomenclature plus a review.
@@ -63,7 +63,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 **Sections**
 1. *What it is.* [S] During arm elevation the scapula upwardly rotates and tilts posteriorly. Its internal or external rotation varies with the plane of elevation and through the range, so it is not taught as one fixed pattern. Candidate evidence: review of scapular kinematics (JOSPT 2009, open in PMC) and an in vivo 3D kinematic study.
 2. *What it is: the shared ratio.* [S] Arm elevation is shared between glenohumeral and scapulothoracic motion; the often-quoted ratio is about 2:1 overall, and it varies by person, plane and load. Candidate evidence: classic kinematic study plus a modern review. The block must say the ratio varies.
-3. *What it is: the force couple.* [S] Upper and lower trapezius with serratus anterior rotate the scapula upward. Candidate evidence: review of exercise rationale for scapular muscles.
+3. *What it is: the force couple.* Removed 2026-10-11: no accessible source stated the named-muscle formulation, so the section and its quiz were dropped (no relabelling as practice).
 4. *Why it matters.* [S] Altered scapular movement is common in people with and without shoulder pain, so on its own it is not a diagnosis. Candidate evidence: scapular dyskinesis consensus statement (2013).
 5. *How to see it.* [P] Watch from behind: raise and lower the arms slowly, 3 to 5 reps; look at symmetry, timing and the inferior angle on the way down. Light load can make it clearer.
 6. *What to do.* [P] Cues for overhead work: "reach long through the hands", "let the shoulder blades travel". Define "shoulder blades back and down" and when it does not fit overhead (STYLE › Cues).
@@ -74,7 +74,6 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 **Graded quiz candidates**
 - Which two scapular motions happen consistently as the arm is raised overhead? (Upward rotation and posterior tilt; internal/external rotation varies with plane and range) [§1]
 - True or false: the glenohumeral-to-scapular ratio is a fixed 2:1 in everyone. (False: it varies) [§2]
-- Which muscles form the upward rotation force couple? [§3]
 - Does a visible change in scapular movement alone mean the client has a shoulder injury? (No) [§4]
 
 **Scenario (ungraded):** As the client lowers the arms from overhead, the inner edge of one shoulder blade lifts slightly away from the ribs compared with the other side; the client has no pain. Continue, adjust, or refer? (Continue with load they control; observe; no referral without warning signs.)
@@ -160,7 +159,7 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 **Sections**
 1. *What research supports.* [S] For subacromial shoulder pain (one specific condition, diagnosed by a clinician), UK specialist guidance reports evidence that exercise is effective at reducing pain in the short term (8 weeks to 6 months) and improving patient-reported function, and states that the most effective physiotherapy or exercise approach remains uncertain. A large trial found that surgery to decompress the space gave no extra benefit over an arthroscopy without decompression. Candidate evidence: BESS care pathway (2025); CSAW randomised trial (2018, PMID 29169668). Wording stays within the population studied, and the claim says nothing about who delivers the exercise (BESS also describes initial self-management). Separately, as **Spindle policy** and not as a science claim: a trainer's loading is not treatment for a diagnosed condition, and a client with diagnosed subacromial pain trains within the treating clinician's plan (SAFETY §2).
 2. *What the trials compared.* [S] For rotator cuff related shoulder pain, a 2020 systematic review compared each approach with placebo or no treatment, not with each other: progressive resisted exercise showed an uncertain clinical benefit, non-progressive exercise no significant benefit, and the certainty of the evidence was low. The block reports those comparisons and that uncertainty and ranks nothing. Candidate evidence: Naunton et al. 2020, Clinical Rehabilitation (PMID 32571081). If no claim is approved, the section is removed (no downgrade).
-3. *Scapular exercise.* [S] Candidate claim on exercises with high serratus anterior and lower trapezius activity relative to upper trapezius. Candidate evidence: EMG-based reviews of scapular exercise. Keep EMG claims modest: activity is not strength gain, and no exercise is called best.
+3. *Scapular exercise.* Removed 2026-10-11: the accessible evidence did not support the EMG ratios or the inference limit, so the section and its quiz were dropped (no relabelling as practice).
 4. *Activation as practice.* [P] What activation drills are for in a session: rehearsal, attention, warm-up. What they are not: a fix.
 5. *How to see it.* [P] Does the client own the position under a light load? Re-check the screen from lesson 4.
 6. *What to do.* [P] Ordered warm-up: position, then light rotation work, then scapular control, then the session's first pattern with a light load. One to three cues each. Easier version for each drill.
@@ -168,7 +167,6 @@ Sections follow one pattern: *what it is*, *why it matters*, *how to see it*, *w
 
 **Graded quiz candidates**
 - For subacromial shoulder pain diagnosed by a clinician, what does UK specialist guidance report about exercise? (It reduces pain in the short term and improves function; the most effective approach remains uncertain) [§1]
-- Does higher EMG activity in an exercise mean it builds more strength? (Not necessarily) [§3]
 
 **Scenario (ungraded):** A client wants to "activate" for 20 minutes before every session. What do you keep, and what do you move into the main session?
 
