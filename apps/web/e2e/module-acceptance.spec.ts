@@ -362,11 +362,9 @@ test.describe.serial("shoulder module acceptance", () => {
     expect(world.completions(actors.trainer!, gym)).toHaveLength(8);
   });
 
-  test("a support run opened by a reviewed diagram shows its label (expected to fail until diagrams render as supported blocks)", async ({ browser }) => {
-    // Known bug on main after #23: a reviewed diagram carries support and opens a run, but renders
-    // as a plain figure with no label, so the run shows none. The diagrams PR renders it as a
-    // supported block with its own label; this test then passes unexpectedly and must be flipped.
-    test.fail(true, "reviewed diagrams render without their run's support label until the diagrams PR lands");
+  test("a support run opened by a reviewed diagram shows its label", async ({ browser }) => {
+    // A reviewed diagram carries support, so it renders as a supported block and the run it opens
+    // shows its label (fixed in #35; pinned as an expected failure until then).
     const page = await signIn(browser, actors.trainer!, learnPath(gym, assignment));
     for (const d of drafts) {
       const opens = d.lesson.blocks.some((b, i) => b.kind === "diagram" && !("support" in (d.lesson.blocks[i - 1] ?? {})));
