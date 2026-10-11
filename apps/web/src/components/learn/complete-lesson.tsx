@@ -2,36 +2,27 @@
 
 import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
-import { completeLesson, type CompleteState } from "@/app/gyms/[slug]/learn/actions";
+import type { CompleteState } from "@/lib/learning/complete";
 import { formatDate } from "@/lib/learning/format";
 
 /**
- * Marks the lesson done. This component stays mounted when the page re-renders
- * after the save, so the server's confirmation is not lost.
+ * Marks the lesson done through `complete`, a server action bound to the rendered
+ * route on the server; the form sends no ids. This component stays mounted when the
+ * page re-renders after the save, so the server's confirmation is not lost.
  */
 export function CompleteLesson({
-  gym,
-  assignmentId,
-  lessonId,
+  complete,
   done,
   receipt,
 }: {
-  gym: string;
-  assignmentId: string;
-  lessonId: string;
+  complete: (prev: CompleteState, form: FormData) => Promise<CompleteState>;
   /** Done or credited when the page loaded, according to the database. */
   done: boolean;
   /** Server-written explanation of the existing completion or credit. */
   receipt: ReactNode;
 }) {
-  const [state, action, pending] = useActionState<CompleteState, FormData>(completeLesson, { status: "idle" });
-  return (
-    <CompletionView state={state} pending={pending} done={done} receipt={receipt} action={action}>
-      <input type="hidden" name="gym" value={gym} />
-      <input type="hidden" name="assignmentId" value={assignmentId} />
-      <input type="hidden" name="lessonId" value={lessonId} />
-    </CompletionView>
-  );
+  const [state, action, pending] = useActionState<CompleteState, FormData>(complete, { status: "idle" });
+  return <CompletionView state={state} pending={pending} done={done} receipt={receipt} action={action} />;
 }
 
 /**
@@ -46,14 +37,12 @@ export function CompletionView({
   done,
   receipt,
   action,
-  children,
 }: {
   state: CompleteState;
   pending: boolean;
   done: boolean;
   receipt: ReactNode;
   action: (form: FormData) => void;
-  children?: ReactNode;
 }) {
   // One live region stays mounted across every state, so screen readers announce the
   // result; focus moves to the confirmation because the button it was on is gone.
@@ -83,7 +72,6 @@ export function CompletionView({
     body = (
       <form action={action} className="flex flex-col gap-3">
         {receipt ? <p className="text-text-muted">{receipt}</p> : null}
-        {children}
         <button
           type="submit"
           disabled={pending}

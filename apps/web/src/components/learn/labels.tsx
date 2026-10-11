@@ -106,18 +106,28 @@ export function ProgressBar({ done, total }: { done: number; total: number }) {
   );
 }
 
-/** Shown once per lesson: what the two support labels mean. */
-export function SupportLegend() {
+/** Shown once per lesson: what the support labels in this lesson mean. Lists only the types present. */
+export function SupportLegend({ supports }: { supports: readonly Support[] }) {
+  const present = new Set(supports);
+  if (present.size === 0) return null;
   return (
-    <dl className="grid grid-cols-1 items-start gap-x-3 gap-y-1 rounded-card sm:grid-cols-[auto_1fr] sm:items-center sm:gap-y-2 border border-border bg-surface p-4 text-label">
-      <dt>
-        <SupportLabel support="science" />
-      </dt>
-      <dd className="mb-2 text-text-muted sm:mb-0">Backed by an approved research claim. Open its sources under the block.</dd>
-      <dt>
-        <SupportLabel support="practice-based" />
-      </dt>
-      <dd className="text-text-muted">Based on coaching practice, not a research claim.</dd>
+    <dl className="grid grid-cols-1 items-start gap-x-3 gap-y-1 rounded-card border border-border bg-surface p-4 text-label sm:grid-cols-[auto_1fr] sm:items-center sm:gap-y-2">
+      {present.has("science") ? (
+        <>
+          <dt>
+            <SupportLabel support="science" />
+          </dt>
+          <dd className="mb-2 text-text-muted last:mb-0 sm:mb-0">Backed by an approved research claim. Open its sources under the block.</dd>
+        </>
+      ) : null}
+      {present.has("practice-based") ? (
+        <>
+          <dt>
+            <SupportLabel support="practice-based" />
+          </dt>
+          <dd className="text-text-muted">Based on coaching practice, not a research claim.</dd>
+        </>
+      ) : null}
     </dl>
   );
 }

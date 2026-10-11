@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { IntegrityAlert, LayerLabel, LessonStateDetail, LessonStateLabel, ProgressBar, ProgressText, VersionTag } from "@/components/learn/labels";
 import { LearnShell, LoadingNote, VersionUnavailable } from "@/components/learn/shell";
 import { learnerGym, myAssignment } from "@/lib/learning/load";
-import type { CourseView } from "@/lib/learning/view";
+import { groupByPart } from "@/lib/learning/view";
 import { VersionNotice } from "@/components/learn/version-notice";
 
 export default function CoursePage(props: PageProps<"/gyms/[slug]/learn/[assignment]">) {
@@ -35,7 +35,7 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
   }
   const { view } = detail;
   const base = `/gyms/${ctx.org.slug}/learn/${detail.assignmentId}`;
-  const parts = groupByPart(view);
+  const parts = groupByPart(view.lessons);
 
   return (
     <LearnShell gym={ctx.org.name} back={back}>
@@ -73,8 +73,8 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
           <p className="rounded-card border border-border bg-surface p-4 font-medium">You completed every lesson in v{view.versionNumber}.</p>
         )}
 
-        {parts.map(([title, lessons]) => (
-          <section key={title} className="flex flex-col gap-2">
+        {parts.map(({ partId, title, lessons }) => (
+          <section key={partId} className="flex flex-col gap-2">
             <h2 className="text-lg font-medium">{title}</h2>
             <ol className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
               {lessons.map((lesson) => (
@@ -102,8 +102,3 @@ async function Course({ params }: PageProps<"/gyms/[slug]/learn/[assignment]">) 
   );
 }
 
-function groupByPart(view: CourseView): [string, CourseView["lessons"]][] {
-  const parts = new Map<string, CourseView["lessons"]>();
-  for (const lesson of view.lessons) parts.set(lesson.partTitle, [...(parts.get(lesson.partTitle) ?? []), lesson]);
-  return [...parts];
-}

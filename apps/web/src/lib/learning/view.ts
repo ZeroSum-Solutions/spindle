@@ -121,6 +121,7 @@ export interface LessonView {
   id: string;
   slug: string;
   title: string;
+  partId: string;
   partTitle: string;
   durationMinutes: number;
   format: Lesson["format"];
@@ -179,6 +180,7 @@ export function courseView(input: CourseViewInput): CourseView {
         id: lesson.id,
         slug: lesson.slug,
         title: lesson.title,
+        partId: part.id,
         partTitle: part.title,
         durationMinutes: lesson.durationMinutes,
         format: lesson.format,
@@ -229,6 +231,17 @@ function deltaView(delta: VersionDelta, previous: PublishedVersion, current: Pub
     added: delta.added.map(name),
     removed: delta.removed.map(name),
   };
+}
+
+/** Lessons grouped by part id, in snapshot order. Titles may repeat; ids may not. */
+export function groupByPart(lessons: readonly LessonView[]): { partId: string; title: string; lessons: LessonView[] }[] {
+  const parts = new Map<string, { partId: string; title: string; lessons: LessonView[] }>();
+  for (const lesson of lessons) {
+    const part = parts.get(lesson.partId) ?? { partId: lesson.partId, title: lesson.partTitle, lessons: [] };
+    part.lessons.push(lesson);
+    parts.set(lesson.partId, part);
+  }
+  return [...parts.values()];
 }
 
 /** The learner's latest assigned version of the course that is older than `current`. */

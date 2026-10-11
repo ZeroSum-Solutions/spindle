@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -12,16 +12,21 @@ export type CompleteState =
 
 const completeSchema = z.object({ gym: slugSchema, assignmentId: z.uuid(), lessonId: z.uuid() });
 
+/** The rendered route's lesson. Comes only from server-held route context, never from a form. */
+export type LessonRoute = z.input<typeof completeSchema>;
+
 const NOT_SAVED: CompleteState = { status: "error", message: "We could not save your progress. Try again." };
 const NOT_FOUND: CompleteState = { status: "error", message: "This lesson is no longer assigned to you here. Reload the page." };
 
 /**
- * Marks a lesson done. The form only names things; the server re-binds them: the
- * gym by slug through RLS, the assignment to that gym and to the caller, and the
- * lesson to that assignment's version, before the idempotent RPC runs.
+ * Marks the route's lesson done. Not a server action itself: the lesson page wraps it
+ * in an inline action that closes over the route values (Next encrypts them), so a
+ * client cannot point it at another gym, assignment or lesson. It still re-binds
+ * them: the gym by slug through RLS, the assignment to that gym and to the caller,
+ * and the lesson to that assignment's version, before the idempotent RPC runs.
  */
-export async function completeLesson(_prev: CompleteState, form: FormData): Promise<CompleteState> {
-  const parsed = completeSchema.safeParse(Object.fromEntries(form));
+export async function completeLesson(route: LessonRoute): Promise<CompleteState> {
+  const parsed = completeSchema.safeParse(route);
   if (!parsed.success) return NOT_FOUND;
   const { gym, assignmentId, lessonId } = parsed.data;
   const me = await currentUser();

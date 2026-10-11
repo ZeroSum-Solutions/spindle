@@ -3,6 +3,7 @@ import { carryForwardCredit } from "@spindle/engine";
 import type { Course, LessonBlock } from "@spindle/schema";
 import {
   byCourse,
+  groupByPart,
   completionsFrom,
   courseView,
   previousVersion,
@@ -204,6 +205,30 @@ describe("byCourse", () => {
     expect(byCourse(items).map((g) => [g.latest.id, g.earlier.map((e) => e.id)])).toEqual([
       ["a3", ["a2", "a1"]],
       ["m1", []],
+    ]);
+  });
+});
+
+describe("groupByPart", () => {
+  it("keeps parts with the same title apart, in snapshot order", () => {
+    const twoParts: Course = {
+      ...course([]),
+      parts: [
+        { id: id(201), ordinal: 1, title: "Review", summary: "", lessons: [lesson(L1, "One")] },
+        { id: id(202), ordinal: 2, title: "Practice", summary: "", lessons: [lesson(L2, "Two")] },
+        { id: id(203), ordinal: 3, title: "Review", summary: "", lessons: [lesson(L3, "Three")] },
+      ],
+    };
+    const v = publishedVersion({ id: V1, version_number: 1, layer: "base", org_id: null, snapshot: twoParts }, [
+      { lesson_id: L1, ordinal: 1, content_hash: hash("a") },
+      { lesson_id: L2, ordinal: 2, content_hash: hash("b") },
+      { lesson_id: L3, ordinal: 3, content_hash: hash("c") },
+    ]);
+    const view = courseView({ current: v, completions: [], versionNumbers: numbers, flaggedClaimIds: [] });
+    expect(groupByPart(view.lessons).map((p) => [p.title, p.lessons.map((l) => l.title)])).toEqual([
+      ["Review", ["One"]],
+      ["Practice", ["Two"]],
+      ["Review", ["Three"]],
     ]);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveContentUrl, SERVABLE_MEDIA, storageObjectFor } from "./media";
+import { isVideoObject, resolveContentUrl, SERVABLE_MEDIA, storageObjectFor } from "./media";
 
 const GYM = "00000000-0000-4000-8000-000000000500";
 const OTHER = "00000000-0000-4000-8000-000000000501";
@@ -55,4 +55,9 @@ describe("SERVABLE_MEDIA", () => {
   it.each(["video/mp4", "image/svg+xml", "text/html", "application/octet-stream", "image/png; charset=x", ""])("refuses %s", (type) =>
     expect(SERVABLE_MEDIA.test(type)).toBe(false),
   );
+});
+
+describe("isVideoObject", () => {
+  it.each(["a/clip.mp4", "a/clip.WEBM"])("redirects %s", (name) => expect(isVideoObject(name)).toBe(true));
+  it.each(["a/clip.mp4.png", "a/clip.mov", "a/mp4", "a/clip.png"])("streams or refuses %s", (name) => expect(isVideoObject(name)).toBe(false));
 });

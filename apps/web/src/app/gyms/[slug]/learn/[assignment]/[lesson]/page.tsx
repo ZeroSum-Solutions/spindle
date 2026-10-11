@@ -7,6 +7,7 @@ import { CompleteLesson } from "@/components/learn/complete-lesson";
 import { IntegrityAlert, LayerLabel, LessonStateDetail, SupportLegend, VersionTag } from "@/components/learn/labels";
 import { LessonOutline } from "@/components/learn/outline";
 import { LearnShell, LoadingNote, VersionUnavailable } from "@/components/learn/shell";
+import { completeLesson, type CompleteState, type LessonRoute } from "@/lib/learning/complete";
 import { claimEvidence, learnerGym, lessonClaimIds, myAssignment } from "@/lib/learning/load";
 import { lessonsOf } from "@/lib/learning/view";
 
@@ -91,7 +92,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
             </section>
           ) : null}
 
-          {lesson.blocks.some((b) => "support" in b) ? <SupportLegend /> : null}
+          <SupportLegend supports={lesson.blocks.flatMap((b) => ("support" in b ? [b.support] : []))} />
 
           <LessonBlocks blocks={lesson.blocks} ctx={{ orgId: version.orgId, claims, flagged }} />
           <LessonMedia media={lesson.media} orgId={version.orgId} />
@@ -99,9 +100,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
 
           <section aria-label="Lesson completion" className="flex flex-col gap-3 border-t border-border pt-6 text-base">
             <CompleteLesson
-              gym={ctx.org.slug}
-              assignmentId={detail.assignmentId}
-              lessonId={lesson.id}
+              complete={completeAction({ gym: ctx.org.slug, assignmentId: detail.assignmentId, lessonId: lesson.id })}
               done={done}
               receipt={
                 done ? (
@@ -145,4 +144,16 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
       </div>
     </LearnShell>
   );
+}
+
+/**
+ * A completion action bound to this rendered lesson. The route values live in the
+ * action's closure, which Next encrypts; the client can call it but cannot change
+ * which gym, assignment or lesson it completes.
+ */
+function completeAction(route: LessonRoute) {
+  return async function complete(): Promise<CompleteState> {
+    "use server";
+    return completeLesson(route);
+  };
 }

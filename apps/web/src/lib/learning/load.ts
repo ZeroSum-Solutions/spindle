@@ -2,6 +2,7 @@ import "server-only";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { slugSchema } from "@/lib/forms";
+import { fetchAll } from "./paginate";
 import { createClient, currentUser } from "@/lib/supabase/server";
 import {
   completionsFrom,
@@ -31,6 +32,15 @@ export interface LearnerGym {
 
 const uuid = z.uuid();
 
+/** Every row of a paged read; a failure surfaces as the given user-facing message. */
+async function loadAll<T>(message: string, page: Parameters<typeof fetchAll<T>>[0]): Promise<T[]> {
+  try {
+    return await fetchAll(page);
+  } catch {
+    throw new Error(message);
+  }
+}
+
 /** The route gym, only if the signed-in user is a member. Anything else is a 404. */
 export async function learnerGym(rawSlug: string): Promise<LearnerGym> {
   const slug = slugSchema.safeParse(rawSlug);
@@ -55,45 +65,62 @@ function toAssignment(row: { id: string; curriculum_versions: unknown }): Assign
 }
 
 async function myAssignmentRows(ctx: LearnerGym): Promise<AssignmentRow[]> {
-  const { data, error } = await ctx.supabase
-    .from("assignments")
-    .select(ASSIGNMENT_SELECT)
-    .eq("org_id", ctx.org.id)
-    .eq("user_id", ctx.me.id)
-    .order("assigned_at");
-  if (error) throw new Error("Could not load your courses.");
-  return data.map(toAssignment);
+  const rows = await loadAll("Could not load your courses.", (from, to) =>
+    ctx.supabase
+      .from("assignments")
+      .select(ASSIGNMENT_SELECT)
+      .eq("org_id", ctx.org.id)
+      .eq("user_id", ctx.me.id)
+      .order("assigned_at")
+      .order("id")
+      .range(from, to),
+  );
+  return rows.map(toAssignment);
 }
 
 async function manifests(ctx: LearnerGym, versionIds: string[]): Promise<Map<string, ManifestRow[]>> {
   const byVersion = new Map<string, ManifestRow[]>(versionIds.map((v) => [v, []]));
   if (versionIds.length === 0) return byVersion;
-  const { data, error } = await ctx.supabase
-    .from("version_lessons")
-    .select("version_id, lesson_id, ordinal, content_hash")
-    .in("version_id", versionIds);
-  if (error) throw new Error("Could not load course lessons.");
+  const data = await loadAll("Could not load course lessons.", (from, to) =>
+    ctx.supabase
+      .from("version_lessons")
+      .select("version_id, lesson_id, ordinal, content_hash")
+      .in("version_id", versionIds)
+      .order("version_id")
+      .order("ordinal")
+      .range(from, to),
+  );
   for (const row of data) byVersion.get(row.version_id)?.push(row);
   return byVersion;
 }
 
 async function myCompletions(ctx: LearnerGym, versionIds: string[]): Promise<CompletionRow[]> {
   if (versionIds.length === 0) return [];
-  const { data, error } = await ctx.supabase
-    .from("lesson_completions")
-    .select("id, version_id, lesson_id, content_hash, completed_at, origin_completion_id")
-    .eq("org_id", ctx.org.id)
-    .eq("user_id", ctx.me.id)
-    .in("version_id", versionIds);
-  if (error) throw new Error("Could not load your progress.");
-  return data;
+  return loadAll("Could not load your progress.", (from, to) =>
+    ctx.supabase
+      .from("lesson_completions")
+      .select("id, version_id, lesson_id, content_hash, completed_at, origin_completion_id")
+      .eq("org_id", ctx.org.id)
+      .eq("user_id", ctx.me.id)
+      .in("version_id", versionIds)
+      .order("id")
+      .range(from, to),
+  );
 }
 
 async function flaggedClaims(ctx: LearnerGym, versionIds: string[]): Promise<Map<string, string[]>> {
   const byVersion = new Map<string, string[]>(versionIds.map((v) => [v, []]));
   if (versionIds.length === 0) return byVersion;
-  const { data, error } = await ctx.supabase.from("version_flags").select("version_id, claim_id").in("version_id", versionIds);
-  if (error) throw new Error("Could not load integrity flags.");
+  const data = await loadAll("Could not load integrity flags.", (from, to) =>
+    ctx.supabase
+      .from("version_flags")
+      .select("version_id, claim_id, source_id")
+      .in("version_id", versionIds)
+      .order("version_id")
+      .order("claim_id")
+      .order("source_id")
+      .range(from, to),
+  );
   for (const row of data) byVersion.get(row.version_id)?.push(row.claim_id);
   return byVersion;
 }

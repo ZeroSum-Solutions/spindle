@@ -89,6 +89,11 @@ test.describe.serial("learner flow", () => {
           const { error } = await a.client.storage.from("org-media").upload(name, PNG_1PX, { contentType: "image/png" });
           if (error) throw new Error(`upload failed: ${error.message}`);
           world.uploads.push({ client: a.client, bucket: "org-media", name });
+          // Synthetic bytes labelled video/mp4: enough to prove signing, redirect and ranges.
+          const clip = `${gymA.id}/${world.run}/clip.mp4`;
+          const { error: videoError } = await a.client.storage.from("org-media").upload(clip, Buffer.alloc(4096, 7), { contentType: "video/mp4" });
+          if (videoError) throw new Error(`video upload failed: ${videoError.message}`);
+          world.uploads.push({ client: a.client, bucket: "org-media", name: clip });
         }
       }
     }
@@ -103,7 +108,10 @@ test.describe.serial("learner flow", () => {
         slug: "house-cues",
         title: "Synthetic house cues",
         blocks: [practice("Synthetic house cue.")],
-        media: [{ kind: "image", src: `/media/org/${gymA.id}/${world.run}/figure.png`, alt: "Synthetic gym figure", caption: "", provenanceId: "synthetic" }],
+        media: [
+          { kind: "image", src: `/media/org/${gymA.id}/${world.run}/figure.png`, alt: "Synthetic gym figure", caption: "", provenanceId: "synthetic" },
+          { kind: "video", src: `/media/org/${gymA.id}/${world.run}/clip.mp4`, alt: "Synthetic gym clip", caption: "", provenanceId: "synthetic" },
+        ],
       },
     ]));
     assignments.partial = world.assign(gymA, actors.owner!, versions.v1, actors.partial!);
@@ -180,7 +188,7 @@ test.describe.serial("learner flow", () => {
   test("method course is practice-based only and serves its gym's media to members", async ({ browser }) => {
     const p = await signIn(browser, actors.partial!, learn(gymA, assignments.method, "house-cues"));
     await expect(p.getByText("Gym method").first()).toBeVisible();
-    await expect(p.getByText("Science", { exact: true })).toHaveCount(1); // the legend only
+    await expect(p.getByText("Science", { exact: true })).toHaveCount(0);
     await expect(p.locator('[data-support="science"]')).toHaveCount(0);
     // CI must exercise this path: a stack without Storage is an environment failure there, never a silent skip.
     if (process.env.CI) expect(storageUp, "Storage API is not reachable; CI must run the media case").toBe(true);
@@ -198,22 +206,46 @@ test.describe.serial("learner flow", () => {
     expect((await b.request.get(`/media/org/${gymA.id}/${world.run}/figure.png`)).status()).toBe(404);
     expect((await b.request.get(`/media/org/${gymA.id}/${world.run}/missing.png`)).status()).toBe(404);
     expect((await b.request.get(`/media/content/..%2F${world.run}/figure.png`)).status()).toBe(404);
+
+    // Stored video: the member gets a redirect to a signed Storage URL that lives at most
+    // 60 s and serves byte ranges; another gym's member gets the same 404 as anything else.
+    await expect(p.locator('video[aria-label="Synthetic gym clip"] source')).toHaveAttribute("src", `/media/org/${gymA.id}/${world.run}/clip.mp4`);
+    const clip = `/media/org/${gymA.id}/${world.run}/clip.mp4`;
+    const redirect = await p.request.get(clip, { maxRedirects: 0 });
+    expect(redirect.status()).toBe(302);
+    expect(redirect.headers()["cache-control"]).toBe("private, no-store");
+    const location = new URL(redirect.headers()["location"]!);
+    expect(location.pathname).toContain(`/storage/v1/object/sign/org-media/${gymA.id}/${world.run}/clip.mp4`);
+    const token = location.searchParams.get("token")!;
+    const claims = JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString()) as { iat: number; exp: number };
+    expect(claims.exp - claims.iat).toBeLessThanOrEqual(60);
+    const range = await fetch(location, { headers: { Range: "bytes=0-99" } });
+    expect(range.status).toBe(206);
+    expect(range.headers.get("content-type")).toBe("video/mp4");
+    expect((await range.arrayBuffer()).byteLength).toBe(100);
+    const foreign = await b.request.get(clip, { maxRedirects: 0 });
+    expect(foreign.status()).toBe(404);
+    expect(foreign.headers()["location"]).toBeUndefined();
   });
 
   test("progress persists across reload and a fresh session; duplicate completion counts once", async ({ browser }) => {
     const path = learn(gymA, assignments.partial, "lesson-one");
     const p = await signIn(browser, actors.partial!, path);
-    const button = p.getByRole("button", { name: "Mark lesson complete" });
-    await button.dblclick();
-    await expect(p.getByTestId("lesson-status")).toContainText("Saved.");
-    await expect(p.getByTestId("lesson-status")).toContainText("v1");
-    // A second tab submits the same completion: the RPC returns the same row.
+    // Two tabs open the lesson before anything is saved, then both submit.
     const second = await p.context().newPage();
     await second.goto(path);
-    await expect(second.getByTestId("lesson-status")).toContainText("Completed.");
-    const rows = () => sql(`select count(*) || ':' || min(completed_at)::text from public.lesson_completions where user_id = '${actors.partial!.id}' and lesson_id = '${ids.l[0]}' and version_id = '${versions.v1}'`);
+    await expect(p.getByRole("button", { name: "Mark lesson complete" })).toBeVisible();
+    await expect(second.getByRole("button", { name: "Mark lesson complete" })).toBeVisible();
+    const rows = () =>
+      sql(`select count(*) || '|' || min(completed_at)::text from public.lesson_completions where user_id = '${actors.partial!.id}' and lesson_id = '${ids.l[0]}' and version_id = '${versions.v1}'`);
+    await p.getByRole("button", { name: "Mark lesson complete" }).dblclick();
+    await expect(p.getByTestId("lesson-status")).toContainText("Saved.");
+    await expect(p.getByTestId("lesson-status")).toContainText("v1");
     const first = rows();
-    expect(first.startsWith("1:")).toBe(true);
+    expect(first.startsWith("1|")).toBe(true);
+    await second.getByRole("button", { name: "Mark lesson complete" }).click();
+    await expect(second.getByTestId("lesson-status")).toContainText("Saved.");
+    expect(rows()).toBe(first); // still one row, and its completed_at did not move
     await p.reload();
     await expect(p.getByTestId("lesson-status")).toContainText("Completed.");
     await p.goto(learn(gymA, assignments.partial));
@@ -376,6 +408,32 @@ test.describe.serial("learner flow", () => {
         await context.close();
       }
     }
+  });
+
+  test("the completion form cannot be pointed at another gym, assignment or lesson", async ({ browser }) => {
+    const path = learn(gymA, assignments.partial, "lesson-3");
+    const p = await signIn(browser, actors.partial!, path);
+    const count = (where: string) => sql(`select count(*) from public.lesson_completions where ${where}`);
+    const otherLesson = `user_id = '${actors.partial!.id}' and version_id = '${versions.v1}' and lesson_id = '${ids.l[1]}'`;
+    const before = sql(`select coalesce(string_agg(id::text || completed_at::text, ','), '') from public.lesson_completions where ${otherLesson}`);
+    // Plant the ids an attacker would send. The bound action ignores the form entirely.
+    await p.locator('section[aria-label="Lesson completion"] form').evaluate(
+      (form, forged) => {
+        for (const [name, value] of Object.entries(forged)) {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        }
+      },
+      { gym: gymB.slug, assignmentId: assignments.multiB!, lessonId: ids.l[1]! },
+    );
+    await p.getByRole("button", { name: "Mark lesson complete" }).click();
+    await expect(p.getByTestId("lesson-status")).toContainText("Saved.");
+    expect(count(`user_id = '${actors.multi!.id}' and org_id = '${gymB.id}'`)).toBe("0");
+    expect(count(`user_id = '${actors.partial!.id}' and version_id = '${versions.v1}' and lesson_id = '${ids.l[2]}'`)).toBe("1");
+    expect(sql(`select coalesce(string_agg(id::text || completed_at::text, ','), '') from public.lesson_completions where ${otherLesson}`)).toBe(before);
   });
 
   test("the design specimen does not exist in production", async ({ page }) => {

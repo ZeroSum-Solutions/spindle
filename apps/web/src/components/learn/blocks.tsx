@@ -96,11 +96,10 @@ function Figure({ asset, orgId }: { asset: MediaAsset; orgId: string | null }) {
   const link = resolveContentUrl(asset.src, { orgId });
   return (
     <figure data-block="image" className="flex flex-col gap-2">
-      {asset.kind === "video" ? (
-        // Storage video waits for byte-range support in the media handler.
-        link.kind === "external" ? <MediaVideo src={link.url} alt={asset.alt} /> : <MediaUnavailable alt={asset.alt} kind="video" />
-      ) : link.kind === "unavailable" ? (
-        <MediaUnavailable alt={asset.alt} />
+      {link.kind === "unavailable" ? (
+        <MediaUnavailable alt={asset.alt} kind={asset.kind === "video" ? "video" : "image"} />
+      ) : asset.kind === "video" ? (
+        <MediaVideo src={link.url} alt={asset.alt} />
       ) : (
         <MediaImage src={link.url} alt={asset.alt} />
       )}

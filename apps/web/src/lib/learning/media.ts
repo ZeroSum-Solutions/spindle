@@ -48,8 +48,13 @@ export function resolveContentUrl(src: string, owner: { orgId: string | null }):
   return { kind: "media", url: src };
 }
 
-/**
- * Content types the media handler will serve. Anything else is refused, never sniffed.
- * No video yet: Safari needs byte-range responses to play it, which the handler does not serve.
- */
+/** Content types the media handler streams itself. Anything else is refused, never sniffed. */
 export const SERVABLE_MEDIA = /^(image\/(png|jpeg|gif|webp|avif)|application\/pdf)$/;
+
+/** How long a signed video URL lives. Players need byte ranges, which Storage serves directly. */
+export const VIDEO_URL_SECONDS = 60;
+
+/** Video objects are redirected to a short-lived signed Storage URL instead of streamed. */
+export function isVideoObject(name: string): boolean {
+  return /\.(mp4|webm)$/i.test(name);
+}

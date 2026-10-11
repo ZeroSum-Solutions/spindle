@@ -11,8 +11,20 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const DB_URL = process.env.DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 const MAILPIT = "http://127.0.0.1:54324";
-const host = new URL(DB_URL).hostname;
-if (host !== "127.0.0.1" && host !== "localhost") throw new Error(`player fixtures refuse a non-local database (${host})`);
+
+/** Fixtures write synthetic rows; they only ever talk to this machine. */
+export function assertLoopback(url: string, what: string): void {
+  let host: string;
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    throw new Error(`player fixtures refuse an unparsable ${what} URL`);
+  }
+  if (host !== "127.0.0.1" && host !== "localhost" && host !== "[::1]") {
+    throw new Error(`player fixtures refuse a non-local ${what} (${host})`);
+  }
+}
+assertLoopback(DB_URL, "database");
 
 /** Runs SQL as the database owner and returns trimmed, unaligned output. Never logs values. */
 export function sql(text: string): string {
@@ -42,6 +54,7 @@ export function publicEnv(): { url: string; key: string } {
     key ??= local.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   }
   if (!url || !key) throw new Error("NEXT_PUBLIC_SUPABASE_URL and _PUBLISHABLE_KEY are required");
+  assertLoopback(url, "Supabase API");
   return { url, key };
 }
 

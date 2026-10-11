@@ -68,6 +68,7 @@ const lesson = (n: number, state: LessonView["state"], extra: Partial<LessonView
   id: `l${n}`,
   slug: `synthetic-lesson-${n}`,
   title: `Synthetic lesson ${n}`,
+  partId: "p1",
   partTitle: "Part one",
   durationMinutes: 6,
   format: "article",
@@ -176,7 +177,7 @@ export default function DesignSpecimen() {
             <LessonOutline view={view} base="/design" currentId="l2" />
           </div>
           <article className="flex max-w-[68ch] flex-col gap-8 text-reading">
-            <SupportLegend />
+            <SupportLegend supports={["science", "practice-based"]} />
             <LessonBlocks blocks={blocks} ctx={{ orgId: null, claims, flagged: new Set([FLAGGED]) }} />
             <LessonMedia media={[]} orgId={null} />
             <LessonResources
