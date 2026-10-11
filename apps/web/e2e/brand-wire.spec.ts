@@ -19,6 +19,7 @@ const actors: Record<string, Actor> = {};
 let gymA: { id: string; slug: string };
 let gymB: { id: string; slug: string };
 let gymC: { id: string; slug: string };
+let gymD: { id: string; slug: string };
 const assignments: Record<string, string> = {};
 const texts: Record<string, string> = {};
 
@@ -55,7 +56,10 @@ test.beforeAll(async () => {
   gymA = world.gym("branda", actors.owner!);
   gymB = world.gym("brandb", actors.owner!);
   gymC = world.gym("plainc", actors.owner!);
-  for (const g of [gymA, gymB, gymC]) world.join(g, actors.owner!, actors.trainer!);
+  gymD = world.gym("legacyd", actors.owner!);
+  for (const g of [gymA, gymB, gymC, gymD]) world.join(g, actors.owner!, actors.trainer!);
+  // Gym D: a brand stored before Lab, with no dark accent pair (Sol R2 on #51).
+  world.legacyBrand(gymD, actors.owner!, { mark: { kind: "text" }, colors: { accent: "#506e4b", onAccent: "#ffffff", band: "#0b3d2e" }, font: "geist" });
   world.join(gymA, actors.owner!, actors.outsider!);
   world.join(gymA, actors.owner!, actors.newbie!);
 
@@ -175,6 +179,15 @@ test("an unbranded gym keeps the standard list, and its revoked title reads 'Unt
     const body = await payloads(page, path);
     expect(body, path).not.toContain("Mat class structure");
   }
+});
+
+test("a brand stored before Lab (no dark pair) renders the standard look, never an error (Sol R2 on #51)", async ({ browser }) => {
+  const page = await signIn(browser, actors.trainer!, learnPath(gymD));
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByText(/Could not load this gym/)).toHaveCount(0);
+  await expect(page.locator("header[data-brand-header]")).toHaveCount(0);
+  // The legacy band never reaches the page.
+  expect(await page.evaluate(() => [...document.querySelectorAll("*")].some((el) => getComputedStyle(el).backgroundColor === "rgb(11, 61, 46)"))).toBe(false);
 });
 
 test("another gym's brand never reaches a non-member or a signed-out visitor", async ({ browser, request }) => {

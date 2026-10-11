@@ -114,7 +114,9 @@ export const memberBrandDtoSchema = z.strictObject({
   brand: z
     .strictObject({
       mark: z.strictObject({ kind: z.literal("text") }),
-      colors: z.strictObject({ accent: lowerHex, onAccent: lowerHex, accentDark: lowerHex, onAccentDark: lowerHex, band: lowerHex.optional() }),
+      // The read shape also accepts a brand saved before Lab (no dark pair), so the page can fall back to
+      // the unbranded look: validateOrgBrand requires both pairs and refuses it (Sol R2 on #51).
+      colors: z.strictObject({ accent: lowerHex, onAccent: lowerHex, accentDark: lowerHex.optional(), onAccentDark: lowerHex.optional(), band: lowerHex.optional() }),
       font: z.enum(Object.keys(BRAND_FONTS) as [BrandFont, ...BrandFont[]]),
     })
     .nullable(),
