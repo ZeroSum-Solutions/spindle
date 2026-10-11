@@ -94,7 +94,11 @@ importers:
         specifier: ^4
         version: 4.23.15
 
-  packages/schema: {}
+  packages/schema:
+    dependencies:
+      zod:
+        specifier: ^4
+        version: 4.6.5
 
 packages:
 
