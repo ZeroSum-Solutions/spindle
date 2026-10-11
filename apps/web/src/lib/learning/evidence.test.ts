@@ -27,8 +27,8 @@ describe("evidenceView", () => {
     expect(evidenceView(["c1"], new Set(["c1"]), states([["c1", "current"]])).retracted).toBe(true);
   });
 
-  it("guesses nothing when the report could not be read", () => {
-    expect(evidenceView(["c1"], none, null)).toEqual({ presentsAsScience: true, withdrawn: false, retracted: false, recheckDue: false, statusUnknown: true });
+  it("fails closed when the report could not be read: no Science presentation, and no claim of withdrawal", () => {
+    expect(evidenceView(["c1"], none, null)).toEqual({ presentsAsScience: false, withdrawn: false, retracted: false, recheckDue: false, statusUnknown: true });
     expect(evidenceView(["c1"], new Set(["c1"]), null).retracted).toBe(true);
   });
 });

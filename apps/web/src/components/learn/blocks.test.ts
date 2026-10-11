@@ -15,7 +15,10 @@ const claim = (id: string, statement: string): ClaimView => ({
 const C1 = "00000000-0000-4000-8000-0000000000c1";
 const C2 = "00000000-0000-4000-8000-0000000000c2";
 
-function render(blocks: LessonBlock[], flagged: string[] = [], integrity?: ReadonlyMap<string, ClaimIntegrityState>) {
+// Both synthetic claims are current unless a test says otherwise.
+const CURRENT = new Map<string, ClaimIntegrityState>([[C1, "current"], [C2, "current"]]);
+
+function render(blocks: LessonBlock[], flagged: string[] = [], integrity: ReadonlyMap<string, ClaimIntegrityState> | null = CURRENT) {
   const claims = new Map([[C1, claim(C1, "Synthetic claim one.")], [C2, claim(C2, "Synthetic claim two.")]]);
   return renderToStaticMarkup(createElement(LessonBlocks, { blocks, ctx: { orgId: null, claims, flagged: new Set(flagged), integrity } }));
 }
@@ -73,5 +76,22 @@ describe("a withdrawn claim inside a science run", () => {
     expect(sections[1]).toContain("lg:border-control");
     expect(sections[2]).toContain(">Science<");
     expect(sections[2]).toContain("Evidence due for recheck");
+  });
+});
+
+describe("an unreadable integrity report", () => {
+  const blocks: LessonBlock[] = [
+    { kind: "paragraph", content: "Synthetic science one.", support: "science", claimIds: [C1] },
+    { kind: "paragraph", content: "Synthetic science two.", support: "science", claimIds: [C2] },
+  ];
+
+  it("withholds the Science label but keeps the text and its citations, without claiming withdrawal", () => {
+    const html = render(blocks, [], null);
+    expect(html).not.toContain(">Science<");
+    expect(html).not.toContain("Claim withdrawn");
+    expect(html.match(/Evidence status unavailable/g)).toHaveLength(2);
+    expect(html).toContain('data-evidence="unknown"');
+    expect(html).toContain("Synthetic science one.");
+    expect(html).toMatch(/Show sources[\s\S]*Synthetic claim one\./);
   });
 });
