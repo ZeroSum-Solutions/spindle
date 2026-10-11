@@ -1,13 +1,16 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { brandTokens } from "@spindle/engine";
+import { OXBLOOD, SAGE } from "../src/lib/theme/preview-brands";
 
 // Tenant brand theming (P4-A) on the test-only preview page: two synthetic brands render the
 // learner shell, a lesson and the module quiz card. No database rows; no sign-in.
 
-const BRANDS = [
-  { name: "Example Barbell Club", accent: "rgb(122, 31, 43)" },
-  { name: "Example Pilates Studio", accent: "rgb(80, 110, 75)" },
-] as const;
+const rgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
+const BRANDS = [OXBLOOD, SAGE].map((b) => {
+  const t = brandTokens(b.colors);
+  return { name: b.name, accent: rgb(t.accent), hover: rgb(t.accentHover), soft: rgb(t.accentSoft) };
+});
 // Atlas evidence colours, which no brand can change.
 const SCIENCE = "rgb(11, 107, 80)";
 const PRACTICE = "rgb(138, 75, 16)";
@@ -21,6 +24,24 @@ const VIEWS = [
 ] as const;
 
 const section = (page: Page, name: string) => page.locator(`[data-brand-preview="${name}"]`);
+
+/**
+ * Puts a brand section into its interactive states: every visible disclosure open (sources, and the
+ * course outline on phones) and the self-check answered, so the feedback and selected option render.
+ */
+async function exercise(s: Locator) {
+  for (const summary of await s.locator("details:not([open]) > summary").all()) {
+    if (await summary.isVisible()) await summary.click();
+  }
+  const check = s.locator("form").filter({ has: s.page().getByRole("button", { name: "Check answer" }) }).first();
+  await check.getByRole("radio").first().check();
+  await check.getByRole("button", { name: "Check answer" }).click();
+}
+
+async function axeClean(page: Page, name: string, what: string) {
+  const axe = await new AxeBuilder({ page }).include(`[data-brand-preview="${name}"]`).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+  expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`), `${name}: ${what}`).toEqual([]);
+}
 
 /** WCAG contrast of two rgb() strings, computed in the page's terms. */
 function ratio(a: string, b: string): number {
@@ -65,8 +86,16 @@ test.describe("tenant brand preview", () => {
       for (const brand of BRANDS) {
         const s = section(page, brand.name);
         await expect(s).toBeVisible();
-        const axe = await new AxeBuilder({ page }).include(`[data-brand-preview="${brand.name}"]`).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
-        expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`), `${brand.name} at ${view.label}`).toEqual([]);
+        await axeClean(page, brand.name, `${view.label}, default state`);
+        // Disclosures open, the mobile outline open, the self-check answered: axe again, and no sideways scroll.
+        await exercise(s);
+        await axeClean(page, brand.name, `${view.label}, opened and answered`);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), "sideways scroll, opened").toBe(0);
+        // The current lesson's text sits on the brand tint, which the marker draws in ::before.
+        const current = s.locator("[aria-current='page']").filter({ visible: true }).first();
+        const marker = await current.evaluate((el) => ({ fg: getComputedStyle(el).color, bg: getComputedStyle(el, "::before").backgroundColor }));
+        expect(marker.bg, `${brand.name}: current-lesson tint`).toBe(brand.soft);
+        expect(ratio(marker.fg, marker.bg), `${brand.name}: current lesson at ${view.label}`).toBeGreaterThanOrEqual(4.5);
         // The brand drives the mark, links and the current lesson; evidence labels stay Spindle's.
         await expect(s.locator("[data-brand-mark]")).toHaveCSS("color", brand.accent);
         await expect(s.getByText("Science", { exact: true }).first()).toHaveCSS("color", SCIENCE);
@@ -77,11 +106,13 @@ test.describe("tenant brand preview", () => {
     });
   }
 
-  test("every themed control shows a visible brand focus ring on keyboard focus, with contrast", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
+  for (const width of [1440, 390]) test(`every themed control shows a visible brand focus ring on keyboard focus, with contrast, at ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
     await page.goto("/brand-preview");
     for (const brand of BRANDS) {
       const s = section(page, brand.name);
+      // Open disclosures (sources; the outline on phones) so their contents are Tab stops too.
+      await exercise(s);
       const total = await s.evaluate((root) => {
         // A radio group is one Tab stop (arrow keys move inside it), so only its first radio counts.
         const groups = new Set<string>();
@@ -131,6 +162,8 @@ test.describe("tenant brand preview", () => {
       const s = section(page, brand.name);
       const link = s.locator("[data-themed='link']").first();
       await link.hover();
+      // Wait out the colour transition: assert the final hover colour before measuring.
+      await expect(link).toHaveCSS("color", brand.hover);
       const hovered = await colours(link);
       expect(ratio(hovered.fg, hovered.bg), `${brand.name}: hovered link`).toBeGreaterThanOrEqual(4.5);
       expect(hovered.fg).not.toBe(brand.accent);
@@ -138,10 +171,12 @@ test.describe("tenant brand preview", () => {
       const sel = await colours(selected);
       expect(ratio(sel.fg, sel.bg), `${brand.name}: selected control`).toBeGreaterThanOrEqual(4.5);
       await selected.hover();
+      await expect(selected).toHaveCSS("background-color", brand.hover);
       const selHover = await colours(selected);
       expect(ratio(selHover.fg, selHover.bg), `${brand.name}: selected control, hover`).toBeGreaterThanOrEqual(4.5);
-      const current = s.locator("[aria-current='page']").first();
-      const cur = await colours(current);
+      const current = s.locator("[aria-current='page']").filter({ visible: true }).first();
+      const cur = await current.evaluate((el) => ({ fg: getComputedStyle(el).color, bg: getComputedStyle(el, "::before").backgroundColor }));
+      expect(cur.bg, `${brand.name}: current-lesson tint`).toBe(brand.soft);
       expect(ratio(cur.fg, cur.bg), `${brand.name}: current lesson`).toBeGreaterThanOrEqual(4.5);
     }
   });

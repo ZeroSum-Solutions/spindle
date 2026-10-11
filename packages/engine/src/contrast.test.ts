@@ -23,6 +23,15 @@ describe("WCAG 2.2 contrast", () => {
     expect(luminance("#0A0A0A")).toBeCloseTo(10 / 255 / 12.92 * 1, 12);
   });
 
+  it("weights the channels exactly as WCAG does (0.2126 R, 0.7152 G, 0.0722 B)", () => {
+    expect(luminance("#FF0000")).toBeCloseTo(0.2126, 12);
+    expect(luminance("#00FF00")).toBeCloseTo(0.7152, 12);
+    expect(luminance("#0000FF")).toBeCloseTo(0.0722, 12);
+    // A mixed pair: pure blue on white is 1.05 / 0.1222.
+    expect(contrast("#0000FF", "#FFFFFF")).toBeCloseTo(1.05 / 0.1222, 10);
+    expect(contrast("#0000FF", "#FFFFFF")).toBeCloseTo(8.59247, 5);
+  });
+
   it("is symmetric, bounded to 1..21, and equal to 1 only for equal luminance (property)", () => {
     const list = [...colours(7, 400)];
     for (let i = 0; i < list.length - 1; i++) {

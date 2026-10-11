@@ -75,6 +75,11 @@ describe("validateBrand", () => {
     ["markup in the name", { name: "<b>Gym</b>" }],
     ["a link in the name", { name: "Visit https://example.com" }],
     ["a control character in the name", { name: "Gym\u0007" }],
+    ["a zero-width-only name", { name: "\u200B" }],
+    ["an invisible name of format characters", { name: "\u2060\uFEFF" }],
+    ["a C1 control in the name", { name: "Gym\u0085name" }],
+    ["bidi overrides in the name", { name: "Gym\u202Espin\u202C" }],
+    ["a bidi isolate in the name", { name: "Gym\u2066x\u2069" }],
     ["an empty name", { name: "   " }],
     ["a font that is not bundled", { font: "comic-sans" }],
     ["an SVG logo", { mark: { ...LOGO, key: "mark.svg", format: "svg" } }],
@@ -108,5 +113,19 @@ describe("brandToCssVars", () => {
     expect(ATLAS.science).toBe("#0b6b50");
     expect(ATLAS.practice).toBe("#8a4b10");
     expect(BASE_ATTRIBUTION).toBe("Base curriculum by Spindle, cited");
+  });
+});
+
+describe("a validated brand cannot change afterwards", () => {
+  it("freezes the brand, its colours and its mark", () => {
+    const r = validateBrand({ ...OXBLOOD, mark: LOGO });
+    if (!r.ok) throw new Error("fixture must pass");
+    expect(Object.isFrozen(r.brand)).toBe(true);
+    expect(Object.isFrozen(r.brand.colors)).toBe(true);
+    expect(Object.isFrozen(r.brand.mark)).toBe(true);
+    expect(() => {
+      (r.brand.mark as { key: string }).key = "https://example.com/x.svg";
+    }).toThrow();
+    expect(r.brand.mark).toMatchObject({ key: "barbell-mark.png" });
   });
 });
