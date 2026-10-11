@@ -1,0 +1,18 @@
+{
+  "key": "shoulder",
+  "slug": "shoulder",
+  "layer": "base",
+  "title": "The shoulder",
+  "subtitle": "How the shoulder works, how to load it, and when to refer",
+  "description": "Eight lessons for working personal trainers: shoulder anatomy, scapulohumeral rhythm, common restrictions, screens and red flags, correctives, loading, throwing and rotation, and when to refer out. Every science statement cites reviewed evidence; coaching practice is labelled as practice.",
+  "level": "foundation",
+  "outcomes": [
+    "Name the bones, joints and rotator cuff muscles of the shoulder.",
+    "Explain how the shoulder blade and the arm share elevation.",
+    "Choose and progress shoulder loading for healthy clients.",
+    "Recognise red flags and refer within your scope."
+  ],
+  "parts": [
+    { "key": "shoulder", "title": "The shoulder", "summary": "From anatomy to loading and referral.", "lessons": ["01", "02", "03", "04", "05", "06", "07", "08"] }
+  ]
+}
