@@ -92,7 +92,7 @@
     },
     {
       "slot": "claim-slot:l1-attachments",
-      "statement": "The scapula's muscular attachments to the axial skeleton include the trapezius, serratus anterior, rhomboid major, rhomboid minor, levator scapulae and pectoralis minor; the serratus anterior attaches along the anterior aspect of the medial border of the scapula.",
+      "statement": "The scapula's muscular attachments to the axial skeleton include the trapezius, serratus anterior, rhomboid major, rhomboid minor, levator scapulae and pectoralis minor.",
       "domain": "foundation",
       "evidenceLevel": "Anatomy reference (narrative review)",
       "population": "Human shoulder anatomy; not a sampled study population (Frank 2013).",
@@ -106,7 +106,7 @@
           "rights": "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). Full text read through the Europe PMC API. Cited and paraphrased only."
         }
       ],
-      "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2. Subclavius is left out: Frank's introductory list names it, but it runs from the first rib to the clavicle, not to the scapula."
+      "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2. Subclavius is left out: Frank's introductory list names it, but it runs from the first rib to the clavicle, not to the scapula. Where on the scapula serratus anterior attaches is not claimed: Frank's section 2 and Table 1 disagree on it (rehearsal 3)."
     }
   ],
   "scenarios": [
@@ -225,7 +225,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Because the shoulder blade has no bony joint with the ribcage, muscles attach it to the trunk. They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae and pectoralis minor. The serratus anterior attaches along the inner edge of the shoulder blade, on the side that faces the ribs.",
+        "content": "Because the shoulder blade has no bony joint with the ribcage, muscles attach it to the trunk. They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae and pectoralis minor.",
         "support": "science",
         "claimIds": [
           "claim-slot:l1-attachments",
