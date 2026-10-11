@@ -93,6 +93,8 @@ export async function ingestPaper(ctx: EvidenceContext, ref: { pmid?: string; do
     epmc = null;
   }
   const pmid = ref.pmid ?? epmc?.pmid ?? pubmed?.pmid ?? null;
+  // A PMID's abstract counts for the DOI that verifySource checks only when a record ties them.
+  if (ref.pmid && doi && pubmed?.doi !== doi && epmc?.doi !== doi) issues.push(`no record ties PMID ${ref.pmid} to DOI ${doi}`);
 
   const check = doi ? await attempt(issues, "verifySource", verifySource(ctx, doi)) : null;
   if (check) issues.push(...check.issues.map((i) => `verifySource: ${i}`));
@@ -120,7 +122,7 @@ export async function ingestPaper(ctx: EvidenceContext, ref: { pmid?: string; do
 
   const ready =
     doi !== null && title !== null && kind !== null && abstract !== null && abstract.text.length >= MIN_ABSTRACT_CHARS &&
-    retraction === "not_retracted" && !issues.some((i) => /lists DOI|has no record for PMID/.test(i));
+    retraction === "not_retracted" && !issues.some((i) => /lists DOI|has no record for PMID|no record ties PMID/.test(i));
   return {
     doi,
     pmid,

@@ -8,6 +8,7 @@
  * Exit 0 every item answered and valid, 1 not approved (see errors), 2 error.
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { z } from "zod";
 import { join } from "node:path";
 import { requireUuid } from "../src/guards";
 import { runReview } from "../src/review/harness";
@@ -15,6 +16,17 @@ import { buildClaimPacket, buildContentPacket, packetDigest, type ClaimTarget, t
 import { reviewPrompt } from "../src/review/prompt";
 import { codexRunner } from "../src/review/runner";
 import { args, dir, evidencePath, lit, main, publisherId, readJson, serviceValue, writeJson } from "./lib/cli";
+
+const evidenceSchema = z.strictObject({
+  sourceId: z.string(),
+  kind: z.enum(["systematic_review", "meta_analysis", "position_stand", "textbook", "nomenclature"]),
+  title: z.string().min(1),
+  identifiers: z.strictObject({ doi: z.string().optional(), pmid: z.string().optional(), url: z.string().optional() }),
+  text: z.string().min(1),
+  textOrigin: z.string().min(1),
+  retraction: z.enum(["retracted", "not_retracted", "unknown"]),
+  checkedAt: z.string(),
+}) satisfies z.ZodType<EvidenceEntry>;
 
 function claimTarget(p: string, id: string): ClaimTarget {
   return JSON.parse(serviceValue(`public.publisher_claim_target(${lit(p)}, ${lit(requireUuid(id, "claim id"))})`)) as ClaimTarget;
@@ -29,7 +41,10 @@ main(async () => {
     const claims = a.get("claims")!.split(",").map((id) => claimTarget(p, id.trim()));
     const evidence = new Map<string, EvidenceEntry>();
     for (const s of new Set(claims.flatMap((c) => c.sourceIds))) {
-      if (existsSync(evidencePath(s))) evidence.set(s, readJson<EvidenceEntry>(evidencePath(s)));
+      if (!existsSync(evidencePath(s))) continue;
+      const entry = evidenceSchema.parse(readJson<unknown>(evidencePath(s)));
+      if (entry.sourceId !== s) throw new Error(`evidence file for ${s} names source ${entry.sourceId}`);
+      evidence.set(s, entry);
     }
     const built = buildClaimPacket(claims, evidence, now.toISOString());
     for (const b of built.blocked) console.log(`blocked ${b.claimId}: ${b.reason}`);

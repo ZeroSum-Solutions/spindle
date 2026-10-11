@@ -1,6 +1,8 @@
 // Guards for the evidence scripts, which write to a database and keep private
 // files. Pure, so they are unit-tested.
-import { isAbsolute, relative, resolve } from "node:path";
+import { execFileSync } from "node:child_process";
+import { existsSync, realpathSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 const PLAIN = /^[A-Za-z0-9_]{1,63}$/;
 const SHARED_PORT = "54322";
@@ -36,12 +38,49 @@ export function psqlTarget(url: string | undefined, env: Readonly<Record<string,
   };
 }
 
-/** Private outputs (abstracts, packets, raw answers) must live outside the public repository. */
-export function privateDir(dir: string | undefined, repoRoot: string, name: string): string {
+/** The real path of the nearest existing ancestor, with the rest appended (the directory may not exist yet). */
+function realpathOfNearest(p: string): string {
+  let head = resolve(p);
+  const tail: string[] = [];
+  while (!existsSync(head)) {
+    tail.unshift(head.slice(dirname(head).length + 1));
+    head = dirname(head);
+  }
+  return join(realpathSync.native(head), ...tail);
+}
+
+function nearestExisting(p: string): string {
+  let head = resolve(p);
+  while (!existsSync(head)) head = dirname(head);
+  return head;
+}
+
+function insideGitWorkTree(p: string): boolean {
+  try {
+    return execFileSync("git", ["-C", nearestExisting(p), "rev-parse", "--is-inside-work-tree"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim() === "true";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Private outputs (abstracts, packets, raw answers) must live outside the public repository and
+ * outside any git work tree (another checkout of the same repository included). Paths are compared
+ * as real paths, so case differences and symlinks do not slip through.
+ */
+export function privateDir(
+  dir: string | undefined,
+  repoRoot: string,
+  name: string,
+  opts: { realpath?: (p: string) => string; insideGit?: (p: string) => boolean } = {},
+): string {
   if (!dir) throw new Error(`set ${name} to a private directory outside the repository`);
   if (!isAbsolute(dir)) throw new Error(`${name} must be an absolute path`);
-  const rel = relative(resolve(repoRoot), resolve(dir));
-  if (rel === "" || (!rel.startsWith("..") && !isAbsolute(rel))) throw new Error(`${name} is inside the repository; private files never go there`);
+  const real = opts.realpath ?? realpathOfNearest;
+  const rel = relative(real(resolve(repoRoot)), real(resolve(dir)));
+  const outside = rel === ".." || rel.startsWith(`..${"/"}`) || isAbsolute(rel);
+  if (!outside) throw new Error(`${name} is inside the repository; private files never go there`);
+  if ((opts.insideGit ?? insideGitWorkTree)(resolve(dir))) throw new Error(`${name} is inside a git work tree; private files never go there`);
   return resolve(dir);
 }
 

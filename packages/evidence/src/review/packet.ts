@@ -114,6 +114,7 @@ export function buildClaimPacket(
   createdAt: string,
 ): { packet: ReviewPacket | null; blocked: { claimId: string; reason: string }[] } {
   const oldest = Date.parse(createdAt) - MAX_EVIDENCE_AGE_DAYS * 86_400_000;
+  const latest = Date.parse(createdAt) + 5 * 60_000;
   const blocked: { claimId: string; reason: string }[] = [];
   const items: PacketItem[] = [];
   const used = new Map<string, EvidenceEntry>();
@@ -122,6 +123,11 @@ export function buildClaimPacket(
     const unsafe = c.sourceIds.filter((s) => evidence.get(s) && evidence.get(s)!.retraction !== "not_retracted");
     if (c.sourceIds.length === 0 || missing.length > 0) {
       blocked.push({ claimId: c.claimId, reason: `no evidence text for source ${missing.join(", ") || "(none)"}` });
+      continue;
+    }
+    const odd = c.sourceIds.filter((s) => !(Date.parse(evidence.get(s)!.checkedAt) <= latest));
+    if (odd.length > 0) {
+      blocked.push({ claimId: c.claimId, reason: `source ${odd.join(", ")} has an unreadable or future check time` });
       continue;
     }
     const stale = c.sourceIds.filter((s) => !(Date.parse(evidence.get(s)!.checkedAt) >= oldest));
@@ -182,13 +188,17 @@ export function buildContentPacket(
   for (const l of targets.lessons) {
     for (const b of l.blocks) {
       if (b.claimIds.length === 0) continue;
+      const block = l.lesson.blocks?.[b.ordinal - 1] as { kind?: unknown } | undefined;
+      if (!block || block.kind !== b.kind) {
+        throw new Error(`Invalid review packet: lesson ${l.lessonId} has no ${b.kind} block ${b.ordinal} in its JSON`);
+      }
       items.push({
         id: `block:${b.blockId}`,
         kind: "block",
         target: b.blockId,
         expectedHash: b.hash,
         claimIds: b.claimIds,
-        content: { lessonId: l.lessonId, ordinal: b.ordinal, block: l.lesson.blocks?.[b.ordinal - 1], claims: claimView(b.claimIds) },
+        content: { lessonId: l.lessonId, ordinal: b.ordinal, block, claims: claimView(b.claimIds) },
       });
     }
     items.push({

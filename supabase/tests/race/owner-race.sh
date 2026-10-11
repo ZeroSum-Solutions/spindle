@@ -11,7 +11,13 @@ if [ -z "$DB" ]; then
   if [ "${CI:-}" = "true" ]; then DB=postgresql://postgres:postgres@127.0.0.1:54322/postgres
   else echo "set DB_URL to an isolated database (this test commits rows)" >&2; exit 2; fi
 fi
-case "$DB" in *:54322/*) [ "${CI:-}" = "true" ] || { echo "refusing the shared local stack on :54322 outside CI" >&2; exit 2; } ;; esac
+# Only a loopback postgresql:// URL with an explicit port and database name; outside CI, never :54322.
+if [[ ! "$DB" =~ ^postgres(ql)?://[A-Za-z0-9_]+(:[^@/]*)?@(127\.0\.0\.1|localhost):([0-9]{1,5})/[A-Za-z0-9_]+$ ]]; then
+  echo "DB_URL must be postgresql://user[:password]@127.0.0.1:<port>/<db>" >&2; exit 2
+fi
+[ "${BASH_REMATCH[4]}" != 54322 ] || [ "${CI:-}" = "true" ] || { echo "refusing the shared local stack on :54322 outside CI" >&2; exit 2; }
+# psql would honour inherited PGHOST, PGPORT, PGSERVICE and friends; drop them all.
+while read -r v; do unset "$v"; done < <(compgen -e | grep '^PG' || true)
 A=00000000-0000-0000-0000-0000000000a1
 B=00000000-0000-0000-0000-0000000000b1
 psql() { command psql "$DB" -X -q -v ON_ERROR_STOP=1 "$@"; }

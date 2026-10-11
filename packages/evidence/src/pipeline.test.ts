@@ -46,6 +46,14 @@ describe("ingestPaper", () => {
     expect(paper.issues.join(" ")).toMatch(/lists DOI 10.1000\/other/);
   });
 
+  it("blocks a PMID and DOI that no record ties together", async () => {
+    const noDoi = { result: { uids: [PMID], [PMID]: { uid: PMID, title: "Synthetic review.", pubtype: ["Meta-Analysis"], articleids: [] } } };
+    const { ctx } = testContext(clean([["esummary.fcgi", noDoi], ["europepmc", epmc({ doi: undefined })]]));
+    const paper = await ingestPaper(ctx, { pmid: PMID, doi: DOI });
+    expect(paper.status).toBe("blocked");
+    expect(paper.issues.join(" ")).toMatch(/no record ties PMID/);
+  });
+
   it("blocks without a full abstract, and never uses a truncated one", async () => {
     const { ctx } = testContext(clean([["esummary.fcgi", esummary()], ["europepmc", epmc({ abstractText: undefined })]]));
     const paper = await ingestPaper(ctx, { pmid: PMID });

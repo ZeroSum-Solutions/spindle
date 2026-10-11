@@ -38,7 +38,7 @@ main(async () => {
       console.log(`RETRACTED ${s.doi}: recorded (${notice.origin}, ${notice.reference}); versions flagged: ${flagged}`);
     }
   }
-  if (noDoi !== "0") console.log(`${noDoi} cited sources have no DOI (textbook or nomenclature): check them by hand`);
+  if (noDoi !== "0") console.log(`${noDoi} cited sources have no DOI (textbook or nomenclature): check them by hand; this run is not clean`);
   console.log(`checked ${sources.length}: ${recorded} retracted, ${unknown} unknown`);
-  return recorded > 0 || unknown > 0 ? 1 : 0;
+  return recorded > 0 || unknown > 0 || noDoi !== "0" ? 1 : 0;
 });

@@ -34,6 +34,14 @@ describe("privateDir and ids", () => {
     expect(privateDir("/repo-other/p", "/repo", "X")).toBe("/repo-other/p");
   });
 
+  it("compares real paths and refuses any git work tree", () => {
+    const real = (p: string) => p.toLowerCase();
+    expect(() => privateDir("/repo/..x", "/repo", "X", { realpath: (p) => p, insideGit: () => false })).toThrow(/inside the repository/);
+    expect(() => privateDir("/REPO/packets", "/repo", "X", { realpath: real, insideGit: () => false })).toThrow(/inside the repository/);
+    expect(() => privateDir("/elsewhere/spindle/p", "/repo", "X", { realpath: (p) => p, insideGit: () => true })).toThrow(/git work tree/);
+    expect(privateDir("/private/p", "/repo", "X", { realpath: (p) => p, insideGit: () => false })).toBe("/private/p");
+  });
+
   it("requires lowercase uuids", () => {
     expect(() => requireUuid("x", "ID")).toThrow(/ID must be/);
     expect(requireUuid("11111111-1111-4111-8111-111111111111", "ID")).toMatch(/^1/);
