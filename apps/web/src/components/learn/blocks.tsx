@@ -29,6 +29,8 @@ export interface BlockContext {
   gradedQuiz?: boolean;
 }
 
+type SupportedBlock = Extract<LessonBlock, { support: unknown }>;
+
 /** Integrity applies to science blocks only; practice blocks carry no claims. */
 function blockEvidenceView(block: SupportedBlock, ctx: BlockContext): EvidenceView | null {
   return block.support === "science" ? evidenceView(block.claimIds, ctx.flagged, ctx.integrity === undefined ? null : ctx.integrity) : null;
