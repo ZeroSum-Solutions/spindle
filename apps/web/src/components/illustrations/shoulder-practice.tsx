@@ -130,7 +130,7 @@ function pushUp(cx: number, base: number, h: number) {
   return { pose, box: h > 0 ? { x: cx + 14, y: base - h, w: 34, h } : null };
 }
 
-function Dumbbell({ at, r = 6 }: { at: Point; r?: number }) {
+export function Dumbbell({ at, r = 6 }: { at: Point; r?: number }) {
   return <circle cx={at.x} cy={at.y} r={r} {...STROKE} style={SURFACE_FILL} data-load={r} />;
 }
 
@@ -154,7 +154,7 @@ function bentRow(cx: number, base: number): { pose: Pose; hand: Point } {
 }
 
 /** Standing or half-kneeling, facing right, one arm pressed overhead. */
-function overheadPress(cx: number, base: number, kneeling: boolean): { pose: Pose; hand: Point } {
+export function overheadPress(cx: number, base: number, kneeling: boolean): { pose: Pose; hand: Point } {
   const hipY = kneeling ? base - 58 : base - 80;
   const hip = P(cx, hipY);
   const neck = P(cx, hipY - 50);

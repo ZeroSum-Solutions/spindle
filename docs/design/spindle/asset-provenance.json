@@ -89,6 +89,39 @@
       "rights": "CC BY-SA 4.0 for the drawing; the surrounding code is AGPL-3.0-only",
       "method": "Hand-written SVG geometry (paths, circles, polygons) in code. Not traced from, or generated from, any image, atlas, textbook figure or third-party illustration; no reference image was opened while drawing.",
       "accuracy": "Schematic and not to scale. Shows only positions the lesson text describes; adds no claim. All words (alt, caption, legend) come from the lesson's diagram block."
+    },
+    {
+      "id": "shoulder-cuff-and-movers",
+      "file": "apps/web/src/components/illustrations/shoulder-cuff.tsx (SHOULDER_CUFF)",
+      "subject": "The rotator cuff of a left shoulder, from the front (subscapularis) and from behind (supraspinatus, infraspinatus, teres minor); the subject's left is on the viewer's right from the front and on the viewer's left from behind. The larger movers are not drawn.",
+      "source": "original-svg",
+      "createdAt": "2026-10-11",
+      "creator": "Spindle (drafted with AI assistance: Claude Opus 5.5; reviewed in the rendered app)",
+      "rights": "CC BY-SA 4.0 for the drawing; the surrounding code is AGPL-3.0-only",
+      "method": "Hand-written SVG geometry (paths, circles, polygons) in code. Not traced from, or generated from, any image, atlas, textbook figure or third-party illustration; no reference image was opened while drawing.",
+      "accuracy": "Schematic and not to scale. Draws only what the lesson's cuff claim states (four muscles from the shoulder blade to the top of the humerus, around the ball and socket); muscle outlines are simplified shapes, not traced. All words come from the lesson's diagram block."
+    },
+    {
+      "id": "reach-screens",
+      "file": "apps/web/src/components/illustrations/shoulder-movement.tsx (REACH_SCREENS)",
+      "subject": "Reach screens (lesson 3): wall reach seen from the right side, lying reach with knees bent, and active then passive range with support at the elbow and wrist",
+      "source": "original-svg",
+      "createdAt": "2026-10-11",
+      "creator": "Spindle (drafted with AI assistance: Claude Opus 5.5; reviewed in the rendered app)",
+      "rights": "CC BY-SA 4.0 for the drawing; the surrounding code is AGPL-3.0-only",
+      "method": "Hand-written SVG geometry (paths, circles, polygons) in code. Not traced from, or generated from, any image, atlas, textbook figure or third-party illustration; no reference image was opened while drawing.",
+      "accuracy": "Schematic and not to scale. Shows only positions the lesson text describes; adds no claim. All words (alt, caption, legend) come from the lesson's diagram block."
+    },
+    {
+      "id": "shoulder-warm-up",
+      "file": "apps/web/src/components/illustrations/shoulder-movement.tsx (SHOULDER_WARM_UP)",
+      "subject": "Warm-up positions (lesson 5): set-up against a wall, light band rotation with the right elbow at the side seen from the front, reaching forward, and a light one-arm press",
+      "source": "original-svg",
+      "createdAt": "2026-10-11",
+      "creator": "Spindle (drafted with AI assistance: Claude Opus 5.5; reviewed in the rendered app)",
+      "rights": "CC BY-SA 4.0 for the drawing; the surrounding code is AGPL-3.0-only",
+      "method": "Hand-written SVG geometry (paths, circles, polygons) in code. Not traced from, or generated from, any image, atlas, textbook figure or third-party illustration; no reference image was opened while drawing.",
+      "accuracy": "Schematic and not to scale. Shows only positions the lesson text describes; adds no claim. All words (alt, caption, legend) come from the lesson's diagram block."
     }
   ]
 }

@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { DRAWINGS, ReviewedDiagram, drawingFor, type ReviewedDiagramContent } from "../learn/diagrams";
 import { Drawing, placeMarkers, type DrawingSpec } from "./primitives";
+import { CUFF_GEOMETRY } from "./shoulder-cuff";
 
 const render = (content: ReviewedDiagramContent) => renderToStaticMarkup(createElement(ReviewedDiagram, { content }));
 const legendFor = (spec: DrawingSpec) => Object.keys(spec.anchors).map((key) => ({ key, label: `Synthetic ${key}`, text: "Synthetic text." }));
@@ -77,5 +78,19 @@ describe("reviewed diagrams: geometry in code, words from the lesson", () => {
     const drawn = render({ ...content, diagramId: "screen-start-positions", legend: [{ key: "screen-2", label: "Synthetic label.", text: "" }] });
     expect(drawn).toContain('data-diagram="available"');
     expect(drawn).toContain('data-anchor="screen-2"');
+  });
+
+  it("draws a left shoulder in both cuff views: the humerus is lateral to the socket on the subject's left", () => {
+    // From the front the subject's left is on the viewer's right; from behind, on the viewer's left.
+    expect(CUFF_GEOMETRY.front.head.x).toBeGreaterThan(CUFF_GEOMETRY.front.glenoid.x);
+    expect(CUFF_GEOMETRY.back.head.x).toBeLessThan(CUFF_GEOMETRY.back.glenoid.x);
+  });
+
+  it("names the four cuff muscles as anchors, each with a leader to its muscle, and nothing else muscular", () => {
+    const spec = DRAWINGS["shoulder-cuff-and-movers"]!;
+    const muscles = ["subscapularis", "supraspinatus", "infraspinatus", "teres-minor"];
+    for (const m of muscles) expect(spec.anchors[m]?.leader).toBeDefined();
+    const html = renderToStaticMarkup(createElement(Drawing, { spec, alt: "Synthetic alt", legend: [] }));
+    expect([...html.matchAll(/data-muscle="([^"]+)"/g)].map((m) => m[1]).sort()).toEqual([...muscles].sort());
   });
 });

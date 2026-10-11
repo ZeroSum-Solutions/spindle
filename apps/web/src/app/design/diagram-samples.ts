@@ -6,6 +6,45 @@ import type { ReviewedDiagramContent } from "@/components/learn/diagrams";
 
 export const DIAGRAM_SAMPLES: readonly ReviewedDiagramContent[] = [
   {
+    diagramId: "shoulder-cuff-and-movers",
+    alt: "Two schematic views of a left shoulder. From the front, one muscle covers the front of the shoulder blade and crosses to the top of the upper arm bone. From behind, three muscles run from the shoulder blade, above and below its spine, to the top of the upper arm bone.",
+    caption: "Sample text. The rotator cuff, left shoulder from the front and from behind. Schematic, not to scale.",
+    legend: [
+      { key: "front-view", label: "From the front.", text: "The subject's left is on your right." },
+      { key: "subscapularis", label: "Subscapularis.", text: "On the front of the shoulder blade." },
+      { key: "humeral-head", label: "Top of the humerus.", text: "Where the four cuff muscles attach." },
+      { key: "back-view", label: "From behind.", text: "The subject's left is on your left." },
+      { key: "supraspinatus", label: "Supraspinatus.", text: "Above the spine of the shoulder blade." },
+      { key: "infraspinatus", label: "Infraspinatus.", text: "Below the spine." },
+      { key: "teres-minor", label: "Teres minor.", text: "Along the outer border, below infraspinatus." },
+    ],
+  },
+  {
+    diagramId: "reach-screens",
+    alt: "Three schematic figures: standing with the back against a wall, arms raised but short of vertical; lying on the back with knees bent, arms overhead toward the floor; standing with one arm raised and supported at the elbow and wrist, with a dashed line showing further range.",
+    caption: "Sample text. Three ways to see reach. Schematic, not to scale.",
+    legend: [
+      { key: "wall-reach", label: "Wall reach.", text: "Back against the wall; raise both arms forward and up." },
+      { key: "hands-stop", label: "Where the hands stop.", text: "Short of the wall overhead (dashed: the full range)." },
+      { key: "lower-back", label: "Lower back.", text: "Note whether it leaves the wall." },
+      { key: "lying-reach", label: "Lying reach.", text: "On the back, knees bent; arms overhead toward the floor behind." },
+      { key: "active-passive", label: "Active then passive.", text: "The client's own raise, then the arm supported (dashed: further range)." },
+      { key: "support", label: "Support.", text: "At the elbow and wrist, only with permission. Never push." },
+    ],
+  },
+  {
+    diagramId: "shoulder-warm-up",
+    alt: "Four schematic figures: standing with the back against a wall; seen from the front with the right elbow at the side and the forearm turned out against a band; reaching both arms forward; pressing one arm overhead with a light weight.",
+    caption: "Sample text. A short warm-up, in order. Schematic, not to scale.",
+    legend: [
+      { key: "position", label: "Position.", text: "The stance or support of the first lift." },
+      { key: "rotation", label: "Light rotation.", text: "Elbow at the side, forearm out and back." },
+      { key: "band", label: "Light band.", text: "Anchored on the other side." },
+      { key: "shoulder-blades", label: "Shoulder blade control.", text: "Reach forward, then overhead along a wall." },
+      { key: "first-pattern", label: "First pattern.", text: "The session's first press or pull, light." },
+    ],
+  },
+  {
     diagramId: "screen-start-positions",
     alt: "Four schematic figures: standing seen from behind, standing seen from the right side with the elbow bent, and two figures seen from behind reaching with the right hand over the shoulder and behind the back.",
     caption: "Sample text. The three screens; where one arm is used, the right arm is shown. Schematic, not to scale.",

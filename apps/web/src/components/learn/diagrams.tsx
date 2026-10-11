@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { ImageOff } from "lucide-react";
 import { Drawing, type DrawingSpec, type LegendItem } from "../illustrations/primitives";
+import { SHOULDER_CUFF } from "../illustrations/shoulder-cuff";
+import { REACH_SCREENS, SHOULDER_WARM_UP } from "../illustrations/shoulder-movement";
 import { PRESS_PULL_OVERHEAD, ROTATION_RECORD_POSITION, SCREEN_POSITIONS } from "../illustrations/shoulder-practice";
 import { ScapulaUpwardRotation, ShoulderComplex } from "../illustrations/shoulder";
 
@@ -81,6 +83,9 @@ export interface ReviewedDiagramContent {
 
 /** Drawings by diagram id. Geometry and anchor names only; no text a learner reads. */
 export const DRAWINGS: Readonly<Record<string, DrawingSpec>> = {
+  "shoulder-cuff-and-movers": SHOULDER_CUFF,
+  "reach-screens": REACH_SCREENS,
+  "shoulder-warm-up": SHOULDER_WARM_UP,
   "screen-start-positions": SCREEN_POSITIONS,
   "press-pull-overhead": PRESS_PULL_OVERHEAD,
   "rotation-record-position": ROTATION_RECORD_POSITION,
