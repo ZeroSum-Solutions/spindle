@@ -35,11 +35,14 @@ function ratio(a: string, b: string): number {
   return (hi! + 0.05) / (lo! + 0.05);
 }
 
-/** The element's own colour and the first opaque background behind it. */
+/**
+ * The element's colour (or outline colour) and the first opaque background behind it. The focus
+ * ring is drawn 4px outside the control, so for the ring the search starts at the parent.
+ */
 async function colours(el: Locator, prop: "color" | "outlineColor" = "color") {
   return el.evaluate((node, p) => {
     let bg = "";
-    for (let n: Element | null = node; n; n = n.parentElement) {
+    for (let n: Element | null = p === "outlineColor" ? node.parentElement : node; n; n = n.parentElement) {
       const c = getComputedStyle(n).backgroundColor;
       if (c && c !== "transparent" && !/rgba\(.*,\s*0\)$/.test(c)) {
         bg = c;
@@ -80,9 +83,20 @@ test.describe("tenant brand preview", () => {
     for (const brand of BRANDS) {
       const s = section(page, brand.name);
       const total = await s.evaluate((root) => {
+        // A radio group is one Tab stop (arrow keys move inside it), so only its first radio counts.
+        const groups = new Set<string>();
         const els = [...root.querySelectorAll<HTMLElement>("a[href], button, summary, input, [tabindex]:not([tabindex='-1'])")].filter((el) => {
           const r = el.getBoundingClientRect();
-          return r.width > 0 && r.height > 0;
+          if (r.width === 0 || r.height === 0) return false;
+          // Disabled controls and content inside a closed disclosure are not Tab stops.
+          if ((el as HTMLButtonElement).disabled) return false;
+          const details = el.closest("details");
+          if (details && !details.open && !el.closest("summary")) return false;
+          if (el instanceof HTMLInputElement && el.type === "radio") {
+            if (groups.has(el.name)) return false;
+            groups.add(el.name);
+          }
+          return true;
         });
         els.forEach((el, i) => el.setAttribute("data-tab-id", String(i)));
         return els.length;

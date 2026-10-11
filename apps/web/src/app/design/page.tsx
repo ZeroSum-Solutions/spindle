@@ -12,7 +12,6 @@ import { ErrorNote } from "@/components/ui";
 import type { ClaimView } from "@/lib/learning/load";
 import type { CourseView, LessonView } from "@/lib/learning/view";
 import { CompletionBoard, LogoReveal } from "./motion-board";
-import { BrandPreview } from "./brand-preview";
 import { QuizBoard } from "./quiz-board";
 import { ModuleStatusCard } from "@/components/learn/module-status";
 
@@ -209,7 +208,9 @@ export default function DesignSpecimen() {
       </Section>
 
       <Section title="Brand preview">
-        <BrandPreview />
+        <p className="text-label text-text-muted">
+          Tenant brands render on their own test-only page, <a href="/brand-preview" className="text-brand underline underline-offset-2 hover:text-brand-hover">/brand-preview</a>.
+        </p>
       </Section>
 
       <Section title="Module status and graded quiz">

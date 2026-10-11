@@ -1,10 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { previewPagesEnabled, TEST_ONLY_PAGES } from "./lib/preview-pages";
 
 const PROTECTED = ["/gyms"];
 
 /** Refreshes the Supabase session cookie and keeps signed-out users out of /gyms. */
 export async function proxy(request: NextRequest) {
+  // Test-only pages are a real 404 (status and body) unless this server was started for tests.
+  if (TEST_ONLY_PAGES.includes(request.nextUrl.pathname) && !previewPagesEnabled(process.env)) {
+    return new NextResponse("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
+  }
   let response = NextResponse.next({ request });
   let pendingCookies: { name: string; value: string; options: object }[] = [];
   let pendingHeaders: Record<string, string> = {};

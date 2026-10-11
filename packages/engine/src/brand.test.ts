@@ -44,6 +44,7 @@ describe("validateBrand", () => {
     const ringBackgrounds = checks.filter((c) => c.state === "focus").map((c) => c.background);
     for (const bg of [ATLAS.canvas, ATLAS.surface, ATLAS.surfaceMuted, ATLAS.dangerSoft]) expect(ringBackgrounds).toContain(bg);
     expect(checks.some((c) => c.role === "Current lesson marker" && c.state === "selected")).toBe(true);
+    expect(checks.some((c) => c.role === "Muted text on the current lesson marker")).toBe(true);
     expect(checks.some((c) => c.role === "Selected control" && c.state === "hover")).toBe(true);
     expect(checks.filter((c) => c.state === "error").every((c) => c.foreground === ATLAS.danger)).toBe(true);
   });
