@@ -4,7 +4,7 @@
 
 ## Decision
 - **Ingress schemas:** `@spindle/schema` has strict zod schemas for the existing Course → Part → Lesson → Block tree (`parseCatalog`, `parseCourse`). Unknown keys and unknown block kinds fail. They check shape only. `validateCatalog` still checks ids, provenance and claim approval, and the database publish gate (ADR 0005) checks that a citation fits the exact content.
-- **Media and links:** `src` and `href` must be a root-relative path with no dot segments, percent escapes, backslashes or whitespace, or an `https` URL without credentials. Every other scheme fails, `http`, `data` and `javascript` included.
+- **Media and links:** `src` and `href` must be a root-relative path with no dot segments, percent escapes, backslashes or whitespace, or an `https` URL without credentials that the WHATWG URL parser accepts, with a port from 1 to 65535. Every other scheme fails, `http`, `data` and `javascript` included.
 - **Evidence binding shape:** a science block has one or more unique claim ids. A practice-based block has none. Blocks that cannot carry support (heading, image, diagram) cannot carry claim ids either.
 - **Version credit** is a set of pure functions in `@spindle/engine`:
   - `diffVersions(previous, next)` returns the unchanged, changed, added and removed lesson ids.
@@ -19,6 +19,6 @@
 - Shape checks at ingress stop malformed or unsafe content before it reaches the publish gate or the player. They cannot judge whether a citation is relevant, so they do not replace the review receipt.
 
 ## Consequences
-- Duplicate completions collapse to the earliest one (ties break on id), so a double submit never counts twice.
+- Duplicate completions collapse to the earliest one, so a double submit never counts twice. The order matches the database (`order by completed_at, id`): completion times keep PostgreSQL's microsecond precision across offsets, and ingress rejects finer precision.
 - A lesson that changes and then returns to content the learner already completed gets its credit back.
 - Rows for versions the caller has no manifest for are trusted as stored. The database guarantees their hashes.

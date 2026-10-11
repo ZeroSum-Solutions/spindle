@@ -86,6 +86,12 @@ describe("content ingress", () => {
     ["https://user:pass@example.org/x.png"],
     ["https://example.org@evil.example/x.png"],
     ["https:/example.org/x.png"],
+    ["https://example.org:99999/a.png"],
+    ["https://example.org:0/a.png"],
+    ["https://example.org:/a.png"],
+    ["https://1.2.3.999/a.png"],
+    ["https://example.123/a.png"],
+    ["https://xn--zz.org/a.png"],
     ["ftp://example.org/x.png"],
     ["/media/x .png"],
     ["/media/x\n.png"],
@@ -97,7 +103,12 @@ describe("content ingress", () => {
     expect(isSafeContentUrl(src)).toBe(false);
   });
 
-  it.each([["/media/x.webp"], ["https://example.org/x.png?w=2"], ["https://cdn.example.org:8443/a/b.svg"]])("accepts safe url %j", (src) => {
+  it.each([
+    ["/media/x.webp"],
+    ["https://example.org/x.png?w=2"],
+    ["https://cdn.example.org:8443/a/b.svg"],
+    ["https://example.org:65535/a.png"],
+  ])("accepts safe url %j", (src) => {
     expect(isSafeContentUrl(src)).toBe(true);
   });
 
@@ -196,6 +207,12 @@ describe("version contracts", () => {
     const carried = { ...direct, id: "done-2", versionId: "v2", originCompletionId: "done-1" };
     expect(parseLessonCompletions([direct, carried])).toEqual([direct, carried]);
     expect(() => parseLessonCompletions([{ ...direct, completedAt: "yesterday" }])).toThrow(/completedAt/);
+    const micro = { ...direct, completedAt: "2026-10-10T12:00:00.000001+05:30" };
+    expect(parseLessonCompletions([micro])).toEqual([micro]);
+    // PostgreSQL keeps microseconds; finer input would be rounded and could reorder completions.
+    expect(() => parseLessonCompletions([{ ...direct, completedAt: "2026-10-10T12:00:00.0000001Z" }])).toThrow(
+      /completedAt/,
+    );
     expect(() => parseLessonCompletions([{ ...direct, originCompletionId: undefined }])).toThrow(/originCompletionId/);
     expect(() => parseLessonCompletions({ rows: [direct] })).toThrow(ContentParseError);
   });

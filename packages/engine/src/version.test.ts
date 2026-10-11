@@ -96,6 +96,30 @@ describe("carryForwardCredit", () => {
     expect(carryForwardCredit(v1, v2, [...completions].reverse())).toEqual(result);
   });
 
+  it("orders completions at PostgreSQL microsecond precision, like the database", () => {
+    // Same millisecond: Date.parse would tie them and the id tie-break would wrongly pick done-a.
+    const earlier = done("l1", "h1", { id: "done-b", completedAt: "2026-10-10T12:00:00.000001Z" });
+    const later = done("l1", "h1", { id: "done-a", completedAt: "2026-10-10T12:00:00.000002Z" });
+    for (const order of [[earlier, later], [later, earlier]]) {
+      expect(carryForwardCredit(v1, v2, order).carried[0]?.originCompletionId).toBe("done-b");
+    }
+  });
+
+  it("compares instants across offsets at microsecond precision", () => {
+    // 17:30:00.000002+05:30 is 12:00:00.000002Z, one microsecond after the UTC row.
+    const utc = done("l1", "h1", { id: "done-b", completedAt: "2026-10-10T12:00:00.000001Z" });
+    const offset = done("l1", "h1", { id: "done-a", completedAt: "2026-10-10T17:30:00.000002+05:30" });
+    expect(carryForwardCredit(v1, v2, [offset, utc]).carried[0]?.originCompletionId).toBe("done-b");
+    const sameInstant = done("l1", "h1", { id: "done-a", completedAt: "2026-10-10T17:30:00.000001+05:30" });
+    expect(carryForwardCredit(v1, v2, [utc, sameInstant]).carried[0]?.originCompletionId).toBe("done-a");
+  });
+
+  it("rejects a completion time it cannot order exactly", () => {
+    for (const completedAt of ["yesterday", "2026-10-10T12:00:00.0000001Z", "2026-10-10T12:00:00"]) {
+      expect(() => carryForwardCredit(v1, v2, [done("l1", "h1", { completedAt })])).toThrow(/completedAt/);
+    }
+  });
+
   it("breaks a same-moment tie on completion id, not input order", () => {
     const a = done("l1", "h1", { id: "done-a" });
     const b = done("l1", "h1", { id: "done-b" });

@@ -74,17 +74,18 @@ export function carryForwardCredit(
   ]);
   const credited = new Set<string>();
   const attempted = new Set<string>();
-  const earliest = new Map<string, LessonCompletion>();
+  const earliest = new Map<string, Ranked>();
   for (const completion of completions) {
     checkAgainstVersion(completion, known.get(completion.versionId));
+    const ranked = { completion, at: epochMicros(completion) };
     attempted.add(completion.lessonId);
     if (after.get(completion.lessonId) !== completion.contentHash) continue;
     if (completion.versionId === next.versionId) credited.add(completion.lessonId);
     const current = earliest.get(completion.lessonId);
-    if (!current || isEarlier(completion, current)) earliest.set(completion.lessonId, completion);
+    if (!current || isEarlier(ranked, current)) earliest.set(completion.lessonId, ranked);
   }
   const carried = [...after].flatMap(([lessonId, contentHash]) => {
-    const origin = earliest.get(lessonId);
+    const origin = earliest.get(lessonId)?.completion;
     if (!origin || credited.has(lessonId)) return [];
     credited.add(lessonId);
     return [{ lessonId, versionId: next.versionId, contentHash, originCompletionId: origin.originCompletionId ?? origin.id }];
@@ -119,9 +120,28 @@ export function retireReviewItems<T extends { lessonId: string }>(
   };
 }
 
-function isEarlier(a: LessonCompletion, b: LessonCompletion): boolean {
-  const diff = Date.parse(a.completedAt) - Date.parse(b.completedAt);
-  return diff < 0 || (diff === 0 && a.id < b.id);
+/** Matches the database's `order by completed_at, id`: exact microseconds, then id (lowercase uuid text sorts like uuid bytes). */
+function isEarlier(a: Ranked, b: Ranked): boolean {
+  return a.at < b.at || (a.at === b.at && a.completion.id < b.completion.id);
+}
+
+interface Ranked {
+  completion: LessonCompletion;
+  at: bigint;
+}
+
+const TIMESTAMP = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?(?:Z|([+-])(\d{2}):(\d{2}))$/;
+
+/** Date.parse keeps only milliseconds; PostgreSQL timestamptz keeps microseconds. */
+function epochMicros(completion: LessonCompletion): bigint {
+  const m = TIMESTAMP.exec(completion.completedAt);
+  invariant(m, `completion ${completion.id} has a completedAt the engine cannot order exactly`);
+  const [, y, mo, d, h, mi, s, frac = "", sign, oh = "0", om = "0"] = m;
+  // setUTCFullYear, unlike Date.UTC, does not map years 0-99 to 1900-1999.
+  const midnight = new Date(0).setUTCFullYear(Number(y), Number(mo) - 1, Number(d));
+  const utcMs = midnight + ((Number(h) * 60 + Number(mi)) * 60 + Number(s)) * 1000;
+  const offsetMinutes = (sign === "-" ? -1 : 1) * (Number(oh) * 60 + Number(om));
+  return BigInt(utcMs - offsetMinutes * 60_000) * 1000n + BigInt(frac.padEnd(6, "0"));
 }
 
 function hashesById(manifest: VersionManifest): Map<string, string> {

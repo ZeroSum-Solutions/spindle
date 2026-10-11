@@ -29,16 +29,23 @@ const requiredText = text.refine((s) => s.trim().length > 0, "must not be blank"
 const RELATIVE_PATH = /^\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/;
 // The host allows no "@", so URLs with credentials fail.
 const HOST_LABEL = "[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?";
-const HTTPS_URL = new RegExp(`^https://${HOST_LABEL}(?:\\.${HOST_LABEL})*(?::\\d{1,5})?(?:[/?#].*)?$`);
-const UNSAFE_CHARS =/[\s\\\u0000-\u001f\u007f]/;
+const HTTPS_URL = new RegExp(`^https://${HOST_LABEL}(?:\\.${HOST_LABEL})*(?::(\\d{1,5}))?(?:[/?#].*)?$`);
+const UNSAFE_CHARS = /[\s\\\u0000-\u001f\u007f]/;
 
-/** Root-relative paths without dot segments, or https URLs without credentials. */
+// WHATWG URL is global in Node and browsers, but the ES lib types do not declare it.
+const WhatwgUrl = (globalThis as unknown as { URL: { canParse(input: string): boolean } }).URL;
+
+/** Root-relative paths without dot segments, or https URLs without credentials that a browser can load. */
 export function isSafeContentUrl(value: string): boolean {
   if (value.length === 0 || value.length > 2048 || UNSAFE_CHARS.test(value)) return false;
   if (value.startsWith("/")) {
     return RELATIVE_PATH.test(value) && value.split("/").every((seg) => seg !== "." && seg !== "..");
   }
-  return HTTPS_URL.test(value);
+  const match = HTTPS_URL.exec(value);
+  if (!match) return false;
+  const port = match[1] === undefined ? 443 : Number(match[1]);
+  // The shape check alone accepts ports out of range and hosts the URL parser rejects (1.2.3.999, xn--zz.org).
+  return port >= 1 && port <= 65535 && WhatwgUrl.canParse(value);
 }
 
 const safeUrl = z.string().refine(isSafeContentUrl, "must be a root-relative path or an https URL");

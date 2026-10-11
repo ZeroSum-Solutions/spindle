@@ -21,7 +21,7 @@ export interface LessonCompletion {
   lessonId: string;
   versionId: string;
   contentHash: string;
-  /** ISO 8601. */
+  /** ISO 8601 with seconds and an offset, at most microsecond precision (PostgreSQL timestamptz). */
   completedAt: string;
   /** Null for a direct completion; for carried credit, the root completion (never a chain). */
   originCompletionId: string | null;
@@ -50,7 +50,9 @@ export const lessonCompletionSchema = z.strictObject({
   lessonId: idSchema,
   versionId: idSchema,
   contentHash: hashSchema,
-  completedAt: z.iso.datetime({ offset: true }),
+  completedAt: z.iso
+    .datetime({ offset: true })
+    .regex(/:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/, "must have at most microsecond precision, like PostgreSQL"),
   originCompletionId: idSchema.nullable(),
 }) satisfies z.ZodType<LessonCompletion>;
 
