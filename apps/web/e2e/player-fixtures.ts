@@ -262,6 +262,38 @@ export class PlayerWorld {
   }
 
   /**
+   * One approved synthetic claim per key, all citing one synthetic source. FIXTURE ONLY: the
+   * approvals are synthetic review receipts recorded through the real RPCs, never real Sol
+   * approvals, and the statements say so. Returns a map from key to claim id.
+   */
+  syntheticClaims(keys: readonly string[]): Map<string, string> {
+    const statement = (key: string) => `Synthetic fixture approval for ${key} (run ${this.run}); not a real review.`;
+    const p = lit(this.publisherId);
+    sql(`begin; ${asService}
+      select public.publisher_add_source(${p}, ${lit(JSON.stringify({ kind: "systematic_review", title: `Synthetic review ${this.run}`, doi: this.doi, license: "Synthetic test record" }))});
+      ${keys
+        .map(
+          (key) => `select public.publisher_add_claim(${p}, jsonb_build_object('statement', ${lit(statement(key))},
+        'evidenceLevel', 'Synthetic level', 'population', 'Synthetic population',
+        'sourceIds', jsonb_build_array((select id from public.sources where doi = ${lit(this.doi)}))));`,
+        )
+        .join("\n")}
+      select public.publisher_review_claim(${p}, c.id,
+        jsonb_build_object('decision', 'approved', 'expiresAt', to_char(now() + interval '1 year', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+          'expectedHash', public.publisher_claim_target(${p}, c.id) ->> 'hash', 'run', ${runReceipt(this.run)},
+          'receipt', '{"existenceCheckedAt": "2026-10-01T00:00:00Z", "faithfulness": "faithful", "retractionCheckedAt": "2026-10-01T00:00:00Z"}'::jsonb))
+      from public.claims c where c.created_by = ${p};
+      commit;`);
+    const ids = new Map<string, string>();
+    for (const key of keys) {
+      const id = sql(`select id from public.claims where statement = ${lit(statement(key))} and created_by = ${p}`);
+      if (!id) throw new Error(`synthetic claim for ${key} was not created`);
+      ids.set(key, id);
+    }
+    return ids;
+  }
+
+  /**
    * Saves and publishes a global course as the publisher, recording synthetic block, lesson
    * and course receipts against the hashes and claim sets the database reports. Returns the version id.
    */
