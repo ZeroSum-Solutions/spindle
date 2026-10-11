@@ -49,8 +49,18 @@ function kindOf(label: string): RetractionKind | null {
 /** Anchored markers only: "RETRACTED: ...", "[Withdrawn] ...". A title that merely mentions the word is ignored. */
 const MARKERS: Record<string, RetractionKind> = { retracted: "retraction", withdrawn: "withdrawal", removed: "removal" };
 
+// Inline formatting a publisher may wrap around a marker, literal or escaped (once or twice).
+const LT = /&(?:amp;)?(?:lt|#0*60|#x0*3c);/gi;
+const GT = /&(?:amp;)?(?:gt|#0*62|#x0*3e);/gi;
+const FORMATTING = /<\/?(?:[A-Za-z_][\w.-]*:)?(?:i|b|u|em|strong|italic|bold|sc|span|sup|sub|small|underline)(?:\s[^<>]*)?\/?>/gi;
+
+/** For marker detection only (Sol R4 R10): the returned title keeps its literal text. */
+export function markerText(title: string): string {
+  return title.replace(LT, "<").replace(GT, ">").replace(FORMATTING, "");
+}
+
 function titleKind(title: string): RetractionKind | null {
-  const m = title.match(/^\s*[[(]?\s*(retracted|withdrawn|removed)\b\s*[\]):.-]/i);
+  const m = markerText(title).match(/^\s*[[(]?\s*(retracted|withdrawn|removed)\b\s*[\]):.-]/i);
   return m?.[1] ? (MARKERS[m[1].toLowerCase()] ?? null) : null;
 }
 

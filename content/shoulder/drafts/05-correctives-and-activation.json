@@ -13,7 +13,8 @@
   "claimSlots": [
     {
       "slot": "claim-slot:l5-subacromial-exercise",
-      "statement": "For subacromial pain, the British Elbow & Shoulder Society patient care pathway (PICO 6) reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves patient-reported function, grades this 'Conditional Positive (low evidence)', and states that the most effective physiotherapy or exercise approach remains uncertain.",
+      "statement": "For subacromial pain, the British Elbow & Shoulder Society patient care pathway (PICO 6) reports evidence that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function at follow-up of up to 6 months, grades the recommendation 'Conditional Positive (low evidence)', and says the best physiotherapy, exercise or manual therapy approach is still uncertain.",
+      "domain": "applied",
       "evidenceLevel": "Clinical guideline (GRADE), British Elbow & Shoulder Society",
       "population": "\"Subacromial Shoulder Pain\" (BESS 2025 patient care pathway).",
       "candidateSources": [
@@ -24,14 +25,16 @@
           "pmid": "41245988",
           "pmcid": "PMC12611748",
           "url": "https://bess.ac.uk/wp-content/uploads/2026/03/Subacromial-Shoulder-Pain-2025.pdf",
-          "rights": "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. Cited and paraphrased only."
+          "rights": "(c) The Author(s) 2025. No licence stated in the PDF read, and Europe PMC lists none: unresolved; treat as all rights reserved. Full PDF read. Cited and paraphrased only.",
+          "locator": "p. 719, PICO 6"
         }
       ],
-      "note": "Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."
+      "note": "Paraphrased; the attributed source excerpt stays in the private evidence packet (D-13), at p. 719, PICO 6. Current-evidence check: Tena-Portilla 2026 (PMID 42609059) also reports low certainty and no clearly most effective approach for rotator cuff related shoulder pain; consistent, recorded but not cited in the block. BESS PICO 18 calls physiotherapy a possible first-line treatment for chronic subacromial pain; the lesson does not generalise that narrower clinical recommendation."
     },
     {
       "slot": "claim-slot:l5-decompression",
       "statement": "In adult patients with subacromial pain syndrome lasting more than 3 months, a systematic review with meta-analysis found high-certainty evidence of no additional benefit of subacromial decompression surgery over placebo surgery for pain at 1 year or physical function at 1 to 2 years.",
+      "domain": "applied",
       "evidenceLevel": "Systematic review with meta-analysis of randomised controlled trials",
       "population": "\"adult patients with subacromial pain syndrome lasting for more than 3 months\" (Lähdeoja 2020).",
       "candidateSources": [
@@ -48,6 +51,7 @@
     {
       "slot": "claim-slot:l5-progressive-comparisons",
       "statement": "A 2020 systematic review found uncertain clinical benefit for progressive and resisted exercise and no significant benefit for non-progressive or non-resisted exercise, each versus placebo or no treatment at more than 6 weeks to 6 months, in rotator cuff related shoulder pain; evidence was low certainty and the categories were not compared directly.",
+      "domain": "applied",
       "evidenceLevel": "Systematic review with meta-analysis of randomised controlled trials",
       "population": "\"people with rotator cuff related pain\" (Naunton 2020).",
       "candidateSources": [
@@ -99,7 +103,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance from the British Elbow & Shoulder Society reports evidence that exercise reduces pain in the short term (8 weeks to 6 months) and improves function. It rates that recommendation as conditional, based on low-certainty evidence, and says the most effective exercise approach remains uncertain.",
+        "content": "For subacromial shoulder pain, a specific condition that a clinician diagnoses, UK specialist guidance from the British Elbow & Shoulder Society reports evidence that exercise reduces pain over 8 weeks to 6 months and improves the function patients report, at follow-up of up to six months. It grades that recommendation as conditional and positive, on low evidence, and says the best physiotherapy, exercise or manual therapy approach is still uncertain.",
         "support": "science",
         "claimIds": [
           "claim-slot:l5-subacromial-exercise"
@@ -218,12 +222,12 @@
         "content": {
           "prompt": "What does UK specialist guidance report about exercise for subacromial shoulder pain?",
           "options": [
-            "It reduces pain in the short term and improves function; the recommendation is conditional, on low-certainty evidence, and the best approach is uncertain",
+            "It reduces pain over 8 weeks to 6 months and improves patient-reported function; the recommendation is conditional, on low evidence, and the best approach is uncertain",
             "One exercise programme is proven best",
             "Exercise does not help"
           ],
           "answerIndex": 0,
-          "explanation": "The guidance reports that exercise reduces short-term pain and improves function, rates this as a conditional recommendation on low-certainty evidence, and says the most effective approach remains uncertain."
+          "explanation": "The guidance reports that exercise reduces pain over 8 weeks to 6 months and improves patient-reported function, grades this conditional positive on low evidence, and says the best approach is still uncertain."
         },
         "support": "science",
         "claimIds": [
