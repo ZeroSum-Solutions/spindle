@@ -286,8 +286,11 @@ function Swatch({ swatch }: { swatch: ThemeSwatch }) {
           <dl className="flex flex-col gap-2 text-label">
             {rows.map((r) => (
               <div key={r.label} className="flex items-center gap-2">
-                {r.sample}
-                <dt className="text-text-muted">{r.label}</dt>
+                {/* The sample sits inside the term: a <div> in a <dl> may hold only <dt> and <dd>. */}
+                <dt className="flex items-center gap-2 text-text-muted">
+                  {r.sample}
+                  {r.label}
+                </dt>
                 <dd data-allow-number className="ml-auto font-mono text-code text-text">{r.value}</dd>
               </div>
             ))}

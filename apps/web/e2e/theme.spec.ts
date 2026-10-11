@@ -85,13 +85,14 @@ test.describe("theme choice", () => {
     await context.close();
   });
 
-  test("the server sends the theme script at the top of <head>, before any stylesheet or body", async ({ request }) => {
+  test("the server sends the theme script inline in <head>, so it runs before <body> is parsed", async ({ request }) => {
     const html = await (await request.get("/")).text();
     const head = html.slice(0, html.indexOf("<body"));
-    const script = head.indexOf("spindle-theme");
-    expect(script, "theme script in <head>").toBeGreaterThan(-1);
-    const firstStyle = head.search(/<link[^>]+rel="stylesheet"/);
-    if (firstStyle > -1) expect(script, "script before the first stylesheet").toBeLessThan(firstStyle);
+    const at = head.indexOf("spindle-theme");
+    expect(at, "theme script in <head>").toBeGreaterThan(-1);
+    // Inline and parser-blocking: no src, no async or defer.
+    const open = head.lastIndexOf("<script", at);
+    expect(head.slice(open, head.indexOf(">", open) + 1)).toBe("<script>");
   });
 
   test("?theme= sets and keeps the theme against the system setting", async ({ browser }) => {
