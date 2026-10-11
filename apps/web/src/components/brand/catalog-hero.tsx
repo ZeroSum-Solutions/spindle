@@ -18,7 +18,8 @@ export function CatalogHero({
   brand: MemberBrandView;
   hero: CatalogHeroView;
   fontFamily: string;
-  action: NavLink;
+  /** The one ink action; absent when there is nothing to start (no assigned course). */
+  action?: NavLink;
   headingLevel?: 1 | 2;
 }) {
   const Heading = headingLevel === 1 ? "h1" : "h2";
@@ -51,6 +52,7 @@ export function CatalogHero({
           </div>
         </div>
       </div>
+      {action ? (
       <div className="mx-auto w-full max-w-[1200px] px-4 py-6 md:px-8">
         <a
           data-catalog-action
@@ -61,6 +63,7 @@ export function CatalogHero({
           <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />
         </a>
       </div>
+      ) : null}
     </div>
   );
 }

@@ -1,11 +1,19 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, type CSSProperties } from "react";
 import { ArrowRight } from "lucide-react";
 import { CourseRow } from "@/components/learn/course-row";
 import { LearnShell, LoadingNote } from "@/components/learn/shell";
 import { learnerGym, myAssignments, type AssignmentSummary } from "@/lib/learning/load";
 import { byCourse } from "@/lib/learning/view";
 import { loadModuleStatus } from "@/lib/learning/quiz-server";
+import { memberBrand, memberCourseCards } from "@/lib/learning/tenant";
+import { brandFromDto, cardFromDto } from "@/components/brand/adapt";
+import { BrandHeader } from "@/components/brand/brand-header";
+import { CatalogHero } from "@/components/brand/catalog-hero";
+import { CourseSection } from "@/components/brand/course-section";
+import { brandScopeVars, type CourseCardView } from "@/components/brand/view";
+import { tenantFontClass } from "@/lib/theme/fonts";
+import type { CourseCardDto } from "@spindle/schema";
 
 export default function LearnPage(props: PageProps<"/gyms/[slug]/learn">) {
   return (
@@ -24,7 +32,7 @@ export default function LearnPage(props: PageProps<"/gyms/[slug]/learn">) {
 async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
   const { slug } = await params;
   const ctx = await learnerGym(slug);
-  const items = await myAssignments(ctx);
+  const [items, brandDto] = await Promise.all([myAssignments(ctx), memberBrand(ctx)]);
   const base = `/gyms/${ctx.org.slug}/learn`;
   const courses = byCourse(items);
   // Completion labels come from the server's module status, never from lesson counts alone.
@@ -35,6 +43,19 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
   const resume = courses
     .map((c) => c.latest)
     .find((a): a is Extract<AssignmentSummary, { available: true }> => a.available && a.view.next !== null);
+
+  // P4-A2: a gym with a saved, valid brand gets the branded catalog; otherwise the standard list.
+  const branded = brandFromDto(brandDto);
+  if (branded) {
+    const cards = await memberCourseCards(ctx);
+    const assignedByCourse = new Map(courses.map((c) => [c.latest.courseId, c.latest.id]));
+    const start = resume
+      ? { label: "Continue where you left off", href: `${base}/${resume.id}/${resume.view.next!.slug}` }
+      : courses[0]
+        ? { label: "Start your first course", href: `${base}/${courses[0].latest.id}` }
+        : undefined;
+    return <BrandedCatalog branded={branded} cards={cards} assignedByCourse={assignedByCourse} base={base} action={start} />;
+  }
 
   return (
     <LearnShell gym={ctx.org.name} back={{ href: `/gyms/${ctx.org.slug}`, label: ctx.org.name }}>
@@ -70,5 +91,55 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
       )}
       </div>
     </LearnShell>
+  );
+}
+
+/**
+ * The member catalog of a branded gym: the tenant header band, the hero, then the assigned courses
+ * as cards, grouped as Gym method, Base (under the seal) and Modality. Only courses the member is
+ * assigned appear; each card opens the newest assigned version.
+ */
+function BrandedCatalog({
+  branded,
+  cards,
+  assignedByCourse,
+  base,
+  action,
+}: {
+  branded: NonNullable<ReturnType<typeof brandFromDto>>;
+  cards: CourseCardDto[];
+  assignedByCourse: Map<string, string>;
+  base: string;
+  action: { label: string; href: string } | undefined;
+}) {
+  const { brand, hero } = branded;
+  const font = tenantFontClass(brand.font);
+  const shown = cards.flatMap((c) => {
+    const assignment = assignedByCourse.get(c.courseId);
+    return assignment ? [cardFromDto(c, `${base}/${assignment}`)] : [];
+  });
+  const of = (layer: CourseCardView["layer"]) => shown.filter((c) => c.layer === layer);
+  return (
+    <div className={`${font.className} flex flex-1 flex-col bg-canvas`} style={brandScopeVars(brand.colors) as CSSProperties}>
+      <BrandHeader
+        brand={brand}
+        fontFamily={font.family}
+        links={[
+          { label: "Your courses", href: base },
+          { label: "Your gyms", href: "/gyms" },
+        ]}
+      />
+      <main className="flex flex-1 flex-col">
+        <CatalogHero brand={brand} hero={hero} fontFamily={font.family} action={action} headingLevel={1} />
+        <div className="@container mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-4 pb-12 md:px-8">
+          {shown.length === 0 ? (
+            <p className="rounded-card border border-border bg-surface p-6 text-text-muted">Nothing is assigned to you in this gym yet.</p>
+          ) : null}
+          <CourseSection id="catalog-gym" kind="method" title="From your gym" courses={of("method")} colors={brand.colors} fontFamily={font.family} level={2} />
+          <CourseSection id="catalog-base" kind="base" title="Base curriculum" courses={of("base")} colors={brand.colors} fontFamily={font.family} level={2} seal />
+          <CourseSection id="catalog-modality" kind="modality" title="Modality courses" courses={of("modality")} colors={brand.colors} fontFamily={font.family} level={2} />
+        </div>
+      </main>
+    </div>
   );
 }

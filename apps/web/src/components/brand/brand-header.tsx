@@ -9,7 +9,7 @@ import { displayName, type MemberBrandView, type NavLink } from "./view";
 export function BrandHeader({ brand, fontFamily, links = [] }: { brand: MemberBrandView; fontFamily: string; links?: readonly NavLink[] }) {
   const shown = links.slice(0, 2);
   return (
-    <header className="@container bg-band text-on-band" style={{ "--focus-ring": "var(--color-on-band)" } as CSSProperties}>
+    <header data-brand-header className="@container bg-band text-on-band" style={{ "--focus-ring": "var(--color-on-band)" } as CSSProperties}>
       <div className="mx-auto flex min-h-16 w-full max-w-[1200px] flex-col justify-center gap-0.5 px-4 py-3 @[480px]:flex-row @[480px]:items-center @[480px]:justify-between @[480px]:gap-8 md:px-8">
         <span data-brand-name className="min-w-0 text-[20px] font-semibold leading-[1.15] tracking-[-0.01em]" style={{ fontFamily, overflowWrap: "anywhere" }}>
           {displayName(brand)}

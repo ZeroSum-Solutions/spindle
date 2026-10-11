@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { LessonBlocks, LessonMedia, LessonResources } from "@/components/learn/blocks";
+import { CoachNote } from "@/components/brand/coach-note";
 import { CompleteLesson } from "@/components/learn/complete-lesson";
 import { IntegrityAlert, LayerLabel, LessonStateDetail, SupportLegend, VersionTag } from "@/components/learn/labels";
 import { receiptLine } from "@/lib/learning/presentation";
@@ -84,6 +85,9 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
             </p>
             {lesson.summary ? <p className="text-text-muted">{lesson.summary}</p> : null}
           </header>
+
+          {/* A gym course's live welcome note opens its first lesson (practice-based, frozen name). */}
+          {index === 0 && detail.texts.welcome ? <CoachNote note={detail.texts.welcome} /> : null}
 
           {integrity === null ? (
             <IntegrityAlert title="We could not check the evidence status of this lesson right now">
