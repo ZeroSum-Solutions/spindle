@@ -1340,6 +1340,7 @@ export type Database = {
       member_tenant_texts: {
         Args: { p_org: string }
         Returns: {
+          admitted: boolean
           slot: string
           text: string
         }[]
