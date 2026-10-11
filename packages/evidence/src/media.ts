@@ -24,7 +24,7 @@ export async function checkYouTubeEmbed(ctx: EvidenceContext, videoId: string): 
   const watch = `https://www.youtube.com/watch?v=${videoId}`;
   const url = `https://www.youtube.com/oembed?${new URLSearchParams({ url: watch, format: "json" })}`;
   try {
-    const data = await ctx.http.fetchJson(url, oembedSchema, { userAgent: ctx.userAgent(), nullStatuses: [401, 403] });
+    const data = await ctx.http.fetchJson(url, oembedSchema, { userAgent: ctx.userAgent(), nullStatuses: [401, 403], requireStatus: 200 });
     if (data) return { status: "embeddable", title: data.title, channel: data.author_name, checkedAt };
     return { status: "not_embeddable", detail: "oEmbed refused embedding (401/403)", checkedAt };
   } catch (e) {
@@ -37,6 +37,21 @@ export async function checkYouTubeEmbed(ctx: EvidenceContext, videoId: string): 
 export function embedRecheckActions(check: EmbedCheck): { outcome: "pass" | "fail"; disable: boolean; notes: string } {
   if (check.status === "embeddable") return { outcome: "pass", disable: false, notes: "oEmbed 200" };
   return { outcome: "fail", disable: true, notes: `oEmbed ${check.status}: ${check.detail}`.slice(0, 2000) };
+}
+
+export type RefreshAction =
+  | { action: "refresh"; available: true; title: string; channel: string }
+  | { action: "unavailable"; available: false; embedOutcome: "fail"; notes: string }
+  | { action: "unknown"; detail: string };
+
+/**
+ * What a metadata refresh does: store fresh metadata; for a confirmed refusal or removal, store
+ * `available: false` and record a failed embed check (playback stops); for a transient error, change nothing.
+ */
+export function metadataRefreshAction(check: EmbedCheck): RefreshAction {
+  if (check.status === "embeddable") return { action: "refresh", available: true, title: check.title, channel: check.channel };
+  if (check.status === "error") return { action: "unknown", detail: check.detail };
+  return { action: "unavailable", available: false, embedOutcome: "fail", notes: `oEmbed ${check.status}: ${check.detail}`.slice(0, 2000) };
 }
 
 /** Provider metadata older than this is refreshed (it is served only while under 30 days old). */

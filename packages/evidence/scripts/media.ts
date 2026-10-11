@@ -9,7 +9,7 @@
  */
 import { createContext } from "../src/context";
 import { requireUuid } from "../src/guards";
-import { checkYouTubeEmbed, embedRecheckActions, METADATA_REFRESH_DAYS, YOUTUBE_ID } from "../src/media";
+import { checkYouTubeEmbed, embedRecheckActions, METADATA_REFRESH_DAYS, metadataRefreshAction, YOUTUBE_ID } from "../src/media";
 import { args, lit, main, publisherId, serviceValue, sql } from "./lib/cli";
 
 const call = (fn: string, ...params: string[]) => serviceValue(`public.${fn}(${[lit(publisherId()), ...params].join(", ")})`);
@@ -57,12 +57,20 @@ main(async () => {
     let failed = 0;
     for (const m of activeMedia(`(md.fetched_at is null or md.fetched_at < now() - interval '${METADATA_REFRESH_DAYS} days')`)) {
       const check = await checkYouTubeEmbed(ctx, m.video_id);
-      if (check.status === "embeddable") {
-        call("publisher_refresh_media_metadata", lit(m.id), `${lit(JSON.stringify({ title: check.title.slice(0, 500), channel: check.channel.slice(0, 200), available: true, fetchedAt: check.checkedAt }))}::jsonb`);
+      const act = metadataRefreshAction(check);
+      if (act.action === "refresh") {
+        call("publisher_refresh_media_metadata", lit(m.id), `${lit(JSON.stringify({ title: act.title.slice(0, 500), channel: act.channel.slice(0, 200), available: true, fetchedAt: check.checkedAt }))}::jsonb`);
         console.log(`${m.id}: refreshed`);
+      } else if (act.action === "unavailable") {
+        // Confirmed refusal or removal (Sol C06): store it and fail the embed check, so playback stops.
+        const prev = JSON.parse(sql(`select coalesce((select json_build_object('title', title, 'channel', channel) from public.practice_media_metadata where media_id = ${lit(m.id)}), '{}')`)) as { title?: string; channel?: string };
+        call("publisher_record_media_check", lit(m.id), `${lit(JSON.stringify({ kind: "embed", outcome: "fail", checkedAt: check.checkedAt, notes: act.notes }))}::jsonb`);
+        call("publisher_refresh_media_metadata", lit(m.id), `${lit(JSON.stringify({ title: (prev.title ?? "Unavailable video").slice(0, 500), channel: (prev.channel ?? "Unknown channel").slice(0, 200), available: false, fetchedAt: check.checkedAt }))}::jsonb`);
+        failed++;
+        console.log(`${m.id}: ${check.status}; stored as unavailable and the embed check failed`);
       } else {
         failed++;
-        console.log(`${m.id}: ${check.status}; not refreshed (run recheck)`);
+        console.log(`${m.id}: unknown (${act.detail}); nothing changed, try again`);
       }
     }
     return failed > 0 ? 1 : 0;

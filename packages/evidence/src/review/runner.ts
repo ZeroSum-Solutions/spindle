@@ -41,7 +41,9 @@ export function prepareReviewerHome(sourceCodexHome: string): ReviewerHome & { d
 /** Tools and integrations the reviewer never needs. It reads only the prompt. */
 export const DISABLED_FEATURES = [
   "shell_tool", "unified_exec", "browser_use", "browser_use_external", "in_app_browser", "computer_use", "apps", "plugins",
-  "remote_plugin", "hooks", "code_mode_host", "skill_search", "tool_suggest", "goals", "sleep_tool",
+  "remote_plugin", "hooks", "code_mode_host", "skill_search", "tool_suggest", "goals", "sleep_tool", "view_image",
+  "image_generation", "multi_agent", "memories", "browser_use_full_cdp_access", "browser_annotation_api", "in_app_local_automation",
+  "unified_exec_tty", "workspace_dependencies", "skill_mcp_dependency_install",
 ] as const;
 
 export interface CodexOptions {
@@ -112,15 +114,17 @@ export function codexRunner(opts: CodexOptions = {}): ReviewRunner {
   return {
     async run(prompt, outputSchema): Promise<RunnerOutput> {
       const dir = await mkdtemp(join(tmpdir(), "spindle-review-"));
-      const home = prepareReviewerHome(process.env.CODEX_HOME ?? join(homedir(), ".codex"));
+      let home: ReturnType<typeof prepareReviewerHome> | null = null;
       try {
+        home = prepareReviewerHome(process.env.CODEX_HOME ?? join(homedir(), ".codex"));
+        const reviewerHome = home;
         const schemaFile = join(dir, "schema.json");
         const outFile = join(dir, "answer.json");
         await writeFile(schemaFile, JSON.stringify(outputSchema));
         const { code, stdout } = await new Promise<{ code: number; stdout: string }>((resolve, reject) => {
           const child = spawn(opts.codexBin ?? "codex", codexArgs(dir, schemaFile, outFile, opts), {
             cwd: dir,
-            env: reviewerEnv(process.env, home),
+            env: reviewerEnv(process.env, reviewerHome),
             stdio: ["pipe", "pipe", "pipe"],
           });
           let out = "";
@@ -142,7 +146,7 @@ export function codexRunner(opts: CodexOptions = {}): ReviewRunner {
         return { lastMessage, model: modelFromEvents(stdout) || requested, requestedModel: requested, session: sessionFromEvents(stdout), exitCode: code };
       } finally {
         await rm(dir, { recursive: true, force: true });
-        home.dispose();
+        home?.dispose();
       }
     },
   };

@@ -1,6 +1,6 @@
 // Pure catalog functions. Ported from the trainer-academy prototype and changed
 // to take the catalog as an argument instead of importing compiled content.
-import { isVideoHostUrl, type Catalog, type Course, type Lesson } from "@spindle/schema";
+import { isVideoHostUrl, RESERVED_LESSON_SLUGS, type Catalog, type Course, type Lesson } from "@spindle/schema";
 
 export interface LessonLocation {
   course: Course;
@@ -32,6 +32,7 @@ export function validateCatalog(catalog: Catalog, provenance: ProvenanceLookup, 
       for (const lesson of part.lessons) {
         claimUnique(ids, lesson.id);
         invariant(!lessonSlugs.has(lesson.slug), `Duplicate lesson slug ${course.slug}/${lesson.slug}`);
+        invariant(!RESERVED_LESSON_SLUGS.includes(lesson.slug), `${lesson.id} uses the reserved lesson slug ${lesson.slug}`);
         lessonSlugs.add(lesson.slug);
         for (const block of lesson.blocks) {
           if (block.kind === "image") {

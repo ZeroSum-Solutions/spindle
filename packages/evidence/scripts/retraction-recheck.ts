@@ -21,6 +21,9 @@ main(async () => {
       and not exists (select 1 from public.source_retractions r where r.source_id = s.id)`)) as { id: string; doi: string }[];
   const noDoi = sql(`select count(*) from public.sources s where s.doi is null and exists (select 1 from public.claim_sources cs where cs.source_id = s.id)
     and not exists (select 1 from public.source_retractions r where r.source_id = s.id)`);
+  const known = sql(`select count(*) from public.sources s where exists (select 1 from public.claim_sources cs where cs.source_id = s.id)
+    and exists (select 1 from public.source_retractions r where r.source_id = s.id)`);
+  if (known !== "0") console.log(`${known} cited sources already have a recorded retraction: their claims cannot publish; this run is not clean`);
   let recorded = 0;
   let unknown = 0;
   for (const s of sources) {
@@ -40,5 +43,5 @@ main(async () => {
   }
   if (noDoi !== "0") console.log(`${noDoi} cited sources have no DOI (textbook or nomenclature): check them by hand; this run is not clean`);
   console.log(`checked ${sources.length}: ${recorded} retracted, ${unknown} unknown`);
-  return recorded > 0 || unknown > 0 || noDoi !== "0" ? 1 : 0;
+  return recorded > 0 || unknown > 0 || noDoi !== "0" || known !== "0" ? 1 : 0;
 });

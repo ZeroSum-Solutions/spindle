@@ -45,10 +45,9 @@ describe("video blocks", () => {
 });
 
 describe("reserved lesson slugs", () => {
-  it("refuses the slug quiz (the module quiz route) and allows look-alikes", () => {
+  it("keeps snapshot parsing lenient (a historical lesson named quiz stays readable); authoring refuses it", () => {
     const lesson = { id: "l1", slug: "quiz", title: "x", summary: "", durationMinutes: 5, format: "article", objectives: [], anatomyIds: [], blocks: [], media: [], resources: [] };
-    expect(lessonSchema.safeParse(lesson).success).toBe(false);
-    expect(lessonSchema.safeParse({ ...lesson, slug: "quizzes" }).success).toBe(true);
+    expect(lessonSchema.safeParse(lesson).success).toBe(true);
     expect(RESERVED_LESSON_SLUGS).toContain("quiz");
   });
 });

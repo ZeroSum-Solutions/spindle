@@ -78,11 +78,14 @@ export async function ingestPaper(ctx: EvidenceContext, ref: { pmid?: string; do
   let pubmed: WorkSummary | null = null;
   if (ref.pmid) {
     pubmed = await attempt(issues, "pubmed", getPubMedByPmid(ctx, ref.pmid));
+    if (pubmed && pubmed.pmid !== ref.pmid) {
+      issues.push(`PubMed returned PMID ${pubmed.pmid} for ${ref.pmid}; record ignored`);
+      pubmed = null;
+    }
     if (!pubmed) issues.push(`pubmed has no record for PMID ${ref.pmid}`);
     else if (pubmed.doi && doi && pubmed.doi !== doi) issues.push(`pubmed lists DOI ${pubmed.doi}, not ${doi}`);
     doi ??= pubmed?.doi ?? null;
   }
-  if (!doi) issues.push("no DOI: verifySource needs one");
 
   // The PubMed record's full abstract, matched on PMID (and DOI); else the DOI record.
   let epmc: EuropePmcWork | null = null;
@@ -92,6 +95,9 @@ export async function ingestPaper(ctx: EvidenceContext, ref: { pmid?: string; do
     issues.push(`europepmc record lists DOI ${epmc.doi}, not ${doi}; record ignored`);
     epmc = null;
   }
+  // The matched MED record may list the DOI PubMed's summary lacks.
+  doi ??= epmc?.doi ?? null;
+  if (!doi) issues.push("no DOI: verifySource needs one");
   const pmid = ref.pmid ?? epmc?.pmid ?? pubmed?.pmid ?? null;
   // A PMID's abstract counts for the DOI that verifySource checks only when a record ties them.
   if (ref.pmid && doi && pubmed?.doi !== doi && epmc?.doi !== doi) issues.push(`no record ties PMID ${ref.pmid} to DOI ${doi}`);
@@ -110,7 +116,8 @@ export async function ingestPaper(ctx: EvidenceContext, ref: { pmid?: string; do
     issues.push(`the abstract has ${abstract.text.length} characters; a review packet needs at least ${MIN_ABSTRACT_CHARS}`);
   }
 
-  const pubTypes = epmc?.pubTypes ?? [];
+  // The matched Europe PMC record's types, else the PubMed record's (the Crossref fallback has none).
+  const pubTypes = epmc?.pubTypes ?? pubmed?.pubTypes ?? [];
   const title = check?.title ?? epmc?.title ?? pubmed?.title ?? null;
   const kind = paperKind(pubTypes);
   if (!kind) issues.push(`publication types (${pubTypes.join(", ") || "none"}) are not a systematic review, meta-analysis or position stand`);
@@ -122,7 +129,7 @@ export async function ingestPaper(ctx: EvidenceContext, ref: { pmid?: string; do
 
   const ready =
     doi !== null && title !== null && kind !== null && abstract !== null && abstract.text.length >= MIN_ABSTRACT_CHARS &&
-    retraction === "not_retracted" && !issues.some((i) => /lists DOI|has no record for PMID|no record ties PMID/.test(i));
+    retraction === "not_retracted" && !issues.some((i) => /lists DOI|has no record for PMID|no record ties PMID|PubMed returned PMID/.test(i));
   return {
     doi,
     pmid,
