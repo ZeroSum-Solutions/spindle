@@ -11,7 +11,7 @@ describe("admitTenantText on the shared fixtures", () => {
       expect(r).toMatchObject({ ok: true, text: f.detail ?? f.text, version: TENANT_TEXT_RULES.version });
     } else {
       expect(r).toMatchObject({ ok: false, reason: f.expect });
-      if (f.expect === "denied") expect(r.ok ? null : r.detail).toBe(f.detail);
+      if (f.expect === "denied" || f.expect === "claim") expect(r.ok ? null : r.detail).toBe(f.detail);
     }
   });
 

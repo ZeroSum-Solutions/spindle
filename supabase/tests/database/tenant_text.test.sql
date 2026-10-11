@@ -3,7 +3,7 @@
 -- checks the block below is that list), LEAD overrides, and the rule set in force. Synthetic text only.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(82);
+select plan(92);
 
 insert into auth.users (id, email, email_confirmed_at) values
   ('00000000-0000-0000-0000-0000000000a1', 'alice@a.test', now()),
@@ -27,10 +27,10 @@ $$;
 create function pg_temp.reset_role() returns void language sql as $$
   select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
 $$;
-/** "ok:<stored text>", or the reason, with the reserved term for "denied". */
+/** "ok:<stored text>", or the reason, with the reserved term for "denied" and the pattern for "claim". */
 create function pg_temp.outcome(a jsonb) returns text language sql as $$
   select case when (a ->> 'ok')::boolean then 'ok:' || (a ->> 'text')
-    else (a ->> 'reason') || case when a ->> 'reason' = 'denied' then ':' || (a ->> 'detail') else '' end end
+    else (a ->> 'reason') || case when a ->> 'reason' in ('denied', 'claim') then ':' || (a ->> 'detail') else '' end end
 $$;
 create function pg_temp.admit(slot text, txt text, org uuid default 'a0000000-0000-4000-8000-000000000001') returns text
 language sql as $$ select pg_temp.outcome(private.admit_tenant_text(org, slot, txt)) $$;
@@ -55,62 +55,72 @@ insert into fx values
   (14, E'brand_name', E'Cafe\u0301 Barbell', E'ok', E'Caf\u00e9 Barbell'),
   (15, E'brand_name', E'Iron\u3164Yard', E'ok', null),
   (16, E'catalog_tagline', E'Strong at 40, 50 and 60+.', E'ok', null),
-  (17, E'catalog_tagline', E'Backed by science', E'denied', E'science'),
-  (18, E'brand_name', E'PT reviewed', E'denied', E'reviewed'),
-  (19, E'brand_name', E'Spindle certified', E'denied', E'spindle'),
-  (20, E'catalog_headline', E'Sc1ence first', E'denied', E'science'),
-  (21, E'catalog_headline', E'5cience first', E'denied', E'science'),
-  (22, E'catalog_headline', E'$CIENCE', E'denied', E'science'),
-  (23, E'catalog_headline', E'Science!', E'denied', E'science'),
-  (24, E'catalog_headline', E's c i e n c e', E'denied', E'science'),
-  (25, E'catalog_headline', E's.c.i.e.n.c.e', E'denied', E'science'),
-  (26, E'catalog_headline', E'\uff53\uff43\uff49\uff45\uff4e\uff43\uff45', E'denied', E'science'),
-  (27, E'catalog_headline', E'\u0455\u0441\u0456\u0435n\u0441\u0435', E'denied', E'science'),
-  (28, E'catalog_headline', E'Sc\u00edenc\u00e9', E'denied', E'science'),
-  (29, E'catalog_headline', E'Sci\u3164ence', E'denied', E'science'),
-  (30, E'catalog_headline', E'BackedByScience', E'denied', E'science'),
-  (31, E'catalog_tagline', E'Evidence-based plans', E'denied', E'evidence'),
-  (32, E'catalog_tagline', E'Peer-reviewed programs', E'denied', E'peer reviewed'),
-  (33, E'catalog_tagline', E'Practice-based only', E'denied', E'practice based'),
-  (34, E'welcome', E'If it hurts, stop and refer.', E'denied', E'stop and refer'),
-  (35, E'coach_role', E'Physical therapist', E'denied', E'physical therapist'),
-  (36, E'welcome', E'As Smith et al showed', E'denied', E'et al'),
-  (37, E'coach_name', E'Dr. Lee', E'denied', E'dr'),
-  (38, E'coach_name', E'D R Lee', E'denied', E'dr'),
-  (39, E'course_title', E'We cure back pain', E'denied', E'cure'),
-  (40, E'course_title', E'Treat knee pain', E'denied', E'treat'),
-  (41, E'welcome', E'See pmid 12345', E'denied', E'pmid'),
-  (42, E'catalog_tagline', E'Clinically proven', E'denied', E'clinically'),
-  (43, E'brand_name', E'Base Curriculum Gym', E'denied', E'base curriculum'),
-  (44, E'welcome', E'javascript:alert(1)', E'link', null),
-  (45, E'welcome', E'mailto:coach', E'link', null),
-  (46, E'welcome', E'\uff4a\uff41\uff56\uff41\uff53\uff43\uff52\uff49\uff50\uff54\uff1ax', E'link', null),
-  (47, E'welcome', E'Visit www.example.org', E'link', null),
-  (48, E'welcome', E'Visit example.org today', E'link', null),
-  (49, E'welcome', E'//example', E'link', null),
-  (50, E'welcome', E'coach@example', E'link', null),
-  (51, E'brand_name', E'<b>Gym</b>', E'link', null),
-  (52, E'welcome', E'See doi 10.1000/182', E'link', null),
-  (53, E'brand_name', E'Sci\u200bence', E'control', null),
-  (54, E'brand_name', E'Gym\u202e', E'control', null),
-  (55, E'brand_name', E'Gym\u2060Yard', E'control', null),
-  (56, E'brand_name', E'Gym\u00adYard', E'control', null),
-  (57, E'welcome', E'Line\u2028break', E'control', null),
-  (58, E'welcome', E'Tab\u0009inside', E'control', null),
-  (59, E'brand_name', E'\ufeffGym', E'ok', E'Gym'),
-  (60, E'brand_name', E'G\ufeffym', E'control', null),
-  (61, E'brand_name', E'\u3164', E'blank', null),
-  (62, E'brand_name', E'\u2800\u2800', E'blank', null),
-  (63, E'brand_name', E'\u0301', E'blank', null),
-  (64, E'brand_name', E'', E'length', null),
-  (65, E'brand_name', E'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', E'length', null),
-  (66, E'brand_name', E'\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb', E'ok', null),
-  (67, E'welcome', E'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', E'length', null),
-  (68, E'nope', E'Andrew Fitness', E'unknown-slot', null)
+  (17, E'welcome', E'Coaching since 2012.', E'ok', null),
+  (18, E'brand_name', E'Est. 2015 Barbell', E'ok', null),
+  (19, E'course_summary', E'Work up to 80% of 1RM.', E'ok', null),
+  (20, E'catalog_tagline', E'Open 24/7', E'ok', null),
+  (21, E'welcome', E'Lower the bar by 2 inches.', E'ok', null),
+  (22, E'catalog_tagline', E'Backed by science', E'denied', E'science'),
+  (23, E'brand_name', E'PT reviewed', E'denied', E'reviewed'),
+  (24, E'brand_name', E'Spindle certified', E'denied', E'spindle'),
+  (25, E'catalog_headline', E'Sc1ence first', E'denied', E'science'),
+  (26, E'catalog_headline', E'5cience first', E'denied', E'science'),
+  (27, E'catalog_headline', E'$CIENCE', E'denied', E'science'),
+  (28, E'catalog_headline', E'Science!', E'denied', E'science'),
+  (29, E'catalog_headline', E's c i e n c e', E'denied', E'science'),
+  (30, E'catalog_headline', E's.c.i.e.n.c.e', E'denied', E'science'),
+  (31, E'catalog_headline', E'\uff53\uff43\uff49\uff45\uff4e\uff43\uff45', E'denied', E'science'),
+  (32, E'catalog_headline', E'\u0455\u0441\u0456\u0435n\u0441\u0435', E'denied', E'science'),
+  (33, E'catalog_headline', E'Sc\u00edenc\u00e9', E'denied', E'science'),
+  (34, E'catalog_headline', E'Sci\u3164ence', E'denied', E'science'),
+  (35, E'catalog_headline', E'BackedByScience', E'denied', E'science'),
+  (36, E'catalog_tagline', E'Evidence-based plans', E'denied', E'evidence'),
+  (37, E'catalog_tagline', E'Peer-reviewed programs', E'denied', E'peer reviewed'),
+  (38, E'catalog_tagline', E'Practice-based only', E'denied', E'practice based'),
+  (39, E'welcome', E'If it hurts, stop and refer.', E'denied', E'stop and refer'),
+  (40, E'coach_role', E'Physical therapist', E'denied', E'physical therapist'),
+  (41, E'welcome', E'As Smith et al showed', E'denied', E'et al'),
+  (42, E'coach_name', E'Dr. Lee', E'denied', E'dr'),
+  (43, E'coach_name', E'D R Lee', E'denied', E'dr'),
+  (44, E'course_title', E'We cure back pain', E'denied', E'cure'),
+  (45, E'course_title', E'Treat knee pain', E'denied', E'treat'),
+  (46, E'welcome', E'See pmid 12345', E'denied', E'pmid'),
+  (47, E'catalog_tagline', E'Clinically proven', E'denied', E'clinically'),
+  (48, E'brand_name', E'Base Curriculum Gym', E'denied', E'base curriculum'),
+  (49, E'welcome', E'javascript:alert(1)', E'link', null),
+  (50, E'welcome', E'mailto:coach', E'link', null),
+  (51, E'welcome', E'\uff4a\uff41\uff56\uff41\uff53\uff43\uff52\uff49\uff50\uff54\uff1ax', E'link', null),
+  (52, E'welcome', E'Visit www.example.org', E'link', null),
+  (53, E'welcome', E'Visit example.org today', E'link', null),
+  (54, E'welcome', E'//example', E'link', null),
+  (55, E'welcome', E'coach@example', E'link', null),
+  (56, E'brand_name', E'<b>Gym</b>', E'link', null),
+  (57, E'welcome', E'See doi 10.1000/182', E'link', null),
+  (58, E'welcome', E'Squats help (Smith, 2019).', E'claim', E'citation'),
+  (59, E'welcome', E'As shown (2019), squats help.', E'claim', E'citation'),
+  (60, E'course_summary', E'This reduces pain by 30%', E'claim', E'outcome claim'),
+  (61, E'catalog_tagline', E'Clients get 30% stronger in 8 weeks', E'claim', E'outcome claim'),
+  (62, E'welcome', E'Improves your squat by 12.5 %', E'claim', E'outcome claim'),
+  (63, E'brand_name', E'Sci\u200bence', E'control', null),
+  (64, E'brand_name', E'Gym\u202e', E'control', null),
+  (65, E'brand_name', E'Gym\u2060Yard', E'control', null),
+  (66, E'brand_name', E'Gym\u00adYard', E'control', null),
+  (67, E'welcome', E'Line\u2028break', E'control', null),
+  (68, E'welcome', E'Tab\u0009inside', E'control', null),
+  (69, E'brand_name', E'\ufeffGym', E'ok', E'Gym'),
+  (70, E'brand_name', E'G\ufeffym', E'control', null),
+  (71, E'brand_name', E'\u3164', E'blank', null),
+  (72, E'brand_name', E'\u2800\u2800', E'blank', null),
+  (73, E'brand_name', E'\u0301', E'blank', null),
+  (74, E'brand_name', E'', E'length', null),
+  (75, E'brand_name', E'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', E'length', null),
+  (76, E'brand_name', E'\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb\U0001f3cb', E'ok', null),
+  (77, E'welcome', E'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', E'length', null),
+  (78, E'nope', E'Andrew Fitness', E'unknown-slot', null)
 -- fixtures:end
 ;
 select is(pg_temp.admit(slot, txt),
-  case when expect = 'ok' then 'ok:' || coalesce(detail, txt) else expect || case when expect = 'denied' then ':' || detail else '' end end,
+  case when expect = 'ok' then 'ok:' || coalesce(detail, txt) else expect || case when expect in ('denied', 'claim') then ':' || detail else '' end end,
   format('fixture %s: %s', n, expect))
 from fx order by n;
 

@@ -68,6 +68,12 @@ const lit = (v: string) => `'${v.replace(/'/g, "''")}'`;
 const asUser = (id: string) =>
   `select set_config('role', 'authenticated', true), set_config('request.jwt.claims', ${lit(JSON.stringify({ sub: id, role: "authenticated" }))}, true);`;
 const asService = `select set_config('role', 'service_role', true), set_config('request.jwt.claims', '{"role":"service_role"}', true);`;
+/** As the table owner: the publisher admits a gym course's newest held title, if it is still pending (P4-A2 rev4a). */
+const admitTitle = (publisherId: string, courseId: string) => `select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+      select public.publisher_decide_tenant_text(${lit(publisherId)}, t.id, jsonb_build_object('decision', 'admitted',
+          'reason', 'Synthetic e2e title.', 'textHash', t.text_hash))
+        from (select * from private.tenant_texts where course_id = ${lit(courseId)} and slot = 'course_title' order by seq desc limit 1) t
+        where not exists (select 1 from private.tenant_text_admissions a where a.text_id = t.id);`;
 
 /**
  * A synthetic review run (ADR 0007): CI records receipts through the real RPCs and never calls
@@ -307,11 +313,16 @@ export class PlayerWorld {
       .at(-1)!;
   }
 
-  /** Saves and publishes a gym method course as its owner or lead. Returns the version id. */
+  /**
+   * Saves and publishes a gym method course as its owner or lead, with the publisher admitting its
+   * held title in between (P4-A2 rev4a). Returns the version id.
+   */
   publishMethod(org: { id: string }, author: Actor, course: Json): string {
     if (!this.courses.includes(String(course.id))) this.courses.push(String(course.id));
     return sql(`begin; ${asUser(author.id)}
       select public.save_course_draft(${lit(org.id)}, ${lit(JSON.stringify(course))}::jsonb);
+      ${admitTitle(this.publisherId, String(course.id))}
+      ${asUser(author.id)}
       select public.publish_course(${lit(String(course.id))});
       commit;`)
       .split("\n")

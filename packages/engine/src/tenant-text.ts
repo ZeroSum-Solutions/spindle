@@ -13,12 +13,14 @@
 //   4. Visible text required: blank characters (default-ignorables such as U+3164, and U+2800)
 //      do not count.
 //   5. No link shapes: markup, "@", any scheme, "//", "www.", name.tld, DOI prefixes.
+//   5a. No citation or outcome-claim shapes: a year in parentheses ("(2019)"), a percentage
+//      with an outcome ("reduces pain by 30%", "30% stronger"). Not overridable.
 //   6. Unless LEAD recorded an override for this exact text in this org and slot: no reserved
 //      word, matched as a whole token after folding (NFKC, blanks dropped, camelCase split, ASCII
 //      lowercase, marks dropped, confusables mapped). Tokens are checked plain and with leet
 //      digits and symbols mapped (1 as i, then as l); runs of single letters are joined first
 //      ("s c i e n c e"); multi-word terms match as token sequences.
-// Years and percentages are ordinary practice copy and pass.
+// Otherwise years and percentages are ordinary practice copy and pass ("Est. 2015", "80% of 1RM").
 import { TENANT_TEXT_RULES } from "./tenant-text-rules";
 
 export type TenantTextSlot =
@@ -40,15 +42,19 @@ export interface TenantTextRules {
   chars: { trim: Ranges; refuse: Ranges; blank: Ranges; visible: Ranges; marks: Ranges };
   /** Regular expressions over the folded-for-links copy; the same source runs in Postgres (ARE) and JavaScript. */
   links: readonly string[];
+  /** Citation and outcome-claim shapes over the same copy as the links (years and percentages pass elsewhere). Never overridden. */
+  claims: readonly { name: string; re: string }[];
   confusables: Record<string, string>;
   leet: Record<string, string>;
   /** What "1" maps to, tried in turn. */
   leetOne: readonly string[];
   deny: readonly string[];
   denyPhrases: readonly (readonly string[])[];
+  /** What members see for a held slot that has no admitted text. */
+  fallbacks: { brand_name: string; course_title: string };
 }
 
-export type AdmissionReason = "required" | "unknown-slot" | "control" | "length" | "blank" | "link" | "denied";
+export type AdmissionReason = "required" | "unknown-slot" | "control" | "length" | "blank" | "link" | "claim" | "denied";
 
 export type TenantTextAdmission =
   | { ok: true; text: string; version: string; overridden: boolean }
@@ -80,6 +86,7 @@ function compile(rules: TenantTextRules) {
     visible: cls(rules.chars.visible),
     marks: cls(rules.chars.marks, "gu"),
     links: rules.links.map((l) => new RegExp(l)),
+    claims: rules.claims.map((c) => ({ name: c.name, re: new RegExp(c.re) })),
     deny: new Set(rules.deny),
   };
 }
@@ -184,6 +191,8 @@ export function admitTenantText(
   if (!c.visible.test(text.replace(c.blank, ""))) return no("blank", "must contain visible text");
   const lc = linkCopy(text, rules);
   if (c.links.some((re) => re.test(lc))) return no("link", "must be plain text, without links, addresses or markup");
+  const claim = c.claims.find((x) => x.re.test(lc));
+  if (claim) return no("claim", claim.name);
   const overridden = overrides.some((o) => o.orgId === input.orgId && o.slot === input.slot && o.text === text);
   if (!overridden) {
     const term = reservedTerm(text, rules);
@@ -191,5 +200,8 @@ export function admitTenantText(
   }
   return { ok: true, text, version, overridden };
 }
+
+/** What members see while a held slot has no admitted text: never the unadmitted text. */
+export const TENANT_TEXT_FALLBACKS = TENANT_TEXT_RULES.fallbacks;
 
 export { TENANT_TEXT_RULES };

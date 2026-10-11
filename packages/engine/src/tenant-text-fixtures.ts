@@ -9,7 +9,7 @@ export interface TenantTextFixture {
   text: string;
   /** "ok", or the refusal reason. */
   expect: "ok" | AdmissionReason;
-  /** For "ok": the stored text. For "denied": the reserved term found. */
+  /** For "ok": the stored text. For "denied": the reserved term found. For "claim": the pattern name. */
   detail?: string;
 }
 
@@ -34,6 +34,11 @@ export const TENANT_TEXT_FIXTURES: readonly TenantTextFixture[] = [
   ok("brand_name", "Cafe\u0301 Barbell", "Caf\u00e9 Barbell"),
   ok("brand_name", "Iron\u3164Yard"),
   ok("catalog_tagline", "Strong at 40, 50 and 60+."),
+  ok("welcome", "Coaching since 2012."),
+  ok("brand_name", "Est. 2015 Barbell"),
+  ok("course_summary", "Work up to 80% of 1RM."),
+  ok("catalog_tagline", "Open 24/7"),
+  ok("welcome", "Lower the bar by 2 inches."),
   // Reserved words, however they are disguised.
   no("catalog_tagline", "Backed by science", "denied", "science"),
   no("brand_name", "PT reviewed", "denied", "reviewed"),
@@ -72,6 +77,12 @@ export const TENANT_TEXT_FIXTURES: readonly TenantTextFixture[] = [
   no("welcome", "coach@example", "link"),
   no("brand_name", "<b>Gym</b>", "link"),
   no("welcome", "See doi 10.1000/182", "link"),
+  // Citation and outcome shapes.
+  no("welcome", "Squats help (Smith, 2019).", "claim", "citation"),
+  no("welcome", "As shown (2019), squats help.", "claim", "citation"),
+  no("course_summary", "This reduces pain by 30%", "claim", "outcome claim"),
+  no("catalog_tagline", "Clients get 30% stronger in 8 weeks", "claim", "outcome claim"),
+  no("welcome", "Improves your squat by 12.5 %", "claim", "outcome claim"),
   // Hidden characters (the #34 core's rules) and blanks.
   no("brand_name", "Sci\u200bence", "control"),
   no("brand_name", "Gym\u202e", "control"),
