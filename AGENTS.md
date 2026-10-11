@@ -8,7 +8,7 @@ Spindle teaches personal trainers how the human body works. Every science claim 
 - **Science vs practice:** a block with `support: "science"` must bind at least one approved claim. Practice-based blocks must not carry claims. Gym method courses (`layer: "method"`) are always practice-based. Modality courses may use science where evidence exists and practice-based otherwise. `validateCatalog` and (from phase 2) the database publish gate enforce this. Do not weaken either one.
 - **Tenancy:** every tenant row carries `org_id`, and RLS covers every operation. Code that uses the service key bypasses RLS, so it needs its own tests. Cache keys include `org_id`.
 - **Client data:** do not ingest any cohort or client data until the disclosure contract (roadmap phase 5) and its tests exist. A suppressed count means unknown, never zero.
-- **AI:** Spindle's runtime never calls a model through a personal subscription on behalf of tenants. Founder drafting runs locally and is reviewed by a human before it is committed.
+- **AI:** Spindle's runtime never calls a model through a personal subscription on behalf of tenants. Founder drafting runs locally. Until launch, every drafted claim and lesson is reviewed by an independent model (GPT-6.1 Sol) with recorded receipts, and a licensed PT reviews the whole base curriculum once before launch (D-08). The app never says a PT reviewed content before that review exists.
 
 ## Layout
 | Path | What |
