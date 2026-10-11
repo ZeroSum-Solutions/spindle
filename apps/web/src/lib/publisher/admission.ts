@@ -25,3 +25,8 @@ export function parseDecision(form: FormData): { ok: true; value: DecisionInput 
   if (parsed.data.decision === "rejected" && reason === "") return { ok: false, error: "Give a reason to reject." };
   return { ok: true, value: { ...parsed.data, reason: reason || DEFAULT_ADMIT_REASON } };
 }
+
+/** The page's fixed error message for a `?error=` key, or undefined for anything else. */
+export function errorMessage(_key: unknown): string | undefined {
+  return undefined;
+}

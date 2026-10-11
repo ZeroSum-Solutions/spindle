@@ -219,6 +219,7 @@ export class PlayerWorld {
   /** Every email this run asks Auth for, recorded before the code is requested so cleanup can find it even if sign-in fails. */
   readonly emails = new Set<string>();
   readonly actors = new Map<string, Actor>();
+  private readonly clients = new Map<string, SupabaseClient>();
   readonly orgs = new Map<string, { id: string; slug: string }>();
   readonly courses: string[] = [];
   readonly uploads: { client: SupabaseClient; bucket: string; name: string }[] = [];
@@ -245,6 +246,7 @@ export class PlayerWorld {
     this.emails.add(email);
     const { client, id } = await userClient(email);
     this.actors.set(name, { email, id });
+    this.clients.set(name, client);
     return { email, id, client };
   }
 
@@ -381,6 +383,18 @@ export class PlayerWorld {
   /** Grants a signed-in actor the content-publisher role (setup, as the database owner; removed with the account). */
   makePublisher(actor: Actor): void {
     sql(`insert into private.content_publishers (user_id, note) values (${lit(actor.id)}, 'synthetic admission-screen e2e');`);
+  }
+
+  /** A held text's stored hash. */
+  textHash(textId: string): string {
+    return sql(`select text_hash from private.tenant_texts where id = ${lit(textId)};`);
+  }
+
+  /** The signed-in Supabase client of a named actor (publishable key, the actor's own session). */
+  client(name: string): SupabaseClient {
+    const c = this.clients.get(name);
+    if (!c) throw new Error(`no client for ${name}`);
+    return c;
   }
 
   /** The current status of a held text (pending, admitted, rejected, revoked or cleared). */

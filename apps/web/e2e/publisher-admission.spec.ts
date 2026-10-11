@@ -17,7 +17,7 @@ const texts: Record<string, string> = {};
 test.beforeAll(async () => {
   test.setTimeout(120_000);
   world.publisher();
-  for (const name of ["owner", "trainer", "pub"]) actors[name] = await world.actor(name);
+  for (const name of ["owner", "trainer", "pub", "outsider"]) actors[name] = await world.actor(name);
   world.makePublisher(actors.pub!);
   gym = world.gym("admit", actors.owner!);
   world.join(gym, actors.owner!, actors.trainer!);
@@ -38,6 +38,52 @@ test("is a hard 404 for anyone who is not a content publisher", async ({ browser
     expect(res?.status(), who).toBe(404);
     await expect(page.getByText("Lift well. Coach better.")).toHaveCount(0);
   }
+});
+
+test("adversarial requests: encoded paths, RSC, direct RPCs and forged-origin actions never decide a text", async ({ browser, request }) => {
+  // Encoded and doubled spellings and RSC requests are 404 too, signed out and signed in.
+  for (const path of ["/%70ublisher/tenant-texts", "//publisher/tenant-texts", "/publisher/../publisher/tenant-texts", "/Publisher/Tenant-Texts"]) {
+    expect((await request.get(path, { maxRedirects: 0 })).status(), `anon ${path}`).toBe(404);
+  }
+  for (const who of ["owner", "trainer", "outsider"]) {
+    const page = await signIn(browser, actors[who]!, "/gyms");
+    for (const path of [PATH, "/%70ublisher/tenant-texts"]) {
+      expect((await page.request.get(path)).status(), `${who} ${path}`).toBe(404);
+      const rsc = await page.request.get(`${path}?_rsc=x`, { headers: { RSC: "1" } });
+      expect(rsc.status(), `${who} RSC ${path}`).toBe(404);
+      expect(await rsc.text()).not.toContain("Lift well. Coach better.");
+    }
+  }
+  // Direct RPC calls from non-publishers, with the real hash: refused, nothing recorded.
+  const hash = world.textHash(texts.headline!);
+  for (const who of ["owner", "trainer"]) {
+    const client = world.client(who);
+    const list = await client.rpc("admission_tenant_texts");
+    expect(list.error?.code, `${who} list`).toBe("42501");
+    const decide = await client.rpc("admission_decide_tenant_text", { p_text: texts.headline, p_decision: { decision: "admitted", reason: "x", textHash: hash } });
+    expect(decide.error?.code, `${who} decide`).toBe("42501");
+  }
+  // A forged hash from the publisher is refused too.
+  const forged = await world.client("pub").rpc("admission_decide_tenant_text", { p_text: texts.headline, p_decision: { decision: "admitted", reason: "x", textHash: "f".repeat(64) } });
+  expect(forged.error).not.toBeNull();
+  // A server action posted with a foreign Origin, as the publisher, is refused by Next before it runs.
+  const pub = await signIn(browser, actors.pub!, PATH);
+  const actionId = await pub.locator('form input[name^="$ACTION_ID_"]').first().getAttribute("name");
+  expect(actionId).toBeTruthy();
+  const forgedPost = await pub.request.post(PATH, {
+    headers: { Origin: "https://attacker.example" },
+    multipart: { [actionId!]: "", textId: texts.headline!, textHash: hash, decision: "admitted", reason: "forged" },
+    maxRedirects: 0,
+  });
+  expect(forgedPost.status(), "forged-origin action").toBeGreaterThanOrEqual(400);
+  expect(world.textStatus(texts.headline!)).toBe("pending");
+  expect(world.textStatus(texts.tagline!)).toBe("pending");
+});
+
+test("an unknown error key shows no message and does not break the page", async ({ browser }) => {
+  const page = await signIn(browser, actors.pub!, `${PATH}?error=__proto__`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Held texts awaiting admission");
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });
 
 test("a publisher sees each pending text in full, with its slot, gym and hash", async ({ browser }) => {

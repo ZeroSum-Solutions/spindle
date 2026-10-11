@@ -4,13 +4,16 @@
 -- Synthetic gyms and users only.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(16);
+select plan(23);
 
 insert into auth.users (id, email, email_confirmed_at) values
   ('00000000-0000-0000-0000-0000000000a1', 'alice@a.test', now()),
   ('00000000-0000-0000-0000-0000000000a3', 'tess@a.test', now()),
   ('00000000-0000-0000-0000-0000000000c1', 'pat@spindle.test', now());
-insert into public.orgs (id, name, slug) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Gym A', 'gym-a');
+insert into public.orgs (id, name, slug) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Gym A', 'gym-a'),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Gym B', 'gym-b');
+insert into auth.users (id, email, email_confirmed_at) values ('00000000-0000-0000-0000-0000000000b1', 'bob@b.test', now());
+insert into public.memberships (org_id, user_id, role) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '00000000-0000-0000-0000-0000000000b1', 'owner');
 insert into public.memberships (org_id, user_id, role) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '00000000-0000-0000-0000-0000000000a1', 'owner'),
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '00000000-0000-0000-0000-0000000000a3', 'trainer');
@@ -76,6 +79,37 @@ select is((select status from public.admission_tenant_texts() where text_id = cu
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
 select is((select text from public.member_tenant_texts('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') where slot = 'catalog_headline' and admitted),
   'Lift well. Coach better.', 'a member now reads the admitted headline');
+
+
+-- Sol R1 on #46: the pending queue is never capped. An older pending text stays listed behind more
+-- than 500 newer history rows (gym B's headline saved 501 times: 500 superseded values and one pending).
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select set_config('test.t3', public.save_tenant_text('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'coach_name', null, 'Coach A. Example')::text, true);
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000b1');
+select count(public.save_tenant_text('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'catalog_headline', null, 'Headline ' || g)) from generate_series(1, 501) g;
+select pg_temp.reset_role();
+select set_config('test.oldest_b', (select id::text from private.tenant_texts where org_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' order by seq limit 1), true);
+select set_config('test.oldest_b_hash', (select text_hash from private.tenant_texts where id = current_setting('test.oldest_b')::uuid), true);
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000c1');
+select ok(exists (select 1 from public.admission_tenant_texts() where text_id = current_setting('test.t3')::uuid and status = 'pending' and not superseded),
+  'an older pending text stays in the queue behind more than 500 newer history rows');
+select ok((select count(*) from public.admission_tenant_texts() where not (status = 'pending' and not superseded)) <= 500,
+  'only the history is capped, at 500 rows');
+
+-- Adversarial wrapper calls: replay, a superseded value, unknown ids; none leaves a receipt.
+select set_config('test.receipts', (select count(*)::text from private.tenant_text_admissions), true);
+select throws_ok(format($$ select public.admission_decide_tenant_text(%L, jsonb_build_object('decision', 'rejected', 'reason', 'x', 'textHash', %L)) $$,
+  current_setting('test.t1'), current_setting('test.h1')), 'P0001', null, 'a second decision on the same value is refused');
+select throws_ok(format($$ select public.admission_decide_tenant_text(%L, jsonb_build_object('decision', 'admitted', 'reason', 'x', 'textHash', %L)) $$,
+  current_setting('test.oldest_b'), current_setting('test.oldest_b_hash')), 'P0001', null, 'a superseded value cannot be decided');
+select throws_ok(format($$ select public.admission_decide_tenant_text(%L, jsonb_build_object('decision', 'admitted', 'reason', 'x', 'textHash', %L)) $$,
+  gen_random_uuid(), repeat('a', 64)), 'P0002', null, 'a publisher deciding an unknown id gets not-found');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+select throws_ok(format($$ select public.admission_decide_tenant_text(%L, jsonb_build_object('decision', 'admitted', 'reason', 'x', 'textHash', %L)) $$,
+  gen_random_uuid(), repeat('a', 64)), '42501', 'actor is not a content publisher',
+  'a non-publisher gets the same refusal for an unknown id as for a real one (no existence hint)');
+select pg_temp.reset_role();
+select is((select count(*)::text from private.tenant_text_admissions), current_setting('test.receipts'), 'no refused call left a receipt');
 
 select * from finish();
 rollback;
