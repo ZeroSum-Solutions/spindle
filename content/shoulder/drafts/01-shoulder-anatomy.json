@@ -92,7 +92,7 @@
     },
     {
       "slot": "claim-slot:l1-attachments",
-      "statement": "The scapula's muscular attachments to the axial skeleton include the trapezius, serratus anterior, rhomboid major, rhomboid minor, levator scapulae and pectoralis minor; the serratus anterior attaches along the anterior aspect of the medial border of the scapula.",
+      "statement": "The scapula's muscular attachments to the axial skeleton include the trapezius, serratus anterior, rhomboid major, rhomboid minor, levator scapulae and pectoralis minor.",
       "domain": "foundation",
       "evidenceLevel": "Anatomy reference (narrative review)",
       "population": "Human shoulder anatomy; not a sampled study population (Frank 2013).",
@@ -106,7 +106,7 @@
           "rights": "CC BY (version not stated in the article or the publisher PDF; Europe PMC lists CC BY). Full text read through the Europe PMC API. Cited and paraphrased only."
         }
       ],
-      "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2. Subclavius is left out: Frank's introductory list names it, but it runs from the first rib to the clavicle, not to the scapula."
+      "note": "Replaces l1-movers: muscle actions are function, and their sources (Vijian 2023, Jacinto 2022) are not admissible. Attachments only, from Frank 2013, section 2. Subclavius is left out: Frank's introductory list names it, but it runs from the first rib to the clavicle, not to the scapula. Where on the scapula serratus anterior attaches is not claimed: Frank's section 2 and Table 1 disagree on it (rehearsal 3)."
     }
   ],
   "scenarios": [
@@ -142,7 +142,7 @@
     "blocks": [
       {
         "kind": "paragraph",
-        "content": "This lesson gives you a working map of the shoulder: where the bones meet, what surrounds the ball and socket, and which muscles attach the shoulder blade. Every later lesson in this module uses this map.",
+        "content": "This lesson gives you a working map of the shoulder: where the bones meet, what surrounds the shoulder joint, and which muscles attach the shoulder blade. Every later lesson in this module uses this map.",
         "support": "practice-based",
         "claimIds": []
       },
@@ -152,7 +152,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Three bones make the shoulder: the upper arm bone (humerus), the shoulder blade (scapula) and the collarbone (clavicle). The ball-and-socket joint (glenohumeral joint) joins the arm to the shoulder blade. The acromioclavicular joint joins the collarbone to the bony tip at the top of the shoulder blade (the acromion), and the sternoclavicular joint joins the collarbone to the breastbone. There is no direct bony joint between the shoulder blade and the ribcage; muscles connect them.",
+        "content": "Three bones make the shoulder: the upper arm bone (humerus), the shoulder blade (scapula) and the collarbone (clavicle). The glenohumeral joint joins the arm to the shoulder blade. The acromioclavicular joint joins the collarbone to the bony tip at the top of the shoulder blade (the acromion), and the sternoclavicular joint joins the collarbone to the breastbone. There is no direct bony joint between the shoulder blade and the ribcage; muscles connect them.",
         "support": "science",
         "claimIds": [
           "claim-slot:l1-bones-joints"
@@ -179,7 +179,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "The socket of the ball-and-socket joint, on the shoulder blade (the glenoid), has a joint surface only a third to a quarter of the size of the ball at the top of the humerus. A rim of fibrocartilage around it, the labrum, adds to the socket's depth and surface.",
+        "content": "The socket of the glenohumeral joint, on the shoulder blade (the glenoid), has a joint surface only a third to a quarter of the size of the rounded head at the top of the humerus. A rim of fibrocartilage around it, the labrum, adds to the socket's depth and surface.",
         "support": "science",
         "claimIds": [
           "claim-slot:l1-shallow-socket"
@@ -225,10 +225,11 @@
       },
       {
         "kind": "paragraph",
-        "content": "Because the shoulder blade has no bony joint with the ribcage, muscles attach it to the trunk. They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae and pectoralis minor. The serratus anterior attaches along the inner edge of the shoulder blade, on the side that faces the ribs.",
+        "content": "Because the shoulder blade has no bony joint with the ribcage, muscles attach it to the trunk. They include the trapezius, the serratus anterior, the rhomboids (major and minor), levator scapulae and pectoralis minor.",
         "support": "science",
         "claimIds": [
-          "claim-slot:l1-attachments"
+          "claim-slot:l1-attachments",
+          "claim-slot:l1-bones-joints"
         ]
       },
       {
@@ -266,7 +267,7 @@
         "kind": "callout",
         "content": {
           "label": "Stop and refer",
-          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back. A new inability to lift or move the arm themselves, without an injury: urgent, today. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. Pain that is getting worse: routine referral now; do not wait. If a client points to a painful spot, describe where it is and how it behaves; never name an injury. This never clears anyone and never names an injury."
+          "text": "If pain comes on or rises, or any warning sign appears: Stop shoulder loading for the rest of the session. After a fall or impact, an arm they cannot move or a shoulder that looks out of place: emergency, now. Do not move the arm or try to put it back. A new inability to lift or move the arm themselves, without an injury: urgent, today. Pins and needles that do not go away, or no feeling in the arm or shoulder: urgent, today. Pain that is getting worse: routine referral now; do not wait. If a client points to a painful spot, describe where it is and how it behaves; never name an injury. This never clears anyone and never names an injury. The full stop rules and referral tiers are in \"When to refer out\" (lesson 8)."
         },
         "support": "practice-based",
         "claimIds": []
@@ -277,7 +278,7 @@
       },
       {
         "kind": "paragraph",
-        "content": "Use plain names with clients and standard names with clinicians. \"The ball-and-socket joint\" and \"the glenohumeral joint\" are the same thing. Saying both helps when a client brings you notes from a physiotherapist or doctor.",
+        "content": "Use plain names with clients and standard names with clinicians: say \"the shoulder joint\" and \"the glenohumeral joint\" together. Saying both helps when a client brings you notes from a physiotherapist or doctor.",
         "support": "practice-based",
         "claimIds": []
       },
@@ -295,7 +296,7 @@
             "Sternoclavicular joint"
           ],
           "answerIndex": 1,
-          "explanation": "The glenohumeral joint is the ball-and-socket joint between the humerus and the glenoid of the shoulder blade."
+          "explanation": "The glenohumeral joint joins the upper arm bone (humerus) to the shoulder blade."
         },
         "support": "science",
         "claimIds": [
