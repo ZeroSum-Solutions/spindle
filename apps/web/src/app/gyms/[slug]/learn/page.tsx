@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense, type CSSProperties } from "react";
 import { ArrowRight } from "lucide-react";
+import { ProgressTrack, segmentsOf } from "@/components/learn/progress-track";
 import { CourseRow } from "@/components/learn/course-row";
 import { LearnShell, LoadingNote } from "@/components/learn/shell";
 import { learnerGym, myAssignments, type AssignmentSummary } from "@/lib/learning/load";
@@ -52,18 +53,22 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
 
   return (
     <LearnShell gym={ctx.org.name} back={{ href: `/gyms/${ctx.org.slug}`, label: ctx.org.name }}>
-      <div data-layout="column" className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <h1 className="text-heading">Your courses</h1>
+      <div data-layout="column" className="mx-auto flex w-full max-w-3xl flex-col gap-block">
+      <div className="flex flex-col gap-tight">
+        <p className="text-eyebrow text-text-muted">{ctx.org.name}</p>
+        <h1 className="text-heading text-text">Your courses</h1>
+      </div>
       {items.length === 0 ? (
         <p className="rounded-card border border-border bg-surface p-6 text-text-muted">Nothing is assigned to you in this gym yet.</p>
       ) : (
         <>
           {resume ? (
-            <section aria-labelledby="resume-title" className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5 md:p-6">
-              <p className="text-label text-text-muted">Next up in {resume.view.title}</p>
-              <h2 id="resume-title" className="text-xl font-medium">
+            <section aria-labelledby="resume-title" data-resume className="flex flex-col gap-stack rounded-card border border-border bg-surface p-block shadow-raise">
+              <p className="text-eyebrow text-signal">Next up · {resume.view.title}</p>
+              <h2 id="resume-title" className="text-section text-text">
                 {resume.view.next!.title}
               </h2>
+              <ProgressTrack segments={segmentsOf(resume.view.lessons, resume.view.lessons.findIndex((l) => l.id === resume.view.next!.id))} />
               <Link
                 href={`${base}/${resume.id}/${resume.view.next!.slug}`}
                 className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover"

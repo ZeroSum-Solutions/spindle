@@ -1,4 +1,5 @@
 import { moduleQuizHref } from "@/lib/learning/quiz";
+import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -8,7 +9,9 @@ import { CoachNote } from "@/components/brand/coach-note";
 import { CompleteLesson } from "@/components/learn/complete-lesson";
 import { IntegrityAlert, LayerLabel, LessonStateDetail, SupportLegend, VersionTag } from "@/components/learn/labels";
 import { receiptLine } from "@/lib/learning/presentation";
+import { LessonDock } from "@/components/learn/lesson-dock";
 import { LessonOutline } from "@/components/learn/outline";
+import { ProgressTrack, segmentsOf } from "@/components/learn/progress-track";
 import { LearnShell, LoadingNote, VersionUnavailable } from "@/components/learn/shell";
 import { completeLesson, type CompleteState, type LessonRoute } from "@/lib/learning/complete";
 import { claimEvidence, learnerGym, lessonClaimIds, myAssignment } from "@/lib/learning/load";
@@ -51,6 +54,8 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
   const lesson = lessons[index]!;
   const state = view.lessons[index]!;
   const flagged = new Set(view.flaggedClaimIds);
+  // One id per render for the outline sheet and its triggers: the router may keep an earlier page hidden.
+  const sheetId = `outline-${randomUUID()}`;
   const hasVideo = lesson.blocks.some((b) => b.kind === "video");
   const hasScience = lesson.blocks.some((b) => "support" in b && b.support === "science");
   const [claims, media, integrity] = await Promise.all([
@@ -63,10 +68,19 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
   const done = state.state === "done" || state.state === "credited";
 
   return (
-    <LearnShell gym={ctx.org.name} back={{ href: courseHref, label: view.title }} frame="reading">
+    <LearnShell
+      gym={ctx.org.name}
+      back={{ href: courseHref, label: view.title }}
+      frame="reading"
+      dock={
+        <LessonDock sheetId={sheetId}>
+          <ProgressTrack segments={segmentsOf(view.lessons, index)} />
+        </LessonDock>
+      }
+    >
       <div data-layout="reading" className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_minmax(0,46rem)] lg:justify-center">
         <div className="lg:sticky lg:top-6 lg:self-start">
-          <LessonOutline view={view} base={courseHref} currentId={lesson.id} />
+          <LessonOutline view={view} base={courseHref} currentId={lesson.id} phone="sheet" sheetId={sheetId} />
         </div>
         <article className="flex min-w-0 max-w-[46rem] flex-col gap-8 text-reading" aria-labelledby="lesson-title">
           <header className="flex flex-col gap-3">
