@@ -1,8 +1,19 @@
-export type Segment = "done" | "current" | "rest";
+/**
+ * Completion and position are separate facts: "current-done" is the open lesson when it is already done
+ * (a revisit), so it still counts as done and still shows as the current place.
+ */
+export type Segment = "done" | "current" | "current-done" | "rest";
+
+const isDone = (s: Segment) => s === "done" || s === "current-done";
+const isCurrent = (s: Segment) => s === "current" || s === "current-done";
 
 /** One segment per lesson, from the lesson states: done or credited is done, the open lesson is current. */
 export function segmentsOf(lessons: readonly { state: string }[], currentIndex?: number): Segment[] {
-  return lessons.map((l, i) => (i === currentIndex ? "current" : l.state === "done" || l.state === "credited" ? "done" : "rest"));
+  return lessons.map((l, i) => {
+    const done = l.state === "done" || l.state === "credited";
+    if (i === currentIndex) return done ? "current-done" : "current";
+    return done ? "done" : "rest";
+  });
 }
 
 /**
@@ -13,8 +24,8 @@ export function segmentsOf(lessons: readonly { state: string }[], currentIndex?:
  */
 export function ProgressTrack({ segments, className = "" }: { segments: readonly Segment[]; className?: string }) {
   const total = segments.length;
-  const done = segments.filter((s) => s === "done").length;
-  const current = segments.indexOf("current");
+  const done = segments.filter(isDone).length;
+  const current = segments.findIndex(isCurrent);
   const shown = current >= 0 ? current + 1 : done;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -26,7 +37,12 @@ export function ProgressTrack({ segments, className = "" }: { segments: readonly
       </span>
       <span aria-hidden className="grid min-w-0 flex-1 gap-1" style={{ gridTemplateColumns: `repeat(${Math.max(total, 1)}, minmax(0, 1fr))` }}>
         {segments.map((s, i) => (
-          <span key={i} data-segment={s} className={`h-1.5 rounded-[1px] measure-${s}`} />
+          <span
+            key={i}
+            data-segment={isDone(s) ? "done" : isCurrent(s) ? "current" : "rest"}
+            data-current={isCurrent(s) || undefined}
+            className={`h-1.5 rounded-[1px] ${isCurrent(s) ? "measure-current" : isDone(s) ? "measure-done" : "measure-rest"}`}
+          />
         ))}
       </span>
       <span aria-hidden className="tabular shrink-0 text-code text-text-muted">
