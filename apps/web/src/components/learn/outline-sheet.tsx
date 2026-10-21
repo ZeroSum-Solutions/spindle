@@ -46,33 +46,48 @@ export function OutlineSheet({ id, progress, children }: { id: string; progress:
       root.style.paddingRight = saved.paddingRight;
       saved = null;
     };
+    const inView = (el: HTMLElement) => {
+      const r = el.getBoundingClientRect();
+      return r.top >= 0 && r.bottom <= window.innerHeight;
+    };
     const restore = () => {
       unlock();
       const back = window.matchMedia(DESKTOP).matches
         ? [...document.querySelectorAll<HTMLElement>('nav[aria-label="Course outline"] [aria-current="page"]')].find((el) => !el.closest("dialog") && el.checkVisibility())
         : opener?.isConnected && opener.checkVisibility()
           ? opener
-          : document.querySelector<HTMLElement>(`[data-outline-trigger="${id}"]`);
-      // The page did not scroll while open, so the trigger is where it was: do not move the page now.
-      back?.focus({ preventScroll: true });
+          : document.querySelector<HTMLElement>(`[data-outline-trigger="${dialog.id}"]`);
+      // Do not move the page for a target already on screen (the trigger, where it was); scroll any other
+      // target into view, such as a late lesson in the sidebar after widening.
+      back?.focus({ preventScroll: !!back && inView(back) });
       opener = null;
     };
-    // showModal() happens outside React (openOutlineSheet); watch the open attribute to lock and unlock.
+    // showModal() happens outside React (openOutlineSheet); watch the open attribute to lock and unlock,
+    // starting from the current state.
     const watch = new MutationObserver(() => (dialog.open ? lock() : unlock()));
     watch.observe(dialog, { attributes: true, attributeFilter: ["open"] });
+    if (dialog.open) lock();
     const desktop = window.matchMedia(DESKTOP);
     const widen = () => {
       if (desktop.matches && dialog.open) dialog.close();
     };
     dialog.addEventListener("close", restore);
     desktop.addEventListener("change", widen);
+    // Runs on unmount and when the router hides this page for back navigation: an open modal left in a
+    // hidden page would keep the next page inert, so close it (without moving focus there).
     return () => {
       dialog.removeEventListener("close", restore);
       desktop.removeEventListener("change", widen);
       watch.disconnect();
+      if (dialog.open) {
+        dialog.close();
+        opener = null;
+      }
       unlock();
     };
-  }, [id]);
+    // Not keyed on the id: a refresh after completing a lesson renders a new id, and an open sheet must keep
+    // its lock rather than be torn down. The id is read from the element when needed.
+  }, []);
   return (
     <>
       <button

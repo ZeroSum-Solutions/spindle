@@ -17,6 +17,14 @@ export function segmentsOf(lessons: readonly { state: string }[], currentIndex?:
 }
 
 /**
+ * The gap between segments, in px (it does not grow with text size), shrinking as the course grows so
+ * segments never collapse: in a 96px track (the minimum) every segment keeps at least 1px, up to 96 lessons.
+ */
+export function segmentGap(total: number): number {
+  return total <= 12 ? 4 : total <= 24 ? 2 : total <= 48 ? 1 : 0;
+}
+
+/**
  * The measurement layer as a readout (DESIGN.md › Shapes): "03 / 08", one segment per lesson (done is
  * ink, the current place is the signal, the rest are hairlines) and the share done. The words carry
  * the meaning for assistive technology; the segments are decorative. With no current lesson the
@@ -35,7 +43,7 @@ export function ProgressTrack({ segments, className = "" }: { segments: readonly
       <span aria-hidden className="tabular shrink-0 text-code text-text">
         {pad(shown)} / {pad(total)}
       </span>
-      <span aria-hidden className="grid min-w-0 flex-1 gap-1" style={{ gridTemplateColumns: `repeat(${Math.max(total, 1)}, minmax(0, 1fr))` }}>
+      <span aria-hidden className="grid min-w-24 flex-1" style={{ gridTemplateColumns: `repeat(${Math.max(total, 1)}, minmax(0, 1fr))`, columnGap: `${segmentGap(total)}px` }}>
         {segments.map((s, i) => (
           <span
             key={i}

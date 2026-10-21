@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { ProgressTrack, segmentsOf } from "./progress-track";
+import { ProgressTrack, segmentGap, segmentsOf } from "./progress-track";
 
 const html = (segments: Parameters<typeof ProgressTrack>[0]["segments"]) => renderToStaticMarkup(createElement(ProgressTrack, { segments }));
 
@@ -35,5 +35,14 @@ describe("ProgressTrack", () => {
     expect(out).toContain("Lesson 2 of 4, 4 done");
     // The open lesson still shows as the current place.
     expect(out.match(/data-current="true"/g)).toHaveLength(1);
+  });
+
+  it("keeps every segment at least 1px wide in a 96px track, up to 96 lessons (60 among them)", () => {
+    for (const total of [1, 4, 12, 13, 24, 25, 48, 49, 60, 96]) {
+      expect((96 - (total - 1) * segmentGap(total)) / total, `${total} lessons`).toBeGreaterThanOrEqual(1);
+    }
+    const out = html(segmentsOf(Array.from({ length: 60 }, (_, i) => ({ state: i < 39 ? "done" : "todo" })), 39));
+    expect(out).toContain("column-gap:0px");
+    expect(out).toContain("Lesson 40 of 60, 39 done");
   });
 });
