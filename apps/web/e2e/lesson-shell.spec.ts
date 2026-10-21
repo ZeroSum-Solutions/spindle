@@ -289,7 +289,10 @@ test("back navigation with the sheet open leaves no modal behind: the earlier le
   await expect(sheet(page)).toBeVisible();
   await page.goBack();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Synthetic shell lesson 1");
-  await expect.poll(() => openModals(page), "no modal left open in a hidden page").toBe(0);
+  // The router keeps lesson 2 hidden; its sheet must not stay open there (some engines keep a hidden open
+  // dialog modal, which leaves this page inert).
+  await expect.poll(() => page.evaluate(() => document.querySelectorAll("dialog[data-outline-sheet][open]").length), "no sheet left open in a hidden page").toBe(0);
+  await expect.poll(() => openModals(page), "no modal left open").toBe(0);
   expect(await rootOverflow(page)).not.toBe("hidden");
   // Not inert: lesson 1's own bar works.
   await shownDock(page).getByRole("button", { name: "Outline" }).click({ timeout: 5000 });
