@@ -37,6 +37,8 @@ Run the smallest existing suite that exercises the change while developing. Befo
 | Browser during development | `mise exec -- pnpm --filter web e2e` | Playwright against local Auth, Mailpit, Storage and database |
 | Browser production build | `CI=1 mise exec -- pnpm --filter web e2e` | The same suite against a fresh production build |
 
+Synthetic-fixture segment passes need the test-environment marker, which the seed `supabase/seeds/test-environment.sql` provisions when `supabase start` creates a stack or `supabase db reset` rebuilds one. A stack created before the marker existed needs `supabase db reset` (or that seed run once with `psql`). Never load the seed into a hosted database.
+
 The Playwright suite needs host `psql` and a test-only service key for fixture setup and cleanup. Put the local stack's key in the command's environment only, never in a file, log or `NEXT_PUBLIC_*` variable:
 
 ```sh

@@ -331,7 +331,7 @@ export class PlayerWorld {
     const p = lit(this.publisherId);
     const c = lit(String(course.id));
     return sql(`begin; ${asService}
-      -- Synthetic-fixture review receipts are refused for segment passes unless the session declares them.
+      -- Synthetic-fixture segment passes need this flag and the local stack's test-environment marker (seed).
       select set_config('spindle.fixture_receipts', 'on', true);
       select public.publisher_save_course_draft(${p}, ${lit(JSON.stringify(course))}::jsonb);
       -- D-11: each registry clip the course embeds gets a synthetic segment review, with a

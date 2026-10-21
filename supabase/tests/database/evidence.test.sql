@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(286);
+select plan(297);
 -- This suite records synthetic-fixture review receipts; outside tests they are refused for segment passes.
 select set_config('spindle.fixture_receipts', 'on', true);
 
@@ -616,6 +616,25 @@ select throws_ok(format($$select public.publisher_record_media_check(pg_temp.pat
 select is((select count(*) from public.practice_media_checks where media_id = pg_temp.id('mv') and kind = 'segment'), 0::bigint,
   'and nothing is recorded');
 select set_config('spindle.fixture_receipts', 'on', true);
+-- Sol R1 PR47-03: the flag alone is not enough. Only a test database carries the marker, and no API role can write it.
+select pg_temp.reset_role();
+delete from private.test_environment;
+select pg_temp.as_service();
+select throws_ok(format($$select public.publisher_record_media_check(pg_temp.pat(), %L, pg_temp.seg_pass(%L, 'fixture-nomarker', now()))$$,
+  pg_temp.id('mv'), pg_temp.id('mv')), '22023', 'invalid check.run: a synthetic-fixture review cannot pass a segment outside tests',
+  'the fixture flag without the test-environment marker is refused');
+select throws_ok($$insert into private.test_environment default values$$, '42501', null,
+  'the service role cannot provision the test-environment marker');
+select pg_temp.reset_role();
+insert into private.test_environment default values;
+select pg_temp.as_service();
+-- Sol R1 PR47-05: only gpt-6.1-sol reviews a segment, at the database boundary, even in a test session.
+select throws_ok(format($$select public.publisher_record_media_check(pg_temp.pat(), %L, pg_temp.seg_pass(%L, 'stub', now())
+    || jsonb_build_object('run', jsonb_build_object('model', 'test-stub', 'session', 'ci-stub', 'packetDigest', repeat('a', 64),
+      'reviewedAt', '2026-10-01T00:00:00Z')))$$, pg_temp.id('mv'), pg_temp.id('mv')),
+  '22023', 'invalid check.run: a segment passes only with a gpt-6.1-sol review', 'a reviewer other than gpt-6.1-sol cannot pass a segment');
+select is((select count(*) from public.practice_media_checks where media_id = pg_temp.id('mv') and kind = 'segment'), 0::bigint,
+  'and none of the refused passes is recorded');
 select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'), pg_temp.seg_pass(pg_temp.id('mv'), 'segment', now()));
 select lives_ok($$select pg_temp.keep('v_v1', pg_temp.publish('78000000-0000-4000-8000-000000000000'))$$,
   'a reviewed, embeddable clip publishes inside a reviewed lesson');
@@ -1548,6 +1567,25 @@ select throws_ok($$select public.publisher_add_source(pg_temp.pat(), pg_temp.fr(
   '22023', 'invalid source.license: a foundation reference must carry an open licence (CC BY, CC0 or public domain)',
   'a licence URL must match an open licence');
 select pg_temp.reset_role();
+
+-- Sol R1 PR47-04: passes stored before the guard stop counting on upgrade. The migration runs
+-- private.retire_unreviewed_segment_passes() once; here it runs over a synthetic-fixture pass.
+select pg_temp.as_service();
+select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('md'), pg_temp.seg_pass(pg_temp.id('md'), 'seg-upgrade', now()));
+select pg_temp.reset_role();
+select is(private.media_publishable(pg_temp.id('md')), 'ok', 'a synthetic-fixture pass makes a clip publishable in a test session');
+select cmp_ok(private.retire_unreviewed_segment_passes(), '>=', 1, 'the upgrade retires latest passes that rest on a fixture');
+select results_eq(format($$select outcome from public.practice_media_checks where media_id = %L and kind = 'segment' order by seq desc limit 1$$,
+  pg_temp.id('md')), $$values ('fail'::text)$$, 'by appending a failed segment check');
+select is(private.media_publishable(pg_temp.id('md')), 'segment-unchecked', 'so the clip no longer publishes or plays');
+select pg_temp.as_service();
+select lives_ok(format($$select public.publisher_record_media_check(pg_temp.pat(), %L, pg_temp.seg_pass(%L, 'seg-sol', now())
+    || jsonb_build_object('run', jsonb_build_object('model', 'gpt-6.1-sol', 'session', 'ci-sol', 'packetDigest', repeat('b', 64),
+      'reviewedAt', '2026-10-01T00:00:00Z')))$$, pg_temp.id('md'), pg_temp.id('md')),
+  'a gpt-6.1-sol review of a real description passes a segment (Sol R1 PR47-05)');
+select pg_temp.reset_role();
+select is(private.retire_unreviewed_segment_passes(), 0, 'and the upgrade leaves a gpt-6.1-sol pass alone');
+select is(private.media_publishable(pg_temp.id('md')), 'ok', 'so the clip publishes again');
 
 select * from finish();
 rollback;
