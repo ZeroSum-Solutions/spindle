@@ -397,6 +397,11 @@ html {
   scroll-padding-bottom: calc(var(--dock-h, 0px) + 0.75rem);
 }
 
+/* The bar sits above the home indicator on phones with a safe-area inset. */
+[data-lesson-dock] {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* The outline bottom sheet (a modal dialog): chrome motion only, none under reduced motion. */
 .outline-sheet::backdrop {
   background: rgb(11 13 18 / 0.55);

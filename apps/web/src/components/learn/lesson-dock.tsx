@@ -8,7 +8,7 @@ import { openOutlineSheet } from "./outline-sheet";
 /**
  * The bottom lesson bar below 1024px: row 1 is where you are (the progress readout) and the outline,
  * row 2 the full-width named next action (the next lesson, or back to the course at the end). It has
- * automatic height (more rows at 320px or 200% text), honours the safe-area inset, and publishes its
+ * automatic height (more rows at 320px or 200% text), honours the safe-area inset (globals.css), and publishes its
  * measured height as --dock-h, which the page reserves at its end and in scroll padding, so focus near
  * the end is never covered. From 1024px it is gone (0px): the sidebar and the in-lesson navigation take
  * over. Chrome only: it never moves lesson text.
@@ -39,7 +39,7 @@ export function LessonDock({ sheetId, next, children }: { sheetId: string; next:
     <div
       ref={ref}
       data-lesson-dock
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] shadow-float backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 shadow-float backdrop-blur lg:hidden"
     >
       <div role="group" aria-label="Lesson progress" className="mx-auto flex w-full max-w-[63rem] flex-wrap items-center gap-x-stack gap-y-tight px-4 py-tight md:px-8">
         <div className="min-w-0 grow basis-48">{children}</div>
