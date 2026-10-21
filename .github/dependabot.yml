@@ -11,6 +11,10 @@ updates:
       # typescript-eslint (via eslint-config-next) does not support TypeScript 7 yet.
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
+      # axe-core 4.14 enables label-content-name-mismatch, which fails CourseCard (a link named by its
+      # title only). Lift this once the card is restructured.
+      - dependency-name: "@axe-core/playwright"
+        versions: [">=4.14.0"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
