@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isTestOnlyPath, previewPagesEnabled } from "./lib/preview-pages";
+import { learnGymSlug } from "./lib/learn-path";
+import { slugSchema } from "./lib/forms";
 
 const PROTECTED = ["/gyms"];
 
@@ -35,18 +37,37 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const signedIn = Boolean(data?.claims?.sub);
   const path = request.nextUrl.pathname;
-  if (!signedIn && PROTECTED.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) {
+  const learnSlug = learnGymSlug(path);
+  if (!signedIn && (learnSlug !== null || PROTECTED.some((prefix) => path === prefix || path.startsWith(`${prefix}/`)))) {
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";
     url.search = `?next=${encodeURIComponent(path)}`;
     // Keep cookie updates (e.g. clearing an invalid session) on the redirect too.
     return apply(NextResponse.redirect(url), pendingCookies, pendingHeaders);
   }
+  // Learner pages stream, so a notFound() in the page arrives after a 200. Answer a real 404 here
+  // for anyone who is not a member of the route gym: the same RLS-protected orgs read as
+  // learnerGym(), which only returns the caller's own gyms. Fails closed; the pages repeat the check.
+  if (learnSlug !== null && !(await isMemberOf(supabase, learnSlug))) {
+    return apply(new NextResponse("Not found", { status: 404, headers: { "Cache-Control": "no-store" } }), pendingCookies, pendingHeaders);
+  }
   if (path.startsWith("/invite/")) {
     response.headers.set("Referrer-Policy", "no-referrer");
     response.headers.set("Cache-Control", "no-store");
   }
   return response;
+}
+
+/** True only when the signed-in caller can read the gym's row; any error counts as no. */
+async function isMemberOf(supabase: ReturnType<typeof createServerClient>, rawSlug: string): Promise<boolean> {
+  const slug = slugSchema.safeParse(rawSlug);
+  if (!slug.success) return false;
+  try {
+    const { data, error } = await supabase.from("orgs").select("id").eq("slug", slug.data).maybeSingle();
+    return !error && data !== null;
+  } catch {
+    return false;
+  }
 }
 
 function apply(
