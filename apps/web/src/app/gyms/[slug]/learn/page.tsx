@@ -71,7 +71,8 @@ async function Courses({ params }: PageProps<"/gyms/[slug]/learn">) {
               <ProgressTrack segments={segmentsOf(resume.view.lessons, resume.view.lessons.findIndex((l) => l.id === resume.view.next!.id))} />
               <Link
                 href={`${base}/${resume.id}/${resume.view.next!.slug}`}
-                className="inline-flex min-h-12 items-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover"
+                // Wraps (even inside a word) rather than overflow the card at 320px with 200% text.
+                className="inline-flex min-h-12 max-w-full flex-wrap items-center gap-2 self-start rounded-control bg-ink px-5 py-2 font-medium text-on-ink [overflow-wrap:anywhere] hover:bg-ink-hover"
               >
                 Resume lesson
                 <ArrowRight aria-hidden strokeWidth={1.75} className="size-4" />
