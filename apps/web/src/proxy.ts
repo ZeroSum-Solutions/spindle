@@ -80,6 +80,8 @@ function apply(
   return response;
 }
 
+// Image files are skipped only where the static assets live (the root and /brand/), so a route
+// parameter that ends in an image extension (/gyms/<slug>/learn/<id>/figure.png) still runs the proxy.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|(?:brand/)?[^/]*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };

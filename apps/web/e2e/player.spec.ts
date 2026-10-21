@@ -517,6 +517,8 @@ test.describe.serial("learner flow", () => {
       learn(gymA, assignments.partial, "lesson-one"),
       learn(gymA, assignments.partial, "module/quiz"),
       learn(gymA, assignments.partial).replace("/learn/", "//%6cearn/"),
+      learn(gymA, assignments.partial, "figure.png"),
+      learn(gymA, assignments.partial, "..%2f.."),
     ]) {
       const res = await b.goto(path);
       expect(res?.status(), path).toBe(404);

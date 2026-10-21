@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { proxy } from "./proxy";
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
+import { config, proxy } from "./proxy";
 
 // A stand-in Supabase client: getClaims reports `sub` (and refreshes a cookie when asked), and the
 // orgs read answers `org` or fails, like the RLS-protected read learnerGym() makes.
@@ -85,7 +86,6 @@ describe("proxy: the learner membership gate", () => {
     ["a lesson", "/gyms/gym-b/learn/7d0f8c64-3f8e-4c1b-9f43-6b0c3f6b2a11/lesson-one"],
     ["the module quiz", "/gyms/gym-b/learn/7d0f8c64-3f8e-4c1b-9f43-6b0c3f6b2a11/module/quiz"],
     ["a percent-encoded letter", "/gyms/gym-b/%6cearn"],
-    ["an encoded slash", "/gyms%2fgym-b%2flearn"],
     ["a double-encoded segment", "/gyms/gym-b/%256cearn"],
     ["upper case", "/Gyms/GYM-B/Learn"],
     ["a doubled slash", "/gyms//gym-b//learn/"],
@@ -98,6 +98,27 @@ describe("proxy: the learner membership gate", () => {
     expect(res.headers.get("cache-control")).toBe("no-store");
     expect(await res.text()).toBe("Not found");
     expect(supa.slugs).toEqual(["gym-b"]);
+  });
+
+  // Sol on #56: the router splits segments before decoding them, so `..%2f..` is one route
+  // parameter (a [lesson]) that canonical decoding would resolve away, possibly onto another gym.
+  it.each([
+    ["an encoded slash and dot segments in the lesson", "/gyms/gym-b/learn/7d0f8c64-3f8e-4c1b-9f43-6b0c3f6b2a11/..%2f.."],
+    ["dot segments that land on another gym", "/gyms/gym-a/learn/..%2f..%2f..%2fgym-b%2flearn"],
+    ["a double-encoded slash", "/gyms/gym-b/learn/x/..%252f.."],
+    ["an encoded backslash", "/gyms/gym-b/learn/x/..%5c.."],
+    ["an encoded slash in the first segment", "/gyms%2fgym-b%2flearn"],
+  ])("fails closed on %s, even for a member, without a read", async (_, path) => {
+    Object.assign(supa, { sub: "user-b", org: { id: "org-b" } });
+    const res = await req(path);
+    expect(res.status).toBe(404);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(supa.slugs).toEqual([]);
+  });
+
+  it("sends a signed-out visitor on a smuggled learner path to sign-in", async () => {
+    const res = await req("/gyms/gym-b/learn/x/..%2f..");
+    expect(res.status).toBe(307);
   });
 
   it("keeps refreshed session cookies on the 404", async () => {
@@ -143,4 +164,29 @@ describe("proxy: the learner membership gate", () => {
     }
     expect(supa.slugs).toEqual([]);
   });
+});
+
+// Calling proxy() directly cannot show whether Next runs it at all. These go through Next's own
+// matcher compiler (Sol on #56: an image extension on a lesson parameter skipped the proxy).
+describe("proxy: the matcher", () => {
+  const runs = (path: string) => unstable_doesMiddlewareMatch({ config, url: `http://127.0.0.1:3000${path}` });
+
+  it.each([
+    "/gyms/gym-b/learn",
+    "/gyms/gym-b/learn/7d0f8c64-3f8e-4c1b-9f43-6b0c3f6b2a11/lesson-one",
+    "/gyms/gym-b/learn/7d0f8c64-3f8e-4c1b-9f43-6b0c3f6b2a11/figure.png",
+    "/gyms/gym-b/learn/7d0f8c64-3f8e-4c1b-9f43-6b0c3f6b2a11/figure.SVG",
+    "/gyms/gym-b/learn/figure.webp",
+    "/gyms/gym-b/learn/7d0f8c64-3f8e-4c1b-9f43-6b0c3f6b2a11/..%2f..",
+    "/brand-preview",
+  ])("runs on %s", (path) => {
+    expect(runs(path)).toBe(true);
+  });
+
+  it.each(["/brand/icon-192.png", "/brand/spindle-symbol.svg", "/favicon.ico", "/_next/static/chunks/app.js", "/_next/image"])(
+    "skips the static asset %s",
+    (path) => {
+      expect(runs(path)).toBe(false);
+    },
+  );
 });
