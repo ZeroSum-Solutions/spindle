@@ -4,8 +4,9 @@
 -- Fixture receipts need two things at once:
 --   1. the test-environment marker: a row in private.test_environment. No migration writes it and
 --      no API role can (every grant is revoked). Only local and CI setup provisions it, through
---      the seed supabase/seeds/test-environment.sql that `supabase start` and `db reset` load;
---      `db push` never loads seeds, so a hosted database has no marker;
+--      the seed supabase/seeds/test-environment.sql that `supabase start` and `db reset` load.
+--      `db push` loads seeds only with `--include-seed`, so a hosted database stays free of the
+--      marker only as long as that flag is never passed to it;
 --   2. the transaction flag set_config('spindle.fixture_receipts', 'on', true), which a suite sets
 --      for its own transaction. Any session can set a custom setting, so the flag alone is not
 --      enough.
@@ -98,12 +99,15 @@ $$;
 -- take EXCLUSIVE on practice_media first: it conflicts with the ROW SHARE every row-lock holder
 -- keeps, so this waits until every open writer transaction ends, and new writers wait for this
 -- migration. A writer already holding a row keeps its table lock and can lock more rows. Plain
--- reads (ACCESS SHARE) are not blocked.
--- One statement: the Supabase CLI runs each migration statement on its own, so a lock taken in
--- one statement would be gone by the next. The retirement covers passes stored before this guard
--- (Sol R1 PR47-04).
+-- reads (ACCESS SHARE) are not blocked. The 5 s lock_timeout (this transaction only) makes the
+-- migration fail fast, to be retried, rather than queue every clip writer behind a stalled
+-- transaction that still holds a row lock.
+-- Inside a DO block: the Supabase CLI applies the file as one transactional batch, but not as an
+-- explicit transaction block, so a top-level LOCK TABLE is refused (25P01). The retirement covers
+-- passes stored before this guard (Sol R1 PR47-04).
 do $$
 begin
+  perform set_config('lock_timeout', '5s', true);
   lock table public.practice_media in exclusive mode;
   create trigger practice_media_checks_segment_guard after insert or update on public.practice_media_checks
     for each row execute function private.guard_segment_pass();
