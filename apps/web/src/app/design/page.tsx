@@ -234,7 +234,7 @@ export default function DesignKit() {
           <KitCard
             n={13}
             title="Lesson bar and outline sheet"
-            note="The bottom lesson bar holds the progress track and, below 1024px, the Outline button; it has automatic height and the page reserves it. The outline opens as a bottom sheet (a modal dialog): Tab cycles inside, Esc closes, focus returns to the trigger."
+            note="Below 1024px the bottom lesson bar holds the progress track and the Outline button on one row and the full-width named next action below; it has automatic height and the page reserves it. From 1024px it is gone. The outline opens as a bottom sheet (a modal dialog): Tab cycles inside, the page behind does not scroll, Esc closes, focus returns to the trigger, and widening past 1024px closes it."
           >
             <p className="text-label">
               <Link href="/design/screens/lesson" className="text-brand underline underline-offset-2 hover:text-brand-hover">

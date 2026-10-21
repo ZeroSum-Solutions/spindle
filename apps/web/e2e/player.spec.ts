@@ -323,19 +323,22 @@ test.describe.serial("learner flow", () => {
     expect(await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   });
 
-  test("on phones, next lesson is the one full-width way forward; previous is a small link", async ({ browser }) => {
+  test("on phones, next lesson is the one full-width way forward in the lesson bar; previous is a small link", async ({ browser }) => {
     const p = await signIn(browser, actors.partial!, learn(gymA, assignments.partial, "lesson-2"));
     for (const width of [390, 320]) {
       await p.setViewportSize({ width, height: 800 });
       await p.goto(learn(gymA, assignments.partial, "lesson-2"));
       await expect(p.getByRole("heading", { level: 1 })).toHaveText("Synthetic lesson two");
       const nav = p.getByRole("navigation", { name: "Lesson navigation" });
-      const next = nav.getByRole("link", { name: /Next lesson/ });
+      const bar = p.locator("[data-lesson-dock]");
+      const next = bar.getByRole("link", { name: /Next lesson/ });
       const prev = nav.getByRole("link", { name: /Previous lesson/ });
-      const [navBox, nextBox, prevBox] = [(await nav.boundingBox())!, (await next.boundingBox())!, (await prev.boundingBox())!];
-      expect(Math.abs(nextBox.width - navBox.width), "next is full width").toBeLessThanOrEqual(1);
+      // Below 1024px the named next action lives only in the bar.
+      await expect(nav.getByRole("link", { name: /Next lesson/ })).toBeHidden();
+      await expect(next).toBeVisible();
+      const [barBox, nextBox, prevBox] = [(await bar.boundingBox())!, (await next.boundingBox())!, (await prev.boundingBox())!];
+      expect(nextBox.width, "next is full width").toBeGreaterThanOrEqual(barBox.width - 2 * 16 - 1);
       expect(nextBox.height).toBeGreaterThanOrEqual(48);
-      expect(prevBox.y + prevBox.height, "previous sits above next").toBeLessThanOrEqual(nextBox.y);
       expect(prevBox.height).toBeGreaterThanOrEqual(44);
       const size = (l: typeof next) => l.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
       expect(await size(prev)).toBeLessThan(await size(next.locator("[data-next-title]")));

@@ -73,7 +73,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
       back={{ href: courseHref, label: view.title }}
       frame="reading"
       dock={
-        <LessonDock sheetId={sheetId}>
+        <LessonDock sheetId={sheetId} next={next ? { href: `${courseHref}/${next.slug}`, title: next.title } : { href: courseHref }}>
           <ProgressTrack segments={segmentsOf(view.lessons, index)} />
         </LessonDock>
       }
@@ -147,10 +147,11 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
             />
           </section>
 
-          {/* Phones: previous is a small link, next the one full-width way forward. From 768px they share a row. */}
-          <nav aria-label="Lesson navigation" className="flex flex-col gap-3 text-base md:flex-row md:items-center md:justify-between">
+          {/* Below 1024px the named next action lives in the lesson bar, so only previous stays here (a small link).
+              From 1024px there is no bar: previous and next share this row. */}
+          <nav aria-label="Lesson navigation" className={`flex-row items-center justify-between gap-3 text-base ${prev ? "flex" : "hidden lg:flex"}`}>
             {prev ? (
-              <Link href={`${courseHref}/${prev.slug}`} className="inline-flex min-h-11 items-center gap-1.5 self-start text-label text-brand hover:text-brand-hover md:self-center">
+              <Link href={`${courseHref}/${prev.slug}`} className="inline-flex min-h-11 items-center gap-1.5 text-label text-brand hover:text-brand-hover">
                 <ArrowLeft aria-hidden strokeWidth={1.75} className="size-4 shrink-0" />
                 <span>
                   <span className="sr-only">Previous lesson: </span>
@@ -158,12 +159,12 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
                 </span>
               </Link>
             ) : (
-              <span className="hidden md:block" />
+              <span className="hidden lg:block" />
             )}
             {next ? (
               <Link
                 href={`${courseHref}/${next.slug}`}
-                className="flex min-h-12 w-full flex-col justify-center rounded-control border border-control bg-surface px-4 py-2 hover:bg-surface-muted md:w-auto md:max-w-[60%] md:items-end md:text-right"
+                className="hidden min-h-12 max-w-[60%] flex-col items-end justify-center rounded-control border border-control bg-surface px-4 py-2 text-right hover:bg-surface-muted lg:flex"
               >
                 <span className="text-label text-text-muted">Next lesson</span>
                 <span data-next-title className="inline-flex items-center gap-1.5 font-medium text-text">
@@ -172,7 +173,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
                 </span>
               </Link>
             ) : (
-              <Link href={courseHref} className="inline-flex min-h-11 items-center gap-1.5 text-brand hover:text-brand-hover">
+              <Link href={courseHref} className="hidden min-h-11 items-center gap-1.5 text-brand hover:text-brand-hover lg:inline-flex">
                 Back to the course
               </Link>
             )}

@@ -391,9 +391,10 @@ body {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
 }
 
-/* The lesson bar publishes its height as --dock-h; focus moved by keyboard or scroll stops above it. */
+/* The lesson bar publishes its height as --dock-h (0px from 1024px, where it is hidden); focus moved by
+   keyboard or scroll stops clear of it, with room for the focus ring. */
 html {
-  scroll-padding-bottom: var(--dock-h, 0px);
+  scroll-padding-bottom: calc(var(--dock-h, 0px) + 0.75rem);
 }
 
 /* The outline bottom sheet (a modal dialog): chrome motion only, none under reduced motion. */

@@ -11,7 +11,7 @@ import { learnPath, signIn } from "./helpers/sign-in";
 // reached by keyboard, it reflows at 320px with 200% text, text spacing does not clip it or the sheet,
 // the sheet traps focus both ways, locks background scroll, closes on Esc, restores focus (also when the
 // opener is gone), and closes itself when the viewport widens past 1024px.
-// RED FIRST (Sol R1 on #53): these cases fail on 2fb1d23; the fixes follow in the next commits.
+// RED FIRST (Sol R1 on #53): these cases failed on 2fb1d23.
 
 test.describe.configure({ mode: "serial" });
 
@@ -173,10 +173,11 @@ test("the outline sheet: both triggers, Tab and Shift+Tab stay inside, scroll lo
     await page.goto(`${lessonPath(2)}?theme=${theme}`);
     await page.waitForLoadState("networkidle");
     await page.evaluate(() => window.scrollTo(0, 200));
-    const scrolled = await page.evaluate(() => window.scrollY);
     for (const which of ["top", "dock"] as const) {
       const trigger = which === "top" ? page.locator("[data-outline-trigger]").filter({ visible: true }) : dock(page).getByRole("button", { name: "Outline" });
       await trigger.focus();
+      // Focusing a trigger that is partly off screen scrolls it into view: the position to keep is the one after that.
+      const scrolled = await page.evaluate(() => window.scrollY);
       await page.keyboard.press("Enter");
       await expect(sheet(page)).toBeVisible();
       await expect(sheet(page).getByRole("heading", { name: "Course outline" })).toBeVisible();

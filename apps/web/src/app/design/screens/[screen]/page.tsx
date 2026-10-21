@@ -41,7 +41,7 @@ async function DesignScreen({ params }: { params: Promise<{ screen: string }> })
         back={back}
         frame="reading"
         dock={
-          <LessonDock sheetId="design-outline-sheet">
+          <LessonDock sheetId="design-outline-sheet" next={{ href: "/design/screens/lesson", title: view.lessons[2]!.title }}>
             <ProgressTrack segments={segmentsOf(view.lessons, 1)} />
           </LessonDock>
         }

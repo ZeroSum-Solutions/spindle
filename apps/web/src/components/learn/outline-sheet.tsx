@@ -4,8 +4,11 @@ import { useEffect, useId, useRef, type ReactNode } from "react";
 import { ChevronUp, X } from "lucide-react";
 
 // The course outline on phones and tablets, as a bottom sheet (a native modal <dialog>): Tab cycles inside,
-// Esc closes, and focus returns to whichever trigger opened it (or to the top trigger if that one is gone).
-// From 1024px the outline is the sidebar instead, so the sheet's triggers are hidden there.
+// Esc closes, the page behind does not scroll, and focus returns to whichever trigger opened it (or to the
+// top trigger if that one is gone). From 1024px the outline is the sidebar instead: the sheet's triggers are
+// hidden there, and an open sheet closes itself when the viewport widens, moving focus to the sidebar.
+
+const DESKTOP = "(min-width: 1024px)";
 
 let opener: HTMLElement | null = null;
 
@@ -27,13 +30,48 @@ export function OutlineSheet({ id, progress, children }: { id: string; progress:
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
+    const root = document.documentElement;
+    let saved: { overflow: string; paddingRight: string } | null = null;
+    // Lock the page behind while open; keep the scrollbar's space so nothing shifts sideways.
+    const lock = () => {
+      if (saved) return;
+      saved = { overflow: root.style.overflow, paddingRight: root.style.paddingRight };
+      const bar = window.innerWidth - root.clientWidth;
+      root.style.overflow = "hidden";
+      if (bar > 0) root.style.paddingRight = `${bar}px`;
+    };
+    const unlock = () => {
+      if (!saved) return;
+      root.style.overflow = saved.overflow;
+      root.style.paddingRight = saved.paddingRight;
+      saved = null;
+    };
     const restore = () => {
-      const back = opener?.isConnected ? opener : document.querySelector<HTMLElement>(`[data-outline-trigger="${id}"]`);
-      back?.focus();
+      unlock();
+      const back = window.matchMedia(DESKTOP).matches
+        ? [...document.querySelectorAll<HTMLElement>('nav[aria-label="Course outline"] [aria-current="page"]')].find((el) => !el.closest("dialog") && el.checkVisibility())
+        : opener?.isConnected && opener.checkVisibility()
+          ? opener
+          : document.querySelector<HTMLElement>(`[data-outline-trigger="${id}"]`);
+      // The page did not scroll while open, so the trigger is where it was: do not move the page now.
+      back?.focus({ preventScroll: true });
       opener = null;
     };
+    // showModal() happens outside React (openOutlineSheet); watch the open attribute to lock and unlock.
+    const watch = new MutationObserver(() => (dialog.open ? lock() : unlock()));
+    watch.observe(dialog, { attributes: true, attributeFilter: ["open"] });
+    const desktop = window.matchMedia(DESKTOP);
+    const widen = () => {
+      if (desktop.matches && dialog.open) dialog.close();
+    };
     dialog.addEventListener("close", restore);
-    return () => dialog.removeEventListener("close", restore);
+    desktop.addEventListener("change", widen);
+    return () => {
+      dialog.removeEventListener("close", restore);
+      desktop.removeEventListener("change", widen);
+      watch.disconnect();
+      unlock();
+    };
   }, [id]);
   return (
     <>
@@ -73,7 +111,7 @@ export function OutlineSheet({ id, progress, children }: { id: string; progress:
             last.focus();
           }
         }}
-        className="outline-sheet m-0 mt-auto max-h-[85dvh] w-full max-w-none rounded-t-plate border-t border-border bg-surface p-0 text-text shadow-float lg:hidden"
+        className="outline-sheet m-0 mt-auto max-h-[85dvh] w-full overflow-y-auto overscroll-contain max-w-none rounded-t-plate border-t border-border bg-surface p-0 text-text shadow-float lg:hidden"
       >
         <div className="flex flex-col gap-tight p-stack pb-[calc(var(--spacing-stack)+env(safe-area-inset-bottom))]">
           <div className="flex items-center justify-between gap-attach">
