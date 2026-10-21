@@ -371,3 +371,25 @@ test("a 60-lesson course: every segment of the track keeps a visible width at 32
   expect(await narrowest(), "narrowest segment at 200% text").toBeGreaterThanOrEqual(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
+
+test("closing the sheet after a resize grew the bar scrolls the trigger clear of it (200% text)", async ({ browser }) => {
+  // Sol R3 on #53, red first: focus went back to the top trigger under the bar.
+  const page = await signIn(browser, actors.shelllearner!, lessonPath(2), { width: 390, height: 844 });
+  await page.goto(lessonPath(2));
+  await page.waitForLoadState("networkidle");
+  await page.addStyleTag({ content: BIG_TEXT });
+  const trigger = page.locator("[data-outline-trigger]").filter({ visible: true });
+  await trigger.click();
+  await expect(sheet(page)).toBeVisible();
+  await page.setViewportSize({ width: 640, height: 400 });
+  await page.keyboard.press("Escape");
+  await expect.poll(() => openModals(page)).toBe(0);
+  await expect(trigger).toBeFocused();
+  await expect
+    .poll(async () => {
+      const t = (await trigger.boundingBox())!;
+      const barTop = (await shownDock(page).boundingBox())!.y;
+      return t.y >= 0 && t.y + t.height <= barTop;
+    }, "the focused trigger is on screen and above the bar")
+    .toBe(true);
+});
