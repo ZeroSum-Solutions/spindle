@@ -364,6 +364,7 @@ export type Database = {
       }
       courses: {
         Row: {
+          cover: Json | null
           created_at: string
           description: string
           id: string
@@ -374,11 +375,13 @@ export type Database = {
           scope: string
           slug: string
           subtitle: string
+          tags: string[]
           title: string
           updated_at: string
           updated_by: string
         }
         Insert: {
+          cover?: Json | null
           created_at?: string
           description: string
           id: string
@@ -389,11 +392,13 @@ export type Database = {
           scope?: string
           slug: string
           subtitle: string
+          tags?: string[]
           title: string
           updated_at?: string
           updated_by: string
         }
         Update: {
+          cover?: Json | null
           created_at?: string
           description?: string
           id?: string
@@ -404,6 +409,7 @@ export type Database = {
           scope?: string
           slug?: string
           subtitle?: string
+          tags?: string[]
           title?: string
           updated_at?: string
           updated_by?: string
@@ -1311,6 +1317,10 @@ export type Database = {
         Args: { p_org: string; p_user: string; p_version: string }
         Returns: string
       }
+      check_tenant_text: {
+        Args: { p_org: string; p_slot: string; p_text: string }
+        Returns: Json
+      }
       complete_lesson: {
         Args: { p_assignment: string; p_lesson: string }
         Returns: string
@@ -1326,6 +1336,16 @@ export type Database = {
       create_org: {
         Args: { org_name: string; org_slug: string }
         Returns: string
+      }
+      member_brand: { Args: { p_org: string }; Returns: Json }
+      member_course_cards: { Args: { p_org: string }; Returns: Json }
+      member_tenant_texts: {
+        Args: { p_org: string }
+        Returns: {
+          admitted: boolean
+          slot: string
+          text: string
+        }[]
       }
       module_status: {
         Args: { p_assignment: string }
@@ -1362,6 +1382,10 @@ export type Database = {
         Args: { p_actor: string; p_claim: string }
         Returns: Json
       }
+      publisher_decide_tenant_text: {
+        Args: { p_decision: Json; p_publisher: string; p_text: string }
+        Returns: string
+      }
       publisher_publish_course: {
         Args: { p_actor: string; p_course: string }
         Returns: string
@@ -1377,6 +1401,10 @@ export type Database = {
       publisher_record_retraction: {
         Args: { p_actor: string; p_notice: Json; p_source: string }
         Returns: number
+      }
+      publisher_record_text_override: {
+        Args: { p_override: Json; p_publisher: string }
+        Returns: string
       }
       publisher_refresh_media_metadata: {
         Args: { p_actor: string; p_media: string; p_metadata: Json }
@@ -1401,6 +1429,10 @@ export type Database = {
       publisher_review_targets: {
         Args: { p_actor: string; p_course: string }
         Returns: Json
+      }
+      publisher_revoke_tenant_text: {
+        Args: { p_publisher: string; p_revocation: Json; p_text: string }
+        Returns: string
       }
       publisher_save_course_draft: {
         Args: { p_actor: string; p_course: Json }
@@ -1429,6 +1461,19 @@ export type Database = {
         Args: { p_course: Json; p_org: string }
         Returns: string
       }
+      save_org_brand: {
+        Args: { p_brand: Json; p_org: string }
+        Returns: number
+      }
+      save_tenant_text: {
+        Args: {
+          p_course: string
+          p_org: string
+          p_slot: string
+          p_text: string
+        }
+        Returns: string
+      }
       set_member_role: {
         Args: {
           member: string
@@ -1444,6 +1489,17 @@ export type Database = {
           correct: number
           passed: boolean
           total: number
+        }[]
+      }
+      tenant_text_status: {
+        Args: { p_course: string; p_org: string; p_slot: string }
+        Returns: {
+          reason: string
+          saved_at: string
+          status: string
+          text: string
+          text_hash: string
+          text_id: string
         }[]
       }
       version_integrity: {
@@ -1463,6 +1519,17 @@ export type Database = {
           review: string
           state: string
           title: string
+        }[]
+      }
+      version_tenant_texts: {
+        Args: { p_version: string }
+        Returns: {
+          author_user_id: string
+          display_name: string
+          saved_at: string
+          slot: string
+          state: string
+          text: string
         }[]
       }
     }

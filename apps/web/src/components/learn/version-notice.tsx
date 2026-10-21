@@ -4,15 +4,15 @@ import type { DeltaView } from "@/lib/learning/view";
 const ICON = { "aria-hidden": true, strokeWidth: 1.75, className: "mt-1 size-4 shrink-0 text-text-muted" } as const;
 
 /** What changed between the learner's previous assigned version and this one: a compact list, one muted explanation. */
-export function VersionNotice({ delta, versionNumber, credited = false }: { delta: DeltaView; versionNumber: number; credited?: boolean }) {
+export function VersionNotice({ delta, versionNumber, credited = false, titleId = "changes-title" }: { delta: DeltaView; versionNumber: number; credited?: boolean; titleId?: string }) {
   const rows = [
     { label: "Changed", icon: <Pencil {...ICON} />, items: delta.changed },
     { label: "Added", icon: <Plus {...ICON} />, items: delta.added },
     { label: "Removed", icon: <Minus {...ICON} />, items: delta.removed },
   ].filter((r) => r.items.length > 0);
   return (
-    <section aria-labelledby="changes-title" className="flex flex-col gap-3 rounded-card bg-surface-muted p-4">
-      <h2 id="changes-title" className="font-medium">
+    <section aria-labelledby={titleId} className="flex flex-col gap-3 rounded-card bg-surface-muted p-4">
+      <h2 id={titleId} className="font-medium">
         What changed from v{delta.fromVersionNumber} to v{versionNumber}
       </h2>
       {rows.length > 0 ? (

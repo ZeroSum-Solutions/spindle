@@ -221,7 +221,9 @@ select lives_ok(format($$delete from public.orgs where id = %L$$, pg_temp.org('g
 -- 56-58: account deletion and anonymous callers ---------------------------------
 reset role;
 select lives_ok($$delete from auth.users where email = 'tess@a.test'$$, 'a trainer''s account can be deleted');
-select is((select count(*) from public.invites where accepted_at is not null and accepted_by is null), 1::bigint,
+-- Scoped to this suite's gym and Tess's invite: a shared stack may hold other orphaned invites.
+select is((select count(*) from public.invites where org_id = pg_temp.org('gym-a') and lower(email) = 'tess@a.test'
+  and accepted_at is not null and accepted_by is null), 1::bigint,
   'the deleted account''s accepted invite keeps its record without the user link');
 set local role anon;
 select throws_ok('select * from public.orgs', '42501', null, 'anon cannot read orgs');

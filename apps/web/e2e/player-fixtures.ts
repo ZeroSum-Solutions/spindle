@@ -8,9 +8,9 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { mailpitFetch } from "./helpers/test-env";
 
 const DB_URL = process.env.DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
-const MAILPIT = "http://127.0.0.1:54324";
 
 /** Fixtures write synthetic rows; they only ever talk to this machine. */
 export function assertLoopback(url: string, what: string): void {
@@ -68,6 +68,12 @@ const lit = (v: string) => `'${v.replace(/'/g, "''")}'`;
 const asUser = (id: string) =>
   `select set_config('role', 'authenticated', true), set_config('request.jwt.claims', ${lit(JSON.stringify({ sub: id, role: "authenticated" }))}, true);`;
 const asService = `select set_config('role', 'service_role', true), set_config('request.jwt.claims', '{"role":"service_role"}', true);`;
+/** As the table owner: the publisher admits a gym course's newest held title, if it is still pending (P4-A2 rev4a). */
+const admitTitle = (publisherId: string, courseId: string) => `select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+      select public.publisher_decide_tenant_text(${lit(publisherId)}, t.id, jsonb_build_object('decision', 'admitted',
+          'reason', 'Synthetic e2e title.', 'textHash', t.text_hash))
+        from (select * from private.tenant_texts where course_id = ${lit(courseId)} and slot = 'course_title' order by seq desc limit 1) t
+        where not exists (select 1 from private.tenant_text_admissions a where a.text_id = t.id);`;
 
 /**
  * A synthetic review run (ADR 0007): CI records receipts through the real RPCs and never calls
@@ -106,7 +112,7 @@ export function publicEnv(): { url: string; key: string } {
 // ---- Sign-in codes -----------------------------------------------------------------
 
 async function messageIds(email: string): Promise<Set<string>> {
-  const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=50`);
+  const res = await mailpitFetch(`/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=50`);
   const { messages } = (await res.json()) as { messages: { ID: string }[] };
   return new Set(messages.map((m) => m.ID));
 }
@@ -114,11 +120,11 @@ async function messageIds(email: string): Promise<Set<string>> {
 /** Waits for a sign-in code that arrived after `before` was taken, so a stale code is never reused. */
 export async function codeAfter(email: string, before: Set<string>): Promise<string> {
   for (let attempt = 0; attempt < 40; attempt++) {
-    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=5`);
+    const res = await mailpitFetch(`/api/v1/search?query=${encodeURIComponent(`to:${email}`)}&limit=5`);
     const { messages } = (await res.json()) as { messages: { ID: string }[] };
     const fresh = messages.find((m) => !before.has(m.ID));
     if (fresh) {
-      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${fresh.ID}`)).json()) as { Text: string };
+      const msg = (await (await mailpitFetch(`/api/v1/message/${fresh.ID}`)).json()) as { Text: string };
       const code = /\b(\d{6})\b/.exec(msg.Text)?.[1];
       if (code) return code;
     }
@@ -146,7 +152,7 @@ export async function userClient(email: string): Promise<{ client: SupabaseClien
 
 // ---- Synthetic curriculum ------------------------------------------------------------
 
-type Json = Record<string, unknown>;
+export type Json = Record<string, unknown>;
 
 export interface LessonSpec {
   id: string;
@@ -358,15 +364,74 @@ export class PlayerWorld {
       .at(-1)!;
   }
 
-  /** Saves and publishes a gym method course as its owner or lead. Returns the version id. */
+  /**
+   * Saves and publishes a gym method course as its owner or lead, with the publisher admitting its
+   * held title in between (P4-A2 rev4a). Returns the version id.
+   */
   publishMethod(org: { id: string }, author: Actor, course: Json): string {
     if (!this.courses.includes(String(course.id))) this.courses.push(String(course.id));
     return sql(`begin; ${asUser(author.id)}
       select public.save_course_draft(${lit(org.id)}, ${lit(JSON.stringify(course))}::jsonb);
+      ${admitTitle(this.publisherId, String(course.id))}
+      ${asUser(author.id)}
       select public.publish_course(${lit(String(course.id))});
       commit;`)
       .split("\n")
       .at(-1)!;
+  }
+
+  /** P4-A2: the owner saves the gym's brand through save_org_brand (which repeats the AA checks). */
+  saveBrand(org: { id: string }, owner: Actor, brand: Json): void {
+    sql(`begin; ${asUser(owner.id)} select public.save_org_brand(${lit(org.id)}, ${lit(JSON.stringify(brand))}::jsonb); commit;`);
+  }
+
+  /**
+   * Test only: stores a brand row as it was saved before Lab (no dark accent pair), bypassing
+   * save_org_brand, which would now refuse it. Models a gym whose brand predates the migration.
+   */
+  legacyBrand(org: { id: string }, owner: Actor, brand: Json): void {
+    sql(`begin; select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+      insert into private.org_brand (org_id, brand, updated_by) values (${lit(org.id)}, ${lit(JSON.stringify(brand))}::jsonb, ${lit(owner.id)})
+        on conflict (org_id) do update set brand = excluded.brand;
+      select private.bump_brand_revision(${lit(org.id)});
+      commit;`);
+  }
+
+  /** P4-A2: an author saves a held text through save_tenant_text; it stays pending until admitted. Returns the text id. */
+  saveText(org: { id: string }, author: Actor, slot: string, courseId: string | null, text: string): string {
+    return sql(`begin; ${asUser(author.id)} select public.save_tenant_text(${lit(org.id)}, ${lit(slot)}, ${courseId ? lit(courseId) : "null"}, ${lit(text)}); commit;`)
+      .split("\n")
+      .at(-1)!;
+  }
+
+  /** P4-A2: the publisher admits a held text through publisher_decide_tenant_text (never a direct receipt row). */
+  admitText(textId: string): void {
+    sql(`begin; select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+      select public.publisher_decide_tenant_text(${lit(this.publisherId)}, t.id, jsonb_build_object('decision', 'admitted',
+          'reason', 'Synthetic e2e text.', 'textHash', t.text_hash))
+        from private.tenant_texts t where t.id = ${lit(textId)};
+      commit;`);
+  }
+
+  /** P4-A2: the publisher revokes one admitted held text through publisher_revoke_tenant_text. */
+  revokeText(textId: string): void {
+    sql(`begin; select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+      select public.publisher_revoke_tenant_text(${lit(this.publisherId)}, ${lit(textId)}, jsonb_build_object('reason', 'Synthetic e2e revocation.'));
+      commit;`);
+  }
+
+  /** P4-A2: the publisher revokes a gym course's admitted title through publisher_revoke_tenant_text. */
+  revokeTitle(courseId: string): void {
+    sql(`begin; select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
+      select public.publisher_revoke_tenant_text(${lit(this.publisherId)}, t.id, jsonb_build_object('reason', 'Synthetic e2e revocation.'))
+        from (select * from private.tenant_texts where course_id = ${lit(courseId)} and slot = 'course_title' order by seq desc limit 1) t;
+      commit;`);
+  }
+
+  /** Saves a gym method course draft as its author, so held course texts can be saved against it before publishing. */
+  saveMethodDraft(org: { id: string }, author: Actor, course: Json): void {
+    if (!this.courses.includes(String(course.id))) this.courses.push(String(course.id));
+    sql(`begin; ${asUser(author.id)} select public.save_course_draft(${lit(org.id)}, ${lit(JSON.stringify(course))}::jsonb); commit;`);
   }
 
   /** Assigns a version through the tenant RPC, as the gym's owner. Returns the assignment id. */

@@ -17,6 +17,8 @@ import {
   type PublishedVersion,
   type VersionRow,
 } from "./view";
+import { cardSummary, shownCourseTitle } from "@/components/brand/adapt";
+import { memberVersionTexts, NO_VERSION_TEXTS, type VersionTexts } from "./tenant";
 
 // Every read here runs as the signed-in user, so RLS applies, and every query also
 // names the route gym and the user. Owners and leads can read other members' rows
@@ -126,8 +128,31 @@ async function flaggedClaims(ctx: LearnerGym, versionIds: string[]): Promise<Map
   return byVersion;
 }
 
+/** What a catalog card shows of an assigned version: facts of that exact version (Sol R1 on #45). */
+export interface CardFacts {
+  cover?: { pattern: "solid" | "diagonal" | "grid" | "dots" | "rings" | "waves"; background: string; foreground: string };
+  tags: string[];
+  lessonCount: number;
+  durationMinutes: number;
+  /** The version's live blurb (version_tenant_texts), or null. */
+  blurb: string | null;
+}
+
+function cardFacts(version: PublishedVersion, texts: VersionTexts): CardFacts {
+  const lessons = lessonsOf(version.course);
+  const cover = version.learnerCourse.cover;
+  return {
+    ...(cover ? { cover: { pattern: cover.pattern, background: cover.background, foreground: cover.foreground } } : {}),
+    tags: [...(version.learnerCourse.tags ?? [])],
+    lessonCount: lessons.length,
+    durationMinutes: lessons.reduce((sum, l) => sum + l.durationMinutes, 0),
+    // Spindle's courses show their published subtitle; gym courses only an admitted blurb (Sol R2 on #45).
+    blurb: cardSummary(version.layer, version.learnerCourse.subtitle, texts.blurb),
+  };
+}
+
 export type AssignmentSummary =
-  | { id: string; courseId: string; versionNumber: number; available: true; view: CourseView }
+  | { id: string; courseId: string; versionNumber: number; available: true; view: CourseView; card: CardFacts }
   | { id: string; courseId: string; versionNumber: number; available: false };
 
 /** The caller's assignments in the route gym, each with its own version's progress. */
@@ -140,17 +165,21 @@ export async function myAssignments(ctx: LearnerGym): Promise<AssignmentSummary[
   const versions = new Map<string, PublishedVersion | null>();
   for (const r of rows) versions.set(r.version.id, tryVersion(r.version, lessonRows.get(r.version.id) ?? []));
 
+  // A gym course's title reads "Untitled course" once its admission is revoked (version_tenant_texts).
+  const texts = new Map(
+    await Promise.all(
+      rows.filter((r) => versions.get(r.version.id)?.layer === "method").map(async (r) => [r.version.id, await memberVersionTexts(ctx, r.version.id)] as const),
+    ),
+  );
   return rows.map((r) => {
     const current = versions.get(r.version.id);
     const meta = { id: r.id, courseId: r.version.course_id, versionNumber: r.version.version_number };
     if (!current) return { ...meta, available: false };
     const sameCourse = rows.filter((o) => o.version.course_id === r.version.course_id).map((o) => versions.get(o.version.id));
     const previous = previousVersion(current, sameCourse.filter((v): v is PublishedVersion => Boolean(v)));
-    return {
-      ...meta,
-      available: true,
-      view: courseView({ current, previous, completions, versionNumbers: numbers, flaggedClaimIds: flags.get(r.version.id) ?? [] }),
-    };
+    const view = courseView({ current, previous, completions, versionNumbers: numbers, flaggedClaimIds: flags.get(r.version.id) ?? [] });
+    const t = texts.get(r.version.id) ?? NO_VERSION_TEXTS;
+    return { ...meta, available: true, view: { ...view, title: shownCourseTitle(view.title, t) }, card: cardFacts(current, t) };
   });
 }
 
@@ -164,7 +193,7 @@ function tryVersion(row: VersionRow, lessons: ManifestRow[]): PublishedVersion |
 }
 
 export type AssignmentDetail =
-  | { available: true; assignmentId: string; version: PublishedVersion; view: CourseView }
+  | { available: true; assignmentId: string; version: PublishedVersion; view: CourseView; texts: VersionTexts }
   | { available: false; assignmentId: string; versionNumber: number };
 
 /**
@@ -202,7 +231,9 @@ export async function myAssignment(ctx: LearnerGym, rawId: string): Promise<Assi
     versionNumbers: new Map(all.map((r) => [r.version.id, r.version.version_number])),
     flaggedClaimIds: flags.get(current.id) ?? [],
   });
-  return { available: true, assignmentId: assignment.id, version: current, view };
+  // Held texts of a gym course: the title's state and the live welcome note and blurb.
+  const texts = current.layer === "method" ? await memberVersionTexts(ctx, current.id) : NO_VERSION_TEXTS;
+  return { available: true, assignmentId: assignment.id, version: current, view: { ...view, title: shownCourseTitle(view.title, texts) }, texts };
 }
 
 export interface SourceView {

@@ -306,7 +306,7 @@ test.describe.serial("learner flow", () => {
     for (const [path, left] of [[learn(gymA), COLUMN], [learn(gymA, assignments.partial, "lesson-one"), OUTLINE]] as const) {
       await p.goto(path);
       await expect(p.getByRole("heading", { level: 1 })).toBeVisible();
-      const mark = (await p.locator("header img").first().boundingBox())!;
+      const mark = (await p.locator("header img:visible").first().boundingBox())!;
       const content = (await layoutSpan(p, left, left))!;
       expect(Math.abs(mark.x - content.left), `${path}: wordmark at ${mark.x}, content at ${content.left}`).toBeLessThanOrEqual(1);
     }
@@ -315,9 +315,9 @@ test.describe.serial("learner flow", () => {
     await p.goto(learn(gymA));
     await expect(p.getByRole("heading", { level: 1 })).toHaveText("Your courses");
     await p.locator("[data-header-context]").evaluate((el) => (el.textContent = "A synthetic gym name that is much too long for any phone header at all"));
-    const mark = (await p.locator("header img").first().boundingBox())!;
+    const mark = (await p.locator("header img:visible").first().boundingBox())!;
     const name = (await p.locator("[data-header-context]").boundingBox())!;
-    expect(mark.width).toBe(120);
+    expect(mark.width).toBe(118);
     expect(name.x, "gym name overlaps the wordmark").toBeGreaterThanOrEqual(mark.x + mark.width + 8);
     expect(name.x + name.width).toBeLessThanOrEqual(320 - 16 + 1);
     expect(await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);

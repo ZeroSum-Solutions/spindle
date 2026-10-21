@@ -2,7 +2,7 @@
 // API bodies). They check shape only: whether a cited claim is approved and
 // relevant is the publish gate's job (validateCatalog and the database receipt).
 import { z } from "zod";
-import type { Catalog, Course, LearnerCourse, LearnerLessonBlock, Lesson, LessonBlock, LessonViewBlock, LessonViewCourse, MediaAsset, RedactedGradedQuiz, VideoSegment } from "./types";
+import type { Catalog, Course, CourseBlurb, CourseCover, CourseWelcome, VersionTenantText, LearnerCourse, LearnerLessonBlock, Lesson, LessonBlock, LessonViewBlock, LessonViewCourse, MediaAsset, ModalityTag, RedactedGradedQuiz, VideoSegment } from "./types";
 
 export class ContentParseError extends Error {
   constructor(
@@ -172,6 +172,84 @@ function lessonSchemaFor<B extends z.ZodType>(block: B) {
   });
 }
 
+export const MODALITY_TAGS = [
+  "strength",
+  "powerlifting",
+  "weightlifting",
+  "hypertrophy",
+  "speed",
+  "mobility",
+  "yoga",
+  "pilates",
+  "running",
+  "endurance",
+  "combat",
+  "team-sport",
+  "youth",
+] as const satisfies readonly ModalityTag[];
+export const COVER_PATTERNS = ["solid", "diagonal", "grid", "dots", "rings", "waves"] as const;
+
+const hexColour = z.string().regex(/^#[0-9a-fA-F]{6}$/, "must be a #RRGGBB colour");
+
+export const courseCoverSchema = z.strictObject({
+  kind: z.literal("pattern"),
+  pattern: z.enum(COVER_PATTERNS),
+  background: hexColour,
+  foreground: hexColour,
+}) satisfies z.ZodType<CourseCover>;
+
+export const courseTagsSchema = z
+  .array(z.enum(MODALITY_TAGS))
+  .max(2)
+  .refine((tags) => new Set(tags).size === tags.length, "has a duplicate tag");
+
+const uuidSchema = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, "must be a lowercase uuid");
+
+const savedAtSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/, "must be a UTC timestamp with microseconds");
+
+export const courseWelcomeSchema = z.strictObject({
+  text: requiredText.max(280),
+  receiptId: uuidSchema,
+  author: z.strictObject({
+    authorUserId: uuidSchema,
+    displayName: requiredText.max(60),
+    /** Where the signature came from; null for the fixed fallback. */
+    signatureSlot: z.enum(["coach_name", "brand_name"]).nullable(),
+    signatureReceiptId: uuidSchema.nullable(),
+    orgId: uuidSchema,
+    savedAt: savedAtSchema,
+  }),
+})
+  .refine((w) => (w.author.signatureSlot === null) === (w.author.signatureReceiptId === null), {
+    message: "a signature names both its slot and its receipt, or neither (the fallback)",
+    path: ["author", "signatureReceiptId"],
+  }) satisfies z.ZodType<CourseWelcome>;
+
+export const courseBlurbSchema = z.strictObject({
+  text: requiredText.max(160),
+  receiptId: uuidSchema,
+  author: z.strictObject({ authorUserId: uuidSchema, savedAt: savedAtSchema }),
+}) satisfies z.ZodType<CourseBlurb>;
+
+/** Rows of version_tenant_texts, as the database returns them. */
+export const versionTenantTextsSchema = z
+  .array(
+    z
+      .strictObject({
+        slot: z.enum(["course_title", "welcome", "course_blurb"]),
+        state: z.enum(["live", "revoked"]),
+        text: z.string().max(400).nullable(),
+        display_name: z.string().max(60).nullable(),
+        author_user_id: uuidSchema.nullable(),
+        saved_at: z.string().nullable(),
+      })
+      .transform(
+        (r): VersionTenantText => ({ slot: r.slot, state: r.state, text: r.text, displayName: r.display_name, authorUserId: r.author_user_id, savedAt: r.saved_at }),
+      ),
+  )
+  .max(3);
+export const parseVersionTenantTexts = (value: unknown): VersionTenantText[] => parseWith(versionTenantTextsSchema, "version tenant texts", value);
+
 function courseSchemaFor<L extends z.ZodType>(lesson: L) {
   return z.strictObject({
     id: idSchema,
@@ -193,7 +271,16 @@ function courseSchemaFor<L extends z.ZodType>(lesson: L) {
         }),
       )
       .max(100),
-  });
+    cover: courseCoverSchema.optional(),
+    tags: courseTagsSchema.optional(),
+    welcome: courseWelcomeSchema.optional(),
+    blurb: courseBlurbSchema.optional(),
+    titleReceiptId: uuidSchema.optional(),
+  })
+    .refine((c) => c.cover === undefined || c.layer === "method", { message: "only gym method courses take a cover", path: ["cover"] })
+    .refine((c) => c.welcome === undefined || c.layer === "method", { message: "only gym method courses have a welcome note", path: ["welcome"] })
+    .refine((c) => c.blurb === undefined || c.layer === "method", { message: "only gym method courses have a tenant blurb", path: ["blurb"] })
+    .refine((c) => c.titleReceiptId === undefined || c.layer === "method", { message: "only gym method courses have a held title", path: ["titleReceiptId"] });
 }
 
 export const lessonSchema = lessonSchemaFor(lessonBlockSchema) satisfies z.ZodType<Lesson>;
@@ -226,6 +313,19 @@ export const catalogSchema = z.strictObject({
 /** Shape-checks a catalog. Run validateCatalog afterwards for ids, provenance and claim approval. */
 export const parseCatalog = (value: unknown): Catalog => parseWith(catalogSchema, "catalog", value);
 export const parseCourse = (value: unknown): Course => parseWith(courseSchema, "course", value);
+/**
+ * A course draft as authors send it to save_course_draft: cover and tags allowed, no welcome note or
+ * blurb (held tenant texts, saved through save_tenant_text and pending until LEAD admits them).
+ */
+export const parseCourseDraft = (value: unknown): Course =>
+  parseWith(
+    courseSchema
+      .refine((c) => c.welcome === undefined, { message: "is saved through save_tenant_text, not the draft", path: ["welcome"] })
+      .refine((c) => c.blurb === undefined, { message: "is saved through save_tenant_text, not the draft", path: ["blurb"] })
+      .refine((c) => c.titleReceiptId === undefined, { message: "is recorded by LEAD's admission, not the draft", path: ["titleReceiptId"] }),
+    "course draft",
+    value,
+  );
 /** Parses curriculum_versions.learner_snapshot, the only snapshot learners can read (ADR 0007). */
 export const parseLearnerCourse = (value: unknown): LearnerCourse => parseWith(learnerCourseSchema, "learner course", value);
 

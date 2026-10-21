@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the app's brand files from the traced Cut 03 wordmark.
+"""Builds the app's brand files from the traced Cut 03 wordmark. SUPERSEDED (2026-10-11) by build-wordmark.py (Pressroom); kept as Atlas history.
 
 Run from the repo root: python3 docs/design/spindle/build-brand.py
 Writes apps/web/public/brand/*.svg and apps/web/src/app/icon.svg. Raster icons

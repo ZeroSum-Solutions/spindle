@@ -1,4 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import { e2ePort } from "./e2e/helpers/test-env";
+
+// E2E_PORT lets a writer run the suite on its own port beside the shared one (default 3100; validated).
+const PORT = e2ePort();
 
 // Needs the local Supabase stack (`supabase start`, with Mailpit) for sign-in codes.
 export default defineConfig({
@@ -7,8 +11,18 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: process.env.CI ? "github" : "list",
-  use: { baseURL: "http://127.0.0.1:3100", trace: "retain-on-failure" },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  use: { baseURL: `http://127.0.0.1:${PORT}`, trace: "retain-on-failure" },
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /zoom\.spec\.ts$/ },
+    // 200% zoom of a 1280px window, without viewport emulation: headless Chromium has no zoom control, so
+    // the window itself is what 200% zoom produces (640 CSS px at devicePixelRatio 2).
+    // Accepted as the WCAG 1.4.10 reflow equivalent of 200% zoom at 1280px (1280 / 2 = 640 CSS px), LEAD disposition on #42 R2.
+    {
+      name: "chromium-zoom-200",
+      testMatch: /zoom\.spec\.ts$/,
+      use: { browserName: "chromium", viewport: null, launchOptions: { args: ["--window-size=640,450", "--force-device-scale-factor=2"] } },
+    },
+  ],
   webServer: {
     // CI tests the production build (NEXT_PUBLIC_* values are inlined at build time).
     // SPINDLE_PREVIEW_PAGES=1 turns on the test-only pages (the brand preview) in the production build.
@@ -16,10 +30,10 @@ export default defineConfig({
     // starts, and the server refuses to start (exit 97) if it is still present.
     command: `env -u SPINDLE_TEST_SERVICE_ROLE_KEY SPINDLE_PREVIEW_PAGES=1 sh -c 'test -z "\${SPINDLE_TEST_SERVICE_ROLE_KEY+x}" || exit 97; ${
       process.env.CI
-        ? "pnpm exec next build && pnpm exec next start --port 3100 --hostname 127.0.0.1"
-        : "pnpm exec next dev --port 3100 --hostname 127.0.0.1"
+        ? `pnpm exec next build && pnpm exec next start --port ${PORT} --hostname 127.0.0.1`
+        : `pnpm exec next dev --port ${PORT} --hostname 127.0.0.1`
     }'`,
-    url: "http://127.0.0.1:3100",
+    url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,
   },

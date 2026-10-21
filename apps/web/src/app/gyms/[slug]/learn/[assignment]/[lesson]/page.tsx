@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { LessonBlocks, LessonMedia, LessonResources } from "@/components/learn/blocks";
+import { CoachNote } from "@/components/brand/coach-note";
 import { CompleteLesson } from "@/components/learn/complete-lesson";
 import { IntegrityAlert, LayerLabel, LessonStateDetail, SupportLegend, VersionTag } from "@/components/learn/labels";
 import { receiptLine } from "@/lib/learning/presentation";
@@ -67,7 +68,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
         <div className="lg:sticky lg:top-6 lg:self-start">
           <LessonOutline view={view} base={courseHref} currentId={lesson.id} />
         </div>
-        <article className="flex min-w-0 max-w-[68ch] flex-col gap-8 text-reading" aria-labelledby="lesson-title">
+        <article className="flex min-w-0 max-w-[46rem] flex-col gap-8 text-reading" aria-labelledby="lesson-title">
           <header className="flex flex-col gap-3">
             <p className="flex flex-wrap items-center gap-2 text-label text-text-muted">
               <LayerLabel layer={view.layer} />
@@ -76,7 +77,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
                 Lesson {index + 1} of {lessons.length} · {state.partTitle}
               </span>
             </p>
-            <h1 id="lesson-title" className="text-heading-lesson font-medium text-text">
+            <h1 id="lesson-title" className="text-heading-lesson text-text">
               {lesson.title}
             </h1>
             <p className="text-label text-text-muted">
@@ -84,6 +85,9 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
             </p>
             {lesson.summary ? <p className="text-text-muted">{lesson.summary}</p> : null}
           </header>
+
+          {/* A gym course's live welcome note opens its first lesson (practice-based, frozen name). */}
+          {index === 0 && detail.texts.welcome ? <CoachNote note={detail.texts.welcome} /> : null}
 
           {integrity === null ? (
             <IntegrityAlert title="We could not check the evidence status of this lesson right now">
