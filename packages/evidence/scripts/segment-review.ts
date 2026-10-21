@@ -96,11 +96,11 @@ main(async () => {
       return 1;
     }
     const described = await describeSegment(seg, { fetch: (u, i) => fetch(u, i), apiKey, now: () => now });
-    if (!described.ok && described.refused) {
-      // The provider refused before doing any work: release the reservation, so it neither costs
-      // budget nor blocks the clip for 90 days. Nothing is recorded; the clip stays disabled.
-      releaseCall(ledgerPath, reservation, described.status ?? 503, new Date());
-      console.log("the describer refused the call before doing any work; the reservation is released and the clip may be tried again");
+    if (!described.ok && "refusal" in described) {
+      // A documented non-billable refusal (refusal.ts): release the reservation, so it neither
+      // costs budget nor blocks the clip for 90 days. Nothing is recorded; the clip stays disabled.
+      releaseCall(ledgerPath, reservation, described.refusal, new Date());
+      console.log(`the describer refused the call (HTTP ${described.refusal}); the reservation is released and the clip may be tried again`);
     } else {
       settleCall(ledgerPath, reservation, described.costUsd, described.ok, new Date());
       console.log(described.costUsd === null ? `describer cost unknown; $${reservation.maxUsd.toFixed(6)} stays reserved` : `describer cost $${described.costUsd.toFixed(6)}`);

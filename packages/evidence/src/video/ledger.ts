@@ -3,14 +3,16 @@
 // cost and in the UTC month of the reservation, and settled afterwards. A reservation
 // with no settlement, or settled with an unknown cost, keeps its full upper bound, so an
 // interrupted or unreadable call can never free budget (Sol PR20-01, 02, 03, 05). A call
-// the provider refused before doing any work (HTTP 429 or 5xx with no usage) is released
-// instead: it costs nothing and does not count toward the 90-day rule (T15).
+// the provider turned away with a documented non-billable refusal (refusal.ts) is released
+// instead: it costs nothing and does not count toward the 90-day rule (T15). A release never
+// outweighs a settlement: a reservation with both keeps its charge and interval (Sol R1 PR47-07).
 import { closeSync, existsSync, fsyncSync, openSync, readFileSync, unlinkSync, writeSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { refusalStatusSchema, type RefusalStatus } from "./refusal";
 
 export const MONTHLY_CAP_USD = 5;
-/** One describe call per clip per 90 days, whatever came of it, unless the provider refused it. */
+/** One describe call per clip per 90 days, whatever came of it, unless the provider refused it (refusal.ts). */
 export const DESCRIBE_INTERVAL_DAYS = 90;
 
 const at = z.iso.datetime({ offset: true });
@@ -31,12 +33,12 @@ const settleSchema = z.strictObject({
   costUsd: z.number().min(0).nullable(),
   ok: z.boolean(),
 });
-/** A reserved call the provider refused before doing any work (HTTP 429 or 5xx, no usage). */
+/** A reserved call the provider turned away with a documented non-billable refusal (refusal.ts). */
 const releaseSchema = z.strictObject({
   type: z.literal("release"),
   id: z.uuid(),
   at,
-  status: z.number().int().min(400).max(599),
+  status: refusalStatusSchema,
 });
 /** A line from before reservations: one settled call. */
 const legacySchema = z.strictObject({
@@ -65,8 +67,11 @@ export function parseLedger(text: string): SpendEntry[] {
 }
 
 const monthOf = (d: Date) => d.toISOString().slice(0, 7);
-const releasedIds = (entries: readonly SpendEntry[]) =>
-  new Set(entries.flatMap((e) => ("type" in e && e.type === "release" ? [e.id] : [])));
+/** Released reservations. One that is also settled is not released: its settlement counts (Sol R1 PR47-07). */
+const releasedIds = (entries: readonly SpendEntry[]) => {
+  const settled = new Set(entries.flatMap((e) => ("type" in e && e.type === "settle" ? [e.id] : [])));
+  return new Set(entries.flatMap((e) => ("type" in e && e.type === "release" && !settled.has(e.id) ? [e.id] : [])));
+};
 
 /**
  * Spend charged to a UTC month: the settled cost of each reservation made in it, or its
@@ -190,11 +195,12 @@ export function settleCall(ledgerPath: string, r: Reservation, costUsd: number |
 }
 
 /**
- * Releases a reservation the provider refused before doing any work (HTTP 429 or 5xx with no
- * usage, as describeSegment reports it). The call then costs nothing and does not count toward
- * the 90-day rule. Nothing was described, so nothing is recorded and the clip stays disabled.
+ * Releases a reservation the provider turned away with a documented non-billable refusal (429 or
+ * 503, as describeSegment reports it; any other status throws). The call then costs nothing and
+ * does not count toward the 90-day rule. Nothing was described, so nothing is recorded and the
+ * clip stays disabled.
  */
-export function releaseCall(ledgerPath: string, r: Reservation, status: number, now: Date): Release {
+export function releaseCall(ledgerPath: string, r: Reservation, status: RefusalStatus, now: Date): Release {
   return withLock(ledgerPath, () => {
     const entries = read(ledgerPath);
     if (!entries.some((e) => "type" in e && e.type === "reserve" && e.id === r.id)) throw new Error(`no reservation ${r.id} in the spend ledger`);
