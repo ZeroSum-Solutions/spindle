@@ -13,7 +13,7 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
-    "typescript": "^7",
+    "typescript": "^6",
     "vitest": "^5"
   }
 }
