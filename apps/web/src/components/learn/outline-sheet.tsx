@@ -46,9 +46,11 @@ export function OutlineSheet({ id, progress, children }: { id: string; progress:
       root.style.paddingRight = saved.paddingRight;
       saved = null;
     };
-    const inView = (el: HTMLElement) => {
+    // Off screen, or under the lesson bar (which can cover half the viewport at 200% text).
+    const hidden = (el: HTMLElement) => {
       const r = el.getBoundingClientRect();
-      return r.top >= 0 && r.bottom <= window.innerHeight;
+      const bar = [...document.querySelectorAll<HTMLElement>("[data-lesson-dock]")].find((d) => d.checkVisibility());
+      return r.top < 0 || r.bottom > (bar ? bar.getBoundingClientRect().top : window.innerHeight);
     };
     const restore = () => {
       unlock();
@@ -57,9 +59,13 @@ export function OutlineSheet({ id, progress, children }: { id: string; progress:
         : opener?.isConnected && opener.checkVisibility()
           ? opener
           : document.querySelector<HTMLElement>(`[data-outline-trigger="${dialog.id}"]`);
-      // Do not move the page for a target already on screen (the trigger, where it was); scroll any other
-      // target into view, such as a late lesson in the sidebar after widening.
-      back?.focus({ preventScroll: !!back && inView(back) });
+      // Native close may already have focused the opener, so focus() alone would not scroll. Leave a target
+      // that is in view where it is; scroll any other into view (scroll-padding keeps it clear of the bar),
+      // such as the trigger after a resize grew the bar, or a late lesson in the sidebar after widening.
+      if (back) {
+        back.focus({ preventScroll: true });
+        if (hidden(back)) back.scrollIntoView({ block: "nearest" });
+      }
       opener = null;
     };
     // showModal() happens outside React (openOutlineSheet); watch the open attribute to lock and unlock,
