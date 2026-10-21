@@ -12,6 +12,8 @@ import { learnPath, signIn } from "./helpers/sign-in";
 // the sheet traps focus both ways, locks background scroll, closes on Esc, restores focus (also when the
 // opener is gone), and closes itself when the viewport widens past 1024px.
 // RED FIRST (Sol R1 on #53): these cases failed on 2fb1d23.
+// Sol R2 on #53 (at 3d7e4a1), red first: back navigation with the sheet open, a long next title at 200%,
+// completing a lesson with the sheet open, widening with a late lesson open, and a 60-lesson course.
 
 test.describe.configure({ mode: "serial" });
 
@@ -22,6 +24,11 @@ let assignment = "";
 const LONG = "Synthetic lesson whose title is long enough to wrap on any phone screen at all";
 const ids = { course: randomUUID(), part: randomUUID(), lessons: [randomUUID(), randomUUID(), randomUUID(), randomUUID()] };
 const lessonPath = (n: number) => learnPath(gym, assignment, `shell-${n}`);
+// A long course for its own learner, so the four-lesson course's progress stays untouched.
+const LONG_COUNT = 60;
+const longIds = { course: randomUUID(), part: randomUUID(), lessons: Array.from({ length: LONG_COUNT }, () => randomUUID()) };
+let longAssignment = "";
+const longPath = (n: number) => learnPath(gym, longAssignment, `long-${n}`);
 const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const PHONES = [
   [320, 700],
@@ -35,9 +42,10 @@ const SPACING = "* { line-height: 1.5 !important; letter-spacing: 0.12em !import
 test.beforeAll(async () => {
   test.setTimeout(180_000);
   world.publisher();
-  for (const name of ["shellowner", "shelllearner"]) actors[name] = await world.actor(name);
+  for (const name of ["shellowner", "shelllearner", "shelllong"]) actors[name] = await world.actor(name);
   gym = world.gym("shell", actors.shellowner!);
   world.join(gym, actors.shellowner!, actors.shelllearner!);
+  world.join(gym, actors.shellowner!, actors.shelllong!);
   const version = world.publishGlobal(
     courseJson(
       ids.course,
@@ -53,6 +61,16 @@ test.beforeAll(async () => {
     ),
   );
   assignment = world.assign(gym, actors.shellowner!, version, actors.shelllearner!);
+  const longVersion = world.publishGlobal(
+    courseJson(
+      longIds.course,
+      longIds.part,
+      "base",
+      "Synthetic long course",
+      longIds.lessons.map((id, i) => ({ id, slug: `long-${i + 1}`, title: `Synthetic long lesson ${i + 1}`, blocks: [practice(`Synthetic long text ${i + 1}.`)] })),
+    ),
+  );
+  longAssignment = world.assign(gym, actors.shellowner!, longVersion, actors.shelllong!);
 });
 
 test.afterAll(async () => {
@@ -60,6 +78,10 @@ test.afterAll(async () => {
 });
 
 const dock = (page: Page) => page.locator("[data-lesson-dock]");
+// The router may keep an earlier lesson's page (and its bar) hidden for back navigation.
+const shownDock = (page: Page) => dock(page).filter({ visible: true });
+const openModals = (page: Page) => page.evaluate(() => document.querySelectorAll("dialog:modal").length);
+const rootOverflow = (page: Page) => page.evaluate(() => getComputedStyle(document.documentElement).overflow);
 const sheet = (page: Page) => page.locator("dialog[data-outline-sheet][open]");
 const inSheet = (page: Page) => page.evaluate(() => !!document.activeElement?.closest("dialog[data-outline-sheet]"));
 
@@ -253,5 +275,99 @@ test("the learn home's resume card carries the progress readout, reflows at 200%
     [r, ...r.querySelectorAll("*")].filter((el) => !(el instanceof SVGElement) && !el.classList.contains("sr-only") && el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 1).map((el) => el.tagName),
   );
   expect(wide, "resume card clipped at 200%").toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+});
+
+test("back navigation with the sheet open leaves no modal behind: the earlier lesson is usable", async ({ browser }) => {
+  const page = await signIn(browser, actors.shelllearner!, lessonPath(1), { width: 390, height: 844 });
+  await page.goto(lessonPath(1));
+  await page.waitForLoadState("networkidle");
+  // A client navigation, so the router keeps lesson 1 for the way back.
+  await shownDock(page).getByRole("link", { name: /Next lesson/ }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(LONG);
+  await shownDock(page).getByRole("button", { name: "Outline" }).click();
+  await expect(sheet(page)).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Synthetic shell lesson 1");
+  await expect.poll(() => openModals(page), "no modal left open in a hidden page").toBe(0);
+  expect(await rootOverflow(page)).not.toBe("hidden");
+  // Not inert: lesson 1's own bar works.
+  await shownDock(page).getByRole("button", { name: "Outline" }).click({ timeout: 5000 });
+  await expect(sheet(page).filter({ visible: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect.poll(() => openModals(page)).toBe(0);
+});
+
+test("a long next-lesson title at 320px with 200% text keeps the bar within half the viewport, Outline on screen", async ({ browser }) => {
+  // Lesson 1's next lesson is the long title.
+  const page = await signIn(browser, actors.shelllearner!, lessonPath(1), { width: 320, height: 700 });
+  await page.goto(lessonPath(1));
+  await page.waitForLoadState("networkidle");
+  await page.addStyleTag({ content: BIG_TEXT });
+  await page.addStyleTag({ content: SPACING });
+  const bar = shownDock(page);
+  const next = bar.getByRole("link", { name: new RegExp(`Next lesson.*${LONG}`) });
+  await expect(next, "the full title stays in the accessible name").toBeAttached();
+  const box = (await bar.boundingBox())!;
+  expect(box.height, "bar height at 700px").toBeLessThanOrEqual(350.5);
+  const outline = bar.getByRole("button", { name: "Outline" });
+  await outline.focus();
+  const o = (await outline.boundingBox())!;
+  expect(o.y, "Outline below the bar's top").toBeGreaterThanOrEqual(box.y - 0.5);
+  expect(o.y + o.height, "Outline on screen").toBeLessThanOrEqual(700.5);
+  await next.focus();
+  const n = (await next.boundingBox())!;
+  expect(n.y + n.height, "next action on screen when focused").toBeLessThanOrEqual(700.5);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  await tabThroughPage(page, "long next title at 200%");
+});
+
+test("completing a lesson with the sheet open keeps the page locked under the open sheet", async ({ browser }) => {
+  const page = await signIn(browser, actors.shelllong!, longPath(1), { width: 390, height: 844 });
+  await page.goto(longPath(1));
+  await page.waitForLoadState("networkidle");
+  const before = await page.locator("dialog[data-outline-sheet]").getAttribute("id");
+  await page.locator("[data-outline-trigger]").filter({ visible: true }).click();
+  await expect(sheet(page)).toBeVisible();
+  // The page behind is inert, so submit the completion form directly; the server action refreshes the page,
+  // which renders a new sheet id.
+  await page.getByRole("button", { name: "Mark lesson complete" }).evaluate((b: HTMLButtonElement) => b.click());
+  await expect(page.getByTestId("lesson-status")).toBeAttached();
+  await expect.poll(() => page.locator("dialog[data-outline-sheet]").getAttribute("id"), "the refresh renders a new sheet id").not.toBe(before);
+  expect(await openModals(page), "the sheet is still open").toBe(1);
+  expect(await rootOverflow(page), "the page behind is still locked").toBe("hidden");
+  await page.keyboard.press("Escape");
+  await expect.poll(() => openModals(page)).toBe(0);
+  expect(await rootOverflow(page)).not.toBe("hidden");
+});
+
+test("widening past 1024px with a late lesson open moves focus to the sidebar's current lesson, on screen", async ({ browser }) => {
+  const page = await signIn(browser, actors.shelllong!, longPath(40), { width: 390, height: 844 });
+  await page.goto(longPath(40));
+  await page.waitForLoadState("networkidle");
+  await page.locator("[data-outline-trigger]").filter({ visible: true }).click();
+  await expect(sheet(page)).toBeVisible();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect.poll(() => openModals(page)).toBe(0);
+  const current = page.getByRole("navigation", { name: "Course outline" }).filter({ visible: true }).locator("[aria-current='page']");
+  await expect(current).toBeFocused();
+  await expect(current).toContainText("Synthetic long lesson 40");
+  const r = (await current.boundingBox())!;
+  expect(r.y, "current lesson below the top").toBeGreaterThanOrEqual(0);
+  expect(r.y + r.height, "current lesson above the bottom").toBeLessThanOrEqual(800);
+});
+
+test("a 60-lesson course: every segment of the track keeps a visible width at 320px, also at 200% text", async ({ browser }) => {
+  const page = await signIn(browser, actors.shelllong!, longPath(40), { width: 320, height: 700 });
+  await page.goto(longPath(40));
+  await page.waitForLoadState("networkidle");
+  const segments = shownDock(page).locator("[data-segment]");
+  await expect(segments).toHaveCount(LONG_COUNT);
+  await expect(shownDock(page).getByText(/Lesson 40 of 60/)).toBeAttached();
+  const narrowest = () => segments.evaluateAll((els) => Math.min(...els.map((e) => e.getBoundingClientRect().width)));
+  expect(await narrowest(), "narrowest segment at 320px").toBeGreaterThanOrEqual(1);
+  await page.addStyleTag({ content: BIG_TEXT });
+  await page.addStyleTag({ content: SPACING });
+  expect(await narrowest(), "narrowest segment at 200% text").toBeGreaterThanOrEqual(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
