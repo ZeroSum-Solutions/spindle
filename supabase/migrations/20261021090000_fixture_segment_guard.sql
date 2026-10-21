@@ -65,17 +65,6 @@ begin
 end;
 $$;
 
--- Lock order (Sol R2): a writer locks its clip's row (private.lock_media, FOR UPDATE) and then
--- writes practice_media_checks. `create trigger` locks that table, and the retirement below needs
--- a key-share lock on each retired clip's row, so a writer holding a clip row would wait on the
--- table while this migration waits on the row: a deadlock. Take every clip row first, in id order,
--- as the writers do. Every row, not only today's candidates: a writer could commit a new pass
--- before the table lock is taken. A writer already holding a row finishes first.
-do $$ begin perform 1 from public.practice_media m order by m.id for key share; end $$;
-
-create trigger practice_media_checks_segment_guard after insert or update on public.practice_media_checks
-  for each row execute function private.guard_segment_pass();
-
 /**
  * Appends a failed segment check for every clip whose latest segment check is a pass that this
  * guard would refuse now: a synthetic-fixture receipt or a reviewer other than gpt-6.1-sol. The
@@ -102,8 +91,25 @@ begin
 end;
 $$;
 
--- Passes stored before this guard (Sol R1 PR47-04).
-select private.retire_unreviewed_segment_passes();
+-- Lock order (Sol R2, R3): a writer locks clip rows (private.lock_media, FOR UPDATE), and
+-- receiptSql may lock several in one transaction in packet order, not id order. Then it writes
+-- practice_media_checks. `create trigger` locks that table, and the retirement needs a key-share
+-- lock on each retired clip's row, so taking rows one by one can deadlock with a writer. Instead
+-- take EXCLUSIVE on practice_media first: it conflicts with the ROW SHARE every row-lock holder
+-- keeps, so this waits until every open writer transaction ends, and new writers wait for this
+-- migration. A writer already holding a row keeps its table lock and can lock more rows. Plain
+-- reads (ACCESS SHARE) are not blocked.
+-- One statement: the Supabase CLI runs each migration statement on its own, so a lock taken in
+-- one statement would be gone by the next. The retirement covers passes stored before this guard
+-- (Sol R1 PR47-04).
+do $$
+begin
+  lock table public.practice_media in exclusive mode;
+  create trigger practice_media_checks_segment_guard after insert or update on public.practice_media_checks
+    for each row execute function private.guard_segment_pass();
+  perform private.retire_unreviewed_segment_passes();
+end;
+$$;
 
 revoke all on function private.fixture_receipts_allowed(), private.check_uses_fixture(public.practice_media_checks),
   private.guard_segment_pass(), private.retire_unreviewed_segment_passes() from public, anon, authenticated, service_role;
