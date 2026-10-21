@@ -31,7 +31,7 @@ export function ProgressTrack({ segments, className = "" }: { segments: readonly
   const pad = (n: number) => String(n).padStart(2, "0");
   const words = current >= 0 ? `Lesson ${current + 1} of ${total}, ${done} done` : `${done} of ${total} lessons done`;
   return (
-    <div data-progress-track className={`flex min-w-0 items-center gap-attach ${className}`}>
+    <div data-progress-track className={`flex min-w-0 flex-wrap items-center gap-attach ${className}`}>
       <span aria-hidden className="tabular shrink-0 text-code text-text">
         {pad(shown)} / {pad(total)}
       </span>
