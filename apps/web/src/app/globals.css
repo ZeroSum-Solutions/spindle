@@ -397,6 +397,14 @@ html {
   scroll-padding-bottom: calc(var(--dock-h, 0px) + 0.75rem);
 }
 
+/* From 1024px the bar is hidden and reserves nothing. The bar also publishes 0px there, but only after a
+   resize callback; this keeps the value right from the first layout at that width. */
+@media (min-width: 1024px) {
+  html {
+    --dock-h: 0px !important;
+  }
+}
+
 /* The bar sits above the home indicator on phones with a safe-area inset. */
 [data-lesson-dock] {
   padding-bottom: env(safe-area-inset-bottom);
