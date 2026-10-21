@@ -14,6 +14,7 @@ import { learnPath, signIn } from "./helpers/sign-in";
 // RED FIRST (Sol R1 on #53): these cases failed on 2fb1d23.
 // Sol R2 on #53 (at 3d7e4a1), red first: back navigation with the sheet open, a long next title at 200%,
 // completing a lesson with the sheet open, widening with a late lesson open, and a 60-lesson course.
+// Sol R3 on #53 (at 38d14db), red first: closing the sheet after a resize grew the bar puts focus clear of it.
 
 test.describe.configure({ mode: "serial" });
 
