@@ -65,6 +65,14 @@ begin
 end;
 $$;
 
+-- Lock order (Sol R2): a writer locks its clip's row (private.lock_media, FOR UPDATE) and then
+-- writes practice_media_checks. `create trigger` locks that table, and the retirement below needs
+-- a key-share lock on each retired clip's row, so a writer holding a clip row would wait on the
+-- table while this migration waits on the row: a deadlock. Take every clip row first, in id order,
+-- as the writers do. Every row, not only today's candidates: a writer could commit a new pass
+-- before the table lock is taken. A writer already holding a row finishes first.
+do $$ begin perform 1 from public.practice_media m order by m.id for key share; end $$;
+
 create trigger practice_media_checks_segment_guard after insert or update on public.practice_media_checks
   for each row execute function private.guard_segment_pass();
 
