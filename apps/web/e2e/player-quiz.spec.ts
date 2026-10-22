@@ -187,10 +187,12 @@ test.describe.serial("graded module quiz", () => {
     expect((await actors.outsider!.client.rpc("module_status", { p_assignment: assignments.learner })).error?.code).toBe("P0002");
     expect(Number(attempts("learner"))).toBe(before + 1);
 
-    // The quiz page of someone else's assignment is not found.
+    // The quiz page of another gym's assignment is a real 404 from the proxy's membership gate.
     const outsider = await signIn(browser, actors.outsider!, learnPath(gymB));
-    await outsider.goto(quizPath());
-    await expect(outsider.getByText(/could not be found/i)).toBeVisible();
+    const res = await outsider.goto(quizPath());
+    expect(res?.status()).toBe(404);
+    expect(res?.headers()["cache-control"]).toContain("no-store");
+    await expect(outsider.getByTestId("quiz-result")).toHaveCount(0);
   });
 
   test("a version without graded questions says so and offers no quiz", async ({ browser }) => {

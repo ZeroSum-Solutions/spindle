@@ -509,9 +509,34 @@ test.describe.serial("learner flow", () => {
     await expect(m.getByText("0 of 3 lessons done", { exact: true })).toBeVisible();
     await expectNotFound(m, learn(gymB, assignments.multiA));
     await expectNotFound(m, learn(gymB, assignments.method));
+    // Another gym's learner pages are a real 404 from the proxy, not a streamed 200 not-found page.
     const b = await signIn(browser, actors.ownerb!, learn(gymB));
-    await expectNotFound(b, learn(gymA, assignments.method));
-    await expectNotFound(b, learn(gymA));
+    for (const path of [
+      learn(gymA),
+      learn(gymA, assignments.method),
+      learn(gymA, assignments.partial, "lesson-one"),
+      learn(gymA, assignments.partial, "module/quiz"),
+      learn(gymA, assignments.partial).replace("/learn/", "//%6cearn/"),
+      learn(gymA, assignments.partial, "figure.png"),
+      learn(gymA, assignments.partial, "..%2f.."),
+      learn(gymA, assignments.partial, "..%252f..%25"),
+    ]) {
+      const res = await b.goto(path);
+      expect(res?.status(), path).toBe(404);
+      expect(res?.headers()["cache-control"], path).toContain("no-store");
+      await expect(b.getByText("Synthetic", { exact: false })).toHaveCount(0);
+    }
+    // Server Action POSTs skip the proxy gate and keep their own checks: a forged one renders nothing
+    // (Next answers an unknown action id with 400 or 409).
+    const forged = await b.request.post(learn(gymA, assignments.partial, "module/quiz"), {
+      headers: { "Next-Action": "0".repeat(42), "Content-Type": "text/plain;charset=UTF-8" },
+      data: "[]",
+    });
+    const forgedBody = await forged.text();
+    expect(forged.status()).toBeGreaterThanOrEqual(400);
+    expect(forged.status()).toBeLessThan(500);
+    expect(forgedBody).not.toContain("Synthetic");
+    expect((await m.goto(learn(gymB, assignments.multiB)))?.status()).toBe(200);
     const o = await signIn(browser, actors.owner!, learn(gymA));
     await expectNotFound(o, learn(gymA, assignments.partial));
     await expectNotFound(o, learn(gymA, assignments.partial, "lesson-one"));
