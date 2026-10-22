@@ -18,6 +18,8 @@ import { learnPath, signIn } from "./helpers/sign-in";
 // Sol and Argon on #53 (at b6bffb0), red first: one breakpoint unit with a larger default font, no checkVisibility,
 // the sidebar scrolling inside itself, long eyebrow words, the focus ring above the bar, focus after choosing a
 // lesson in the sheet, and Shift+Tab from the dialog itself.
+// Round 2 (at 629e603), red first: focus revealed inside the sidebar's and the bar's own scroll boxes without
+// moving the window, the current lesson and modified clicks in the sheet, and clicks on the sheet's text.
 
 test.describe.configure({ mode: "serial" });
 
@@ -365,6 +367,7 @@ test("widening past 1024px with a late lesson open moves focus to the sidebar's 
   await expect.poll(() => openModals(page)).toBe(0);
   const current = page.getByRole("navigation", { name: "Course outline" }).filter({ visible: true }).locator("[aria-current='page']");
   await expect(current).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY), "the window did not scroll").toBe(0);
   await expect(current).toContainText("Synthetic long lesson 40");
   const r = (await current.boundingBox())!;
   expect(r.y, "current lesson below the top").toBeGreaterThanOrEqual(0);
@@ -465,6 +468,7 @@ test("widening with a late lesson open in a long read scrolls the sidebar, not t
   await expect.poll(() => openModals(page)).toBe(0);
   const current = page.getByRole("navigation", { name: "Course outline" }).filter({ visible: true }).locator("[aria-current='page']");
   await expect(current).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY), "the window did not scroll").toBe(0);
   const r = (await current.boundingBox())!;
   expect(r.y, "current lesson below the top").toBeGreaterThanOrEqual(0);
   expect(r.y + r.height, "current lesson above the bottom").toBeLessThanOrEqual(800);
@@ -523,27 +527,109 @@ test("choosing a lesson in the sheet leaves focus on the new lesson, not on the 
   const onTrigger = () => page.evaluate(() => !!document.activeElement?.closest("[data-outline-trigger], [data-lesson-dock]"));
   expect(await onTrigger(), "no trigger refocused on the way").toBe(false);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Synthetic shell lesson 3");
-  const focus = await page.evaluate(() => {
-    const a = document.activeElement as HTMLElement | null;
-    return { body: !a || a === document.body, shown: !!a && a.getClientRects().length > 0 };
-  });
   expect(await onTrigger(), "focus is not on a sheet trigger").toBe(false);
-  expect(focus.body || focus.shown, "focus is on the page on show").toBe(true);
+  // Nothing holds focus, so the next Tab starts at the top of the new lesson.
+  expect(await page.evaluate(() => document.activeElement === document.body), "focus at the top of the new lesson").toBe(true);
 });
 
-test("Shift+Tab from the dialog itself stays in the sheet", async ({ browser }) => {
+test("clicking the sheet's text keeps focus in the sheet: Shift+Tab and Tab stay inside", async ({ browser }) => {
   const page = await signIn(browser, actors.shelllearner!, lessonPath(2), { width: 390, height: 844 });
   await page.goto(lessonPath(2));
   await page.waitForLoadState("networkidle");
   await page.locator("[data-outline-trigger]").filter({ visible: true }).click();
   await expect(sheet(page)).toBeVisible();
-  // Clicking the sheet's padding focuses the dialog element itself.
-  await sheet(page).evaluate((d: HTMLDialogElement) => {
-    d.tabIndex = -1;
-    d.focus();
+  for (const key of ["Shift+Tab", "Tab"]) {
+    // A click on the heading (not a control) is how focus reaches the dialog element itself.
+    await sheet(page).getByRole("heading", { name: "Course outline" }).click();
+    expect(await inSheet(page), `${key}: the click keeps focus in the sheet`).toBe(true);
+    await page.keyboard.press(key);
+    expect(await inSheet(page), `${key}: still inside`).toBe(true);
+    expect(await page.evaluate(() => document.activeElement?.tagName), `${key}: on a control`).not.toBe("DIALOG");
+  }
+  await page.keyboard.press("Escape");
+});
+
+test("widening with the current lesson in the sidebar's part below the window scrolls the sidebar, not the window", async ({ browser }) => {
+  // Find a lesson whose sidebar link sits inside the sidebar's box but below the window at 1280x800.
+  const page = await signIn(browser, actors.shelllong!, longPath(1), { width: 1280, height: 800 });
+  await page.goto(longPath(1));
+  await page.waitForLoadState("networkidle");
+  const n = await page.evaluate(() => {
+    const box = document.querySelector<HTMLElement>("[data-outline-scroll]")!.getBoundingClientRect();
+    const links = [...document.querySelectorAll<HTMLElement>("[data-outline-scroll] a")];
+    const i = links.findIndex((a) => {
+      const r = a.getBoundingClientRect();
+      return r.bottom + 7 > window.innerHeight && r.top < box.bottom;
+    });
+    return i + 1;
   });
-  await page.keyboard.press("Shift+Tab");
-  expect(await inSheet(page)).toBe(true);
-  expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe("DIALOG");
+  expect(n, "set-up: such a lesson exists").toBeGreaterThan(1);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(longPath(n));
+  await page.waitForLoadState("networkidle");
+  await page.locator("[data-outline-trigger]").filter({ visible: true }).click();
+  await expect(sheet(page)).toBeVisible();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect.poll(() => openModals(page)).toBe(0);
+  const current = page.getByRole("navigation", { name: "Course outline" }).filter({ visible: true }).locator("[aria-current='page']");
+  await expect(current).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY), "the window did not scroll").toBe(0);
+  // The link and its ring sit in the part of the sidebar's box that is on screen.
+  const fits = await current.evaluate((a) => {
+    const r = a.getBoundingClientRect();
+    const b = a.closest("[data-outline-scroll]")!.getBoundingClientRect();
+    return r.top - 7 >= Math.max(b.top, 0) - 0.5 && r.bottom + 7 <= Math.min(b.bottom, window.innerHeight) + 0.5;
+  });
+  expect(fits, `lesson ${n}: link and ring visible inside the sidebar`).toBe(true);
+});
+
+test("closing the sheet reveals the bar's Outline inside the bar's own scroll box (320x300, 200% text)", async ({ browser }) => {
+  const page = await signIn(browser, actors.shelllearner!, lessonPath(2), { width: 320, height: 300 });
+  await page.goto(lessonPath(2));
+  await page.waitForLoadState("networkidle");
+  await page.addStyleTag({ content: BIG_TEXT });
+  await page.addStyleTag({ content: SPACING });
+  const bar = shownDock(page);
+  // The bar is capped at half the viewport and scrolls inside: scroll it to its end, past the Outline button.
+  await bar.evaluate((d) => (d.scrollTop = d.scrollHeight));
+  const outline = bar.getByRole("button", { name: "Outline" });
+  const inBox = () =>
+    outline.evaluate((o) => {
+      const r = o.getBoundingClientRect();
+      const b = o.closest("[data-lesson-dock]")!.getBoundingClientRect();
+      return r.top - 7 >= b.top - 0.5 && r.bottom + 7 <= Math.min(b.bottom, window.innerHeight) + 0.5;
+    });
+  expect(await inBox(), "set-up: Outline scrolled out of the bar's box").toBe(false);
+  await outline.evaluate((o: HTMLElement) => o.click());
+  await expect(sheet(page)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect.poll(() => openModals(page)).toBe(0);
+  await expect(outline).toBeFocused();
+  expect(await inBox(), "Outline and its ring visible inside the bar").toBe(true);
+});
+
+test("choosing the current lesson in the sheet closes it and returns focus to the trigger", async ({ browser }) => {
+  const page = await signIn(browser, actors.shelllearner!, lessonPath(2), { width: 390, height: 844 });
+  await page.goto(lessonPath(2));
+  await page.waitForLoadState("networkidle");
+  const trigger = page.locator("[data-outline-trigger]").filter({ visible: true });
+  await trigger.click();
+  await sheet(page).locator("[aria-current='page']").click();
+  await expect.poll(() => openModals(page)).toBe(0);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(LONG);
+  await expect(trigger).toBeFocused();
+});
+
+test("a modified click on a lesson in the sheet (new tab) leaves the sheet open with focus inside", async ({ browser }) => {
+  const page = await signIn(browser, actors.shelllearner!, lessonPath(2), { width: 390, height: 844 });
+  await page.goto(lessonPath(2));
+  await page.waitForLoadState("networkidle");
+  page.context().on("page", (p) => void p.close());
+  await page.locator("[data-outline-trigger]").filter({ visible: true }).click();
+  await sheet(page).getByRole("link", { name: /Synthetic shell lesson 3/ }).click({ modifiers: ["ControlOrMeta"] });
+  await page.waitForTimeout(300);
+  expect(await openModals(page), "the sheet stays open").toBe(1);
+  expect(await inSheet(page), "focus stays in the sheet").toBe(true);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(LONG);
   await page.keyboard.press("Escape");
 });
