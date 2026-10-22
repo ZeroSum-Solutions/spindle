@@ -11,11 +11,15 @@ import {
   describeSegment,
   descriptionTimesError,
   estimateMaxCostUsd,
+  lastCallAt,
   monthSpendUsd,
   parseLedger,
   parseTimestamp,
+  refusalStatus,
+  releaseCall,
   reserveCall,
   settleCall,
+  type RefusalStatus,
   type SegmentRef,
 } from "./index";
 
@@ -37,6 +41,9 @@ const gemini = (desc: unknown, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 const deps = (fetch: (u: string, i: RequestInit) => Promise<Response>) => ({ fetch, apiKey: KEY, now: () => NOW });
+const ledger = () => join(mkdtempSync(join(tmpdir(), "spindle-ledger-")), "gemini-spend.jsonl");
+const req = (now: Date, extra: Partial<Parameters<typeof reserveCall>[1]> = {}) =>
+  ({ mediaId: SEG.mediaId, videoId: SEG.videoId, model: "gemini-3.8-flash", maxUsd: 0.04, lastDescribedAt: null, now, ...extra });
 
 describe("describeSegment", () => {
   it("sends the YouTube URL natively with the window (15 s context, clamped at 0) and the key only in a header", async () => {
@@ -122,6 +129,74 @@ describe("describer failures that may still cost money (Sol PR20-02, PR20-09)", 
   });
 });
 
+describe("calls the provider refuses before doing any work (T15; Sol R1 PR47-01, 02, 06)", () => {
+  const envelope = (code: number, status: string) => ({ error: { code, message: "The model is overloaded. Please try again later.", status } });
+  it.each([
+    [429, "RESOURCE_EXHAUSTED"],
+    [503, "UNAVAILABLE"],
+  ] as const)("marks HTTP %i %s with Google's error envelope and no usage as a refusal", async (status, name) => {
+    const r = await describeSegment(SEG, deps(reply(status, envelope(status, name))));
+    expect(r).toMatchObject({ ok: false, refusal: status, costUsd: null });
+    expect(refusalStatus(status, envelope(status, name))).toBe(status);
+  });
+
+  const kept: [string, () => Promise<Response>][] = [
+    ["a 503 reporting partial positive usage", reply(503, { ...envelope(503, "UNAVAILABLE"), usageMetadata: { promptTokenCount: 5645, candidatesTokenCount: 158 } })],
+    ["a 429 reporting partial positive usage", reply(429, { ...envelope(429, "RESOURCE_EXHAUSTED"), usageMetadata: { promptTokenCount: 5645, candidatesTokenCount: 158 } })],
+    ["a 503 reporting zero usage", reply(503, { ...envelope(503, "UNAVAILABLE"), usageMetadata: { promptTokenCount: 0, totalTokenCount: 0 } })],
+    ["a 503 reporting complete usage", reply(503, gemini(DESC))],
+    ["a 500", reply(500, envelope(500, "INTERNAL"))],
+    ["a 502 from a gateway", reply(502, envelope(502, "UNAVAILABLE"))],
+    ["a 504 deadline", reply(504, envelope(504, "DEADLINE_EXCEEDED"))],
+    ["a 503 with an unrecognised body", reply(503, { message: "overloaded" })],
+    ["a 503 whose envelope names another status", reply(503, envelope(503, "INTERNAL"))],
+    ["a 503 whose envelope names another code", reply(503, envelope(500, "UNAVAILABLE"))],
+    ["a 503 that is not JSON", async () => new Response("<html>", { status: 503 })],
+    ["a 400", reply(400, envelope(400, "INVALID_ARGUMENT"))],
+    ["a 403", reply(403, envelope(403, "PERMISSION_DENIED"))],
+    ["a timeout", async () => { throw new Error("The operation was aborted due to timeout"); }],
+  ];
+  it.each(kept)("keeps the reservation on %s", async (_n, fetch) => {
+    const r = await describeSegment(SEG, deps(fetch));
+    // Only ok, error and cost: nothing that marks the call releasable.
+    expect(Object.keys(r).sort()).toEqual(["costUsd", "error", "ok"]);
+    expect(r.ok).toBe(false);
+  });
+
+  // A real request always has a prompt and at least a second of video, and Gemini's total covers
+  // every part: zero or inconsistent usage is not a complete report (cross-family R5 WARN 2).
+  const incomplete: [string, Record<string, number>][] = [
+    ["zero usage", { promptTokenCount: 0, totalTokenCount: 0 }],
+    ["a total below the prompt", { promptTokenCount: 5645, totalTokenCount: 100 }],
+    ["a total below its parts", { promptTokenCount: 5645, candidatesTokenCount: 158, thoughtsTokenCount: 511, totalTokenCount: 6000 }],
+  ];
+  it.each(incomplete)("leaves the cost unknown on %s, so the full bound stays reserved", async (_n, usageMetadata) => {
+    for (const fetch of [reply(503, { ...envelope(503, "UNAVAILABLE"), usageMetadata }), reply(200, gemini(DESC, { usageMetadata }))]) {
+      const r = await describeSegment(SEG, deps(fetch));
+      expect(r).toMatchObject({ ok: false, costUsd: null });
+      const path = ledger();
+      const res = reserveCall(path, req(NOW, { maxUsd: 0.04 }));
+      settleCall(path, res, r.costUsd, r.ok, NOW);
+      expect(monthSpendUsd(parseLedger(readFileSync(path, "utf8")), "2026-10")).toBeCloseTo(0.04);
+    }
+  });
+
+  it("keeps the full reservation and the 90-day block for 126 billed 503s with partial usage", async () => {
+    const path = ledger();
+    for (let i = 0; i < 126; i++) {
+      const r = reserveCall(path, req(NOW, { mediaId: `clip-${i}`, maxUsd: 0.01 }));
+      const d = await describeSegment(SEG, deps(reply(503, { ...envelope(503, "UNAVAILABLE"), usageMetadata: { promptTokenCount: 9, candidatesTokenCount: 9 } })));
+      expect(Object.keys(d).sort()).toEqual(["costUsd", "error", "ok"]);
+      if (d.ok) throw new Error("a billed 503 was described");
+      settleCall(path, r, d.costUsd, false, NOW);
+    }
+    const entries = parseLedger(readFileSync(path, "utf8"));
+    expect(monthSpendUsd(entries, "2026-10")).toBeCloseTo(1.26);
+    expect(lastCallAt(entries, "clip-0")).toBe(NOW.toISOString());
+    expect(() => reserveCall(path, req(NOW, { mediaId: "clip-0" }))).toThrow(/one call per clip/);
+  });
+});
+
 describe("incomplete usage (Sol R2 PR20-02)", () => {
   it("charges the reported total, at the output price beyond the prompt, when output counts are missing", async () => {
     const r = await describeSegment(SEG, deps(reply(200, gemini(DESC, { usageMetadata: { promptTokenCount: 1000, totalTokenCount: 1669 } }))));
@@ -174,9 +249,6 @@ describe("prices and upper bound (Sol PR20-06)", () => {
 });
 
 describe("spend ledger (Sol PR20-01, PR20-02, PR20-03, PR20-05)", () => {
-  const ledger = () => join(mkdtempSync(join(tmpdir(), "spindle-ledger-")), "gemini-spend.jsonl");
-  const req = (now: Date, extra: Partial<Parameters<typeof reserveCall>[1]> = {}) =>
-    ({ mediaId: SEG.mediaId, videoId: SEG.videoId, model: "gemini-3.8-flash", maxUsd: 0.04, lastDescribedAt: null, now, ...extra });
 
   it("reserves the upper bound before a call, so two calls cannot share the last of the budget", () => {
     const path = ledger();
@@ -238,6 +310,54 @@ describe("spend ledger (Sol PR20-01, PR20-02, PR20-03, PR20-05)", () => {
     expect(() => reserveCall(path, req(new Date(NOW.getTime() + 1000)))).toThrow(/one call per clip per 90 days/);
     expect(() => reserveCall(ledger(), req(NOW, { lastDescribedAt: "2026-08-01T00:00:00Z" }))).toThrow(/one call per clip/);
     expect(() => reserveCall(path, req(new Date(NOW.getTime() + 91 * 86_400_000)))).not.toThrow();
+  });
+
+  it("releases a refused call: no charge, and the clip may be sent again at once (T15)", () => {
+    const path = ledger();
+    const r = reserveCall(path, req(NOW, { maxUsd: 1 }));
+    releaseCall(path, r, 503, NOW);
+    const entries = parseLedger(readFileSync(path, "utf8"));
+    expect(monthSpendUsd(entries, "2026-10")).toBe(0);
+    expect(lastCallAt(entries, SEG.mediaId)).toBeNull();
+    expect(() => reserveCall(path, req(new Date(NOW.getTime() + 1000)))).not.toThrow();
+  });
+
+  it("refuses to release a settled call, to settle a released one, or to release an orphan", () => {
+    const path = ledger();
+    const settled = reserveCall(path, req(NOW, { mediaId: "a", maxUsd: 1 }));
+    settleCall(path, settled, null, false, NOW);
+    expect(() => releaseCall(path, settled, 503, NOW)).toThrow(/already settled/);
+    const released = reserveCall(path, req(NOW, { mediaId: "b", maxUsd: 1 }));
+    releaseCall(path, released, 503, NOW);
+    expect(() => settleCall(path, released, 0, false, NOW)).toThrow(/released/);
+    expect(() => releaseCall(path, { ...released, id: "99999999-9999-4999-8999-999999999999" }, 503, NOW)).toThrow(/no reservation/);
+    expect(monthSpendUsd(parseLedger(readFileSync(path, "utf8")), "2026-10")).toBeCloseTo(1);
+  });
+
+  it("releases only a documented refusal status, whatever the caller passes (Sol R1 PR47-06)", () => {
+    const path = ledger();
+    const r = reserveCall(path, req(NOW, { maxUsd: 1 }));
+    for (const status of [403, 500, 502, 504, 400]) {
+      expect(() => releaseCall(path, r, status as RefusalStatus, NOW)).toThrow();
+    }
+    expect(monthSpendUsd(parseLedger(readFileSync(path, "utf8")), "2026-10")).toBeCloseTo(1);
+    expect(lastCallAt(parseLedger(readFileSync(path, "utf8")), SEG.mediaId)).toBe(NOW.toISOString());
+    const line = `${JSON.stringify({ type: "release", id: r.id, at: NOW.toISOString(), status: 403 })}\n`;
+    expect(() => parseLedger(readFileSync(path, "utf8") + line)).toThrow(/unreadable/);
+  });
+
+  it("keeps the charge and the interval of a reservation that is both settled and released (Sol R1 PR47-07)", () => {
+    for (const order of ["settle-first", "release-first"] as const) {
+      const path = ledger();
+      const r = reserveCall(path, req(NOW, { maxUsd: 1 }));
+      const settle = `${JSON.stringify({ type: "settle", id: r.id, at: NOW.toISOString(), costUsd: 0.5, ok: false })}\n`;
+      const release = `${JSON.stringify({ type: "release", id: r.id, at: NOW.toISOString(), status: 503 })}\n`;
+      writeFileSync(path, readFileSync(path, "utf8") + (order === "settle-first" ? settle + release : release + settle));
+      const entries = parseLedger(readFileSync(path, "utf8"));
+      expect(monthSpendUsd(entries, "2026-10")).toBeCloseTo(0.5);
+      expect(lastCallAt(entries, SEG.mediaId)).toBe(NOW.toISOString());
+      expect(() => reserveCall(path, req(new Date(NOW.getTime() + 1000)))).toThrow(/one call per clip/);
+    }
   });
 
   it("refuses to spend with an unreadable ledger", () => {
