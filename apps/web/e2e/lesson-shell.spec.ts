@@ -20,6 +20,7 @@ import { learnPath, signIn } from "./helpers/sign-in";
 // lesson in the sheet, and Shift+Tab from the dialog itself.
 // Round 2 (at 629e603), red first: focus revealed inside the sidebar's and the bar's own scroll boxes without
 // moving the window, the current lesson and modified clicks in the sheet, and clicks on the sheet's text.
+// Round 3 (at cf3483b), red first: the last lesson of a 60- and a 13-lesson course after widening.
 
 test.describe.configure({ mode: "serial" });
 
@@ -35,6 +36,11 @@ const LONG_COUNT = 60;
 const longIds = { course: randomUUID(), part: randomUUID(), lessons: Array.from({ length: LONG_COUNT }, () => randomUUID()) };
 let longAssignment = "";
 const longPath = (n: number) => learnPath(gym, longAssignment, `long-${n}`);
+// A 13-lesson course for the same learner: its sidebar barely scrolls, so the box alone cannot reveal its end.
+const MID_COUNT = 13;
+const midIds = { course: randomUUID(), part: randomUUID(), lessons: Array.from({ length: MID_COUNT }, () => randomUUID()) };
+let midAssignment = "";
+const midPath = (n: number) => learnPath(gym, midAssignment, `mid-${n}`);
 const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const PHONES = [
   [320, 700],
@@ -83,6 +89,16 @@ test.beforeAll(async () => {
     ),
   );
   longAssignment = world.assign(gym, actors.shellowner!, longVersion, actors.shelllong!);
+  const midVersion = world.publishGlobal(
+    courseJson(
+      midIds.course,
+      midIds.part,
+      "base",
+      "Synthetic mid course",
+      midIds.lessons.map((id, i) => ({ id, slug: `mid-${i + 1}`, title: `Synthetic mid lesson ${i + 1}`, blocks: [practice(`Synthetic mid text ${i + 1}.`)] })),
+    ),
+  );
+  midAssignment = world.assign(gym, actors.shellowner!, midVersion, actors.shelllong!);
 });
 
 test.afterAll(async () => {
@@ -633,3 +649,37 @@ test("a modified click on a lesson in the sheet (new tab) leaves the sheet open 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(LONG);
   await page.keyboard.press("Escape");
 });
+
+for (const [course, count, path] of [
+  ["60-lesson", LONG_COUNT, longPath],
+  ["13-lesson", MID_COUNT, midPath],
+] as const) {
+  test(`widening with the last lesson of a ${course} course open shows it, ring included, scrolling the window only by what the sidebar cannot`, async ({ browser }) => {
+    const page = await signIn(browser, actors.shelllong!, path(count), { width: 1280, height: 800 });
+    // How far the sidebar's box reaches below the window at the top of the page.
+    await page.goto(path(count));
+    await page.waitForLoadState("networkidle");
+    const below = await page.evaluate(() => Math.max(0, document.querySelector("[data-outline-scroll]")!.getBoundingClientRect().bottom - window.innerHeight));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(path(count));
+    await page.waitForLoadState("networkidle");
+    await page.locator("[data-outline-trigger]").filter({ visible: true }).click();
+    await expect(sheet(page)).toBeVisible();
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect.poll(() => openModals(page)).toBe(0);
+    const current = page.getByRole("navigation", { name: "Course outline" }).filter({ visible: true }).locator("[aria-current='page']");
+    await expect(current).toBeFocused();
+    await expect(current).toContainText(`lesson ${count}`);
+    const at = await current.evaluate((a) => {
+      const r = a.getBoundingClientRect();
+      const b = a.closest("[data-outline-scroll]")!.getBoundingClientRect();
+      return { top: r.top, bottom: r.bottom, boxTop: b.top, boxBottom: b.bottom, scrollY: window.scrollY, h: window.innerHeight };
+    });
+    expect(at.top - 7, "ring below the window top").toBeGreaterThanOrEqual(-0.5);
+    expect(at.bottom + 7, "ring above the window bottom").toBeLessThanOrEqual(at.h + 0.5);
+    expect(at.top - 7, "ring inside the sidebar box").toBeGreaterThanOrEqual(at.boxTop - 0.5);
+    expect(at.bottom + 7, "ring inside the sidebar box").toBeLessThanOrEqual(at.boxBottom + 0.5);
+    // The window moves at most by the part of the box below it, never more.
+    expect(at.scrollY, "window scroll limited to the box's overhang").toBeLessThanOrEqual(below + 1);
+  });
+}
