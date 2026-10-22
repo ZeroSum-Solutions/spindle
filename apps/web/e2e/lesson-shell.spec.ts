@@ -20,7 +20,7 @@ import { learnPath, signIn } from "./helpers/sign-in";
 // lesson in the sheet, and Shift+Tab from the dialog itself.
 // Round 2 (at 629e603), red first: focus revealed inside the sidebar's and the bar's own scroll boxes without
 // moving the window, the current lesson and modified clicks in the sheet, and clicks on the sheet's text.
-// Round 3 (at cf3483b), red first: the last lesson of a 60- and a 13-lesson course after widening.
+// Round 3 (at cf3483b), red first: the last lesson of a 60- and a 10-lesson course after widening.
 
 test.describe.configure({ mode: "serial" });
 
@@ -36,8 +36,10 @@ const LONG_COUNT = 60;
 const longIds = { course: randomUUID(), part: randomUUID(), lessons: Array.from({ length: LONG_COUNT }, () => randomUUID()) };
 let longAssignment = "";
 const longPath = (n: number) => learnPath(gym, longAssignment, `long-${n}`);
-// A 13-lesson course for the same learner: its sidebar barely scrolls, so the box alone cannot reveal its end.
-const MID_COUNT = 13;
+// A 10-lesson course for the same learner. At 1280x800 its sidebar fits the box (no scroll of its own) yet
+// reaches below the window at the top of the page, so only the window can reveal its end. (13 lessons would
+// overflow the 752px box: about 44px plus 63px per lesson.)
+const MID_COUNT = 10;
 const midIds = { course: randomUUID(), part: randomUUID(), lessons: Array.from({ length: MID_COUNT }, () => randomUUID()) };
 let midAssignment = "";
 const midPath = (n: number) => learnPath(gym, midAssignment, `mid-${n}`);
@@ -650,9 +652,9 @@ test("a modified click on a lesson in the sheet (new tab) leaves the sheet open 
   await page.keyboard.press("Escape");
 });
 
-for (const [course, count, path] of [
-  ["60-lesson", LONG_COUNT, longPath],
-  ["13-lesson", MID_COUNT, midPath],
+for (const [course, count, path, zeroScroll] of [
+  ["60-lesson", LONG_COUNT, longPath, false],
+  ["10-lesson", MID_COUNT, midPath, true],
 ] as const) {
   test(`widening with the last lesson of a ${course} course open shows it, ring included, scrolling the window only by what the sidebar cannot`, async ({ browser }) => {
     const page = await signIn(browser, actors.shelllong!, path(count), { width: 1280, height: 800 });
@@ -660,6 +662,15 @@ for (const [course, count, path] of [
     await page.goto(path(count));
     await page.waitForLoadState("networkidle");
     const below = await page.evaluate(() => Math.max(0, document.querySelector("[data-outline-scroll]")!.getBoundingClientRect().bottom - window.innerHeight));
+    if (zeroScroll) {
+      // Set-up: the sidebar's box cannot scroll at all, and its end is below the window.
+      const maxScrollTop = await page.evaluate(() => {
+        const box = document.querySelector<HTMLElement>("[data-outline-scroll]")!;
+        return box.scrollHeight - box.clientHeight;
+      });
+      expect(maxScrollTop, "set-up: the sidebar fits its box").toBe(0);
+      expect(below, "set-up: the sidebar reaches below the window").toBeGreaterThan(0);
+    }
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(path(count));
     await page.waitForLoadState("networkidle");
