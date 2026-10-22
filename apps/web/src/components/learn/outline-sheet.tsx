@@ -58,9 +58,10 @@ export function OutlineSheet({ id, progress, children }: { id: string; progress:
       saved = null;
     };
     // Brings a focus target and its ring into view without moving more than it must. Inside the sidebar's
-    // scroll box or the bar (both scroll inside themselves), only that box scrolls, within the part of it on
-    // screen, so the window and the reading column never move. Elsewhere the window scrolls the target clear of
-    // the top edge and of the bar (scroll padding leaves room for the ring).
+    // scroll box or the bar (both scroll inside themselves), that box scrolls first, within the part of it on
+    // screen; the window moves only by what the box cannot show (the end of the sidebar at the top of the
+    // page). Elsewhere the window scrolls the target clear of the top edge and of the bar (scroll padding
+    // leaves room for the ring).
     const reveal = (el: HTMLElement) => {
       const r = el.getBoundingClientRect();
       // The sidebar's box scrolls only from the lg breakpoint; below it the trigger sits in it as a plain wrapper.
@@ -70,6 +71,12 @@ export function OutlineSheet({ id, progress, children }: { id: string; progress:
         const [top, bottom] = [Math.max(b.top, 0) + RING, Math.min(b.bottom, window.innerHeight) - RING];
         if (r.top < top) box.scrollTop -= top - r.top;
         else if (r.bottom > bottom) box.scrollTop += Math.min(r.bottom - bottom, r.top - top);
+        // The sidebar's box starts below the header, so at the top of the page its end reaches past the window,
+        // and its own scroll stops at its end: scroll the window by only what is still clipped. (The bar is
+        // fixed inside the window, so this never applies there.)
+        const now = el.getBoundingClientRect();
+        if (now.bottom + RING > window.innerHeight) window.scrollBy(0, now.bottom + RING - window.innerHeight);
+        else if (now.top - RING < 0) window.scrollBy(0, now.top - RING);
         return;
       }
       const bar = [...document.querySelectorAll<HTMLElement>("[data-lesson-dock]")].find(isShown);

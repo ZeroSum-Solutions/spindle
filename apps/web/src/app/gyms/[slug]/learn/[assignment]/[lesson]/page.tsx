@@ -80,9 +80,10 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
     >
       <div data-layout="reading" className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_minmax(0,46rem)] lg:justify-center">
         <div className="lg:sticky lg:top-6 lg:self-start">
-          {/* The sidebar scrolls inside itself, so focus moved to a late lesson never scrolls the reading column; the
-              inset keeps focus rings unclipped without moving the column. */}
-          <div data-outline-scroll className="lg:-m-2 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:overscroll-contain lg:p-2">
+          {/* The sidebar scrolls inside itself, so focus moved to a late lesson scrolls the reading column at most by
+              the part of the box below the window; at the box's end the wheel carries on to the window (no
+              overscroll containment), so its last lessons stay in reach. The inset keeps focus rings unclipped. */}
+          <div data-outline-scroll className="lg:-m-2 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:p-2">
             <LessonOutline view={view} base={courseHref} currentId={lesson.id} phone="sheet" sheetId={sheetId} />
           </div>
         </div>
