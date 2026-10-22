@@ -94,12 +94,16 @@ export function estimateMaxCostUsd(seg: SegmentRef, at: Date): number {
 }
 
 // The reported total is required: without it the billable usage is unknown (Sol R2 PR20-02).
-const usageSchema = z.object({
-  promptTokenCount: z.number().int().min(0),
-  candidatesTokenCount: z.number().int().min(0).default(0),
-  thoughtsTokenCount: z.number().int().min(0).default(0),
-  totalTokenCount: z.number().int().min(0),
-});
+// A real request always has a prompt and video, and Gemini's total covers every part, so zero
+// or inconsistent usage is not a complete report either: its cost is unknown (cross-family R5).
+const usageSchema = z
+  .object({
+    promptTokenCount: z.number().int().min(1),
+    candidatesTokenCount: z.number().int().min(0).default(0),
+    thoughtsTokenCount: z.number().int().min(0).default(0),
+    totalTokenCount: z.number().int().min(1),
+  })
+  .refine((u) => u.totalTokenCount >= u.promptTokenCount + u.candidatesTokenCount + u.thoughtsTokenCount, "the total is below its parts");
 
 /**
  * An upper bound on what the call was billed: the prompt at the input price, and everything

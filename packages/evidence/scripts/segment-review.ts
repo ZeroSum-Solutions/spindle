@@ -57,9 +57,10 @@ main(async () => {
   const p = publisherId();
   const reviewDir = dir("SPINDLE_REVIEW_DIR");
 
+  // Only real describer calls count toward the 90 days: a retired fixture description never blocks one.
   const row = JSON.parse(sql(`select coalesce((select json_build_object('mediaId', m.id, 'videoId', m.video_id, 'startSeconds', m.start_seconds,
       'endSeconds', m.end_seconds, 'rationale', m.rationale, 'status', private.media_publishable(m.id),
-      'lastDescribedAt', (select max(c.described_at) from public.practice_media_checks c where c.media_id = m.id))
+      'lastDescribedAt', private.segment_last_described_at(m.id))
     from public.practice_media m where m.id = ${lit(mediaId)}), 'null')`)) as (SegmentRef & { status: string; lastDescribedAt: string | null }) | null;
   if (!row) throw new Error("no such media");
   if (row.status !== "ok" && row.status !== "segment-unchecked") {

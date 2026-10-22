@@ -163,6 +163,24 @@ describe("calls the provider refuses before doing any work (T15; Sol R1 PR47-01,
     expect(r.ok).toBe(false);
   });
 
+  // A real request always has a prompt and at least a second of video, and Gemini's total covers
+  // every part: zero or inconsistent usage is not a complete report (cross-family R5 WARN 2).
+  const incomplete: [string, Record<string, number>][] = [
+    ["zero usage", { promptTokenCount: 0, totalTokenCount: 0 }],
+    ["a total below the prompt", { promptTokenCount: 5645, totalTokenCount: 100 }],
+    ["a total below its parts", { promptTokenCount: 5645, candidatesTokenCount: 158, thoughtsTokenCount: 511, totalTokenCount: 6000 }],
+  ];
+  it.each(incomplete)("leaves the cost unknown on %s, so the full bound stays reserved", async (_n, usageMetadata) => {
+    for (const fetch of [reply(503, { ...envelope(503, "UNAVAILABLE"), usageMetadata }), reply(200, gemini(DESC, { usageMetadata }))]) {
+      const r = await describeSegment(SEG, deps(fetch));
+      expect(r).toMatchObject({ ok: false, costUsd: null });
+      const path = ledger();
+      const res = reserveCall(path, req(NOW, { maxUsd: 0.04 }));
+      settleCall(path, res, r.costUsd, r.ok, NOW);
+      expect(monthSpendUsd(parseLedger(readFileSync(path, "utf8")), "2026-10")).toBeCloseTo(0.04);
+    }
+  });
+
   it("keeps the full reservation and the 90-day block for 126 billed 503s with partial usage", async () => {
     const path = ledger();
     for (let i = 0; i < 126; i++) {

@@ -3,7 +3,7 @@
 -- content and receipts are synthetic; no model is called.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(297);
+select plan(303);
 -- This suite records synthetic-fixture review receipts; outside tests they are refused for segment passes.
 select set_config('spindle.fixture_receipts', 'on', true);
 
@@ -633,6 +633,12 @@ select throws_ok(format($$select public.publisher_record_media_check(pg_temp.pat
     || jsonb_build_object('run', jsonb_build_object('model', 'test-stub', 'session', 'ci-stub', 'packetDigest', repeat('a', 64),
       'reviewedAt', '2026-10-01T00:00:00Z')))$$, pg_temp.id('mv'), pg_temp.id('mv')),
   '22023', 'invalid check.run: a segment passes only with a gpt-6.1-sol review', 'a reviewer other than gpt-6.1-sol cannot pass a segment');
+-- Cross-family R5 WARN 3: the describer is an allowlist too, even in a test session.
+select throws_ok(format($$select public.publisher_record_media_check(pg_temp.pat(), %L, pg_temp.seg_pass(%L, 'mock', now())
+    || jsonb_build_object('describer', jsonb_build_object('run', jsonb_build_object('model', 'mock-describer', 'session', 'mock-1',
+      'packetDigest', repeat('c', 64), 'reviewedAt', pg_temp.iso(now() - interval '1 day')), 'costUsd', 0.01)))$$, pg_temp.id('mv'), pg_temp.id('mv')),
+  '22023', 'invalid check.describer: a segment passes only with a gemini-3.8-flash description',
+  'a describer other than gemini-3.8-flash cannot pass a segment');
 select is((select count(*) from public.practice_media_checks where media_id = pg_temp.id('mv') and kind = 'segment'), 0::bigint,
   'and none of the refused passes is recorded');
 select public.publisher_record_media_check(pg_temp.pat(), pg_temp.id('mv'), pg_temp.seg_pass(pg_temp.id('mv'), 'segment', now()));
@@ -1578,6 +1584,9 @@ select cmp_ok(private.retire_unreviewed_segment_passes(), '>=', 1, 'the upgrade 
 select results_eq(format($$select outcome from public.practice_media_checks where media_id = %L and kind = 'segment' order by seq desc limit 1$$,
   pg_temp.id('md')), $$values ('fail'::text)$$, 'by appending a failed segment check');
 select is(private.media_publishable(pg_temp.id('md')), 'segment-unchecked', 'so the clip no longer publishes or plays');
+-- Cross-family R5 WARN 1: only real describer calls start the 90-day interval.
+select is(private.segment_last_described_at(pg_temp.id('md')), null::timestamptz,
+  'a retired fixture description does not hold back a real description of the clip');
 select pg_temp.as_service();
 select lives_ok(format($$select public.publisher_record_media_check(pg_temp.pat(), %L, pg_temp.seg_pass(%L, 'seg-sol', now())
     || jsonb_build_object('run', jsonb_build_object('model', 'gpt-6.1-sol', 'session', 'ci-sol', 'packetDigest', repeat('b', 64),
@@ -1586,6 +1595,29 @@ select lives_ok(format($$select public.publisher_record_media_check(pg_temp.pat(
 select pg_temp.reset_role();
 select is(private.retire_unreviewed_segment_passes(), 0, 'and the upgrade leaves a gpt-6.1-sol pass alone');
 select is(private.media_publishable(pg_temp.id('md')), 'ok', 'so the clip publishes again');
+select is(private.segment_last_described_at(pg_temp.id('md')),
+  (select c.described_at from public.practice_media_checks c where c.media_id = pg_temp.id('md') and c.kind = 'segment' order by c.seq desc limit 1),
+  'a real description starts the 90-day interval');
+-- Cross-family R5 WARN 3: a recorded describer model must match its run, at the database boundary.
+insert into public.review_runs (model, session_id, packet_digest, reviewed_at, recorded_by)
+  values ('test-stub', 'ci-stub-describer', repeat('d', 64), now() - interval '1 day', pg_temp.pat());
+create function pg_temp.stub_described_pass() returns void language sql as $$
+  insert into public.practice_media_checks (media_id, kind, outcome, checked_at, run_id, recorded_by,
+      describer_model, describer_run_id, describer_cost_usd, described_at, context)
+    values (pg_temp.id('md'), 'segment', 'pass', now(),
+      (select id from public.review_runs where model = 'gpt-6.1-sol' and session_id = 'ci-sol'), pg_temp.pat(),
+      'gemini-3.8-flash', (select id from public.review_runs where model = 'test-stub' and session_id = 'ci-stub-describer'),
+      0.01, now() - interval '1 day', pg_temp.ctx(pg_temp.id('md')))
+$$;
+select throws_ok('select pg_temp.stub_described_pass()', '22023',
+  'invalid check.describer: a segment passes only with a gemini-3.8-flash description',
+  'even the table owner cannot record a gemini-3.8-flash describer model over another model''s run');
+-- A pass like that stored before the guard is retired on upgrade, and its description does not count.
+alter table public.practice_media_checks disable trigger practice_media_checks_segment_guard;
+select pg_temp.stub_described_pass();
+alter table public.practice_media_checks enable trigger practice_media_checks_segment_guard;
+select is(private.retire_unreviewed_segment_passes(), 1, 'the upgrade retires a pass whose description is not a real describer run');
+select is(private.media_publishable(pg_temp.id('md')), 'segment-unchecked', 'so that clip stops publishing and playing');
 
 select * from finish();
 rollback;

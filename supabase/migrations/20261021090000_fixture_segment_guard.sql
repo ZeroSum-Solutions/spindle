@@ -41,8 +41,34 @@ as $$
 $$;
 
 /**
- * A passing segment check is reviewed by gpt-6.1-sol, whoever inserts it (the RPC or a direct
- * write). A synthetic-fixture review or description passes only where fixture receipts are
+ * True when a check's description came from a real describer call: a run of the approved
+ * describer model (gemini-3.8-flash, DESCRIBER_MODEL in packages/evidence/src/video/describe.ts),
+ * the same model the check records, and no synthetic-fixture run behind the check.
+ */
+create function private.check_has_real_description(c public.practice_media_checks)
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select c.describer_model = 'gemini-3.8-flash' and not private.check_uses_fixture(c)
+     and exists (select 1 from public.review_runs d where d.id = c.describer_run_id and d.model = c.describer_model)
+$$;
+
+/**
+ * When the clip was last described by a real describer call, for the 90-day describe interval.
+ * A synthetic-fixture or otherwise unapproved description never blocks a real one (cross-family R5).
+ */
+create function private.segment_last_described_at(p_media uuid)
+returns timestamptz
+language sql stable security definer set search_path = ''
+as $$
+  select max(c.described_at) from public.practice_media_checks c
+  where c.media_id = p_media and private.check_has_real_description(c)
+$$;
+
+/**
+ * A passing segment check is reviewed by gpt-6.1-sol and describes with a gemini-3.8-flash run
+ * whose model the check records, whoever inserts it (the RPC or a direct write). Both are
+ * allowlists. A synthetic-fixture review or description passes only where fixture receipts are
  * allowed. After the row's own constraints, so a malformed row still reports its constraint.
  */
 create function private.guard_segment_pass()
@@ -51,6 +77,7 @@ language plpgsql security definer set search_path = ''
 as $$
 declare
   reviewer text;
+  describer text;
 begin
   if new.kind <> 'segment' or new.outcome <> 'pass' then return new; end if;
   if private.check_uses_fixture(new) then
@@ -62,13 +89,19 @@ begin
   if reviewer is distinct from 'gpt-6.1-sol' and not (reviewer like 'synthetic-fixture%' and private.fixture_receipts_allowed()) then
     raise exception 'invalid check.run: a segment passes only with a gpt-6.1-sol review' using errcode = '22023';
   end if;
+  select d.model into describer from public.review_runs d where d.id = new.describer_run_id;
+  if describer is distinct from new.describer_model
+     or not (describer = 'gemini-3.8-flash' or (describer like 'synthetic-fixture%' and private.fixture_receipts_allowed())) then
+    raise exception 'invalid check.describer: a segment passes only with a gemini-3.8-flash description' using errcode = '22023';
+  end if;
   return new;
 end;
 $$;
 
 /**
  * Appends a failed segment check for every clip whose latest segment check is a pass that this
- * guard would refuse now: a synthetic-fixture receipt or a reviewer other than gpt-6.1-sol. The
+ * guard would refuse now: a synthetic-fixture receipt, a reviewer other than gpt-6.1-sol, or a
+ * description that is not a real gemini-3.8-flash run (cross-family R5). The
  * clip then stops playing and publishing until a real review passes it. Returns the count.
  */
 create function private.retire_unreviewed_segment_passes()
@@ -85,7 +118,7 @@ begin
   from public.practice_media_checks c
   where c.seq in (select max(l.seq) from public.practice_media_checks l where l.kind = 'segment' group by l.media_id)
     and c.outcome = 'pass'
-    and (private.check_uses_fixture(c)
+    and (not private.check_has_real_description(c)
          or (select r.model from public.review_runs r where r.id = c.run_id) is distinct from 'gpt-6.1-sol');
   get diagnostics n = row_count;
   return n;
@@ -116,4 +149,5 @@ end;
 $$;
 
 revoke all on function private.fixture_receipts_allowed(), private.check_uses_fixture(public.practice_media_checks),
+  private.check_has_real_description(public.practice_media_checks), private.segment_last_described_at(uuid),
   private.guard_segment_pass(), private.retire_unreviewed_segment_passes() from public, anon, authenticated, service_role;
