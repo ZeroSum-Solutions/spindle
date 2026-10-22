@@ -47,9 +47,17 @@ export async function proxy(request: NextRequest) {
   }
   // Learner pages stream, so a notFound() in the page arrives after a 200. Answer a real 404 here
   // for anyone who is not a member of the route gym: the same RLS-protected orgs read as
-  // learnerGym(), which only returns the caller's own gyms. Fails closed; the pages repeat the check.
-  if (learnSlug !== null && !(await isMemberOf(supabase, learnSlug))) {
-    return apply(new NextResponse("Not found", { status: 404, headers: { "Cache-Control": "no-store" } }), pendingCookies, pendingHeaders);
+  // learnerGym(), which only returns the caller's own gyms. A failed read is a 503, never a pass;
+  // the pages repeat the check.
+  // Server Actions are left to their own learnerGym() checks, which answer in-band; a 404 here would
+  // throw in the client and lose the learner's answers. An unknown action id gets Next's own 400.
+  const serverAction = request.method === "POST" && request.headers.has("next-action");
+  if (learnSlug !== null && !serverAction) {
+    const membership = await membershipIn(supabase, learnSlug);
+    if (membership !== "member") {
+      const [status, body] = membership === "unknown" ? [503, "Service unavailable"] : [404, "Not found"];
+      return apply(new NextResponse(body, { status, headers: { "Cache-Control": "no-store" } }), pendingCookies, pendingHeaders);
+    }
   }
   if (path.startsWith("/invite/")) {
     response.headers.set("Referrer-Policy", "no-referrer");
@@ -58,15 +66,23 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-/** True only when the signed-in caller can read the gym's row; any error counts as no. */
-async function isMemberOf(supabase: ReturnType<typeof createServerClient>, rawSlug: string): Promise<boolean> {
+/**
+ * Whether the signed-in caller can read the gym's row. A failed read is "unknown", never a pass and
+ * never "not a member"; only its kind is logged, not the query error, which may echo request data.
+ */
+async function membershipIn(supabase: ReturnType<typeof createServerClient>, rawSlug: string): Promise<"member" | "none" | "unknown"> {
   const slug = slugSchema.safeParse(rawSlug);
-  if (!slug.success) return false;
+  if (!slug.success) return "none";
   try {
     const { data, error } = await supabase.from("orgs").select("id").eq("slug", slug.data).maybeSingle();
-    return !error && data !== null;
+    if (error) {
+      console.error("learn gate: membership lookup failed", { reason: "query error" });
+      return "unknown";
+    }
+    return data ? "member" : "none";
   } catch {
-    return false;
+    console.error("learn gate: membership lookup failed", { reason: "exception" });
+    return "unknown";
   }
 }
 

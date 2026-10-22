@@ -519,12 +519,23 @@ test.describe.serial("learner flow", () => {
       learn(gymA, assignments.partial).replace("/learn/", "//%6cearn/"),
       learn(gymA, assignments.partial, "figure.png"),
       learn(gymA, assignments.partial, "..%2f.."),
+      learn(gymA, assignments.partial, "..%252f..%25"),
     ]) {
       const res = await b.goto(path);
       expect(res?.status(), path).toBe(404);
       expect(res?.headers()["cache-control"], path).toContain("no-store");
       await expect(b.getByText("Synthetic", { exact: false })).toHaveCount(0);
     }
+    // Server Action POSTs skip the proxy gate and keep their own checks: a forged one renders nothing
+    // (Next answers an unknown action id with 400 or 409).
+    const forged = await b.request.post(learn(gymA, assignments.partial, "module/quiz"), {
+      headers: { "Next-Action": "0".repeat(42), "Content-Type": "text/plain;charset=UTF-8" },
+      data: "[]",
+    });
+    const forgedBody = await forged.text();
+    expect(forged.status()).toBeGreaterThanOrEqual(400);
+    expect(forged.status()).toBeLessThan(500);
+    expect(forgedBody).not.toContain("Synthetic");
     expect((await m.goto(learn(gymB, assignments.multiB)))?.status()).toBe(200);
     const o = await signIn(browser, actors.owner!, learn(gymA));
     await expectNotFound(o, learn(gymA, assignments.partial));

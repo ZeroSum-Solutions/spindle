@@ -116,6 +116,41 @@ describe("proxy: the learner membership gate", () => {
     expect(supa.slugs).toEqual([]);
   });
 
+  // Argon on #56 (a1a17a2): exact inputs. Undecodable segments, and smuggling that pops the
+  // canonical path off /gyms, must fail closed too. Next serves the lesson page for some of these
+  // (`/%2e/gyms/...`, `..%252f..%25`) and answers 404 or 500 for the rest; the gate never passes them.
+  const U = "7d0f8c64-3f8e-4c1b-9f43-6b0c3f6b2a11";
+  const awkward = [
+    `/gyms/gym-b/%6cearn/${U}/%FF`,
+    `/%67yms/gym-b/learn/${U}/%FF`,
+    `/gyms/gym-b/%256cearn/${U}/lesson%25`,
+    `/gyms/gym%2db/learn/${U}/%FF`,
+    "/gyms%2fgym-b%2flearn%2f..%2f..%2f..",
+    "/gyms%2fgym-b/learn/x/..%2f..%2f..%2f..",
+    "/%2e/gyms/gym-b/learn/x/..%2f..%2f..%2f..",
+    "/gyms/gym-b/learn/x/..%2f..%FF",
+    "/gyms/gym-b/learn/x/..%252f..%25",
+  ];
+
+  it.each(awkward)("fails closed on %s for a member, without a read", async (path) => {
+    Object.assign(supa, { sub: "user-b", org: { id: "org-b" } });
+    const res = await req(path);
+    expect(res.status).toBe(404);
+    expect(supa.slugs).toEqual([]);
+  });
+
+  it.each(awkward)("sends a signed-out visitor on %s to sign-in", async (path) => {
+    const res = await req(path);
+    expect(res.status).toBe(307);
+  });
+
+  it("reads each segment decoded on its own, as the router does", async () => {
+    Object.assign(supa, { sub: "user-b", org: { id: "org-b" } });
+    const res = await req(`/gyms/gym%2db/learn/${U}/lesson-one`);
+    expect(res.status).toBe(200);
+    expect(supa.slugs).toEqual(["gym-b"]);
+  });
+
   it("sends a signed-out visitor on a smuggled learner path to sign-in", async () => {
     const res = await req("/gyms/gym-b/learn/x/..%2f..");
     expect(res.status).toBe(307);
@@ -128,10 +163,39 @@ describe("proxy: the learner membership gate", () => {
     expect(res.cookies.get("sb-test-auth-token")?.value).toBe("refreshed");
   });
 
-  it.each(["error", "throw"] as const)("fails closed when the membership read reports %s", async (fail) => {
-    Object.assign(supa, { sub: "user-a", org: { id: "org-b" }, fail });
+  // Sol on #56 (a1a17a2): a failed lookup is not "not a member". It must not pass, and it must not
+  // pose as a 404 either: a non-cacheable 503 with no detail in the body.
+  it.each(["error", "throw"] as const)("answers 503 when the membership read reports %s", async (fail) => {
+    Object.assign(supa, { sub: "user-a", org: { id: "org-b" }, fail, refresh: true });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     const res = await req("/gyms/gym-b/learn/x/lesson-one");
+    expect(res.status).toBe(503);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(await res.text()).toBe("Service unavailable");
+    expect(res.cookies.get("sb-test-auth-token")?.value).toBe("refreshed");
+    expect(logged).toHaveBeenCalledWith("learn gate: membership lookup failed", { reason: fail === "error" ? "query error" : "exception" });
+    logged.mockRestore();
+  });
+
+  // Argon on #56 (a1a17a2): Server Actions answer in-band (NOT_SUBMITTED, NOT_SAVED); a proxy 404
+  // would throw in the client and unmount the quiz. Actions repeat learnerGym() themselves, and an
+  // unknown action id gets Next's own 400 without rendering the page.
+  it("leaves a Server Action POST to the action's own checks", async () => {
+    supa.sub = "user-a";
+    const res = await proxy(new NextRequest("http://127.0.0.1:3000/gyms/gym-b/learn/x/module/quiz", { method: "POST", headers: { "Next-Action": "abc123" } }));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-middleware-next")).toBe("1");
+    expect(supa.slugs).toEqual([]);
+  });
+
+  it.each([
+    ["a GET that carries the action header", "GET", { "Next-Action": "abc123" }],
+    ["a POST without the action header", "POST", {}],
+  ] as const)("still gates %s", async (_, method, headers) => {
+    supa.sub = "user-a";
+    const res = await proxy(new NextRequest("http://127.0.0.1:3000/gyms/gym-b/learn/x/module/quiz", { method, headers }));
     expect(res.status).toBe(404);
+    expect(supa.slugs).toEqual(["gym-b"]);
   });
 
   it("answers 404 without a read when the slug cannot be a gym", async () => {
