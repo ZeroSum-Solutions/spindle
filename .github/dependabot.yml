@@ -7,6 +7,18 @@ updates:
     groups:
       all:
         patterns: ["*"]
+    ignore:
+      # typescript-eslint (via eslint-config-next) does not support TypeScript 7 yet.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # Node types track the runtime pinned in mise.toml (node = "24"); bump both together.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # Accessibility fix pending: axe-core 4.14 enables label-content-name-mismatch (WCAG 2.5.3), which
+      # fails CourseCard (apps/web/src/components/brand/course-card.tsx): the whole card is one link named
+      # by its title only. Lift this hold once the card is restructured.
+      - dependency-name: "@axe-core/playwright"
+        versions: [">=4.14.0"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

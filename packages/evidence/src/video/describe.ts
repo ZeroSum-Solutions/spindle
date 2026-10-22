@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { RunReceipt } from "../review/harness";
 import { canonicalJson } from "../review/packet";
+import { refusalStatus, type RefusalStatus } from "./refusal";
 import { CONTEXT_SECONDS, descriptionTimesError } from "./timestamps";
 
 export const DESCRIBER_MODEL = "gemini-3.8-flash";
@@ -93,12 +94,16 @@ export function estimateMaxCostUsd(seg: SegmentRef, at: Date): number {
 }
 
 // The reported total is required: without it the billable usage is unknown (Sol R2 PR20-02).
-const usageSchema = z.object({
-  promptTokenCount: z.number().int().min(0),
-  candidatesTokenCount: z.number().int().min(0).default(0),
-  thoughtsTokenCount: z.number().int().min(0).default(0),
-  totalTokenCount: z.number().int().min(0),
-});
+// A real request always has a prompt and video, and Gemini's total covers every part, so zero
+// or inconsistent usage is not a complete report either: its cost is unknown (cross-family R5).
+const usageSchema = z
+  .object({
+    promptTokenCount: z.number().int().min(1),
+    candidatesTokenCount: z.number().int().min(0).default(0),
+    thoughtsTokenCount: z.number().int().min(0).default(0),
+    totalTokenCount: z.number().int().min(1),
+  })
+  .refine((u) => u.totalTokenCount >= u.promptTokenCount + u.candidatesTokenCount + u.thoughtsTokenCount, "the total is below its parts");
 
 /**
  * An upper bound on what the call was billed: the prompt at the input price, and everything
@@ -115,7 +120,9 @@ export function costUsd(usage: z.input<typeof usageSchema>, at: Date): number {
 export type DescribeResult =
   | { ok: true; description: SegmentDescription; run: RunReceipt; costUsd: number; uncertain: boolean }
   /** costUsd is null when the charge is unknown: the call may have been billed (Sol PR20-02). */
-  | { ok: false; error: string; costUsd: number | null };
+  | { ok: false; error: string; costUsd: number | null }
+  /** A documented non-billable refusal (see refusal.ts): the caller may release its reservation (T15). */
+  | { ok: false; error: string; costUsd: null; refusal: RefusalStatus };
 
 const responseSchema = z.object({
   modelVersion: z.string().optional(),
@@ -161,7 +168,10 @@ export async function describeSegment(seg: SegmentRef, deps: DescribeDeps): Prom
   }
   const usage = usageSchema.safeParse((json as { usageMetadata?: unknown } | null)?.usageMetadata);
   const cost = usage.success ? costUsd(usage.data, at) : null;
-  if (!res.ok) return fail(`describer HTTP ${res.status}`, cost);
+  if (!res.ok) {
+    const refusal = refusalStatus(res.status, json);
+    return refusal === null ? fail(`describer HTTP ${res.status}`, cost) : { ok: false, error: `describer HTTP ${res.status}`, costUsd: null, refusal };
+  }
   const parsed = responseSchema.safeParse(json);
   if (!parsed.success) return fail("describer response is malformed", cost);
   if (cost === null) return fail("describer response reports no usage, so its cost is unknown", null);
