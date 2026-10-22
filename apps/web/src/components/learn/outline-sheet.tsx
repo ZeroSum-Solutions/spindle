@@ -57,13 +57,23 @@ export function OutlineSheet({ id, progress, children }: { id: string; progress:
       root.style.paddingRight = saved.paddingRight;
       saved = null;
     };
-    // Off screen, or with its focus ring under the lesson bar (which can cover half the viewport at 200% text).
-    // A control in the bar is always on screen.
-    const hidden = (el: HTMLElement) => {
-      if (el.closest("[data-lesson-dock]")) return false;
+    // Brings a focus target and its ring into view without moving more than it must. Inside the sidebar's
+    // scroll box or the bar (both scroll inside themselves), only that box scrolls, within the part of it on
+    // screen, so the window and the reading column never move. Elsewhere the window scrolls the target clear of
+    // the top edge and of the bar (scroll padding leaves room for the ring).
+    const reveal = (el: HTMLElement) => {
       const r = el.getBoundingClientRect();
+      // The sidebar's box scrolls only from the lg breakpoint; below it the trigger sits in it as a plain wrapper.
+      const box = el.closest<HTMLElement>("[data-outline-scroll], [data-lesson-dock]");
+      if (box && getComputedStyle(box).overflowY !== "visible") {
+        const b = box.getBoundingClientRect();
+        const [top, bottom] = [Math.max(b.top, 0) + RING, Math.min(b.bottom, window.innerHeight) - RING];
+        if (r.top < top) box.scrollTop -= top - r.top;
+        else if (r.bottom > bottom) box.scrollTop += Math.min(r.bottom - bottom, r.top - top);
+        return;
+      }
       const bar = [...document.querySelectorAll<HTMLElement>("[data-lesson-dock]")].find(isShown);
-      return r.top < 0 || r.bottom + RING > (bar ? bar.getBoundingClientRect().top : window.innerHeight);
+      if (r.top - RING < 0 || r.bottom + RING > (bar ? bar.getBoundingClientRect().top : window.innerHeight)) el.scrollIntoView({ block: "nearest" });
     };
     const restore = () => {
       unlock();
@@ -79,13 +89,12 @@ export function OutlineSheet({ id, progress, children }: { id: string; progress:
         : own?.isConnected && isShown(own)
           ? own
           : document.querySelector<HTMLElement>(`[data-outline-trigger="${dialog.id}"]`);
-      // Native close may already have focused the opener, so focus() alone would not scroll. Leave a target
-      // that is in view where it is; scroll any other into view (scroll-padding keeps it clear of the bar),
-      // such as the trigger after a resize grew the bar, or a late lesson in the sidebar after widening (the
-      // sidebar scrolls inside itself, so the reading column stays where it is).
+      // Native close may already have focused the opener, so focus() alone would not scroll: reveal it, such as
+      // the trigger after a resize grew the bar, the bar's Outline below the bar's own scrollport, or a late
+      // lesson in the sidebar after widening.
       if (back) {
         back.focus({ preventScroll: true });
-        if (hidden(back)) back.scrollIntoView({ block: "nearest" });
+        reveal(back);
       }
     };
     // showModal() happens outside React (openOutlineSheet); watch the open attribute to lock and unlock,
@@ -131,19 +140,23 @@ export function OutlineSheet({ id, progress, children }: { id: string; progress:
         ref={ref}
         id={id}
         aria-labelledby={titleId}
+        tabIndex={-1}
         data-outline-sheet
-        // A link inside navigates: close first, so the sheet never stays open over the next lesson.
+        // A plain click on another lesson navigates: close first, so the sheet never stays open over the next
+        // lesson. A modified click (new tab or window) leaves the sheet as it is; the current lesson just closes it.
         onClick={(e) => {
           const link = (e.target as HTMLElement).closest("a");
-          if (link) e.currentTarget.dataset.leaving = "1";
+          if (link && (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) return;
+          const leaving = !!link && link.getAttribute("aria-current") !== "page";
+          if (leaving) e.currentTarget.dataset.leaving = "1";
           if (e.target === e.currentTarget || link) e.currentTarget.close();
           // The router moves to the chosen lesson: focus must not stay on this page's trigger, which close()
           // refocuses natively (restore skips it too). Blurred, focus starts at the top of the next lesson.
-          if (link) (document.activeElement as HTMLElement | null)?.blur();
+          if (leaving) (document.activeElement as HTMLElement | null)?.blur();
         }}
         // A modal dialog makes the page inert, but Tab past the last control would leave for the browser
         // chrome. Keep the cycle inside the sheet: last to first, and Shift+Tab from first to last (also from the
-        // dialog itself, which takes focus when its padding is clicked).
+        // dialog itself, which takes focus when its padding or text is clicked: tabIndex -1).
         onKeyDown={(e) => {
           if (e.key !== "Tab") return;
           const items = [...e.currentTarget.querySelectorAll<HTMLElement>("a[href], button:not([disabled])")].filter((el) => el.offsetParent !== null);

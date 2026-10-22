@@ -394,8 +394,9 @@ body {
 }
 
 /* The lesson bar publishes its height as --dock-h (0px from 1024px, where it is hidden); focus moved by
-   keyboard or scroll stops clear of it, with room for the focus ring. */
+   keyboard or scroll stops clear of it and of the top edge, with room for the focus ring. */
 html {
+  scroll-padding-top: 0.75rem;
   scroll-padding-bottom: calc(var(--dock-h, 0px) + 0.75rem);
 }
 
