@@ -84,7 +84,7 @@ export function CompletionView({
           type="submit"
           disabled={pending}
           aria-describedby={state.status === "error" ? errorId : undefined}
-          className="inline-flex min-h-12 min-w-56 items-center justify-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover disabled:cursor-progress disabled:opacity-80"
+          className="inline-flex min-h-12 min-w-[min(14rem,100%)] items-center justify-center gap-2 self-start rounded-control bg-ink px-5 font-medium text-on-ink hover:bg-ink-hover disabled:cursor-progress disabled:opacity-80"
         >
           {pending ? <LoaderCircle aria-hidden strokeWidth={1.75} className="size-5 animate-spin motion-reduce:animate-none" /> : null}
           {pending ? "Saving…" : state.status === "error" ? "Try again" : "Mark lesson complete"}

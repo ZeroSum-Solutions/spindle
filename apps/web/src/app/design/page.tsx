@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LessonBlocks, LessonResources } from "@/components/learn/blocks";
 import { CourseRow } from "@/components/learn/course-row";
@@ -6,6 +7,7 @@ import { ReviewedDiagram } from "@/components/learn/diagrams";
 import { IntegrityAlert, LayerLabel, LessonStateLabel, SupportLabel, SupportLegend, VersionTag } from "@/components/learn/labels";
 import { ModuleStatusCard } from "@/components/learn/module-status";
 import { LessonOutline } from "@/components/learn/outline";
+import { ProgressTrack } from "@/components/learn/progress-track";
 import { VersionUnavailable } from "@/components/learn/shell";
 import { VersionNotice } from "@/components/learn/version-notice";
 import { YouTubeSegment } from "@/components/learn/youtube-segment";
@@ -220,6 +222,26 @@ export default function DesignKit() {
                 availability={{ mediaId: "m-off", state: "disabled", review: null, title: null, channel: null, available: null }}
               />
             </div>
+          </KitCard>
+          <KitCard n={12} title="Progress track" note="The measurement layer as a readout: position, one segment per lesson (done ink, current signal, the rest hairlines) and the share done. The words are for assistive technology; the segments are decorative.">
+            <ThemePair>
+              <div className="flex flex-col gap-stack">
+                <ProgressTrack segments={["done", "done", "current", "rest", "rest", "rest", "rest", "rest"]} />
+                <ProgressTrack segments={["done", "done", "done", "done"]} />
+              </div>
+            </ThemePair>
+          </KitCard>
+          <KitCard
+            n={13}
+            title="Lesson bar and outline sheet"
+            note="Below 1024px the bottom lesson bar holds the progress track and the Outline button on one row and the full-width named next action below; it has automatic height and the page reserves it. From 1024px it is gone. The outline opens as a bottom sheet (a modal dialog): Tab cycles inside, the page behind does not scroll, Esc closes, focus returns to the trigger, and widening past 1024px closes it."
+          >
+            <p className="text-label">
+              <Link href="/design/screens/lesson" className="text-brand underline underline-offset-2 hover:text-brand-hover">
+                Open the lesson screen
+              </Link>{" "}
+              <span className="text-text-muted">(try it at 390px and with the toggle).</span>
+            </p>
           </KitCard>
         </KitPart>
 

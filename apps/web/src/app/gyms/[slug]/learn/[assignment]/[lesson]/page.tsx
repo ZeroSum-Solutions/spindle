@@ -1,4 +1,5 @@
 import { moduleQuizHref } from "@/lib/learning/quiz";
+import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -8,7 +9,9 @@ import { CoachNote } from "@/components/brand/coach-note";
 import { CompleteLesson } from "@/components/learn/complete-lesson";
 import { IntegrityAlert, LayerLabel, LessonStateDetail, SupportLegend, VersionTag } from "@/components/learn/labels";
 import { receiptLine } from "@/lib/learning/presentation";
+import { LessonDock } from "@/components/learn/lesson-dock";
 import { LessonOutline } from "@/components/learn/outline";
+import { ProgressTrack, segmentsOf } from "@/components/learn/progress-track";
 import { LearnShell, LoadingNote, VersionUnavailable } from "@/components/learn/shell";
 import { completeLesson, type CompleteState, type LessonRoute } from "@/lib/learning/complete";
 import { claimEvidence, learnerGym, lessonClaimIds, myAssignment } from "@/lib/learning/load";
@@ -51,6 +54,8 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
   const lesson = lessons[index]!;
   const state = view.lessons[index]!;
   const flagged = new Set(view.flaggedClaimIds);
+  // One id per render for the outline sheet and its triggers: the router may keep an earlier page hidden.
+  const sheetId = `outline-${randomUUID()}`;
   const hasVideo = lesson.blocks.some((b) => b.kind === "video");
   const hasScience = lesson.blocks.some((b) => "support" in b && b.support === "science");
   const [claims, media, integrity] = await Promise.all([
@@ -63,10 +68,24 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
   const done = state.state === "done" || state.state === "credited";
 
   return (
-    <LearnShell gym={ctx.org.name} back={{ href: courseHref, label: view.title }} frame="reading">
+    <LearnShell
+      gym={ctx.org.name}
+      back={{ href: courseHref, label: view.title }}
+      frame="reading"
+      dock={
+        <LessonDock sheetId={sheetId} next={next ? { href: `${courseHref}/${next.slug}`, title: next.title } : { href: courseHref }}>
+          <ProgressTrack segments={segmentsOf(view.lessons, index)} />
+        </LessonDock>
+      }
+    >
       <div data-layout="reading" className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_minmax(0,46rem)] lg:justify-center">
         <div className="lg:sticky lg:top-6 lg:self-start">
-          <LessonOutline view={view} base={courseHref} currentId={lesson.id} />
+          {/* The sidebar scrolls inside itself, so focus moved to a late lesson scrolls the reading column at most by
+              the part of the box below the window; at the box's end the wheel carries on to the window (no
+              overscroll containment), so its last lessons stay in reach. The inset keeps focus rings unclipped. */}
+          <div data-outline-scroll className="lg:-m-2 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:p-2">
+            <LessonOutline view={view} base={courseHref} currentId={lesson.id} phone="sheet" sheetId={sheetId} />
+          </div>
         </div>
         <article className="flex min-w-0 max-w-[46rem] flex-col gap-8 text-reading" aria-labelledby="lesson-title">
           <header className="flex flex-col gap-3">
@@ -133,10 +152,11 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
             />
           </section>
 
-          {/* Phones: previous is a small link, next the one full-width way forward. From 768px they share a row. */}
-          <nav aria-label="Lesson navigation" className="flex flex-col gap-3 text-base md:flex-row md:items-center md:justify-between">
+          {/* Below 1024px the named next action lives in the lesson bar, so only previous stays here (a small link).
+              From 1024px there is no bar: previous and next share this row. */}
+          <nav aria-label="Lesson navigation" className={`flex-row items-center justify-between gap-3 text-base ${prev ? "flex" : "hidden lg:flex"}`}>
             {prev ? (
-              <Link href={`${courseHref}/${prev.slug}`} className="inline-flex min-h-11 items-center gap-1.5 self-start text-label text-brand hover:text-brand-hover md:self-center">
+              <Link href={`${courseHref}/${prev.slug}`} className="inline-flex min-h-11 items-center gap-1.5 text-label text-brand hover:text-brand-hover">
                 <ArrowLeft aria-hidden strokeWidth={1.75} className="size-4 shrink-0" />
                 <span>
                   <span className="sr-only">Previous lesson: </span>
@@ -144,12 +164,12 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
                 </span>
               </Link>
             ) : (
-              <span className="hidden md:block" />
+              <span className="hidden lg:block" />
             )}
             {next ? (
               <Link
                 href={`${courseHref}/${next.slug}`}
-                className="flex min-h-12 w-full flex-col justify-center rounded-control border border-control bg-surface px-4 py-2 hover:bg-surface-muted md:w-auto md:max-w-[60%] md:items-end md:text-right"
+                className="hidden min-h-12 max-w-[60%] flex-col items-end justify-center rounded-control border border-control bg-surface px-4 py-2 text-right hover:bg-surface-muted lg:flex"
               >
                 <span className="text-label text-text-muted">Next lesson</span>
                 <span data-next-title className="inline-flex items-center gap-1.5 font-medium text-text">
@@ -158,7 +178,7 @@ async function LessonPlayer({ params }: PageProps<"/gyms/[slug]/learn/[assignmen
                 </span>
               </Link>
             ) : (
-              <Link href={courseHref} className="inline-flex min-h-11 items-center gap-1.5 text-brand hover:text-brand-hover">
+              <Link href={courseHref} className="hidden min-h-11 items-center gap-1.5 text-brand hover:text-brand-hover lg:inline-flex">
                 Back to the course
               </Link>
             )}

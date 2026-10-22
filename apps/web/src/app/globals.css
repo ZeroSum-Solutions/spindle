@@ -234,6 +234,8 @@
   }
   .text-eyebrow {
     text-transform: uppercase;
+    /* Eyebrows carry names (gyms, courses): a long word wraps rather than overflowing at 320px or 200% text. */
+    overflow-wrap: anywhere;
   }
   .tabular {
     font-variant-numeric: tabular-nums;
@@ -389,6 +391,40 @@ body {
   /* Focus appears immediately: colour transitions (Tailwind's transition-colors includes
      outline-color) must never fade the ring in. Everything else may still transition. */
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+}
+
+/* The lesson bar publishes its height as --dock-h (0px from 1024px, where it is hidden); focus moved by
+   keyboard or scroll stops clear of it and of the top edge, with room for the focus ring. */
+html {
+  scroll-padding-top: 0.75rem;
+  scroll-padding-bottom: calc(var(--dock-h, 0px) + 0.75rem);
+}
+
+/* From the lg breakpoint (64rem, the same unit as Tailwind's lg) the bar is hidden and reserves nothing. The
+   bar also publishes 0px there, but only after a resize callback; this keeps the value right from the first
+   layout at that width. */
+@media (min-width: 64rem) {
+  html {
+    --dock-h: 0px !important;
+  }
+}
+
+/* The bar sits above the home indicator on phones with a safe-area inset. */
+[data-lesson-dock] {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* The outline bottom sheet (a modal dialog): chrome motion only, none under reduced motion. */
+.outline-sheet::backdrop {
+  background: rgb(11 13 18 / 0.55);
+}
+.outline-sheet[open] {
+  animation: sheet-in var(--duration-drawer) var(--ease-drawer);
+}
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
 }
 
 /* Native disclosure: rotate the chevron, never animate the reading text itself. */
