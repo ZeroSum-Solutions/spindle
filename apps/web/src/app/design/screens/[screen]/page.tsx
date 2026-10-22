@@ -48,7 +48,11 @@ async function DesignScreen({ params }: { params: Promise<{ screen: string }> })
       >
         <div data-layout="reading" className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_minmax(0,46rem)] lg:justify-center">
           <div className="lg:sticky lg:top-6 lg:self-start">
-            <LessonOutline view={view} base="/design/screens" currentId="l2" phone="sheet" sheetId="design-outline-sheet" />
+            {/* The sidebar scrolls inside itself, so focus moved to a late lesson never scrolls the reading column; the
+                inset keeps focus rings unclipped without moving the column. */}
+            <div data-outline-scroll className="lg:-m-2 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto lg:overscroll-contain lg:p-2">
+              <LessonOutline view={view} base="/design/screens" currentId="l2" phone="sheet" sheetId="design-outline-sheet" />
+            </div>
           </div>
           <article className="flex min-w-0 max-w-[46rem] flex-col gap-8 text-reading" aria-labelledby="lesson-title">
             <header className="flex flex-col gap-3">

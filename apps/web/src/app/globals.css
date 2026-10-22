@@ -234,6 +234,8 @@
   }
   .text-eyebrow {
     text-transform: uppercase;
+    /* Eyebrows carry names (gyms, courses): a long word wraps rather than overflowing at 320px or 200% text. */
+    overflow-wrap: anywhere;
   }
   .tabular {
     font-variant-numeric: tabular-nums;
@@ -397,9 +399,10 @@ html {
   scroll-padding-bottom: calc(var(--dock-h, 0px) + 0.75rem);
 }
 
-/* From 1024px the bar is hidden and reserves nothing. The bar also publishes 0px there, but only after a
-   resize callback; this keeps the value right from the first layout at that width. */
-@media (min-width: 1024px) {
+/* From the lg breakpoint (64rem, the same unit as Tailwind's lg) the bar is hidden and reserves nothing. The
+   bar also publishes 0px there, but only after a resize callback; this keeps the value right from the first
+   layout at that width. */
+@media (min-width: 64rem) {
   html {
     --dock-h: 0px !important;
   }

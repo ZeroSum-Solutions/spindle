@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ListOrdered } from "lucide-react";
-import { openOutlineSheet } from "./outline-sheet";
+import { DESKTOP, isShown, openOutlineSheet } from "./outline-sheet";
 
 /**
  * The bottom lesson bar below 1024px: row 1 is where you are (the progress readout) and the outline,
@@ -24,14 +24,14 @@ export function LessonDock({ sheetId, next, children }: { sheetId: string; next:
     publish();
     const observer = new ResizeObserver(publish);
     observer.observe(el);
-    // Hidden from 1024px: a display change is not always a resize the observer reports.
-    const desktop = window.matchMedia("(min-width: 1024px)");
+    // Hidden from the lg breakpoint: a display change is not always a resize the observer reports.
+    const desktop = window.matchMedia(DESKTOP);
     desktop.addEventListener("change", publish);
     return () => {
       observer.disconnect();
       desktop.removeEventListener("change", publish);
       // The router may already show the next lesson's bar: hand the value to it rather than clearing it.
-      const other = [...document.querySelectorAll<HTMLElement>("[data-lesson-dock]")].find((d) => d !== el && d.checkVisibility());
+      const other = [...document.querySelectorAll<HTMLElement>("[data-lesson-dock]")].find((d) => d !== el && isShown(d));
       if (other) root.style.setProperty("--dock-h", `${Math.ceil(other.getBoundingClientRect().height)}px`);
       else root.style.removeProperty("--dock-h");
     };
@@ -42,7 +42,7 @@ export function LessonDock({ sheetId, next, children }: { sheetId: string; next:
       data-lesson-dock
       className="fixed inset-x-0 bottom-0 z-30 max-h-[50dvh] overflow-y-auto overscroll-contain border-t border-border bg-surface/95 shadow-float backdrop-blur lg:hidden"
     >
-      <div role="group" aria-label="Lesson progress" className="mx-auto flex w-full max-w-[63rem] flex-wrap items-center gap-x-stack gap-y-tight px-4 py-tight md:px-8">
+      <nav aria-label="Lesson bar" className="mx-auto flex w-full max-w-[63rem] flex-wrap items-center gap-x-stack gap-y-tight px-4 py-tight md:px-8">
         <div className="min-w-0 grow basis-48">{children}</div>
         <button
           type="button"
@@ -69,7 +69,7 @@ export function LessonDock({ sheetId, next, children }: { sheetId: string; next:
           )}
           <ArrowRight aria-hidden strokeWidth={1.75} className="size-4 shrink-0" />
         </Link>
-      </div>
+      </nav>
     </div>
   );
 }
