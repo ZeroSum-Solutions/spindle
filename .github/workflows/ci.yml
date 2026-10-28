@@ -31,7 +31,7 @@ jobs:
           tar -xzf gitleaks.tar.gz gitleaks && rm gitleaks.tar.gz
           ./gitleaks git . --redact --exit-code 1 --no-banner
           rm gitleaks
-      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+      - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
       - name: Install
         run: pnpm install --frozen-lockfile
       - name: Lint, typecheck, test, build
