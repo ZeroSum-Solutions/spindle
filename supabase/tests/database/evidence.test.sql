@@ -70,9 +70,12 @@ create function pg_temp.iso(t timestamptz) returns text language sql as $$
 $$;
 
 -- A synthetic model run: the receipt CI records instead of calling a model.
+-- It is reviewed a day before the transaction starts, never on a fixed date: an
+-- approval may not outlast its run by more than 24 months, so a fixed date made
+-- the 'now() + interval' approvals below fail as the calendar moved on.
 create function pg_temp.run(tag text) returns jsonb language sql as $$
   select jsonb_build_object('model', 'synthetic-fixture', 'session', 'ci-' || tag,
-    'packetDigest', encode(extensions.digest(tag, 'sha256'), 'hex'), 'reviewedAt', '2026-10-01T00:00:00Z')
+    'packetDigest', encode(extensions.digest(tag, 'sha256'), 'hex'), 'reviewedAt', pg_temp.iso(now() - interval '1 day'))
 $$;
 -- A synthetic describer run (D-11): what a Gemini segment description would record.
 create function pg_temp.describer(tag text, cost numeric, at timestamptz default now() - interval '1 day') returns jsonb language sql as $$

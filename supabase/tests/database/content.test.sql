@@ -91,8 +91,12 @@ language sql as $$
 $$;
 -- Synthetic review receipts (ADR 0007): the same RPCs a model review uses, with
 -- a fixture run and the hashes and claim sets the database reports. No model is called.
+-- The run is reviewed a day before the transaction starts, so the 'now() + 1 year'
+-- approvals stay inside its 24-month window whatever the date.
 create function pg_temp.run() returns jsonb language sql as $$
-  select '{"model": "synthetic-fixture", "session": "ci-content", "packetDigest": "0000000000000000000000000000000000000000000000000000000000000001", "reviewedAt": "2026-10-01T00:00:00Z"}'::jsonb
+  select jsonb_build_object('model', 'synthetic-fixture', 'session', 'ci-content',
+    'packetDigest', '0000000000000000000000000000000000000000000000000000000000000001',
+    'reviewedAt', to_char((now() - interval '1 day') at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))
 $$;
 create function pg_temp.review_lessons(cid uuid) returns void language plpgsql as $$
 declare
