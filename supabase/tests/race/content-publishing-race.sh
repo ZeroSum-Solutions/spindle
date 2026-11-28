@@ -159,8 +159,10 @@ L3=7ace0003-0000-4000-8000-000000000011
 L4=7ace0004-0000-4000-8000-000000000011
 # Synthetic review receipts (ADR 0007): a fixture run, never a model call. It is
 # reviewed when the script starts, not on a fixed date, so the 'now() + 1 year'
-# approval stays inside the run's 24-month window whatever the date.
-REVIEWED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+# approval stays inside the run's 24-month window whatever the date. The time comes
+# from the database clock, which judges "in the future", not the runner's.
+REVIEWED_AT=$(q "select to_char(now() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"')")
+[ -n "$REVIEWED_AT" ] || { echo "could not read the database clock" >&2; exit 1; }
 RUNJ='{"model": "synthetic-fixture", "session": "ci-race", "packetDigest": "0000000000000000000000000000000000000000000000000000000000000002", "reviewedAt": "'"$REVIEWED_AT"'"}'
 lesson_review() { # $1 lesson id, $2 expected hash, $3 claim ids json
   echo "public.publisher_review_lesson('$P', $1, jsonb_build_object('verdict', 'clean', 'expectedHash', $2,
